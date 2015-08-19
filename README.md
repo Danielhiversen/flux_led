@@ -33,7 +33,6 @@ and looks like it might be a bit of work.
 package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
  See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
-
 ##### Examples:
 Scan network:
 
@@ -77,3 +76,37 @@ Set custom pattern 25% speed, red/green/blue, gradual change:
 
 	flux_led.py 192.168.1.100 -C gradual 25 "red green (0,0,255)"
 	
+Show help:
+```	
+$ ./flux_led.py -h
+Usage: usage: flux_led.py [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...].
+
+A utility to control Flux WiFi LED Bulbs.
+
+Options:
+  -h, --help            show this help message and exit
+  -e, --examples        Show usage examples
+  -s, --scan            Search for bulbs on local network
+  -S, --scanresults     Operate on scan results instead of arg list
+  -i, --info            Info about bulb(s) state
+  -l, --listpresets     List preset codes
+  -t, --timers          Show timers
+
+  Power options (mutually exclusive):
+    -1, --on            Turn on specified bulb(s)
+    -0, --off           Turn off specified bulb(s)
+
+  Mode options (mutually exclusive):
+    -c COLOR, --color=COLOR
+                        Set single color mode.  Can be either color name, web
+                        hex, or comma-separated RGB triple
+    -w LEVEL, --warmwhite=LEVEL
+                        Set warm white mode (LEVEL is percent)
+    -p CODE SPEED, --preset=CODE SPEED
+                        Set preset pattern mode (SPEED is percent)
+    -C TYPE SPEED COLORLIST, --custom=TYPE SPEED COLORLIST
+                        Set custom pattern mode. TYPE should be jump, gradual,
+                        or strobe. SPEED is percent. COLORLIST is a should be
+                        a space-separated list of color names, web hex values,
+                        or comma-separated RGB triples,
+```
