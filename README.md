@@ -33,3 +33,47 @@ and looks like it might be a bit of work.
 package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
  See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
+
+##### Examples:
+Scan network:
+
+	flux_led.py -s
+	
+Scan network and show info about all bulbs:
+
+	flux_led.py -sSti
+
+Turn on:
+
+	flux_led.py 192.168.1.100 --on
+	flux_led.py 192.168.1.100 -192.168.1.101 -1
+	
+Turn on all bulbs on LAN:
+
+	flux_led.py -sS --on
+	
+Turn off:
+
+	flux_led.py 192.168.1.100 --off
+	flux_led.py 192.168.1.100 --0
+	flux_led.py -sS --off
+	
+Set warm white, 75%
+
+	flux_led.py 192.168.1.100 -w 75 -0	
+	
+Set fixed color red :
+
+	flux_led.py 192.168.1.100 -c Red
+	flux_led.py 192.168.1.100 -c 255,0,0
+	flux_led.py 192.168.1.100 -c "#FF0000"
+	
+	
+Set preset pattern #35 with 40% speed:	
+
+	flux_led.py 192.168.1.100 -p 35 40
+	
+Set custom pattern 25% speed, red/green/blue, gradual change:
+
+	flux_led.py 192.168.1.100 -C gradual 25 "red green (0,0,255)"
+	
