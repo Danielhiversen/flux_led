@@ -24,6 +24,7 @@ in PyQt, Kivy, or some other framework.
 * Setting timers (Programmatically only)
 	
 ##### Some missing pieces:
+* Initial administration to set up WiFi SSID and passphrase/key.
 * The CLI interface for setting timers is still in-progress.
 * Music-relating pulsing. This feature isn't so impressive on the Magic Home app, 
 and looks like it might be a bit of work.
