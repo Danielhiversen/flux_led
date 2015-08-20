@@ -9,7 +9,7 @@ But it does seem to work!
 So far most of the functionality of the apps is available here via the CLI
 and/or programmatically.
 
-The classes in this project could very easily be incorporated in a GUI app written 
+The classes in this project could very easily be used as an API, and incorporated into a GUI app written 
 in PyQt, Kivy, or some other framework.
 
 ##### Available:
