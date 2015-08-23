@@ -2,34 +2,38 @@
 
 """
 This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
-
 The protocol was reverse-engineered by studying packet captures between a 
-and the controlling "Magic Home" mobile app.  The code here dealing with the
-network protocol is littered with magic numbers, and ain't so pretty.
+bulb and the controlling "Magic Home" mobile app.  The code here dealing 
+with the network protocol is littered with magic numbers, and ain't so pretty.
 But it does seem to work!
 
 So far most of the functionality of the apps is available here via the CLI
-and/or programaically.
+and/or programmatically.
 
-Available:
-	* Discovering bulbs on LAN
-	* Turning on/off bulb
-	* Get state information
-	* Setting "warm white" mode
-	* Setting single color mode
-	* Setting preset pattern mode
-	* Setting custom pattern mode
-	* Reading timers
-	* Setting timers (API only)
+The classes in this project could very easily be used as an API, and incorporated into a GUI app written 
+in PyQt, Kivy, or some other framework.
+
+##### Available:
+* Discovering bulbs on LAN
+* Turning on/off bulb
+* Get state information
+* Setting "warm white" mode
+* Setting single color mode
+* Setting preset pattern mode
+* Setting custom pattern mode
+* Reading timers
+* Setting timers
 	
-Some missing pieces:
-	* Music-relating pulsing.  This feature isn't so impressive on the app, and
-	  looks like t might be a bit of work.
+##### Some missing pieces:
+* Initial administration to set up WiFi SSID and passphrase/key.
+* Remote access administration
+* Music-relating pulsing. This feature isn't so impressive on the Magic Home app, 
+and looks like it might be a bit of work.
 	  
-Cool feature:
-	Specify colors with names or web hex values: http://www.w3schools.com/html/html_colornames.asp
-	Requires that python webcolors package is installed
-	
+##### Cool feature:
+* Specify colors with names or web hex values.  Requires that python "webcolors" 
+package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
+ See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
 """
 import socket
@@ -90,10 +94,24 @@ class utils:
 		# try to convert to an english name
 		try:
 			return webcolors.rgb_to_name(rgb)
-		except:
+		except Exception as e:
+			#print e
 			pass
 		return str(rgb)
 	
+	@staticmethod
+	def get_color_names_list():
+		names = set()
+		for key in webcolors.css2_hex_to_names.keys():
+			names.add(webcolors.css2_hex_to_names[key])
+		for key in webcolors.css21_hex_to_names.keys():
+			names.add(webcolors.css21_hex_to_names[key])
+		for key in webcolors.css3_hex_to_names.keys():
+			names.add(webcolors.css3_hex_to_names[key])
+		for key in webcolors.html4_hex_to_names.keys():
+			names.add(webcolors.html4_hex_to_names[key])			
+		return sorted(names)
+		
 	@staticmethod
 	def date_has_passed(dt):
 		delta = dt - datetime.datetime.now()
@@ -986,13 +1004,22 @@ def parseArgs():
 	#parser.description += "."
 	power_group = OptionGroup(parser, 'Power options (mutually exclusive)')
 	mode_group = OptionGroup(parser, 'Mode options (mutually exclusive)')
+	info_group = OptionGroup(parser, 'Program help and information option')
 
-	parser.add_option("-e", "--examples",
+	parser.add_option_group(info_group)
+	info_group.add_option("-e", "--examples",
 					  action="store_true", dest="showexamples", default=False,
 					  help="Show usage examples")
-	parser.add_option("", "--timerhelp",
+	info_group.add_option("", "--timerhelp",
 					  action="store_true", dest="timerhelp", default=False,
 					  help="Show detailed help for setting timers")	
+	info_group.add_option("-l", "--listpresets",
+					  action="store_true", dest="listpresets", default=False,
+					  help="List preset codes")
+	info_group.add_option("--listcolors",
+					  action="store_true", dest="listcolors", default=False,
+					  help="List color names")
+	
 	parser.add_option("-s", "--scan",
 					  action="store_true", dest="scan", default=False,
 					  help="Search for bulbs on local network")
@@ -1020,16 +1047,12 @@ def parseArgs():
 							default=None, nargs=3, 
 							help="Set custom pattern mode. " +
 							  "TYPE should be jump, gradual, or strobe. SPEED is percent. " +
-							  "COLORLIST is a should be a space-separated list of color names, web hex values, or comma-separated RGB triples, ")
+							  "COLORLIST is a should be a space-separated list of color names, web hex values, or comma-separated RGB triples")
 	parser.add_option_group(mode_group)
 	
 	parser.add_option("-i", "--info",
 					  action="store_true", dest="info", default=False,
 					  help="Info about bulb(s) state")
-		
-	parser.add_option("-l", "--listpresets",
-					  action="store_true", dest="listpresets", default=False,
-					  help="List preset codes")
 	
 	parser.add_option("-t", "--timers",
 					  action="store_true", dest="showtimers", default=False,
@@ -1054,6 +1077,21 @@ def parseArgs():
 		showTimerHelp()
 		sys.exit(0)
 	
+	if options.listpresets:
+		for c in range(PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping+1):
+			print "{:2} {}".format(c, PresetPattern.valtostr(c))
+		sys.exit(0)
+
+	global webcolors_available
+	if options.listcolors:
+		if webcolors_available:
+			for c in utils.get_color_names_list():
+				print "{}, ".format(c),
+			print
+		else:
+			print "webcolors package doesn't seem to be installed. No color names available"
+		sys.exit(0)		
+		
 	if options.settimer:
 		new_timer = processSetTimerArgs(parser, options.settimer)
 		options.new_timer = new_timer
@@ -1120,12 +1158,6 @@ def main():
 			sys.exit(0)
 	else:
 		addrs = args
-		
-	if options.listpresets:
-		for c in range(PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping+1):
-			print "{:2} {}".format(c, PresetPattern.valtostr(c))
-		sys.exit(0)
-		
 	
 	# now we have our bulb list, perform same operation on all of them
 	for a in addrs:
@@ -1139,7 +1171,13 @@ def main():
 			print "Setting warm white mode, level: {}%".format(options.ww)
 			bulb.setWarmWhite(options.ww)
 		elif options.color is not None:
-			print "Setting color RGB:{}".format(options.color)
+			print "Setting color RGB:{}".format(options.color),
+			name = utils.color_tuple_to_string(options.color)
+			if name is None:
+				print 
+			else:
+				print "[{}]".format(name)
+				
 			bulb.setRgb(options.color[0],options.color[1],options.color[2])
 		elif options.custom is not None:
 			bulb.setCustomPattern(options.custom[2], options.custom[1], options.custom[0])
