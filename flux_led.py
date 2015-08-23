@@ -78,7 +78,7 @@ class utils:
 		# try to convert a string RGB tuple
 		try:
 			val = ast.literal_eval(color)
-			if type(val) is not tuple and len(val) != 3:
+			if type(val) is not tuple or len(val) != 3:
 				raise Exception
 			return val
 		except:
@@ -92,8 +92,13 @@ class utils:
 			return webcolors.rgb_to_name(rgb)
 		except:
 			pass
-		return str(rgb)	
-		
+		return str(rgb)
+	
+	@staticmethod
+	def date_has_passed(dt):
+		delta = dt - datetime.datetime.now()
+		return delta.total_seconds() < 0
+
 	@staticmethod
 	def dump_bytes(bytes):
 		print ''.join('{:02x} '.format(x) for x in bytearray(bytes))
@@ -216,7 +221,13 @@ class LedTimer():
 		return self.active
 
 	def isExpired(self):
-		#TODO if no repeat mask and datetime is in past, return True
+		# if no repeat mask and datetime is in past, return True
+		if self.repeat_mask != 0:
+			return False
+		elif self.year!=0 and self.month!=0 and self.day!=0:
+			dt = datetime.datetime(self.year, self.month, self.day, self.hour, self.minute)
+			if  utils.date_has_passed(dt):
+				return True
 		return False
 		
 	def setTime(self, hour, minute):
@@ -566,7 +577,7 @@ class WifiLedBulb():
 		return timer_list
 				
 	def sendTimers(self, timer_list):
-		# remove inactive timers from list
+		# remove inactive or expired timers from list
 		for t in timer_list:
 			if not t.isActive() or t.isExpired():
 				timer_list.remove(t)
@@ -741,13 +752,20 @@ Set preset pattern #35 with 40% speed:
 	
 Set custom pattern 25% speed, red/green/blue, gradual change:
 	%prog% 192.168.1.100 -C gradual 25 "red green (0,0,255)"
+	
+Set timer #1 to turn on red at 5:30pm on weekdays:
+	%prog% 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
+	
+Deactivate timer #4:
+	%prog% 192.168.1.100 -T 4 inactive ""
+
+Use --timerhelp for more details on setting timers
 	"""
 	
 	print example_text.replace("%prog%",sys.argv[0])
 
 def showTimerHelp():
 	timerhelp_text = """
-
 There are 6 timers available for each bulb.
 
 Mode Details:
@@ -790,7 +808,15 @@ Setting Details:
 		e.g:
 		"2015-09-13" 
 		"2016-12-03" 	
-			
+
+	color: Color name, hex code, or rgb triple
+	
+	level: Level of the warm while light (0-100)
+	
+	code:  Code of the preset pattern (use -l to list them)
+	
+	speed: Speed of the preset pattern transions (0-100)
+		
 Example setting strings:
 	"time:2130;repeat:0123456"
 	"time:2130;date:2015-08-11"
@@ -802,6 +828,129 @@ Example setting strings:
 	
 	print timerhelp_text
 	
+def processSetTimerArgs(parser, args):
+	mode = args[1]
+	num = args[0]
+	settings = args[2]
+	
+	if not num.isdigit() or int(num) > 6 or int(num) < 1:
+		parser.error("Timer number must be between 1 and 6")
+
+	# create a dict from the settings string
+	settings_list=settings.split(";")
+	settings_dict = {}
+	for s in settings_list:
+		pair = s.split(":")
+		key = pair[0].strip().lower()
+		val = ""
+		if len(pair) > 1:
+			val = pair[1].strip().lower()
+		settings_dict[key] = val
+		
+	keys = settings_dict.keys()
+	timer = LedTimer()
+	
+	if mode == "inactive":
+		#no setting needed
+		timer.setActive(False)
+
+	elif mode in ["poweroff", "default","color","preset","warmwhite"]:
+		timer.setActive(True)
+
+		if "time" not in keys:
+			parser.error("This mode needs a time: {}".format(mode))
+		if  "repeat" in keys and "date" in keys:
+			parser.error("This mode only a repeat or a date, not both: {}".format(mode))
+			
+		# validate time format
+		if len(settings_dict["time"]) != 4 or not settings_dict["time"].isdigit() :
+			parser.error("time must be a 4 digits")
+		hour = int(settings_dict["time"][0:2:])
+		minute = int(settings_dict["time"][2:4:])
+		if hour > 23: 
+			parser.error("timer hour can't be greater than 23")
+		if minute > 59:
+			parser.error("timer minute can't be greater than 59")
+
+		timer.setTime(hour, minute)
+
+		# validate date format
+		if  "repeat" not in keys and "date" not in keys:
+			# Generate date for next occurance of time
+			print("No time or repeat given. Defaulting to next occurance of time")
+			now = datetime.datetime.now()
+			dt = now.replace(hour=hour, minute=minute)
+			if utils.date_has_passed(dt):
+				dt = dt + datetime.timedelta(days=1)
+			#settings_dict["date"] = date
+			timer.setDate(dt.year, dt.month, dt.day)
+		elif "date" in keys:
+			try:
+				dt = datetime.datetime.strptime(settings_dict["date"], '%Y-%m-%d')
+				timer.setDate(dt.year, dt.month, dt.day)
+			except ValueError:
+				parser.error("date is not properly formatted: YYYY-MM-DD")
+		
+		# validate repeat format
+		if "repeat" in keys:
+			if len(settings_dict["repeat"]) == 0:
+				parser.error("Must specify days to repeat")
+			days = set()
+			for c in list(settings_dict["repeat"]):
+				if c not in ['0', '1', '2', '3', '4', '5', '6']:
+					parser.error("repeat can only contain digits 0-6")
+				days.add(int(c))
+
+			repeat = 0
+			if 0 in days: repeat |= LedTimer.Su
+			if 1 in days: repeat |= LedTimer.Mo
+			if 2 in days: repeat |= LedTimer.Tu
+			if 3 in days: repeat |= LedTimer.We
+			if 4 in days: repeat |= LedTimer.Th
+			if 5 in days: repeat |= LedTimer.Fr
+			if 6 in days: repeat |= LedTimer.Sa
+			timer.setRepeatMask(repeat)
+
+		if  mode == "default":
+			timer.setModeDefault()
+			
+		if  mode == "poweroff":
+			timer.setModeTurnOff()			
+			
+		if  mode == "color":
+			if  "color" not in keys:
+				parser.error("color mode needs a color setting")
+			#validate color val
+			c = utils.color_object_to_tuple(settings_dict["color"])
+			if c is None:
+				parser.error("Invalid color value: {}".format(settings_dict["color"]))
+			timer.setModeColor(c[0],c[1],c[2])
+				
+		if  mode == "preset":
+			if  "code" not in keys:
+				parser.error("preset mode needs a code: {}".format(mode))
+			if  "speed" not in keys:
+				parser.error("preset mode needs a speed: {}".format(mode))
+			code = settings_dict["code"]
+			speed = settings_dict["speed"]			
+			if not speed.isdigit() or int(speed) > 100:
+				parser.error("preset speed must be a percentage (0-100)")
+			if not code.isdigit() or not PresetPattern.valid(int(code)):
+				parser.error("preset code must be in valid range")
+			timer.setModePresetPattern(int(code),int(speed))
+				
+		if  mode == "warmwhite":
+			if  "level" not in keys:
+				parser.error("warmwhite mode needs a level: {}".format(mode))
+			level = settings_dict["level"]
+			if not level.isdigit() or int(level) > 100:
+				parser.error("warmwhite level must be a percentage (0-100)")
+			timer.setModeWarmWhite(int(level))
+	else:
+		parser.error("Not a valid timer mode: {}".format(mode))
+	
+	return timer
+
 def processCustomArgs(parser, args):
 	if args[0] not in ["gradual", "jump", "strobe"]:
 		parser.error("bad pattern type: {}".format(args[0]))
@@ -885,13 +1034,13 @@ def parseArgs():
 	parser.add_option("-t", "--timers",
 					  action="store_true", dest="showtimers", default=False,
 					  help="Show timers")
-	parser.add_option("-T", "--settimer", metavar='NUM MODE SETTINGS',
+	parser.add_option("-T", "--settimer", dest="settimer", metavar='NUM MODE SETTINGS',
 							default=None, nargs=3, 
 							help="Set timer. " +
-							  "NUM: number of the timer (1-6) " +
-							  "MODE: inactive, poweroff, default, color, preset, or warmwhite " +
+							  "NUM: number of the timer (1-6). " +
+							  "MODE: inactive, poweroff, default, color, preset, or warmwhite. " +
 							  "SETTINGS: a string of settings including time, repeatdays or date, " +
-							  "and other mode specific settings.  Use --timerhelp for more details.")
+							  "and other mode specific settings.   Use --timerhelp for more details.")
 
 		
 	parser.usage = "usage: %prog [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...]."
@@ -904,7 +1053,13 @@ def parseArgs():
 	if options.timerhelp:
 		showTimerHelp()
 		sys.exit(0)
-				
+	
+	if options.settimer:
+		new_timer = processSetTimerArgs(parser, options.settimer)
+		options.new_timer = new_timer
+	else:
+		options.new_timer = None
+		
 	mode_count = 0
 	if options.color:  mode_count += 1
 	if options.ww:     mode_count += 1
@@ -937,6 +1092,7 @@ def parseArgs():
 	if options.off:  op_count += 1
 	if options.info: op_count += 1
 	if options.listpresets: op_count += 1
+	if options.settimer: op_count += 1
 	
 	if (not options.scan or options.scanresults) and (op_count == 0):
 		parser.error("An operation must be specified")
@@ -966,7 +1122,7 @@ def main():
 		addrs = args
 		
 	if options.listpresets:
-		for c in range(PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping):
+		for c in range(PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping+1):
 			print "{:2} {}".format(c, PresetPattern.valtostr(c))
 		sys.exit(0)
 		
@@ -1003,6 +1159,15 @@ def main():
 		if options.info:
 			bulb.refreshState()
 			print "[{}] {}".format(a,bulb)
+
+		if options.settimer:
+			timers = bulb.getTimers()
+			num = int(options.settimer[0])-1
+			print "New Timer ---- #{}: {}".format(num,options.new_timer)
+			if options.new_timer.isExpired():
+				print "[timer is already expired, will be deactivated]"
+			timers[num] = options.new_timer 
+			bulb.sendTimers(timers)
 			
 		if options.showtimers:
 			timers = bulb.getTimers()
@@ -1011,67 +1176,10 @@ def main():
 				num += 1
 				print "  Timer #{}: {}".format(num,t)
 			print ""
+			
+
 	sys.exit(0)
 
-	
-
-	"""
-	inactive, poweroff, default, color, preset, warmwhite
-
-
-	Timer Mode | Settings
-	--------------------------------------------
-	inactive:  [none]
-	poweroff:  time, (repeat mask | date)
-	default:   time, (repeat mask | date)
-	color:     time, (repeat mask | date), color
-	preset:    time, (repeat mask | date), code, speed
-	warmwhite: time, (repeat mask | date), level
-	
-	-T "mode:inactive"
-	-T "mode:default;time:2130;repeat:0123456"
-	-T "mode:off;time:2130;date:2015-08-11"
-	-T "mode:color;time:1245;repeat:12345;color:123,345,23"
-	-T "mode:color;time:1245;repeat:12345;color:green"
-	-T "mode:preset;time:1245;repeat:06;code:50;speed:30"
-	-T "mode:ww;time:0345;date:2015-08-11;level:100"
-
-	
-	
-	
-	
-	timers[0].setModeWarmWhite(50)
-	timers[0].setTime(19,28)
-	timers[0].setRepeatMask(LedTimer.Everyday)
-	timers[0].setActive()
-	
-	timers[1].setModeTurnOff()
-	timers[1].setTime(11,30)
-	timers[1].setRepeatMask(LedTimer.Everyday)
-	timers[1].setActive()
-	
-	timers[2].setRepeatMask(LedTimer.Weekend)
-	timers[2].setModeColor(255,0,0)
-	timers[2].setTime(13,00)
-	timers[2].setActive()
-
-	timers[3].setModeTurnOff()
-	timers[3].setRepeatMask(LedTimer.Weekend)
-	timers[3].setTime(13,05)
-	timers[3].setActive()
-	
-	timers[4].setModePresetPattern(PresetPattern.white_gradual_change, 100)
-	timers[4].setDate(2015,8,31)
-	timers[4].setTime(16,20)
-	timers[4].setActive()	
-	
-	timers[5].setModeTurnOff()
-	timers[5].setDate(2015,8,31)
-	timers[5].setTime(16,55)
-	timers[5].setActive()
-	
-	bulb.sendTimers(timers)
-	"""
 
 if __name__ == '__main__':
 	main()
