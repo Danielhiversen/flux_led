@@ -450,7 +450,7 @@ class WifiLedBulb():
 		self.socket.connect((self.ipaddr, self.port))
 		
 		self.__state_str = ""
-		self.refreshState()
+		#self.refreshState()
 
 	def __determineMode(self, ww_level, pattern_code):
 		mode = "unknown"
@@ -471,6 +471,7 @@ class WifiLedBulb():
 		rx = self.__readResponse(14)
 
 		power_state = rx[2]
+		power_str = "Unknown power state"
 		
 		if power_state == 0x23:
 			self.is_on = True
@@ -518,9 +519,26 @@ class WifiLedBulb():
 		hour = rx[6]
 		minute = rx[7]
 		second = rx[8]
-		# tzoffset = ord(rx[9)
-		dt = datetime.datetime(year,month,date,hour,minute,second)
+		#dayofweek = rx[9]
+		try:
+			dt = datetime.datetime(year,month,date,hour,minute,second)
+		except:
+			dt = None
 		return dt
+
+	def setClock(self):
+		msg = bytearray([0x10, 0x14])
+		now = datetime.datetime.now()
+		msg.append(now.year-2000)
+		msg.append(now.month)
+		msg.append(now.day)
+		msg.append(now.hour)
+		msg.append(now.minute)
+		msg.append(now.second)
+		msg.append(now.isoweekday()) # day of week
+		msg.append(0x00)
+		msg.append(0x0f)
+		self.__write(msg)
 
 	def turnOn(self, on=True):
 		if on:
@@ -529,6 +547,9 @@ class WifiLedBulb():
 			msg = bytearray([0x71, 0x24, 0x0f])
 			
 		self.__write(msg)
+		#print "set bulb {}".format(on)
+		#time.sleep(.5)
+		#x = self.__readResponse(4)
 		self.__is_on = on
 		
 	def isOn(self):
@@ -678,8 +699,9 @@ class WifiLedBulb():
 		# calculate checksum of byte array and add to end
 		csum = sum(bytes) & 0xFF
 		bytes.append(csum)
+		#print "-------------",utils.dump_bytes(bytes)
 		self.__writeRaw(bytes)
-		time.sleep(.4)		
+		#time.sleep(.4)		
 		
 	def __readResponse(self, expected):
 		remaining = expected
@@ -694,11 +716,21 @@ class WifiLedBulb():
 		rx = self.socket.recv(byte_count)
 		return rx
 	
-class  BulbSeeker():
+class  BulbScanner():
 	def __init__(self):
-		pass
+		self.found_bulbs = []
 	
-	def discover(self, timeout=10):
+	def getBulbInfoByID(self, id):
+		bulb_info = None
+		for b in self.found_bulbs:
+			if b['id'] == id:
+				return b
+		return b		
+
+	def getBulbInfo(self):
+		return self.found_bulbs	
+	
+	def scan(self, timeout=10):
 		
 		DISCOVERY_PORT = 48899
 	
@@ -731,8 +763,14 @@ class  BulbSeeker():
 						break
 	
 				if data is not None and data != msg:
-					response_list.append(data.split(',')[0])
+					# tuples of IDs and IP addresses
+					item = dict()
+					item['ipaddr'] = data.split(',')[0]
+					item['id'] = data.split(',')[1]
+					item['model'] = data.split(',')[2]
+					response_list.append(item)
 
+		self.found_bulbs = response_list
 		return response_list
 #=========================================================================
 def showUsageExamples():
@@ -771,9 +809,12 @@ Set preset pattern #35 with 40% speed:
 Set custom pattern 25% speed, red/green/blue, gradual change:
 	%prog% 192.168.1.100 -C gradual 25 "red green (0,0,255)"
 	
+Sync all bulb's clocks with this computer's:
+	%prog% -sS --setclock
+	
 Set timer #1 to turn on red at 5:30pm on weekdays:
 	%prog% 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
-	
+
 Deactivate timer #4:
 	%prog% 192.168.1.100 -T 4 inactive ""
 
@@ -1053,7 +1094,12 @@ def parseArgs():
 	parser.add_option("-i", "--info",
 					  action="store_true", dest="info", default=False,
 					  help="Info about bulb(s) state")
-	
+	parser.add_option("", "--getclock",
+					  action="store_true", dest="getclock", default=False,
+					  help="Get clock")	
+	parser.add_option("", "--setclock",
+					  action="store_true", dest="setclock", default=False,
+					  help="Set clock to same as current time on this computer")
 	parser.add_option("-t", "--timers",
 					  action="store_true", dest="showtimers", default=False,
 					  help="Show timers")
@@ -1129,6 +1175,8 @@ def parseArgs():
 	if options.on:   op_count += 1
 	if options.off:  op_count += 1
 	if options.info: op_count += 1
+	if options.getclock: op_count += 1
+	if options.setclock: op_count += 1
 	if options.listpresets: op_count += 1
 	if options.settimer: op_count += 1
 	
@@ -1148,63 +1196,85 @@ def main():
 	(options, args) = parseArgs()
 	
 	if options.scan:
-		addrs = BulbSeeker().discover(2)
-		if options.scanresults and len(addrs) > 0 :
-			pass
+		scanner = BulbScanner()
+		scanner.scan(timeout=2)
+		bulb_info_list = scanner.getBulbInfo()
+		# we have a list of buld info dicts
+		addrs = []
+		if options.scanresults and len(bulb_info_list) > 0 :
+			for b in bulb_info_list:
+				addrs.append(b['ipaddr'])
 		else:
-			print "{} bulbs found".format(len(addrs))
-			for a in addrs:
-				print "  {}".format(a)
+			print "{} bulbs found".format(len(bulb_info_list))
+			for b in bulb_info_list:
+				print "  {} {}".format(b['id'], b['ipaddr'])
 			sys.exit(0)
+		
 	else:
 		addrs = args
+		bulb_info_list = []
+		for addr in args:
+			info = dict()
+			info['ipaddr'] = addr
+			info['id'] = 'Unknown ID'
+			bulb_info_list.append(info)
+			
 	
 	# now we have our bulb list, perform same operation on all of them
-	for a in addrs:
+	for info in bulb_info_list:
+		a = info['ipaddr']
 		try:
-			bulb = WifiLedBulb(a)
+			bulb = WifiLedBulb(info['ipaddr'])
 		except Exception as e:
-			print "Unable to connect to bulb at [{}]: {}".format(a,e)
+			print "Unable to connect to bulb at [{}]: {}".format(info['ipaddr'],e)
 			continue
 
+		if options.getclock:
+			print "{} [{}] {}".format(info['id'], info['ipaddr'],bulb.getClock())
+
+		if options.setclock:
+			bulb.setClock()
+			
 		if options.ww is not None:
 			print "Setting warm white mode, level: {}%".format(options.ww)
 			bulb.setWarmWhite(options.ww)
+			
 		elif options.color is not None:
 			print "Setting color RGB:{}".format(options.color),
 			name = utils.color_tuple_to_string(options.color)
 			if name is None:
 				print 
 			else:
-				print "[{}]".format(name)
-				
+				print "[{}]".format(name)	
 			bulb.setRgb(options.color[0],options.color[1],options.color[2])
+			
 		elif options.custom is not None:
 			bulb.setCustomPattern(options.custom[2], options.custom[1], options.custom[0])
 			print "Setting custom pattern: {}, Speed={}%, {}".format(
 				options.custom[0], options.custom[1], options.custom[2])
+			
 		elif options.preset is not None:
 			print "Setting preset pattern: {}, Speed={}%".format(PresetPattern.valtostr(options.preset[0]), options.preset[1])
 			bulb.setPresetPattern(options.preset[0], options.preset[1])
 
 		if options.on:
-			print "Turning on bulb"
+			print "Turning on bulb at {}".format(bulb.ipaddr)
 			bulb.turnOn()
 		elif options.off:
-			print "Turning off bulb"
+			print "Turning off bulb at {}".format(bulb.ipaddr)
 			bulb.turnOff()
 			
 		if options.info:
 			bulb.refreshState()
-			print "[{}] {}".format(a,bulb)
+			print "{} [{}] {}".format(info['id'], info['ipaddr'],bulb)
 
 		if options.settimer:
 			timers = bulb.getTimers()
-			num = int(options.settimer[0])-1
+			num = int(options.settimer[0])
 			print "New Timer ---- #{}: {}".format(num,options.new_timer)
 			if options.new_timer.isExpired():
 				print "[timer is already expired, will be deactivated]"
-			timers[num] = options.new_timer 
+			timers[num-1] = options.new_timer 
 			bulb.sendTimers(timers)
 			
 		if options.showtimers:
