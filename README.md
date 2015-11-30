@@ -66,7 +66,10 @@ Set preset pattern #35 with 40% speed:
 	
 Set custom pattern 25% speed, red/green/blue, gradual change:
 	flux_led.py 192.168.1.100 -C gradual 25 "red green (0,0,255)"
-	
+
+Sync all bulb's clocks with this computer's:
+	%prog% -sS --setclock
+		
 Set timer #1 to turn on red at 5:30pm on weekdays:
 	flux_led.py 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
 	
@@ -88,6 +91,8 @@ Options:
   -s, --scan            Search for bulbs on local network
   -S, --scanresults     Operate on scan results instead of arg list
   -i, --info            Info about bulb(s) state
+  --getclock            Get clock
+  --setclock            Set clock to same as current time on this computer
   -t, --timers          Show timers
   -T NUM MODE SETTINGS, --settimer=NUM MODE SETTINGS
                         Set timer. NUM: number of the timer (1-6). MODE:
