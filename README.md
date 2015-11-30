@@ -22,6 +22,7 @@ in PyQt, Kivy, or some other framework.
 * Setting custom pattern mode
 * Reading timers
 * Setting timers
+* Sync clock
 	
 ##### Some missing pieces:
 * Initial administration to set up WiFi SSID and passphrase/key.
