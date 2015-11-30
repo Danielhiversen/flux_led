@@ -68,7 +68,7 @@ Set custom pattern 25% speed, red/green/blue, gradual change:
 	flux_led.py 192.168.1.100 -C gradual 25 "red green (0,0,255)"
 
 Sync all bulb's clocks with this computer's:
-	%prog% -sS --setclock
+	flux_led.py -sS --setclock
 		
 Set timer #1 to turn on red at 5:30pm on weekdays:
 	flux_led.py 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
