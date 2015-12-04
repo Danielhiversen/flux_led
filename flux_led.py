@@ -474,10 +474,10 @@ class WifiLedBulb():
 		power_str = "Unknown power state"
 		
 		if power_state == 0x23:
-			self.is_on = True
+			self.__is_on = True
 			power_str = "ON "
 		elif power_state == 0x24:
-			self.is_on = False
+			self.__is_on = False
 			power_str = "OFF"
 			
 		pattern = rx[3]
