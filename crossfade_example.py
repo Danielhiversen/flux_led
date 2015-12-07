@@ -27,7 +27,7 @@ def crossFade(bulb, color1, color2):
 		r = r1 - int(i * float(r1 - r2)/steps)
 		g = g1 - int(i * float(g1 - g2)/steps)
 		b = b1 - int(i * float(b1 - b2)/steps)
-		bulb.setRgb(r,g,b)
+		bulb.setRgb(r,g,b, persist=False)
 
 def main():
 
@@ -74,7 +74,7 @@ def main():
 				continue
 			
 			# set to color and wait
-			bulb.setRgb(*color)
+			bulb.setRgb(*color, persist=False)
 			time.sleep(color_time)
 
 			#fade from color to next color			

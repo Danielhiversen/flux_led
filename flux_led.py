@@ -454,7 +454,7 @@ class WifiLedBulb():
 
 	def __determineMode(self, ww_level, pattern_code):
 		mode = "unknown"
-		if pattern_code == 0x61:
+		if pattern_code in [ 0x61, 0x62]:
 			if ww_level != 0:
 				mode = "ww"
 			else:
@@ -472,7 +472,7 @@ class WifiLedBulb():
 
 		power_state = rx[2]
 		power_str = "Unknown power state"
-		
+
 		if power_state == 0x23:
 			self.__is_on = True
 			power_str = "ON "
@@ -500,8 +500,9 @@ class WifiLedBulb():
 		elif mode == "custom":
 			mode_str = "Custom pattern (Speed {}%)".format(speed)
 		else:
-			mode_str = "Unknown pattern"
-			
+			mode_str = "Unknown mode 0x{:x}".format(pattern)
+		if pattern == 0x62:
+			mode_str += " (tmp)"
 		self.__state_str = "{} [{}]".format(power_str, mode_str)
 
 	def __str__(self):
@@ -558,8 +559,11 @@ class WifiLedBulb():
 	def turnOff(self):
 		self.turnOn(False)
 	
-	def setWarmWhite(self, level):
-		msg = bytearray([0x31])
+	def setWarmWhite(self, level, persist=True):
+		if persist:
+			msg = bytearray([0x31])
+		else:
+			msg = bytearray([0x41])
 		msg.append(0x00)
 		msg.append(0x00)
 		msg.append(0x00)
@@ -568,8 +572,11 @@ class WifiLedBulb():
 		msg.append(0x0f)
 		self.__write(msg)
 		
-	def setRgb(self, r,g,b):
-		msg = bytearray([0x31])
+	def setRgb(self, r,g,b, persist=True):
+		if persist:
+			msg = bytearray([0x31])
+		else:
+			msg = bytearray([0x41])
 		msg.append(r)
 		msg.append(g)
 		msg.append(b)
@@ -1046,6 +1053,7 @@ def parseArgs():
 	power_group = OptionGroup(parser, 'Power options (mutually exclusive)')
 	mode_group = OptionGroup(parser, 'Mode options (mutually exclusive)')
 	info_group = OptionGroup(parser, 'Program help and information option')
+	other_group = OptionGroup(parser, 'Other options')
 
 	parser.add_option_group(info_group)
 	info_group.add_option("-e", "--examples",
@@ -1111,6 +1119,11 @@ def parseArgs():
 							  "SETTINGS: a string of settings including time, repeatdays or date, " +
 							  "and other mode specific settings.   Use --timerhelp for more details.")
 
+	
+	other_group.add_option("-v", "--volatile",
+					  action="store_true", dest="volatile", default=False,
+					  help="Don't persist mode setting with hard power cycle (RGB and WW modes only).")
+	parser.add_option_group(other_group)
 		
 	parser.usage = "usage: %prog [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...]."
 	(options, args) = parser.parse_args()
@@ -1237,7 +1250,7 @@ def main():
 			
 		if options.ww is not None:
 			print "Setting warm white mode, level: {}%".format(options.ww)
-			bulb.setWarmWhite(options.ww)
+			bulb.setWarmWhite(options.ww, not options.volatile)
 			
 		elif options.color is not None:
 			print "Setting color RGB:{}".format(options.color),
@@ -1246,7 +1259,7 @@ def main():
 				print 
 			else:
 				print "[{}]".format(name)	
-			bulb.setRgb(options.color[0],options.color[1],options.color[2])
+			bulb.setRgb(options.color[0],options.color[1],options.color[2], not options.volatile)
 			
 		elif options.custom is not None:
 			bulb.setCustomPattern(options.custom[2], options.custom[1], options.custom[0])
