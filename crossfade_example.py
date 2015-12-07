@@ -27,6 +27,7 @@ def crossFade(bulb, color1, color2):
 		r = r1 - int(i * float(r1 - r2)/steps)
 		g = g1 - int(i * float(g1 - g2)/steps)
 		b = b1 - int(i * float(b1 - b2)/steps)
+		# (use non-persistent mode to help preserve flash)
 		bulb.setRgb(r,g,b, persist=False)
 
 def main():
@@ -68,12 +69,9 @@ def main():
 		while True:
 			
 			bulb.refreshState()
-			if not bulb.isOn():
-				# if the bulb isn't on, don't do anything
-				time.sleep(60)
-				continue
-			
+
 			# set to color and wait
+			# (use non-persistent mode to help preserve flash)
 			bulb.setRgb(*color, persist=False)
 			time.sleep(color_time)
 
