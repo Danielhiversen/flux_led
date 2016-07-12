@@ -758,7 +758,7 @@ class  BulbScanner():
 			if time.time() > quit_time:
 				break			
 			# send out a broadcast query
-			sock.sendto(bytearray(msg), ('<broadcast>', DISCOVERY_PORT))
+			sock.sendto(bytearray(msg), (bytearray('<broadcast>'), DISCOVERY_PORT))
 			
 			# inner loop waiting for responses
 			while True:
