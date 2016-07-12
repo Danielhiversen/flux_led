@@ -42,6 +42,8 @@ import sys
 import datetime
 from optparse import OptionParser,OptionGroup
 import ast
+from __future__ import print_function
+
 try:
 	import webcolors
 	webcolors_available = True
@@ -119,7 +121,7 @@ class utils:
 
 	@staticmethod
 	def dump_bytes(bytes):
-		print ''.join('{:02x} '.format(x) for x in bytearray(bytes))
+		print(''.join('{:02x} '.format(x) for x in bytearray(bytes)))
 	
 	max_delay = 0x1f
 	
@@ -607,7 +609,7 @@ class WifiLedBulb():
 		resp_len = 88
 		rx = self.__readResponse(resp_len)
 		if len(rx) != resp_len:
-			print "response too short!"
+			print("response too short!")
 			raise Exception
 			
 		#utils.dump_data(rx)
@@ -630,7 +632,7 @@ class WifiLedBulb():
 				
 		# truncate if more than 6
 		if len(timer_list) > 6:
-			print "too many timers, truncating list"
+			print("too many timers, truncating list")
 			del timer_list[6:]
 			
 		# pad list to 6 with inactive timers
@@ -657,12 +659,12 @@ class WifiLedBulb():
 				
 		# truncate if more than 16
 		if len(rgb_list) > 16:
-			print "too many colors, truncating list"
+			print("too many colors, truncating list")
 			del rgb_list[16:]
 			
 		# quit if too few
 		if len(rgb_list) == 0:
-			print "no colors, aborting"
+			print("no colors, aborting")
 			return
 		
 		msg = bytearray()
@@ -828,7 +830,7 @@ Deactivate timer #4:
 Use --timerhelp for more details on setting timers
 	"""
 	
-	print example_text.replace("%prog%",sys.argv[0])
+	print(example_text.replace("%prog%",sys.argv[0]))
 
 def showTimerHelp():
 	timerhelp_text = """
@@ -892,7 +894,7 @@ Example setting strings:
 	"time:0345;date:2015-08-11;level:100"
 	"""
 	
-	print timerhelp_text
+	print(timerhelp_text)
 	
 def processSetTimerArgs(parser, args):
 	mode = args[1]
