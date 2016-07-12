@@ -36,13 +36,13 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
  See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
 """
+from __future__ import print_function
 import socket
 import time
 import sys
 import datetime
 from optparse import OptionParser,OptionGroup
 import ast
-from __future__ import print_function
 
 try:
 	import webcolors
