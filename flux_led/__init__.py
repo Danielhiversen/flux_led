@@ -1269,8 +1269,8 @@ def main():
 				options.custom[0], options.custom[1], options.custom[2]))
 			
 		elif options.preset is not None:
-			print("Setting preset pattern: {}, Speed={}%".format(PresetPattern.valtostr(options.preset[0]), options.preset[1])))
-			bulb.setPresetPattern(options.preset[0], options.preset[1]))
+			print("Setting preset pattern: {}, Speed={}%".format(PresetPattern.valtostr(options.preset[0]), options.preset[1]))
+			bulb.setPresetPattern(options.preset[0], options.preset[1])
 
 		if options.on:
 			print("Turning on bulb at {}".format(bulb.ipaddr))
