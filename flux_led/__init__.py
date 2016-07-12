@@ -747,7 +747,7 @@ class  BulbScanner():
 		sock.bind(('', DISCOVERY_PORT))
 		sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 		
-		msg = "HF-A11ASSISTHREAD"
+		msg = bytearray("HF-A11ASSISTHREAD",'utf8')
 		
 		# set the time at which we will quit the search
 		quit_time = time.time() + timeout
@@ -758,7 +758,7 @@ class  BulbScanner():
 			if time.time() > quit_time:
 				break			
 			# send out a broadcast query
-			sock.sendto(bytearray(msg,'utf8'), ('<broadcast>', DISCOVERY_PORT))
+			sock.sendto(msg, ('<broadcast>', DISCOVERY_PORT))
 			
 			# inner loop waiting for responses
 			while True:
@@ -1306,5 +1306,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
 
