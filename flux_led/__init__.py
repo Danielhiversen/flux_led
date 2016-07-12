@@ -1140,7 +1140,7 @@ def parseArgs():
 	
 	if options.listpresets:
 		for c in range(PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping+1):
-			print "{:2} {}".format(c, PresetPattern.valtostr(c))
+			print("{:2} {}".format(c, PresetPattern.valtostr(c)))
 		sys.exit(0)
 
 	global webcolors_available
@@ -1150,7 +1150,7 @@ def parseArgs():
 				print "{}, ".format(c),
 			print
 		else:
-			print "webcolors package doesn't seem to be installed. No color names available"
+			print("webcolors package doesn't seem to be installed. No color names available")
 		sys.exit(0)		
 		
 	if options.settimer:
@@ -1220,9 +1220,9 @@ def main():
 			for b in bulb_info_list:
 				addrs.append(b['ipaddr'])
 		else:
-			print "{} bulbs found".format(len(bulb_info_list))
+			print("{} bulbs found".format(len(bulb_info_list)))
 			for b in bulb_info_list:
-				print "  {} {}".format(b['id'], b['ipaddr'])
+				print("  {} {}".format(b['id'], b['ipaddr']))
 			sys.exit(0)
 		
 	else:
@@ -1241,54 +1241,54 @@ def main():
 		try:
 			bulb = WifiLedBulb(info['ipaddr'])
 		except Exception as e:
-			print "Unable to connect to bulb at [{}]: {}".format(info['ipaddr'],e)
+			print("Unable to connect to bulb at [{}]: {}".format(info['ipaddr'],e))
 			continue
 
 		if options.getclock:
-			print "{} [{}] {}".format(info['id'], info['ipaddr'],bulb.getClock())
+			print("{} [{}] {}".format(info['id'], info['ipaddr'],bulb.getClock()))
 
 		if options.setclock:
 			bulb.setClock()
 			
 		if options.ww is not None:
-			print "Setting warm white mode, level: {}%".format(options.ww)
+			print("Setting warm white mode, level: {}%".format(options.ww))
 			bulb.setWarmWhite(options.ww, not options.volatile)
 			
 		elif options.color is not None:
-			print "Setting color RGB:{}".format(options.color),
+			print("Setting color RGB:{}".format(options.color),)
 			name = utils.color_tuple_to_string(options.color)
 			if name is None:
-				print 
+				print()
 			else:
-				print "[{}]".format(name)	
+				print("[{}]".format(name))
 			bulb.setRgb(options.color[0],options.color[1],options.color[2], not options.volatile)
 			
 		elif options.custom is not None:
 			bulb.setCustomPattern(options.custom[2], options.custom[1], options.custom[0])
-			print "Setting custom pattern: {}, Speed={}%, {}".format(
-				options.custom[0], options.custom[1], options.custom[2])
+			print("Setting custom pattern: {}, Speed={}%, {}".format(
+				options.custom[0], options.custom[1], options.custom[2]))
 			
 		elif options.preset is not None:
-			print "Setting preset pattern: {}, Speed={}%".format(PresetPattern.valtostr(options.preset[0]), options.preset[1])
-			bulb.setPresetPattern(options.preset[0], options.preset[1])
+			print("Setting preset pattern: {}, Speed={}%".format(PresetPattern.valtostr(options.preset[0]), options.preset[1])
+			bulb.setPresetPattern(options.preset[0], options.preset[1]))
 
 		if options.on:
-			print "Turning on bulb at {}".format(bulb.ipaddr)
+			print("Turning on bulb at {}".format(bulb.ipaddr))
 			bulb.turnOn()
 		elif options.off:
-			print "Turning off bulb at {}".format(bulb.ipaddr)
+			print("Turning off bulb at {}".format(bulb.ipaddr))
 			bulb.turnOff()
 			
 		if options.info:
 			bulb.refreshState()
-			print "{} [{}] {}".format(info['id'], info['ipaddr'],bulb)
+			print("{} [{}] {}".format(info['id'], info['ipaddr'],bulb))
 
 		if options.settimer:
 			timers = bulb.getTimers()
 			num = int(options.settimer[0])
-			print "New Timer ---- #{}: {}".format(num,options.new_timer)
+			print("New Timer ---- #{}: {}".format(num,options.new_timer))
 			if options.new_timer.isExpired():
-				print "[timer is already expired, will be deactivated]"
+				print("[timer is already expired, will be deactivated]")
 			timers[num-1] = options.new_timer 
 			bulb.sendTimers(timers)
 			
@@ -1297,8 +1297,8 @@ def main():
 			num = 0
 			for t in timers:
 				num += 1
-				print "  Timer #{}: {}".format(num,t)
-			print ""
+				print("  Timer #{}: {}".format(num,t))
+			print("")
 			
 
 	sys.exit(0)
