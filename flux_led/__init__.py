@@ -1147,8 +1147,8 @@ def parseArgs():
 	if options.listcolors:
 		if webcolors_available:
 			for c in utils.get_color_names_list():
-				print "{}, ".format(c),
-			print
+				print("{}, ".format(c))
+			print("")
 		else:
 			print("webcolors package doesn't seem to be installed. No color names available")
 		sys.exit(0)		
