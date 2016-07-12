@@ -452,6 +452,7 @@ class WifiLedBulb():
 		self.socket.connect((self.ipaddr, self.port))
 		
 		self.__state_str = ""
+		self.raw_state = None
 		#self.refreshState()
 
 	def __determineMode(self, ww_level, pattern_code):
@@ -506,7 +507,8 @@ class WifiLedBulb():
 		if pattern == 0x62:
 			mode_str += " (tmp)"
 		self.__state_str = "{} [{}]".format(power_str, mode_str)
-
+		self.raw_sate = rx
+		
 	def __str__(self):
 		return self.__state_str
 
