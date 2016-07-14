@@ -773,7 +773,7 @@ class  BulbScanner():
 					if time.time() > quit_time:
 						break
 	
-				if data is not None and data != msg:
+				if data is not None and str(data) != msg:
 					# tuples of IDs and IP addresses
 					print(data, msg)
 					print(type(data), type(msg))
