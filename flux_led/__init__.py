@@ -775,6 +775,7 @@ class  BulbScanner():
 	
 				if data is not None and data != msg:
 					# tuples of IDs and IP addresses
+					data = str(data)
 					print(data)
 					print(addr)
 					item = dict()
