@@ -780,6 +780,8 @@ class  BulbScanner():
 				
 				data = str(data)
 				data_split = data.split(',')
+				if len(data_split) < 3:
+					continue
 				print(data, msg)
 				print(data_split)
 				print(addr)
