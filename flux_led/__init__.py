@@ -778,14 +778,15 @@ class  BulbScanner():
 				if  data == msg:
 					continue
 				
-				print(data, msg)
-				print(type(data), type(msg))
 				data = str(data)
+				data_split = data.split(',')
+				print(data, msg)
+				print(data_split)
 				print(addr)
 				item = dict()
-				item['ipaddr'] = data.split(',')[0]
-				item['id'] = data.split(',')[1]
-				item['model'] = data.split(',')[2]
+				item['ipaddr'] = data_split[0]
+				item['id'] = data_split[1]
+				item['model'] = data_split[2]
 				response_list.append(item)
 
 		self.found_bulbs = response_list
