@@ -773,10 +773,8 @@ class  BulbScanner():
 					if time.time() > quit_time:
 						break
 	
-				if data is not None and data.encode('ascii') != msg:
+				if data is not None and data != msg:
 					# tuples of IDs and IP addresses
-					print(data)
-					data = data.encode('ascii')
 					print(data, msg)
 					print(addr)
 					item = dict()
