@@ -773,17 +773,20 @@ class  BulbScanner():
 					if time.time() > quit_time:
 						break
 	
-				if data is not None and str(data) != msg:
-					# tuples of IDs and IP addresses
-					print(data, msg)
-					print(type(data), type(msg))
-					data = str(data)
-					print(addr)
-					item = dict()
-					item['ipaddr'] = data.split(',')[0]
-					item['id'] = data.split(',')[1]
-					item['model'] = data.split(',')[2]
-					response_list.append(item)
+				if data is None:
+					continue
+				if  data == msg:
+					continue
+				
+				print(data, msg)
+				print(type(data), type(msg))
+				data = str(data)
+				print(addr)
+				item = dict()
+				item['ipaddr'] = data.split(',')[0]
+				item['id'] = data.split(',')[1]
+				item['model'] = data.split(',')[2]
+				response_list.append(item)
 
 		self.found_bulbs = response_list
 		return response_list
