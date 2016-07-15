@@ -778,7 +778,7 @@ class  BulbScanner():
 				if  data == msg:
 					continue
 				
-				data = str(data)
+				data = data.decode('ascii')
 				data_split = data.split(',')
 				if len(data_split) < 3:
 					continue
