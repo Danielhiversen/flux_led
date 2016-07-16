@@ -782,9 +782,6 @@ class  BulbScanner():
 				data_split = data.split(',')
 				if len(data_split) < 3:
 					continue
-				print(data, msg)
-				print(data_split)
-				print(addr)
 				item = dict()
 				item['ipaddr'] = data_split[0]
 				item['id'] = data_split[1]
