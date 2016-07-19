@@ -452,6 +452,7 @@ class WifiLedBulb():
 		self.socket.connect((self.ipaddr, self.port))
 		
 		self.__state_str = ""
+		self.mode = ""
 		self.raw_state = None
 		#self.refreshState()
 
@@ -508,6 +509,8 @@ class WifiLedBulb():
 			mode_str += " (tmp)"
 		self.__state_str = "{} [{}]".format(power_str, mode_str)
 		self.raw_sate = rx
+		self.mode = mode
+
 		
 	def __str__(self):
 		return self.__state_str
@@ -564,9 +567,14 @@ class WifiLedBulb():
 		self.turnOn(False)
 	
 	def getWarmWhite255(self):
-		return int(self.raw_state[9])
+		if mode == "ww":
+			return int(self.raw_state[9])
+		return 255
 
 	def setWarmWhite(self, level, persist=True):
+		self.setWarmWhite255(utils.percentToByte(level), persist)
+
+	def setWarmWhite255(self, level, persist=True):
 		if persist:
 			msg = bytearray([0x31])
 		else:
@@ -574,11 +582,19 @@ class WifiLedBulb():
 		msg.append(0x00)
 		msg.append(0x00)
 		msg.append(0x00)
-		msg.append(utils.percentToByte(level))
+		msg.append(int(level))
 		msg.append(0x0f)
 		msg.append(0x0f)
 		self.__write(msg)
-		
+
+	def getRgb(self):
+		if mode == "color":
+			red = self.raw_sate[6]
+			green = self.raw_sate[7]
+			blue = self.raw_sate[8]
+			return (red, green, blue)
+		return (255, 255, 255)
+
 	def setRgb(self, r,g,b, persist=True):
 		if persist:
 			msg = bytearray([0x31])
