@@ -454,7 +454,7 @@ class WifiLedBulb():
 		self.__state_str = ""
 		self.mode = ""
 		self.raw_state = None
-		#self.refreshState()
+		self.refreshState()
 
 	def __determineMode(self, ww_level, pattern_code):
 		mode = "unknown"
