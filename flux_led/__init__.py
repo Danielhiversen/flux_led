@@ -567,8 +567,8 @@ class WifiLedBulb():
 		self.turnOn(False)
 	
 	def getWarmWhite255(self):
-		if mode == "ww":
-			return int(self.raw_state[9])
+		if self.mode == "ww":
+			return int(self.raw_sate[9])
 		return 255
 
 	def setWarmWhite(self, level, persist=True):
@@ -588,7 +588,7 @@ class WifiLedBulb():
 		self.__write(msg)
 
 	def getRgb(self):
-		if mode == "color":
+		if self.mode == "color":
 			red = self.raw_sate[6]
 			green = self.raw_sate[7]
 			blue = self.raw_sate[8]
