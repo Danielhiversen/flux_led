@@ -609,7 +609,7 @@ class WifiLedBulb():
         msg.append(0x0f)
         self.__write(msg)
         
-     def setRgbw(self, r,g,b,w, persist=True):
+    def setRgbw(self, r,g,b,w, persist=True):
         if persist:
             msg = bytearray([0x31])
         else:
