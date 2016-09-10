@@ -602,9 +602,22 @@ class WifiLedBulb():
         else:
             msg = bytearray([0x41])
         msg.append(0x00)
-        msg.append(int(level))
+        msg.append(0x00)
         msg.append(0x00)
         msg.append(int(level))
+        msg.append(0x0f)
+        msg.append(0x0f)
+        self.__write(msg)
+        
+     def setRGBW(self, r,g,b,w, persist=True):
+        if persist:
+            msg = bytearray([0x31])
+        else:
+            msg = bytearray([0x41])
+        msg.append(int(r))
+        msg.append(int(g))
+        msg.append(int(b))
+        msg.append(int(w))
         msg.append(0x0f)
         msg.append(0x0f)
         self.__write(msg)
