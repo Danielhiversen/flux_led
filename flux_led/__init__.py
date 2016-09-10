@@ -602,7 +602,7 @@ class WifiLedBulb():
         else:
             msg = bytearray([0x41])
         msg.append(0x00)
-        msg.append(int(level)))
+        msg.append(int(level))
         msg.append(0x00)
         msg.append(int(level))
         msg.append(0x0f)
