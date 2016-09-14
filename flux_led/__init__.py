@@ -621,6 +621,15 @@ class WifiLedBulb():
         msg.append(0x0f)
         msg.append(0x0f)
         self.__write(msg)
+        
+    def getRgbw(self):
+        if self.mode != "color":
+            return (255, 255, 255, 255)
+        red = self.raw_state[6]
+        green = self.raw_state[7]
+        blue = self.raw_state[8]
+        white = self.raw_state[9]
+        return (red, green, blue, white)
 
     def getRgb(self):
         if self.mode != "color":
