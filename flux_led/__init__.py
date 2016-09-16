@@ -41,6 +41,7 @@ import socket
 import time
 import sys
 import datetime
+import colorsys
 from optparse import OptionParser,OptionGroup
 import ast
 
@@ -608,8 +609,20 @@ class WifiLedBulb():
         msg.append(0x0f)
         msg.append(0x0f)
         self.__write(msg)
-        
-    def setRgbw(self, r,g,b,w, persist=True):
+
+    def getRgbw(self):
+        if self.mode != "color":
+            return (255, 255, 255, 255)
+        red = self.raw_state[6]
+        green = self.raw_state[7]
+        blue = self.raw_state[8]
+        white = self.raw_state[9]
+        return (red, green, blue, white)
+
+
+    def setRgbw(self, r,g,b,w, persist=True, brightness=None):
+        if brightness != None:
+            (r, g, b) = self.__calculateBrightness((r, g, b), brightness)
         if persist:
             msg = bytearray([0x31])
         else:
@@ -621,15 +634,6 @@ class WifiLedBulb():
         msg.append(0x0f)
         msg.append(0x0f)
         self.__write(msg)
-        
-    def getRgbw(self):
-        if self.mode != "color":
-            return (255, 255, 255, 255)
-        red = self.raw_state[6]
-        green = self.raw_state[7]
-        blue = self.raw_state[8]
-        white = self.raw_state[9]
-        return (red, green, blue, white)
 
     def getRgb(self):
         if self.mode != "color":
@@ -639,7 +643,9 @@ class WifiLedBulb():
         blue = self.raw_state[8]
         return (red, green, blue)
 
-    def setRgb(self, r,g,b, persist=True):
+    def setRgb(self, r,g,b, persist=True, brightness=None):
+        if brightness != None:
+            (r, g, b) = self.__calculateBrightness((r, g, b), brightness)
         if persist:
             msg = bytearray([0x31])
         else:
@@ -801,6 +807,13 @@ class WifiLedBulb():
 
     def __readRaw(self, byte_count=1024):
         return self.socket.recv(byte_count)
+
+    def __calculateBrightness(self, rgb, level):
+            r = rgb[0]
+            g = rgb[1]
+            b = rgb[2]
+            hsv = colorsys.rgb_to_hsv(r, g, b)
+            return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
 class  BulbScanner():
     def __init__(self):
@@ -1388,4 +1401,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
