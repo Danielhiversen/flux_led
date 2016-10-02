@@ -44,6 +44,7 @@ import datetime
 import colorsys
 from optparse import OptionParser,OptionGroup
 import ast
+import threading
 
 try:
     import webcolors
@@ -449,6 +450,7 @@ class WifiLedBulb():
         self.port = port
         self.__is_on = False
 
+        self.lock = threading.Lock()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(10)
         self.socket.connect((self.ipaddr, self.port))
@@ -471,7 +473,7 @@ class WifiLedBulb():
             mode = "preset"
         return mode
 
-    def refreshState(self):
+    def refreshState(self, retry=True):
         msg = bytearray([0x81, 0x8a, 0x8b])
         try:
             self.__write(msg)
@@ -483,14 +485,10 @@ class WifiLedBulb():
         pattern = rx[3]
         ww_level = rx[9]
         mode = self.__determineMode(ww_level, pattern)
-        if mode == "unknown":
+        if mode == "unknown" and retry:
             self.reconnect()
-            msg = bytearray([0x81, 0x8a, 0x8b])
-            self.__write(msg)
-            rx = self.__readResponse(14)
-            pattern = rx[3]
-            ww_level = rx[9]
-        mode = self.__determineMode(ww_level, pattern)
+            self.refrehState(False)
+            return
         power_state = rx[2]
 
         if power_state == 0x23:
@@ -773,14 +771,15 @@ class WifiLedBulb():
         self.__write(msg)
 
     def reconnect(self):
-        self.__is_on = False
-        self.socket.close()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(10)
-        self.socket.connect((self.ipaddr, self.port))
+        with self.lock:
+            self.socket.close()
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(10)
+            self.socket.connect((self.ipaddr, self.port))
 
     def __writeRaw(self, bytes):
-        self.socket.send(bytes)
+        with self.lock:
+            self.socket.send(bytes)
 
     def __write(self, bytes):
         # calculate checksum of byte array and add to end
@@ -806,7 +805,8 @@ class WifiLedBulb():
         return rx
 
     def __readRaw(self, byte_count=1024):
-        return self.socket.recv(byte_count)
+        with self.lock:
+            return self.socket.recv(byte_count)
 
     def __calculateBrightness(self, rgb, level):
             r = rgb[0]
