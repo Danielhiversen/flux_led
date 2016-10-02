@@ -479,6 +479,10 @@ class WifiLedBulb():
             self.__write(msg)
             rx = self.__readResponse(14)
         except socket.error:
+            if retry:
+                self.reconnect()
+                self.refrehState(False)
+                return
             self.__is_on = False
             return
 
