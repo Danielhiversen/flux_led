@@ -458,6 +458,7 @@ class WifiLedBulb():
         self.__state_str = ""
         self.mode = ""
         self.raw_state = None
+        self._last_updated = datetime.datetime.fromtimestamp(0)
         self.refreshState()
 
     def __determineMode(self, ww_level, pattern_code):
@@ -474,6 +475,9 @@ class WifiLedBulb():
         return mode
 
     def refreshState(self, retry=True):
+        if (datetime.datetime.now() - self._last_updated).total_seconds() < 3:
+            return
+        self._last_updated = datetime.datetime.now()
         msg = bytearray([0x81, 0x8a, 0x8b])
         try:
             self.__write(msg)
@@ -515,7 +519,7 @@ class WifiLedBulb():
         if power_state == 0x23:
             power_str = "ON "
         elif power_state == 0x24:
-            self.__is_on = False
+            power_str = False
 
         delay = rx[5]
         speed = utils.delayToSpeed(delay)
@@ -574,6 +578,7 @@ class WifiLedBulb():
         self.__write(msg)
 
     def turnOn(self, on=True):
+        self._last_updated = datetime.datetime.now()
         if on:
             msg = bytearray([0x71, 0x23, 0x0f])
         else:
