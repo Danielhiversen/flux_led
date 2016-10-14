@@ -485,7 +485,7 @@ class WifiLedBulb():
         except socket.error:
             if retry:
                 self.reconnect()
-                self.refrehState(False)
+                self.refreshState(False)
                 return
             self.__is_on = False
             return
@@ -495,7 +495,7 @@ class WifiLedBulb():
         mode = self.__determineMode(ww_level, pattern)
         if mode == "unknown" and retry:
             self.reconnect()
-            self.refrehState(False)
+            self.refreshState(False)
             return
         power_state = rx[2]
 
