@@ -461,7 +461,7 @@ class WifiLedBulb():
             self.socket.connect((self.ipaddr, self.port))
             self.refreshState()
         except socket.error:
-            continue
+            pass
 
     def __determineMode(self, ww_level, pattern_code):
         mode = "unknown"
