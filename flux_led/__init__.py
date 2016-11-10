@@ -539,6 +539,9 @@ class WifiLedBulb():
             mode_str = "Unknown mode 0x{:x}".format(pattern)
         if pattern == 0x62:
             mode_str += " (tmp)"
+        mode_str += " raw state: "  
+        for _r in rx:
+          mode_str += str(_r) + ","
         self.__state_str = "{} [{}]".format(power_str, mode_str)
         return self.__state_str
 
