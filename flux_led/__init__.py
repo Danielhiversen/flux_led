@@ -527,8 +527,7 @@ class WifiLedBulb():
             red = rx[6]
             green = rx[7]
             blue = rx[8]
-            color_str = str(red, green, blue)
-            mode_str = "Color: {}".format(color_str)
+            mode_str = "Color: {}".format((red, green, blue))
         elif mode == "ww":
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "preset":
