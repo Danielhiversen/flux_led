@@ -613,7 +613,7 @@ class WifiLedBulb():
         msg.append(0x00)
         msg.append(0x00)
         msg.append(int(level))
-        msg.append(0x0f)
+        msg.append(0xf0)
         msg.append(0x0f)
         self.__write(msg)
 
@@ -638,7 +638,7 @@ class WifiLedBulb():
         msg.append(int(g))
         msg.append(int(b))
         msg.append(int(w))
-        msg.append(0x0f)
+        msg.append(0x00)
         msg.append(0x0f)
         self.__write(msg)
 
@@ -661,7 +661,7 @@ class WifiLedBulb():
         msg.append(int(g))
         msg.append(int(b))
         msg.append(0x00)
-        msg.append(0xf0)
+        msg.append(0x00)
         msg.append(0x0f)
         self.__write(msg)
 
