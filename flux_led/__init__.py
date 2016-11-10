@@ -662,6 +662,7 @@ class WifiLedBulb():
         msg.append(int(b))
         msg.append(0x00)
         msg.append(0x00)
+        msg.append(0x00)
         msg.append(0x0f)
         self.__write(msg)
 
