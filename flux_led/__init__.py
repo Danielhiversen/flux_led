@@ -451,15 +451,17 @@ class WifiLedBulb():
         self.__is_on = False
 
         self.lock = threading.Lock()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(10)
-        self.socket.connect((self.ipaddr, self.port))
-
         self.__state_str = ""
         self.mode = ""
         self.raw_state = None
         self._last_updated = datetime.datetime.fromtimestamp(0)
-        self.refreshState()
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(10)
+            self.socket.connect((self.ipaddr, self.port))
+            self.refreshState()
+        except socket.error:
+            continue
 
     def __determineMode(self, ww_level, pattern_code):
         mode = "unknown"
