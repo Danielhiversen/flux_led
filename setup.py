@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name = 'flux_led',
     packages = ['flux_led'],
-    version = '0.8',
+    version = '0.9',
     description = 'a library to communicate with the flux_led',
     url='https://github.com/Danielhiversen/flux_led',
     classifiers=[
