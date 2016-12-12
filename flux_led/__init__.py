@@ -589,6 +589,7 @@ class WifiLedBulb():
         return "{} [{}]".format(power_str, mode_str)
 
     def turnOn(self, retry=2):
+        self._is_on = True
         msg = bytearray([0x71, 0x23, 0x0f])
         try:
             self._send_msg(msg)
@@ -596,10 +597,12 @@ class WifiLedBulb():
             if retry:
                 self.connect()
                 self.turnOn(max(retry-1, 0))
-            return
-        self._is_on = True
+                return
+            self._is_on = False
+
 
     def turnOff(self, retry=2):
+        self._is_on = False
         msg = bytearray([0x71, 0x24, 0x0f])
         try:
             self._send_msg(msg)
@@ -607,8 +610,6 @@ class WifiLedBulb():
             if retry:
                 self.connect()
                 self.turnOff(max(retry-1, 0))
-            return
-        self._is_on = False
 
     def isOn(self):
         return self.is_on
