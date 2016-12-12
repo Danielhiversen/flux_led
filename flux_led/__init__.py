@@ -529,10 +529,10 @@ class WifiLedBulb():
                 return
             self._is_on = False
             return
-        if rx is None and retry > 0:
+        if rx is None or len(rx) < 14:
+            if retry < 1:
+                return
             self.update_state(max(retry-1, 0))
-            return
-        elif rx is None:
             return
 
         pattern = rx[3]
