@@ -488,6 +488,7 @@ class WifiLedBulb():
         return self._brightness
 
     def connect(self, retry=0):
+        self.close()
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.settimeout(self.timeout)
@@ -495,10 +496,11 @@ class WifiLedBulb():
         except socket.error:
             if retry < 1:
                 return
-            self.close()
             self.connect(max(retry-1, 0))
 
     def close(self):
+        if self._socket is None:
+            return
         try:
             self._socket.close()
         except socket.error:
@@ -523,11 +525,11 @@ class WifiLedBulb():
             self._send_msg(msg)
             rx = self._read_msg(14)
         except socket.error:
-            if retry:
-                self.connect()
-                self.update_state(max(retry-1, 0))
+            if retry < 1:
+                self._is_on = False
                 return
-            self._is_on = False
+            self.connect()
+            self.update_state(max(retry-1, 0))
             return
         if rx is None or len(rx) < 14:
             if retry < 1:
@@ -538,7 +540,9 @@ class WifiLedBulb():
         pattern = rx[3]
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern)
-        if mode == "unknown" and retry:
+        if mode == "unknown":
+            if retry < 1:
+                return
             self.connect()
             self.update_state(max(retry-1, 0))
             return
@@ -695,7 +699,7 @@ class WifiLedBulb():
         except socket.error:
             if retry:
                 self.connect()
-                self.setRgb(r,g,b, level, persist, max(retry-1, 0))
+                self.setRgb(r,g,b, persist, max(retry-1, 0))
 
     def _calculateBrightness(self, rgb, level):
         r = rgb[0]
