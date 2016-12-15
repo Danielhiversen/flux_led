@@ -445,25 +445,68 @@ class LedTimer():
         return txt
 
 class WifiLedBulb():
-    def __init__(self, ipaddr, port=5577):
+    def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
         self.port = port
-        self.__is_on = False
+        self.timeout = timeout
 
-        self.lock = threading.Lock()
-        self.__state_str = ""
-        self.mode = ""
         self.raw_state = None
-        self._last_updated = datetime.datetime.fromtimestamp(0)
+        self._is_on = False
+        self._mode = None
+        self._rgb = [0, 0, 0]
+        self._warm_white = 0
+        self._cold_white = 0
+        self._brightness = 0
+        self._socket = None 
+        self._lock = threading.Lock()
+
+        self.connect(2)
+        self.update_state()
+
+    @property
+    def is_on(self):
+        return self._is_on
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @property
+    def rgb(self):
+        return self._rgb
+
+    @property
+    def warm_white(self):
+        return self._warm_white
+
+    @property
+    def cold_white(self):
+        return self._cold_white
+
+    @property
+    def brightness(self):
+        return self._brightness
+
+    def connect(self, retry=0):
+        self.close()
         try:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.settimeout(10)
-            self.socket.connect((self.ipaddr, self.port))
-            self.refreshState()
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.settimeout(self.timeout)
+            self._socket.connect((self.ipaddr, self.port))
+        except socket.error:
+            if retry < 1:
+                return
+            self.connect(max(retry-1, 0))
+
+    def close(self):
+        if self._socket is None:
+            return
+        try:
+            self._socket.close()
         except socket.error:
             pass
 
-    def __determineMode(self, ww_level, pattern_code):
+    def _determineMode(self, ww_level, pattern_code):
         mode = "unknown"
         if pattern_code in [ 0x61, 0x62]:
             if ww_level != 0:
@@ -476,38 +519,42 @@ class WifiLedBulb():
             mode = "preset"
         return mode
 
-    def refreshState(self, retry=True):
-        if (datetime.datetime.now() - self._last_updated).total_seconds() < 3:
-            return
-        self._last_updated = datetime.datetime.now()
+    def update_state(self, retry=2):
         msg = bytearray([0x81, 0x8a, 0x8b])
         try:
-            self.__write(msg)
-            rx = self.__readResponse(14)
+            self._send_msg(msg)
+            rx = self._read_msg(14)
         except socket.error:
-            if retry:
-                self.reconnect()
-                self.refreshState(False)
+            if retry < 1:
+                self._is_on = False
                 return
-            self.__is_on = False
+            self.connect()
+            self.update_state(max(retry-1, 0))
+            return
+        if rx is None or len(rx) < 14:
+            if retry < 1:
+                self._is_on = False
+                return
+            self.update_state(max(retry-1, 0))
             return
 
         pattern = rx[3]
         ww_level = rx[9]
-        mode = self.__determineMode(ww_level, pattern)
-        if mode == "unknown" and retry:
-            self.reconnect()
-            self.refreshState(False)
+        mode = self._determineMode(ww_level, pattern)
+        if mode == "unknown":
+            if retry < 1:
+                return
+            self.connect()
+            self.update_state(max(retry-1, 0))
             return
         power_state = rx[2]
 
         if power_state == 0x23:
-            self.__is_on = True
+            self._is_on = True
         elif power_state == 0x24:
-            self.__is_on = False
+            self._is_on = False
         self.raw_state = rx
-        self.mode = mode
-
+        self._mode = mode
 
     def __str__(self):
         rx = self.raw_state
@@ -544,14 +591,156 @@ class WifiLedBulb():
         mode_str += " raw state: "  
         for _r in rx:
           mode_str += str(_r) + ","
-        self.__state_str = "{} [{}]".format(power_str, mode_str)
-        return self.__state_str
+        return "{} [{}]".format(power_str, mode_str)
 
+    def turnOn(self, retry=2):
+        self._is_on = True
+        msg = bytearray([0x71, 0x23, 0x0f])
+        try:
+            self._send_msg(msg)
+        except socket.error:
+            if retry:
+                self.connect()
+                self.turnOn(max(retry-1, 0))
+                return
+            self._is_on = False
+
+
+    def turnOff(self, retry=2):
+        self._is_on = False
+        msg = bytearray([0x71, 0x24, 0x0f])
+        try:
+            self._send_msg(msg)
+        except socket.error:
+            if retry:
+                self.connect()
+                self.turnOff(max(retry-1, 0))
+
+    def isOn(self):
+        return self.is_on
+
+    def getWarmWhite255(self):
+        if self.mode != "ww":
+            return 255
+        return int(self.raw_state[9])
+
+    def setWarmWhite(self, level, persist=True, retry=2):
+        self.setWarmWhite255(utils.percentToByte(level), persist, retry)
+
+    def setWarmWhite255(self, level, persist=True, retry=2):
+        if persist:
+            msg = bytearray([0x31])
+        else:
+            msg = bytearray([0x41])
+        msg.append(0x00)
+        msg.append(0x00)
+        msg.append(0x00)
+        msg.append(int(level))
+        msg.append(0x0f)
+        msg.append(0x0f)
+        try:
+            self._send_msg(msg)
+        except socket.error:
+            if retry:
+                self.connect()
+                self.setWarmWhite255(level, persist, max(retry-1, 0))
+
+    def getRgbw(self):
+        if self.mode != "color":
+            return (255, 255, 255, 255)
+        red = self.raw_state[6]
+        green = self.raw_state[7]
+        blue = self.raw_state[8]
+        white = self.raw_state[9]
+        return (red, green, blue, white)
+
+    def setRgbw(self, r,g,b,w, persist=True, brightness=None, retry=2):
+        if brightness != None:
+            (r, g, b) = self._calculateBrightness((r, g, b), brightness)
+        if persist:
+            msg = bytearray([0x31])
+        else:
+            msg = bytearray([0x41])
+        msg.append(int(r))
+        msg.append(int(g))
+        msg.append(int(b))
+        msg.append(int(w))
+        msg.append(0x0f)
+        msg.append(0x0f)
+        try:
+            self._send_msg(msg)
+        except socket.error:
+            if retry:
+                self.connect()
+                self.setRgbw(r,g,b,w, persist, max(retry-1, 0))
+
+    def getRgb(self):
+        if self.mode != "color":
+            return (255, 255, 255)
+        red = self.raw_state[6]
+        green = self.raw_state[7]
+        blue = self.raw_state[8]
+        return (red, green, blue)
+
+    def setRgb(self, r,g,b, persist=True, brightness=None, retry=2):
+        if brightness != None:
+            (r, g, b) = self._calculateBrightness((r, g, b), brightness)
+        if persist:
+            msg = bytearray([0x31])
+        else:
+            msg = bytearray([0x41])
+        msg.append(int(r))
+        msg.append(int(g))
+        msg.append(int(b))
+        msg.append(0x00)
+        msg.append(0xf0)
+        msg.append(0x0f)
+        try:
+            self._send_msg(msg)
+        except socket.error:
+            if retry:
+                self.connect()
+                self.setRgb(r,g,b, persist, max(retry-1, 0))
+
+    def _calculateBrightness(self, rgb, level):
+        r = rgb[0]
+        g = rgb[1]
+        b = rgb[2]
+        hsv = colorsys.rgb_to_hsv(r, g, b)
+        return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
+
+    def _send_msg(self, bytes):
+        # calculate checksum of byte array and add to end
+        csum = sum(bytes) & 0xFF
+        bytes.append(csum)
+        with self._lock:
+            self._socket.send(bytes)
+
+    def _read_msg(self, expected):
+        remaining = expected
+        rx = bytearray()
+        begin = time.time()
+        while remaining > 0:
+            if time.time() - begin > self.timeout:
+                break
+            try:
+                with self._lock:
+                    self._socket.setblocking(0)
+                    chunk = self._socket.recv(remaining)
+                    if chunk:
+                        begin = time.time()
+                    remaining -= len(chunk)
+                    rx.extend(chunk)
+            except socket.error:
+                pass
+            finally:
+                self._socket.setblocking(1)
+        return rx
 
     def getClock(self):
         msg = bytearray([0x11, 0x1a, 0x1b, 0x0f])
-        self.__write(msg)
-        rx = self.__readResponse(12)
+        self._send_msg(msg)
+        rx = self._read_msg(12)
         if len(rx) != 12:
             return
         year =  rx[3] + 2000
@@ -579,95 +768,7 @@ class WifiLedBulb():
         msg.append(now.isoweekday()) # day of week
         msg.append(0x00)
         msg.append(0x0f)
-        self.__write(msg)
-
-    def turnOn(self, on=True):
-        self._last_updated = datetime.datetime.now()
-        if on:
-            msg = bytearray([0x71, 0x23, 0x0f])
-        else:
-            msg = bytearray([0x71, 0x24, 0x0f])
-
-        self.__write(msg)
-        #print "set bulb {}".format(on)
-        #time.sleep(.5)
-        #x = self.__readResponse(4)
-        self.__is_on = on
-
-    def isOn(self):
-        return self.__is_on
-
-    def turnOff(self):
-        self.turnOn(False)
-
-    def getWarmWhite255(self):
-        if self.mode != "ww":
-            return 255
-        return int(self.raw_state[9])
-
-    def setWarmWhite(self, level, persist=True):
-        self.setWarmWhite255(utils.percentToByte(level), persist)
-
-    def setWarmWhite255(self, level, persist=True):
-        if persist:
-            msg = bytearray([0x31])
-        else:
-            msg = bytearray([0x41])
-        msg.append(0x00)
-        msg.append(0x00)
-        msg.append(0x00)
-        msg.append(int(level))
-        msg.append(0x0f)
-        msg.append(0x0f)
-        self.__write(msg)
-
-    def getRgbw(self):
-        if self.mode != "color":
-            return (255, 255, 255, 255)
-        red = self.raw_state[6]
-        green = self.raw_state[7]
-        blue = self.raw_state[8]
-        white = self.raw_state[9]
-        return (red, green, blue, white)
-
-
-    def setRgbw(self, r,g,b,w, persist=True, brightness=None):
-        if brightness != None:
-            (r, g, b) = self.__calculateBrightness((r, g, b), brightness)
-        if persist:
-            msg = bytearray([0x31])
-        else:
-            msg = bytearray([0x41])
-        msg.append(int(r))
-        msg.append(int(g))
-        msg.append(int(b))
-        msg.append(int(w))
-        msg.append(0x0f)
-        msg.append(0x0f)
-        self.__write(msg)
-
-    def getRgb(self):
-        if self.mode != "color":
-            return (255, 255, 255)
-        red = self.raw_state[6]
-        green = self.raw_state[7]
-        blue = self.raw_state[8]
-        return (red, green, blue)
-
-    def setRgb(self, r,g,b, persist=True, brightness=None):
-        if brightness != None:
-            (r, g, b) = self.__calculateBrightness((r, g, b), brightness)
-        if persist:
-            msg = bytearray([0x31])
-        else:
-            msg = bytearray([0x41])
-        msg.append(int(r))
-        msg.append(int(g))
-        msg.append(int(b))
-        msg.append(0x00)
-        msg.append(0xf0)
-        msg.append(0x0f)
-        self.__write(msg)
+        self._send_msg(msg)
 
     def setPresetPattern(self, pattern, speed):
 
@@ -683,13 +784,13 @@ class WifiLedBulb():
         pattern_set_msg.append(delay)
         pattern_set_msg.append(0x0f)
 
-        self.__write(pattern_set_msg)
+        self._send_msg(pattern_set_msg)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2a, 0x2b, 0x0f])
-        self.__write(msg)
+        self._send_msg(msg)
         resp_len = 88
-        rx = self.__readResponse(resp_len)
+        rx = self._read_msg(resp_len)
         if len(rx) != resp_len:
             print("response too short!")
             raise Exception
@@ -731,14 +832,13 @@ class WifiLedBulb():
         for t in timer_list:
             msg.extend(t.toBytes())
         msg.extend(msg_end)
-        self.__write(msg)
+        self._send_msg(msg)
 
         # not sure what the resp is, prob some sort of ack?
-        rx = self.__readResponse(1)
-        rx = self.__readResponse(3)
+        rx = self._read_msg(1)
+        rx = self._read_msg(3)
 
     def setCustomPattern(self, rgb_list, speed, transition_type):
-
         # truncate if more than 16
         if len(rgb_list) > 16:
             print("too many colors, truncating list")
@@ -781,52 +881,11 @@ class WifiLedBulb():
         msg.append(0xff)
         msg.append(0x0f)
 
-        self.__write(msg)
+        self._send_msg(msg)
 
-    def reconnect(self):
-        with self.lock:
-            self.socket.close()
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.settimeout(10)
-            self.socket.connect((self.ipaddr, self.port))
+    def refreshState(self):
+        return self.update_state()
 
-    def __writeRaw(self, bytes):
-        with self.lock:
-            self.socket.send(bytes)
-
-    def __write(self, bytes):
-        # calculate checksum of byte array and add to end
-        csum = sum(bytes) & 0xFF
-        bytes.append(csum)
-        try:
-            self.__writeRaw(bytes)
-        except socket.error:
-            self.reconnect()
-            self.__writeRaw(bytes)
-
-    def __readResponse(self, expected):
-        remaining = expected
-        rx = bytearray()
-        while remaining > 0:
-            try:
-                chunk = self.__readRaw(remaining)
-            except socket.error:
-                self.reconnect()
-                chunk = self.__readRaw(remaining)
-            remaining -= len(chunk)
-            rx.extend(chunk)
-        return rx
-
-    def __readRaw(self, byte_count=1024):
-        with self.lock:
-            return self.socket.recv(byte_count)
-
-    def __calculateBrightness(self, rgb, level):
-            r = rgb[0]
-            g = rgb[1]
-            b = rgb[2]
-            hsv = colorsys.rgb_to_hsv(r, g, b)
-            return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
 class  BulbScanner():
     def __init__(self):
@@ -1388,7 +1447,7 @@ def main():
             bulb.turnOff()
 
         if options.info:
-            bulb.refreshState()
+            bulb.update_state()
             print("{} [{}] {}".format(info['id'], info['ipaddr'],bulb))
 
         if options.settimer:
