@@ -533,6 +533,7 @@ class WifiLedBulb():
             return
         if rx is None or len(rx) < 14:
             if retry < 1:
+                self._is_on = False
                 return
             self.update_state(max(retry-1, 0))
             return
