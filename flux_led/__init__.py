@@ -450,6 +450,8 @@ class WifiLedBulb():
         self.port = port
         self.timeout = timeout
 
+        self.ledenet = False
+
         self.raw_state = None
         self._is_on = False
         self._mode = None
@@ -457,7 +459,7 @@ class WifiLedBulb():
         self._warm_white = 0
         self._cold_white = 0
         self._brightness = 0
-        self._socket = None 
+        self._socket = None
         self._lock = threading.Lock()
 
         self.connect(2)
@@ -588,7 +590,7 @@ class WifiLedBulb():
             mode_str = "Unknown mode 0x{:x}".format(pattern)
         if pattern == 0x62:
             mode_str += " (tmp)"
-        mode_str += " raw state: "  
+        mode_str += " raw state: "
         for _r in rx:
           mode_str += str(_r) + ","
         return "{} [{}]".format(power_str, mode_str)
@@ -636,6 +638,10 @@ class WifiLedBulb():
         msg.append(0x00)
         msg.append(0x00)
         msg.append(int(level))
+
+        if self.ledenet:
+            msg.append(int(level))
+
         msg.append(0x0f)
         msg.append(0x0f)
         try:
@@ -665,6 +671,10 @@ class WifiLedBulb():
         msg.append(int(g))
         msg.append(int(b))
         msg.append(int(w))
+
+        if self.ledenet:
+            msg.append(0x00)
+
         msg.append(0x0f)
         msg.append(0x0f)
         try:
@@ -692,6 +702,10 @@ class WifiLedBulb():
         msg.append(int(r))
         msg.append(int(g))
         msg.append(int(b))
+
+        if self.ledenet:
+            msg.append(0x00)
+
         msg.append(0x00)
         msg.append(0xf0)
         msg.append(0x0f)
@@ -769,6 +783,9 @@ class WifiLedBulb():
         msg.append(0x00)
         msg.append(0x0f)
         self._send_msg(msg)
+
+    def enableLedenet(self):
+        self.ledenet = True
 
     def setPresetPattern(self, pattern, speed):
 
@@ -1290,6 +1307,9 @@ def parseArgs():
                               "and other mode specific settings.   Use --timerhelp for more details.")
 
 
+    parser.add_option("--ledenet", action="store_true", dest="enable_ledenet", default=None,
+                      help="Enable support for ledenet LED controllers")
+
     other_group.add_option("-v", "--volatile",
                       action="store_true", dest="volatile", default=False,
                       help="Don't persist mode setting with hard power cycle (RGB and WW modes only).")
@@ -1416,6 +1436,9 @@ def main():
 
         if options.setclock:
             bulb.setClock()
+
+        if options.enable_ledenet:
+            bulb.enableLedenet()
 
         if options.ww is not None:
             print("Setting warm white mode, level: {}%".format(options.ww))
