@@ -450,7 +450,7 @@ class WifiLedBulb():
         self.port = port
         self.timeout = timeout
 
-        self.ledenet = False
+        self.protocol = None
 
         self.raw_state = None
         self._is_on = False
@@ -639,7 +639,7 @@ class WifiLedBulb():
         msg.append(0x00)
         msg.append(int(level))
 
-        if self.ledenet:
+        if self.protocol == "LEDENET":
             msg.append(int(level))
 
         msg.append(0x0f)
@@ -672,7 +672,7 @@ class WifiLedBulb():
         msg.append(int(b))
         msg.append(int(w))
 
-        if self.ledenet:
+        if self.protocol == "LEDENET":
             msg.append(0x00)
 
         msg.append(0x0f)
@@ -703,7 +703,7 @@ class WifiLedBulb():
         msg.append(int(g))
         msg.append(int(b))
 
-        if self.ledenet:
+        if self.protocol == "LEDENET":
             msg.append(0x00)
 
         msg.append(0x00)
@@ -784,8 +784,8 @@ class WifiLedBulb():
         msg.append(0x0f)
         self._send_msg(msg)
 
-    def enableLedenet(self):
-        self.ledenet = True
+    def setProtocol(self, protocol):
+        self.protocol = protocol
 
     def setPresetPattern(self, pattern, speed):
 
@@ -1307,8 +1307,8 @@ def parseArgs():
                               "and other mode specific settings.   Use --timerhelp for more details.")
 
 
-    parser.add_option("--ledenet", action="store_true", dest="enable_ledenet", default=None,
-                      help="Enable support for ledenet LED controllers")
+    parser.add_option("--protocol", dest="protocol", default=None, metavar="PROTOCOL",
+                      help="Set the device protocol. Currently only supports LEDENET")
 
     other_group.add_option("-v", "--volatile",
                       action="store_true", dest="volatile", default=False,
@@ -1420,6 +1420,7 @@ def main():
             info = dict()
             info['ipaddr'] = addr
             info['id'] = 'Unknown ID'
+
             bulb_info_list.append(info)
 
 
@@ -1437,8 +1438,8 @@ def main():
         if options.setclock:
             bulb.setClock()
 
-        if options.enable_ledenet:
-            bulb.enableLedenet()
+        if options.protocol:
+            bulb.setProtocol(options.protocol)
 
         if options.ww is not None:
             print("Setting warm white mode, level: {}%".format(options.ww))
