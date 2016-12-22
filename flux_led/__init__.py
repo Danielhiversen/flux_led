@@ -785,7 +785,7 @@ class WifiLedBulb():
         self._send_msg(msg)
 
     def setProtocol(self, protocol):
-        self.protocol = protocol
+        self.protocol = protocol.upper()
 
     def setPresetPattern(self, pattern, speed):
 
