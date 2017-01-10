@@ -4,9 +4,22 @@ setup(
     name = 'flux_led',
     packages = ['flux_led'],
     version = '0.11',
-    description = 'a library to communicate with the flux_led',
-    url='https://github.com/Danielhiversen/flux_led',
-    classifiers=[
+    description = 'A Python library to communicate with the flux_led smart bulbs',
+    author = 'Daniel Høyer Iversen', 'Beville',
+    author_email = '',
+    url = 'https://github.com/Danielhiversen/flux_led',
+    license = 'LGPLv3+',
+    include_package_data = True,
+    keywords = [
+        'flux_led',
+        'smart bulbs',
+        'light',
+        ],
+    install_requires = [
+        'colorsys',
+        'ast',
+        ],
+    classifiers = [
         'Development Status :: 3 - Alpha',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
@@ -22,5 +35,5 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Home Automation',
         'Topic :: Software Development :: Libraries :: Python Modules'
-        ]
+        ],
 )
