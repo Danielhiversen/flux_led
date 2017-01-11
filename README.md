@@ -34,6 +34,14 @@ and looks like it might be a bit of work.
 * Specify colors with names or web hex values.  Requires that python "webcolors" 
 package is installed.  (Easily done via pip, easy_install, or apt-get, etc.) Use --listcolors to show valid color names.
 
+##### Installation:
+* Flux_led package available at https://pypi.python.org/pypi/flux-led/
+```
+pip install flux_led
+
+easy_install flux_led
+```
+
 ##### Examples:
 ```
 Scan network:
