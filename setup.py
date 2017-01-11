@@ -1,3 +1,4 @@
+# coding=utf-8
 from setuptools import setup
 
 setup(
@@ -5,8 +6,8 @@ setup(
     packages = ['flux_led'],
     version = '0.11',
     description = 'A Python library to communicate with the flux_led smart bulbs',
-    author = 'Daniel Høyer Iversen', 'Beville',
-    author_email = '',
+    author = 'Daniel Høyer Iversen, Beville',
+    author_email = 'mail@dahoiv.net',
     url = 'https://github.com/Danielhiversen/flux_led',
     license = 'LGPLv3+',
     include_package_data = True,
