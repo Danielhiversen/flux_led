@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name = 'flux_led',
     packages = ['flux_led'],
-    version = '0.11',
+    version = '0.12',
     description = 'A Python library to communicate with the flux_led smart bulbs',
     author = 'Daniel Høyer Iversen, Beville',
     author_email = 'mail@dahoiv.net',
@@ -15,10 +15,6 @@ setup(
         'flux_led',
         'smart bulbs',
         'light',
-        ],
-    install_requires = [
-        'colorsys',
-        'ast',
         ],
     classifiers = [
         'Development Status :: 3 - Alpha',
