@@ -184,7 +184,7 @@ class PresetPattern:
     seven_color_strobe_flash = 0x30
     red_strobe_flash =         0x31
     green_strobe_flash =       0x32
-    blue_stobe_flash =         0x33
+    blue_strobe_flash =        0x33
     yellow_strobe_flash =      0x34
     cyan_strobe_flash =        0x35
     purple_strobe_flash =      0x36
@@ -204,7 +204,24 @@ class PresetPattern:
                 return key.replace("_", " ").title()
         return None
 
+class BuiltInTimer():
+    sunrise = 0xA1
+    sunset = 0xA2
 
+    @staticmethod
+    def valid(byte_value):
+        return byte_value == BuiltInTimer.sunrise or byte_value == BuiltInTimer.sunset
+
+    @staticmethod
+    def valtostr(pattern):
+        for key, value in BuiltInTimer.__dict__.items():
+            if type(value) is int and value == pattern:
+                return key.replace("_", " ").title()
+        return None
+
+    @staticmethod
+    def normalizePercentage(raw_value):
+        return raw_value/255 * 100;
 
 class LedTimer():
     Mo = 0x02
@@ -345,16 +362,24 @@ class LedTimer():
         self.repeat_mask = bytes[7]
         self.pattern_code = bytes[8]
 
-        if self.pattern_code == 0x61:
+
+        if self.pattern_code == 0x00:
+            self.mode ="default"
+        elif self.pattern_code == 0x61:
             self.mode = "color"
             self.red = bytes[9]
             self.green = bytes[10]
             self.blue = bytes[11]
-        elif self.pattern_code == 0x00:
-            self.mode ="default"
-        else:
+        elif BuiltInTimer.valid(self.pattern_code):
+            self.mode = BuiltInTimer.valtostr(self.pattern_code)
+            self.duration = bytes[9] #same byte as red
+            self.brightness_start = bytes[10] #same byte as green
+            self.brightness_end = bytes[11] #same byte as blue
+        elif PresetPattern.valid(self.pattern_code):
             self.mode = "preset"
             self.delay = bytes[9] #same byte as red
+        else:
+            self.mode = "unknown"
 
         self.warmth_level = bytes[12]
         if self.warmth_level != 0:
@@ -392,10 +417,14 @@ class LedTimer():
         bytes[13] = 0xf0
 
         bytes[8] = self.pattern_code
-        if self.mode == "preset":
+        if PresetPattern.valid(self.pattern_code):
             bytes[9] = self.delay
             bytes[10] = 0
             bytes[11] = 0
+        elif BuiltInTimer.valid(self.pattern_code):
+            bytes[9] = self.duration
+            bytes[10] = self.brightness_start
+            bytes[11] = self.brightness_end
         else:
             bytes[9] = self.red
             bytes[10] = self.green
@@ -441,6 +470,13 @@ class LedTimer():
             pat = PresetPattern.valtostr(self.pattern_code)
             speed = utils.delayToSpeed(self.delay)
             txt += "{} (Speed:{}%)".format(pat, speed)
+
+        elif BuiltInTimer.valid(self.pattern_code):
+            type = BuiltInTimer.valtostr(self.pattern_code)
+
+            txt += "{} (Duration:{} minutes, Brightness: {}% -> {}%)".format(
+                type, self.duration,
+                BuiltInTimer.normalizePercentage(self.brightness_start), BuiltInTimer.normalizePercentage(self.brightness_end))
 
         return txt
 
@@ -519,6 +555,9 @@ class WifiLedBulb():
             mode = "custom"
         elif PresetPattern.valid(pattern_code):
             mode = "preset"
+        elif BuiltInTimer.valid(pattern_code):
+            mode = BuiltInTimer.valtostr(pattern_code)
+
         return mode
 
     def update_state(self, retry=2):
@@ -586,6 +625,8 @@ class WifiLedBulb():
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
         elif mode == "custom":
             mode_str = "Custom pattern (Speed {}%)".format(speed)
+        elif BuiltInTimer.valid(pattern):
+            mode_str = BuiltInTimer.valtostr(pattern)
         else:
             mode_str = "Unknown mode 0x{:x}".format(pattern)
         if pattern == 0x62:
