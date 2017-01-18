@@ -219,10 +219,6 @@ class BuiltInTimer():
                 return key.replace("_", " ").title()
         return None
 
-    @staticmethod
-    def normalizePercentage(raw_value):
-        return raw_value/255 * 100;
-
 class LedTimer():
     Mo = 0x02
     Tu = 0x04
@@ -318,6 +314,25 @@ class LedTimer():
         self.green = 0
         self.blue = 0
         self.turn_on = True
+
+    def setModeSunrise(self, startBrightness, endBrightness, duration):
+        self.mode = "sunrise"
+        self.turn_on = True
+        self.pattern_code = BuiltInTimer.sunrise
+        self.brightness_start = utils.percentToByte(startBrightness)
+        self.brightness_end = utils.percentToByte(endBrightness)
+        self.warmth_level = utils.percentToByte(endBrightness)
+        self.duration = int(duration)
+
+    def setModeSunset(self, startBrightness, endBrightness, duration):
+        self.mode = "sunrise"
+        self.turn_on = True
+        self.pattern_code = BuiltInTimer.sunset
+        self.brightness_start = utils.percentToByte(startBrightness)
+        self.brightness_end = utils.percentToByte(endBrightness)
+        self.warmth_level = utils.percentToByte(endBrightness)
+        self.duration = int(duration)
+
 
     def setModeTurnOff(self):
         self.mode = "off"
@@ -476,7 +491,7 @@ class LedTimer():
 
             txt += "{} (Duration:{} minutes, Brightness: {}% -> {}%)".format(
                 type, self.duration,
-                BuiltInTimer.normalizePercentage(self.brightness_start), BuiltInTimer.normalizePercentage(self.brightness_end))
+                utils.byteToPercent(self.brightness_start), utils.byteToPercent(self.brightness_end))
 
         return txt
 
@@ -1079,6 +1094,8 @@ Settings available for each mode:
     color:      time, (repeat | date), color
     preset:     time, (repeat | date), code, speed
     warmwhite:  time, (repeat | date), level
+    sunrise:    time, (repeat | date), startBrightness, endBrightness, duration
+    sunset:     time, (repeat | date), startBrightness, endBrightness, duration
 
 Setting Details:
 
@@ -1109,7 +1126,13 @@ Setting Details:
 
     code:  Code of the preset pattern (use -l to list them)
 
-    speed: Speed of the preset pattern transions (0-100)
+    speed: Speed of the preset pattern transitions (0-100)
+
+    startBrightness: starting brightness of warmlight (0-100)
+
+    endBrightness: ending brightness of warmlight (0-100)
+
+    duration: transition time in minutes
 
 Example setting strings:
     "time:2130;repeat:0123456"
@@ -1148,7 +1171,7 @@ def processSetTimerArgs(parser, args):
         #no setting needed
         timer.setActive(False)
 
-    elif mode in ["poweroff", "default","color","preset","warmwhite"]:
+    elif mode in ["poweroff", "default", "color", "preset", "warmwhite", "sunrise", "sunset"]:
         timer.setActive(True)
 
         if "time" not in keys:
@@ -1240,6 +1263,26 @@ def processSetTimerArgs(parser, args):
             if not level.isdigit() or int(level) > 100:
                 parser.error("warmwhite level must be a percentage (0-100)")
             timer.setModeWarmWhite(int(level))
+
+        if  mode == "sunrise" or mode == "sunset":
+            if  "startbrightness" not in keys:
+                parser.error("{} mode needs a startBrightness (0% -> 100%)".format(mode))
+            startBrightness = int(settings_dict["startbrightness"])
+
+            if  "endbrightness" not in keys:
+                parser.error("{} mode needs an endBrightness (0% -> 100%)".format(mode))
+            endBrightness = int(settings_dict["endbrightness"])
+
+            if  "duration" not in keys:
+                parser.error("{} mode needs a duration (minutes)".format(mode))
+            duration = int(settings_dict["duration"])
+
+            if mode == "sunrise":
+                timer.setModeSunrise(startBrightness, endBrightness, duration)
+
+            elif mode == "sunset":
+                timer.setModeSunset(startBrightness, endBrightness, duration)
+
     else:
         parser.error("Not a valid timer mode: {}".format(mode))
 
