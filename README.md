@@ -63,7 +63,7 @@ Turn off:
 	python -m flux_led -sS --off
 	
 Set warm white, 75%
-	python -m flux_led 192.168.1.100 -w 75 -0	
+	python -m flux_led 192.168.1.100 -w 75 -1
 
 Set fixed color red :
 	python -m flux_led 192.168.1.100 -c Red
