@@ -1539,12 +1539,16 @@ def main():
             bulb.setRgb(options.color[0],options.color[1],options.color[2], not options.volatile)
 
         elif options.custom is not None:
-            bulb.setCustomPattern(options.custom[2], options.custom[1], options.custom[0])
+            bulb.setCustomPattern(options.custom[2],
+                                  options.custom[1],
+                                  options.custom[0])
             print("Setting custom pattern: {}, Speed={}%, {}".format(
                 options.custom[0], options.custom[1], options.custom[2]))
 
         elif options.preset is not None:
-            print("Setting preset pattern: {}, Speed={}%".format(PresetPattern.valtostr(options.preset[0]), options.preset[1]))
+            print("Setting preset pattern: {}, Speed={}%".
+                  format(PresetPattern.valtostr(options.preset[0]),
+                         options.preset[1]))
             bulb.setPresetPattern(options.preset[0], options.preset[1])
 
         if options.on:
@@ -1556,12 +1560,12 @@ def main():
 
         if options.info:
             bulb.update_state()
-            print("{} [{}] {}".format(info['id'], info['ipaddr'],bulb))
+            print("{} [{}] {}".format(info['id'], info['ipaddr'], bulb))
 
         if options.settimer:
             timers = bulb.getTimers()
             num = int(options.settimer[0])
-            print("New Timer ---- #{}: {}".format(num,options.new_timer))
+            print("New Timer ---- #{}: {}".format(num, options.new_timer))
             if options.new_timer.isExpired():
                 print("[timer is already expired, will be deactivated]")
             timers[num-1] = options.new_timer
@@ -1572,9 +1576,8 @@ def main():
             num = 0
             for t in timers:
                 num += 1
-                print("  Timer #{}: {}".format(num,t))
+                print("  Timer #{}: {}".format(num, t))
             print("")
-
 
     sys.exit(0)
 
