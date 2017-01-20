@@ -58,7 +58,7 @@ class utils:
         global webcolors_available
 
         # see if it's already a color tuple
-        if type(color) is tuple and len(color) == 3:
+        if type(color) is tuple and (len(color) == 3 or len(color == 4)):
             return color
 
         # can't convert non-string
@@ -86,7 +86,7 @@ class utils:
         # try to convert a string RGB tuple
         try:
             val = ast.literal_eval(color)
-            if type(val) is not tuple or len(val) != 3:
+            if type(val) is not tuple or (len(val) != 3 and len(val) != 4):
                 raise Exception
             return val
         except:
@@ -451,6 +451,8 @@ class WifiLedBulb():
         self.timeout = timeout
 
         self.protocol = None
+        self.rgbwcapable = False
+        self.rgbwprotocol = False
 
         self.raw_state = None
         self._is_on = False
@@ -539,6 +541,22 @@ class WifiLedBulb():
                 return
             self.update_state(max(retry-1, 0))
             return
+
+        # Devices that don't require a separate rgb/w bit
+        if (rx[1] == 0x04 or
+            rx[1] == 0x33 or
+            rx[1] == 0x81):
+            self.rgbwprotocol = True
+
+        # Devices that actually support rgbw
+        if (rx[1] == 0x04 or
+            rx[1] == 0x81):
+            self.rgbwcapable = True
+
+        # Devices that use an 8-byte protocol
+        if (rx[1] == 0x27 or
+            rx[1] == 0x35):
+            self.protocol = "LEDENET"
 
         pattern = rx[3]
         ww_level = rx[9]
@@ -630,26 +648,8 @@ class WifiLedBulb():
         self.setWarmWhite255(utils.percentToByte(level), persist, retry)
 
     def setWarmWhite255(self, level, persist=True, retry=2):
-        if persist:
-            msg = bytearray([0x31])
-        else:
-            msg = bytearray([0x41])
-        msg.append(0x00)
-        msg.append(0x00)
-        msg.append(0x00)
-        msg.append(int(level))
-
-        if self.protocol == "LEDENET":
-            msg.append(int(level))
-
-        msg.append(0x0f)
-        msg.append(0x0f)
-        try:
-            self._send_msg(msg)
-        except socket.error:
-            if retry:
-                self.connect()
-                self.setWarmWhite255(level, persist, max(retry-1, 0))
+        self.setRgbw(0, 0, 0, level, persist=persist, brightness=None,
+                     retry=retry)
 
     def getRgbw(self):
         if self.mode != "color":
@@ -661,28 +661,41 @@ class WifiLedBulb():
         return (red, green, blue, white)
 
     def setRgbw(self, r,g,b,w, persist=True, brightness=None, retry=2):
+        if (r or g or b) and w and not self.rgbwcapable:
+            print("RGBW command sent to non-RGBW device")
+            raise Exception
+
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
+
         if persist:
             msg = bytearray([0x31])
         else:
             msg = bytearray([0x41])
+
         msg.append(int(r))
         msg.append(int(g))
         msg.append(int(b))
         msg.append(int(w))
-
         if self.protocol == "LEDENET":
+            msg.append(int(w))
+
+        if not self.rgbwprotocol:
+            if w > 0:
+                msg.append(0x0f)
+            else:
+                msg.append(0xf0)
+        else:
             msg.append(0x00)
 
-        msg.append(0x0f)
         msg.append(0x0f)
         try:
             self._send_msg(msg)
         except socket.error:
             if retry:
                 self.connect()
-                self.setRgbw(r,g,b,w, persist, max(retry-1, 0))
+                self.setRgbw(r,g,b,w, persist=persist, brightness=brightness,
+                             retry=max(retry-1, 0))
 
     def getRgb(self):
         if self.mode != "color":
@@ -693,28 +706,8 @@ class WifiLedBulb():
         return (red, green, blue)
 
     def setRgb(self, r,g,b, persist=True, brightness=None, retry=2):
-        if brightness != None:
-            (r, g, b) = self._calculateBrightness((r, g, b), brightness)
-        if persist:
-            msg = bytearray([0x31])
-        else:
-            msg = bytearray([0x41])
-        msg.append(int(r))
-        msg.append(int(g))
-        msg.append(int(b))
-
-        if self.protocol == "LEDENET":
-            msg.append(0x00)
-
-        msg.append(0x00)
-        msg.append(0xf0)
-        msg.append(0x0f)
-        try:
-            self._send_msg(msg)
-        except socket.error:
-            if retry:
-                self.connect()
-                self.setRgb(r,g,b, persist, max(retry-1, 0))
+        self.setRgbw(r, g, b, 0, persist=persist, brightness=brightness,
+                     retry=retry)
 
     def _calculateBrightness(self, rgb, level):
         r = rgb[0]
@@ -1452,7 +1445,10 @@ def main():
                 print()
             else:
                 print("[{}]".format(name))
-            bulb.setRgb(options.color[0],options.color[1],options.color[2], not options.volatile)
+            if len(options.color) == 3:
+                bulb.setRgb(options.color[0],options.color[1],options.color[2], not options.volatile)
+            elif len(options.color) == 4:
+                bulb.setRgbw(options.color[0],options.color[1],options.color[2],options.color[3], not options.volatile)
 
         elif options.custom is not None:
             bulb.setCustomPattern(options.custom[2], options.custom[1], options.custom[0])
