@@ -747,6 +747,8 @@ class WifiLedBulb():
         msg.append(0x0f)
         try:
             self._send_msg(msg)
+            if brightness:
+                self._brightness = brightness
         except socket.error:
             if retry:
                 self.connect()
