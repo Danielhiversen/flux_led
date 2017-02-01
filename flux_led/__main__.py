@@ -36,6 +36,7 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
  See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
 """
+
 from __future__ import print_function
 import socket
 import time
@@ -106,13 +107,13 @@ class utils:
     @staticmethod
     def get_color_names_list():
         names = set()
-        for key in webcolors.css2_hex_to_names.keys():
+        for key in list(webcolors.css2_hex_to_names.keys()):
             names.add(webcolors.css2_hex_to_names[key])
-        for key in webcolors.css21_hex_to_names.keys():
+        for key in list(webcolors.css21_hex_to_names.keys()):
             names.add(webcolors.css21_hex_to_names[key])
-        for key in webcolors.css3_hex_to_names.keys():
+        for key in list(webcolors.css3_hex_to_names.keys()):
             names.add(webcolors.css3_hex_to_names[key])
-        for key in webcolors.html4_hex_to_names.keys():
+        for key in list(webcolors.html4_hex_to_names.keys()):
             names.add(webcolors.html4_hex_to_names[key])
         return sorted(names)
 
@@ -199,7 +200,7 @@ class PresetPattern:
 
     @staticmethod
     def valtostr(pattern):
-        for key, value in PresetPattern.__dict__.iteritems():
+        for key, value in PresetPattern.__dict__.items():
             if type(value) is int and value == pattern:
                 return key.replace("_", " ").title()
         return None
@@ -214,7 +215,7 @@ class BuiltInTimer():
 
     @staticmethod
     def valtostr(pattern):
-        for key, value in BuiltInTimer.__dict__.items():
+        for key, value in list(BuiltInTimer.__dict__.items()):
             if type(value) is int and value == pattern:
                 return key.replace("_", " ").title()
         return None
@@ -233,7 +234,7 @@ class LedTimer():
 
     @staticmethod
     def dayMaskToStr(mask):
-        for key, value in LedTimer.__dict__.iteritems():
+        for key, value in LedTimer.__dict__.items():
             if type(value) is int and value == mask:
                 return key
         return None
@@ -1157,7 +1158,7 @@ def processSetTimerArgs(parser, args):
             val = pair[1].strip().lower()
         settings_dict[key] = val
 
-    keys = settings_dict.keys()
+    keys = list(settings_dict.keys())
     timer = LedTimer()
 
     if mode == "inactive":
