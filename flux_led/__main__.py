@@ -508,10 +508,8 @@ class WifiLedBulb():
         self.raw_state = None
         self._is_on = False
         self._mode = None
-        self._rgb = [0, 0, 0]
         self._warm_white = 0
         self._cold_white = 0
-        self._brightness = 0
         self._socket = None
         self._lock = threading.Lock()
 
@@ -527,10 +525,6 @@ class WifiLedBulb():
         return self._mode
 
     @property
-    def rgb(self):
-        return self._rgb
-
-    @property
     def warm_white(self):
         return self._warm_white
 
@@ -540,7 +534,16 @@ class WifiLedBulb():
 
     @property
     def brightness(self):
-        return self._brightness
+        """Return current brightness 0-255.
+
+        For warm white return current led level. For RGB
+        calculate the HSV and return the 'value'.
+        """
+        if self.mode == "ww":
+            return int(self.raw_state[9])
+        else:
+            _, _, v = colorsys.rgb_to_hsv(*self.getRgb())
+            return v
 
     def connect(self, retry=0):
         self.close()
@@ -698,7 +701,7 @@ class WifiLedBulb():
     def getWarmWhite255(self):
         if self.mode != "ww":
             return 255
-        return int(self.raw_state[9])
+        return self.brightness
 
     def setWarmWhite(self, level, persist=True, retry=2):
         self.setWarmWhite255(utils.percentToByte(level), persist, retry)
@@ -747,8 +750,6 @@ class WifiLedBulb():
         msg.append(0x0f)
         try:
             self._send_msg(msg)
-            if brightness:
-                self._brightness = brightness
         except socket.error:
             if retry:
                 self.connect()
