@@ -654,6 +654,9 @@ class WifiLedBulb():
             green = rx[7]
             blue = rx[8]
             mode_str = "Color: {}".format((red, green, blue))
+            mode_str += " Brightness: {}".format(self.brightness)
+
+
         elif mode == "ww":
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "preset":
