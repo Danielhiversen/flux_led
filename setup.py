@@ -32,5 +32,10 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Home Automation',
         'Topic :: Software Development :: Libraries :: Python Modules'
-        ],
+    ],
+    entry_points={
+        'console_scripts': [
+            'flux_led = flux_led.__main__:main'
+        ]
+    },
 )
