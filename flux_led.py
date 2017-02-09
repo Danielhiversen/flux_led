@@ -600,6 +600,10 @@ class WifiLedBulb():
 		pattern_set_msg.append(0x0f)
 
 		self.__write(pattern_set_msg)
+    	def getSpeed(self):
+        	delay = self.raw_state[5]
+        	speed = utils.delayToSpeed(delay)
+		return speed	
 
 	def getTimers(self):
 		msg = bytearray([0x22, 0x2a, 0x2b, 0x0f])
