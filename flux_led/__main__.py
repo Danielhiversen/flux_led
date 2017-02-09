@@ -722,6 +722,11 @@ class WifiLedBulb():
         blue = self.raw_state[8]
         white = self.raw_state[9]
         return (red, green, blue, white)
+    
+    def getSpeed(self):
+        delay = self.raw_state[5]
+        speed = utils.delayToSpeed(delay)
+        return speed
 
     def setRgbw(self, r,g,b,w, persist=True, brightness=None, retry=2):
         if (r or g or b) and w and not self.rgbwcapable:
