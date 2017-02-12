@@ -718,8 +718,24 @@ class WifiLedBulb():
         self.setWarmWhite255(utils.percentToByte(level), persist, retry)
 
     def setWarmWhite255(self, level, persist=True, retry=2):
-        self.setRgbw(0, 0, 0, level, persist=persist, brightness=None,
-                     retry=retry)
+        self.setRgbw(w=level, persist=persist, brightness=None, retry=retry)
+
+    def setColdWhite(self, level, persist=True, retry=2):
+        self.setColdWhite255(utils.percentToByte(level), persist, retry)
+
+    def setColdWhite255(self, level, persist=True, retry=2):
+        self.setRgbw(persist=persist, brightness=None, retry=retry, w2=level)
+
+    def setWhiteTemperature(self, temperature, brightness, persist=True,
+                            retry=2):
+        # Assume output temperature of between 2700 and 6500 Kelvin, and scale
+        # the warm and cold LEDs linearly to provide that
+        temperature = max(temperature-2700, 0)
+        warm = 255 * (1 - (temperature/3800))
+        cold = min(255 * temperature/3800, 255)
+        warm *= brightness/255
+        cold *= brightness/255
+        self.setRgbw(w=warm, w2=cold, persist=persist, retry=retry)
 
     def getRgbw(self):
         if self.mode != "color":
