@@ -505,6 +505,7 @@ class WifiLedBulb():
         self.protocol = None
         self.rgbwcapable = False
         self.rgbwprotocol = False
+        self.badrgbw = False
 
         self.raw_state = None
         self._is_on = False
@@ -608,13 +609,19 @@ class WifiLedBulb():
 
         # Devices that actually support rgbw
         if (rx[1] == 0x04 or
+            rx[1] == 0x25 or
             rx[1] == 0x81):
             self.rgbwcapable = True
 
         # Devices that use an 8-byte protocol
-        if (rx[1] == 0x27 or
+        if (rx[1] == 0x25 or
+            rx[1] == 0x27 or
             rx[1] == 0x35):
             self.protocol = "LEDENET"
+
+        # Devices that support RGBW, but only as two separate commands
+        if rx[1] == 0x25:
+            self.badrgbw = True
 
         pattern = rx[3]
         ww_level = rx[9]
@@ -728,10 +735,18 @@ class WifiLedBulb():
         speed = utils.delayToSpeed(delay)
         return speed
 
-    def setRgbw(self, r,g,b,w, persist=True, brightness=None, retry=2):
+    def setRgbw(self, r=None, g=None, b=None, w=None, persist=True,
+                brightness=None, retry=2, w2=None):
         if (r or g or b) and w and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise Exception
+
+        # Some devices provide RGBW control, but require two separate writes
+        # If we've been given both colours and whites, split them up
+        if self.badrgbw == True and (r != None and (w != None or w2 != None)):
+            self.setRgbw(w=w, w2=w2, retry=retry, persist=persist)
+            self.setRgbw(r, g, b, retry=retry, persist=persist)
+            return
 
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
@@ -741,21 +756,46 @@ class WifiLedBulb():
         else:
             msg = bytearray([0x41])
 
-        msg.append(int(r))
-        msg.append(int(g))
-        msg.append(int(b))
-        msg.append(int(w))
-        if self.protocol == "LEDENET":
+        if r is not None:
+            msg.append(int(r))
+        else:
+            msg.append(int(0))
+        if g is not None:
+            msg.append(int(g))
+        else:
+            msg.append(int(0))
+        if b is not None:
+            msg.append(int(b))
+        else:
+            msg.append(int(0))
+        if w is not None:
             msg.append(int(w))
+        else:
+            msg.append(int(0))
+
+        # LEDENET devices support two white outputs for cool and warm. We set
+        # the second one here - if we're only setting a single white value,
+        # we set the second output to be the same as the first
+        if self.protocol == "LEDENET":
+            if w2 is not None:
+                msg.append(int(w2))
+            elif w is not None:
+                msg.append(int(w))
+            else:
+                msg.append(0)
 
         if not self.rgbwprotocol:
-            if w > 0:
+            # For devices that can't set RGB+W simultaneously, indicate whether
+            # we should set the white outputs or the RGB outputs
+            if w is not None or w2 is not None:
                 msg.append(0x0f)
             else:
                 msg.append(0xf0)
         else:
+            # These devices can simultaneously control the RBG and white output
             msg.append(0x00)
 
+        # Message terminator
         msg.append(0x0f)
         try:
             self._send_msg(msg)
