@@ -62,7 +62,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x01\x19P\x00\x0f\x0f'))
+            mock.call(bytearray(b'1\x01\x19P\x00\xf0\x0f'))
         )
 
         light.update_state()
