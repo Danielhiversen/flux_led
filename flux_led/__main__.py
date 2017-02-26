@@ -46,6 +46,7 @@ import colorsys
 from optparse import OptionParser,OptionGroup
 import ast
 import threading
+from binascii import hexlify
 
 try:
     import webcolors
@@ -516,6 +517,8 @@ class WifiLedBulb():
         self._lock = threading.Lock()
 
         self.connect(2)
+        print('connected')
+        print('attempting to update')
         self.update_state()
 
     @property
@@ -549,13 +552,16 @@ class WifiLedBulb():
 
     def connect(self, retry=0):
         self.close()
+        print('closing connection to', self.ipaddr)
         try:
+            print('connecting to', self.ipaddr, 'attenpt', retry)
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.settimeout(self.timeout)
             self._socket.connect((self.ipaddr, self.port))
         except socket.error:
             if retry < 1:
                 return
+            print('socket error')
             self.connect(max(retry-1, 0))
 
     def close(self):
@@ -568,13 +574,15 @@ class WifiLedBulb():
 
     def _determineMode(self, ww_level, pattern_code):
         mode = "unknown"
-        if pattern_code in [ 0x61, 0x62]:
+        if pattern_code in [0x61, 0x62]:
             if ww_level != 0:
                 mode = "ww"
             else:
                 mode = "color"
         elif pattern_code == 0x60:
             mode = "custom"
+        elif pattern_code == 0x41:
+            mode = "color"
         elif PresetPattern.valid(pattern_code):
             mode = "preset"
         elif BuiltInTimer.valid(pattern_code):
@@ -582,24 +590,67 @@ class WifiLedBulb():
 
         return mode
 
-    def update_state(self, retry=2):
+    def query_state(self, retry=2, led_type = None):
+        print('querying... attempt ', retry, 'for type', led_type)
+
+        # default values
         msg = bytearray([0x81, 0x8a, 0x8b])
+        msg_len = 14
+        use_csum = True
+
+        if self.protocol == 'LEDnet_wifi370' or led_type == 'LEDnet_wifi370':
+            msg =  bytearray([0xef, 0x01, 0x77])
+            msg_len = 11
+            led_type = 'LEDnet_wifi370'
+            use_csum = False
         try:
-            self._send_msg(msg)
-            rx = self._read_msg(14)
+            self._send_msg(msg, use_csum)
+            rx = self._read_msg(msg_len)
         except socket.error:
+ #           print('querry_state socket error')
             if retry < 1:
                 self._is_on = False
                 return
             self.connect()
-            self.update_state(max(retry-1, 0))
-            return
-        if rx is None or len(rx) < 14:
+            return self.query_state(max(retry-1, 0), led_type)
+        if rx is None or len(rx) < msg_len:
+ #           print('response is empty')
             if retry < 1:
                 self._is_on = False
-                return
-            self.update_state(max(retry-1, 0))
-            return
+                if led_type == None:
+                    rx = self.query_state(retry = 2, led_type = 'LEDnet_wifi370')
+                return rx
+#            print('attempting a resend')
+            return self.query_state(max(retry-1, 0), led_type)
+            print('rx length', len(rx), 'led_type = ', led_type)  
+        if len(rx) == 11 and led_type == 'LEDnet_wifi370':
+#            print('found the right protocol') 
+            self.protocol = 'LEDnet_wifi370'
+        return rx
+
+    def update_state(self, retry=2 ):
+        rx = self.query_state(retry)
+#        print('query_state', rx)
+        
+        # typical response:
+        #pos  0  1  2  3  4  5  6  7  8  9 10
+        #    66 01 24 39 21 0a ff 00 00 01 99
+        #     |     |  |     |  |  |  |  |  |
+        #     |     |  |     |  |  |  |  |  |  checksum
+        #     |     |  |     |  |  |  |  warmwhite
+        #     |     |  |     |  |  |  blue
+        #     |     |  |     |  |  green 
+        #     |     |  |     |  red
+        #     |     |  |     speed: 0f = highest f0 is lowest
+        #     |     |  preset pattern             
+        #     |     off(23)/on(24)
+        #     |
+        #     |
+        #     msg head
+        #        
+
+
+
 
         # Devices that don't require a separate rgb/w bit
         if (rx[1] == 0x04 or
@@ -623,14 +674,19 @@ class WifiLedBulb():
         if rx[1] == 0x25:
             self.badrgbw = True
 
+        # Devices that use the 11-byte protocol
+        if rx[1] == 0x01:
+            self.protcol = "LEDnet_wifi370"
+
         pattern = rx[3]
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern)
         if mode == "unknown":
+            print('unknown mode')
             if retry < 1:
                 return
             self.connect()
-            self.update_state(max(retry-1, 0))
+            rx = self.query_state(max(retry-1, 0))
             return
         power_state = rx[2]
 
@@ -640,6 +696,7 @@ class WifiLedBulb():
             self._is_on = False
         self.raw_state = rx
         self._mode = mode
+#        print('\nupdate complete\n')
 
     def __str__(self):
         rx = self.raw_state
@@ -683,28 +740,34 @@ class WifiLedBulb():
           mode_str += str(_r) + ","
         return "{} [{}]".format(power_str, mode_str)
 
-    def turnOn(self, retry=2):
-        self._is_on = True
-        msg = bytearray([0x71, 0x23, 0x0f])
+    def turnOn(self, retry=2, turn_on = True):
+        msg_on = bytearray([0x71, 0x23, 0x0f])
+        msg_on = bytearray([0x71, 0x24, 0x0f])
+        use_csum = True
+        if self.protocol == 'LEDnet_wifi370':
+            msg_on =  bytearray([0xcc, 0x23, 0x33])
+            msg_off =  bytearray([0xcc, 0x24, 0x33])
+            use_csum = False         
+
+        if turn_on:
+            self._is_on = True            
+            msg = msg_on
+        else:
+            self._is_on = False
+            msg = msg_off
+                
         try:
-            self._send_msg(msg)
+            self._send_msg(msg, use_csum)
         except socket.error:
             if retry:
                 self.connect()
-                self.turnOn(max(retry-1, 0))
+                self.turnOn(max(retry-1, 0), turn_on)
                 return
             self._is_on = False
 
 
     def turnOff(self, retry=2):
-        self._is_on = False
-        msg = bytearray([0x71, 0x24, 0x0f])
-        try:
-            self._send_msg(msg)
-        except socket.error:
-            if retry:
-                self.connect()
-                self.turnOff(max(retry-1, 0))
+        self.turnOn(retry, turn_on = False)
 
     def isOn(self):
         return self.is_on
@@ -753,6 +816,7 @@ class WifiLedBulb():
 
     def setRgbw(self, r=None, g=None, b=None, w=None, persist=True,
                 brightness=None, retry=2, w2=None):
+        use_csum = True
         if (r or g or b) and w and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise Exception
@@ -813,8 +877,16 @@ class WifiLedBulb():
 
         # Message terminator
         msg.append(0x0f)
+
+        if self.protocol == 'LEDnet_wifi370':
+            use_csum = False
+            msg = bytearray([0x56])
+            msg.append(int(r))
+            msg.append(int(g))
+            msg.append(int(b))
+            msg.append(0xaa)
         try:
-            self._send_msg(msg)
+            self._send_msg(msg, use_csum)
         except socket.error:
             if retry:
                 self.connect()
@@ -840,12 +912,13 @@ class WifiLedBulb():
         hsv = colorsys.rgb_to_hsv(r, g, b)
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
-    def _send_msg(self, bytes):
-        # calculate checksum of byte array and add to end
-        csum = sum(bytes) & 0xFF
-        bytes.append(csum)
+    def _send_msg(self, bytes, checksum = True):
+        if checksum: # calculate checksum of byte array and add to end
+            csum = sum(bytes) & 0xFF
+            bytes.append(csum)
         with self._lock:
             self._socket.send(bytes)
+        print('sending', ' '.join(list('{:02x}'.format(r) for r in bytes)))
 
     def _read_msg(self, expected):
         remaining = expected
@@ -866,6 +939,7 @@ class WifiLedBulb():
                 pass
             finally:
                 self._socket.setblocking(1)
+        print('recieved',' '.join(list('{:02x}'.format(r) for r in rx)))
         return rx
 
     def getClock(self):
