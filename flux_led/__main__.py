@@ -515,6 +515,7 @@ class WifiLedBulb():
         self._cold_white = 0
         self._socket = None
         self._lock = threading.Lock()
+        self._use_csum = True
 
         self.connect(2)
         self.update_state()
@@ -590,15 +591,14 @@ class WifiLedBulb():
         # default values
         msg = bytearray([0x81, 0x8a, 0x8b])
         msg_len = 14
-        use_csum = True
 
         if self.protocol == 'LEDnet_wifi370' or led_type == 'LEDnet_wifi370':
             msg =  bytearray([0xef, 0x01, 0x77])
             msg_len = 11
             led_type = 'LEDnet_wifi370'
-            use_csum = False
+            self._use_csum = False
         try:
-            self._send_msg(msg, use_csum)
+            self._send_msg(msg)
             rx = self._read_msg(msg_len)
         except socket.error:
             if retry < 1:
@@ -663,6 +663,7 @@ class WifiLedBulb():
         # Devices that use the 11-byte protocol
         if rx[1] == 0x01:
             self.protcol = "LEDnet_wifi370"
+            self._use_csum = False
 
         pattern = rx[3]
         ww_level = rx[9]
@@ -727,12 +728,10 @@ class WifiLedBulb():
 
     def turnOn(self, retry=2, turn_on = True):
         msg_on = bytearray([0x71, 0x23, 0x0f])
-        msg_on = bytearray([0x71, 0x24, 0x0f])
-        use_csum = True
+        msg_off = bytearray([0x71, 0x24, 0x0f])
         if self.protocol == 'LEDnet_wifi370':
             msg_on =  bytearray([0xcc, 0x23, 0x33])
             msg_off =  bytearray([0xcc, 0x24, 0x33])
-            use_csum = False         
 
         if turn_on:
             self._is_on = True            
@@ -742,7 +741,7 @@ class WifiLedBulb():
             msg = msg_off
                 
         try:
-            self._send_msg(msg, use_csum)
+            self._send_msg(msg)
         except socket.error:
             if retry:
                 self.connect()
@@ -864,14 +863,13 @@ class WifiLedBulb():
         msg.append(0x0f)
 
         if self.protocol == 'LEDnet_wifi370':
-            use_csum = False
             msg = bytearray([0x56])
             msg.append(int(r))
             msg.append(int(g))
             msg.append(int(b))
             msg.append(0xaa)
         try:
-            self._send_msg(msg, use_csum)
+            self._send_msg(msg)
         except socket.error:
             if retry:
                 self.connect()
@@ -897,8 +895,8 @@ class WifiLedBulb():
         hsv = colorsys.rgb_to_hsv(r, g, b)
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
-    def _send_msg(self, bytes, checksum = True):
-        if checksum: # calculate checksum of byte array and add to end
+    def _send_msg(self, bytes):
+        if self._use_csum: # calculate checksum of byte array and add to end
             csum = sum(bytes) & 0xFF
             bytes.append(csum)
         with self._lock:
