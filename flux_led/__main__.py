@@ -516,8 +516,6 @@ class WifiLedBulb():
         self._lock = threading.Lock()
 
         self.connect(2)
-        print('connected')
-        print('attempting to update')
         self.update_state()
 
     @property
@@ -552,14 +550,12 @@ class WifiLedBulb():
     def connect(self, retry=0):
         self.close()
         try:
-            print('connecting to', self.ipaddr, 'attenpt', retry)
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.settimeout(self.timeout)
             self._socket.connect((self.ipaddr, self.port))
         except socket.error:
             if retry < 1:
                 return
-            print('socket error')
             self.connect(max(retry-1, 0))
 
     def close(self):
@@ -589,7 +585,6 @@ class WifiLedBulb():
         return mode
 
     def query_state(self, retry=2, led_type = None):
-        print('querying... attempt ', retry, 'for type', led_type)
 
         # default values
         msg = bytearray([0x81, 0x8a, 0x8b])
