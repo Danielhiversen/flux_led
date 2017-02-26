@@ -551,7 +551,6 @@ class WifiLedBulb():
 
     def connect(self, retry=0):
         self.close()
-        print('closing connection to', self.ipaddr)
         try:
             print('connecting to', self.ipaddr, 'attenpt', retry)
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -606,31 +605,26 @@ class WifiLedBulb():
             self._send_msg(msg, use_csum)
             rx = self._read_msg(msg_len)
         except socket.error:
- #           print('querry_state socket error')
             if retry < 1:
                 self._is_on = False
                 return
             self.connect()
             return self.query_state(max(retry-1, 0), led_type)
         if rx is None or len(rx) < msg_len:
- #           print('response is empty')
             if retry < 1:
                 self._is_on = False
                 if led_type == None:
                     rx = self.query_state(retry = 2, led_type = 'LEDnet_wifi370')
                 return rx
-#            print('attempting a resend')
             return self.query_state(max(retry-1, 0), led_type)
             print('rx length', len(rx), 'led_type = ', led_type)  
         if len(rx) == 11 and led_type == 'LEDnet_wifi370':
-#            print('found the right protocol') 
             self.protocol = 'LEDnet_wifi370'
         return rx
 
     def update_state(self, retry=2 ):
         rx = self.query_state(retry)
-#        print('query_state', rx)
-        
+      
         # typical response:
         #pos  0  1  2  3  4  5  6  7  8  9 10
         #    66 01 24 39 21 0a ff 00 00 01 99
@@ -647,9 +641,6 @@ class WifiLedBulb():
         #     |
         #     msg head
         #        
-
-
-
 
         # Devices that don't require a separate rgb/w bit
         if (rx[1] == 0x04 or
@@ -689,7 +680,6 @@ class WifiLedBulb():
             self._is_on = False
         self.raw_state = rx
         self._mode = mode
-#        print('\nupdate complete\n')
 
     def __str__(self):
         rx = self.raw_state
@@ -862,7 +852,6 @@ class WifiLedBulb():
             bytes.append(csum)
         with self._lock:
             self._socket.send(bytes)
-        print('sending', ' '.join(list('{:02x}'.format(r) for r in bytes)))
 
     def _read_msg(self, expected):
         remaining = expected
@@ -883,7 +872,6 @@ class WifiLedBulb():
                 pass
             finally:
                 self._socket.setblocking(1)
-        print('recieved',' '.join(list('{:02x}'.format(r) for r in rx)))
         return rx
 
     def getClock(self):
