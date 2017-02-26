@@ -46,7 +46,6 @@ import colorsys
 from optparse import OptionParser,OptionGroup
 import ast
 import threading
-from binascii import hexlify
 
 try:
     import webcolors
