@@ -569,7 +569,7 @@ class WifiLedBulb():
 
     def _determineMode(self, ww_level, pattern_code):
         mode = "unknown"
-        if pattern_code in [0x61, 0x62]:
+        if pattern_code in [ 0x61, 0x62]:
             if ww_level != 0:
                 mode = "ww"
             else:
@@ -617,6 +617,8 @@ class WifiLedBulb():
             self.protocol = 'LEDnet_wifi370'
         return rx
 
+
+
     def update_state(self, retry=2 ):
         rx = self.query_state(retry)
       
@@ -636,7 +638,6 @@ class WifiLedBulb():
         #     |
         #     msg head
         #        
-
         # Devices that don't require a separate rgb/w bit
         if (rx[1] == 0x04 or
             rx[1] == 0x33 or
@@ -668,11 +669,10 @@ class WifiLedBulb():
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern)
         if mode == "unknown":
-            print('unknown mode')
             if retry < 1:
                 return
             self.connect()
-            rx = self.query_state(max(retry-1, 0))
+            self.update_state(max(retry-1, 0))
             return
         power_state = rx[2]
 
@@ -752,6 +752,7 @@ class WifiLedBulb():
     def turnOff(self, retry=2):
         self.turnOn(retry, turn_on = False)
 
+
     def isOn(self):
         return self.is_on
 
@@ -799,7 +800,7 @@ class WifiLedBulb():
 
     def setRgbw(self, r=None, g=None, b=None, w=None, persist=True,
                 brightness=None, retry=2, w2=None):
-        use_csum = True
+
         if (r or g or b) and w and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise Exception
@@ -861,12 +862,14 @@ class WifiLedBulb():
         # Message terminator
         msg.append(0x0f)
 
+        # yet another type of protocol/controller that only supports RGB (no ww)
         if self.protocol == 'LEDnet_wifi370':
             msg = bytearray([0x56])
             msg.append(int(r))
             msg.append(int(g))
             msg.append(int(b))
             msg.append(0xaa)
+        
         try:
             self._send_msg(msg)
         except socket.error:
