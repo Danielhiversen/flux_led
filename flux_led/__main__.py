@@ -725,7 +725,8 @@ class WifiLedBulb():
           mode_str += str(_r) + ","
         return "{} [{}]".format(power_str, mode_str)
 
-    def turnOn(self, retry=2, turn_on = True):
+
+    def _change_state(self, retry, turn_on = True):
         msg_on = bytearray([0x71, 0x23, 0x0f])
         msg_off = bytearray([0x71, 0x24, 0x0f])
         if self.protocol == 'LEDnet_wifi370':
@@ -733,10 +734,8 @@ class WifiLedBulb():
             msg_off =  bytearray([0xcc, 0x24, 0x33])
 
         if turn_on:
-            self._is_on = True            
             msg = msg_on
         else:
-            self._is_on = False
             msg = msg_off
                 
         try:
@@ -748,8 +747,12 @@ class WifiLedBulb():
                 return
             self._is_on = False
 
+    def turnOn(self, retry=2, turn_on = True):
+        self._is_on = True            
+        self._change_state(retry, turn_on = True)
 
     def turnOff(self, retry=2):
+        self._is_on = False
         self.turnOn(retry, turn_on = False)
 
 
