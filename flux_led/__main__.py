@@ -747,13 +747,14 @@ class WifiLedBulb():
                 return
             self._is_on = False
 
+
     def turnOn(self, retry=2, turn_on = True):
         self._is_on = True            
         self._change_state(retry, turn_on = True)
 
     def turnOff(self, retry=2):
         self._is_on = False
-        self.turnOn(retry, turn_on = False)
+        self._change_state(retry, turn_on = False)
 
 
     def isOn(self):
