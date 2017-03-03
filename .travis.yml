@@ -8,6 +8,13 @@ install:
 - pip install pytest
 - pip install coveralls
 script:
-- py.test tests.py 
-
-
+- py.test tests.py
+deploy:
+  provider: pypi
+  user: dahoiv
+  password:
+    secure: oksuyq/Y2+vPZMPRNLE89CbMUPjEzqftBi31Y0F6W9YM3kGowZ3XlLr8ge3PrelEHgVxzfAbceBxOfwn5/Qm45IcQYHQljtBOsGmVoE7eHlTQZUP9CbuU26LPJWAtnc82uCEaZTvmVD3frKq4jm9bcYwS3KMNb50AZyJbgBIDzv5N9J/k7ofdN7hq/F7piSj5M+HFeNZtOfOAFZIcVuMw5cqhQkT8YpHBI3uvHQB6vSWgwZUNEoW6N3GNGWdsr9l940SmKHqUOHjHfCshTl+NvY7pt4cwh89wY8dmQwslYnkZYEgx254mivZX/3RhBZDPKW9c/lMFx7diqwiIblV5HhsPHS1IuLao+MIRnjrlgW9wdwcXs3NBMxi2Blq7Peah3gddrVjYb3YexHBW2EmmifP53Jygdt5omE6tu0egvRd7IOs8m8F9/GTMUZxvBkFa3YHWUOsTtC7T4fXchWfKQ7fDF7SaGmYvPi9m0/reGi9lotasY0ViUCmKFv0V/KhlfJNJjuzt94pOAegoiwrWa3BEsR1orAY51hOq5ZweJFe1sOR6X/JTtqFV1ZSIgqxVDKhuXjcl8GJYBfj7ce+76whQcU6q3JL55p6qHaV+UlXjKVNmRT7nMANawZGyTmwhdlUnLLzD3dqhhgH5fOdJ3HAp860C+S8g0J76Ui/w7M=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: Danielhiversen/flux_led
