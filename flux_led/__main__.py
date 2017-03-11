@@ -948,7 +948,6 @@ class WifiLedBulb():
             bytes.append(csum)
         with self._lock:
             self._socket.send(bytes)
-            print('sending   ', bytes.hex())
 
     def _read_msg(self, expected):
         remaining = expected
@@ -969,7 +968,6 @@ class WifiLedBulb():
                 pass
             finally:
                 self._socket.setblocking(1)
-        print('recieving ', rx.hex())
         return rx
 
     def getClock(self):
