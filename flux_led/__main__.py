@@ -591,10 +591,10 @@ class WifiLedBulb():
         msg = bytearray([0x81, 0x8a, 0x8b])
         msg_len = 14
 
-        if self.protocol == 'LEDnet_wifi370' or led_type == 'LEDnet_wifi370':
+        if self.protocol == 'LEDENET_ORIGINAL' or led_type == 'LEDENET_ORIGINAL':
             msg =  bytearray([0xef, 0x01, 0x77])
             msg_len = 11
-            led_type = 'LEDnet_wifi370'
+            led_type = 'LEDENET_ORIGINAL'
             self._use_csum = False
         try:
             self._send_msg(msg)
@@ -609,12 +609,9 @@ class WifiLedBulb():
             if retry < 1:
                 self._is_on = False
                 if led_type == None:
-                    rx = self.query_state(retry = 2, led_type = 'LEDnet_wifi370')
+                    rx = self.query_state(retry = 2, led_type = 'LEDENET_ORIGINAL')
                 return rx
             return self.query_state(max(retry-1, 0), led_type)
-            print('rx length', len(rx), 'led_type = ', led_type)  
-        if len(rx) == 11 and led_type == 'LEDnet_wifi370':
-            self.protocol = 'LEDnet_wifi370'
         return rx
 
 
@@ -625,17 +622,17 @@ class WifiLedBulb():
         # typical response:
         #pos  0  1  2  3  4  5  6  7  8  9 10
         #    66 01 24 39 21 0a ff 00 00 01 99
-        #     |     |  |     |  |  |  |  |  |
-        #     |     |  |     |  |  |  |  |  |  checksum
-        #     |     |  |     |  |  |  |  warmwhite
-        #     |     |  |     |  |  |  blue
-        #     |     |  |     |  |  green 
-        #     |     |  |     |  red
-        #     |     |  |     speed: 0f = highest f0 is lowest
-        #     |     |  preset pattern             
-        #     |     off(23)/on(24)
-        #     |
-        #     |
+        #     |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  warmwhite
+        #     |  |  |  |  |  |  |  |  blue
+        #     |  |  |  |  |  |  |  green 
+        #     |  |  |  |  |  |  red
+        #     |  |  |  |  |  speed: 0f = highest f0 is lowest
+        #     |  |  |  |  <don't know yet>
+        #     |  |  |  preset pattern             
+        #     |  |  off(23)/on(24)
+        #     |  type
         #     msg head
         #        
         # Devices that don't require a separate rgb/w bit
@@ -659,10 +656,11 @@ class WifiLedBulb():
         # Devices that support RGBW, but only as two separate commands
         if rx[1] == 0x25:
             self.badrgbw = True
+            self.protocol = "BadRGBW"
 
-        # Devices that use the 11-byte protocol
+        # Devices that use the original LEDENET protocol
         if rx[1] == 0x01:
-            self.protcol = "LEDnet_wifi370"
+            self.protcol = "LEDENET_ORIGINAL"
             self._use_csum = False
 
         pattern = rx[3]
@@ -727,17 +725,19 @@ class WifiLedBulb():
 
 
     def _change_state(self, retry, turn_on = True):
-        msg_on = bytearray([0x71, 0x23, 0x0f])
-        msg_off = bytearray([0x71, 0x24, 0x0f])
-        if self.protocol == 'LEDnet_wifi370':
+
+        if self.protocol == 'LEDENET_ORIGINAL':
             msg_on =  bytearray([0xcc, 0x23, 0x33])
             msg_off =  bytearray([0xcc, 0x24, 0x33])
+        else:
+            msg_on = bytearray([0x71, 0x23, 0x0f])
+            msg_off = bytearray([0x71, 0x24, 0x0f])
 
         if turn_on:
             msg = msg_on
         else:
             msg = msg_off
-                
+
         try:
             self._send_msg(msg)
         except socket.error:
@@ -749,7 +749,7 @@ class WifiLedBulb():
 
 
     def turnOn(self, retry=2, turn_on = True):
-        self._is_on = True            
+        self._is_on = True
         self._change_state(retry, turn_on = True)
 
     def turnOff(self, retry=2):
@@ -809,6 +809,45 @@ class WifiLedBulb():
             print("RGBW command sent to non-RGBW device")
             raise Exception
 
+        # sample message for original LEDENET protocol
+        #  0  1  2  3  4
+        # 56 90 fa 77 aa
+        #  |  |  |  |  |
+        #  |  |  |  |  terminator
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  head
+
+        
+        # sample message for the other protocols
+        #  0  1  2  3  4  5  6
+        # 31 90 fa 77 00 00 0f
+        #  |  |  |  |  |  |  |
+        #  |  |  |  |  |  |  terminator
+        #  |  |  |  |  |  special/white2 (see below)
+        #  |  |  |  |  white
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  persisitence (31 for true / 41 for false)
+        #
+        # the special byte
+        # the special byte can have different values depending on the type
+        # of device:
+        # For devices that support 2 types of white value (warm and cold
+        # white) this value is the cold white value. These use the LEDENET
+        # protocol. If a second value is not given, reuse the first white value.
+        #
+        # For devices that cannot set both rbg and white values at the same time
+        # (including devices that only support white) this value
+        # specifies if this command is to set white value (0f) or the rgb
+        # value (f0). 
+        #
+        # For all other rgb and rgbw devices, the value is 00
+
+
+
         # Some devices provide RGBW control, but require two separate writes
         # If we've been given both colours and whites, split them up
         if self.badrgbw == True and (r != None and (w != None or w2 != None)):
@@ -819,61 +858,62 @@ class WifiLedBulb():
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
 
-        if persist:
-            msg = bytearray([0x31])
-        else:
-            msg = bytearray([0x41])
-
-        if r is not None:
-            msg.append(int(r))
-        else:
-            msg.append(int(0))
-        if g is not None:
-            msg.append(int(g))
-        else:
-            msg.append(int(0))
-        if b is not None:
-            msg.append(int(b))
-        else:
-            msg.append(int(0))
-        if w is not None:
-            msg.append(int(w))
-        else:
-            msg.append(int(0))
-
-        # LEDENET devices support two white outputs for cool and warm. We set
-        # the second one here - if we're only setting a single white value,
-        # we set the second output to be the same as the first
-        if self.protocol == "LEDENET":
-            if w2 is not None:
-                msg.append(int(w2))
-            elif w is not None:
-                msg.append(int(w))
-            else:
-                msg.append(0)
-
-        if not self.rgbwprotocol:
-            # For devices that can't set RGB+W simultaneously, indicate whether
-            # we should set the white outputs or the RGB outputs
-            if w is not None or w2 is not None:
-                msg.append(0x0f)
-            else:
-                msg.append(0xf0)
-        else:
-            # These devices can simultaneously control the RGB and white output
-            msg.append(0x00)
-
-        # Message terminator
-        msg.append(0x0f)
-
-        # yet another type of protocol/controller that only supports RGB (no ww)
-        if self.protocol == 'LEDnet_wifi370':
+        # The original LEDENET protocol
+        if self.protocol == 'LEDENET_ORIGINAL':
             msg = bytearray([0x56])
             msg.append(int(r))
             msg.append(int(g))
             msg.append(int(b))
             msg.append(0xaa)
-        
+        else:
+            # all other devices
+            # determine how to set the special byte
+            # For devices that can't set RGB+W simultaneously, indicate whether
+            # we should set the white outputs or the RGB outputs
+            if not self.rgbwprotocol:
+                if w is not None or w2 is not None:
+                    special = 0x0f
+                else:
+                    special = 0xf0
+            # LEDENET devices support two white outputs for cool and warm. We set
+            # the second one here - if we're only setting a single white value,
+            # we set the second output to be the same as the first
+            elif self.protocol == "LEDENET":
+                if w2 is not None:
+                    special = int(w2)
+                elif w is not None:
+                    special = int(w)
+            else:
+            # These devices can simultaneously control the RGB and white output
+                special = 0x00
+
+            #assemble the message
+            if persist:
+                msg = bytearray([0x31])
+            else:
+                msg = bytearray([0x41])
+
+            if r is not None:
+                msg.append(int(r))
+            else:
+                msg.append(int(0))
+            if g is not None:
+                msg.append(int(g))
+            else:
+                msg.append(int(0))
+            if b is not None:
+                msg.append(int(b))
+            else:
+                msg.append(int(0))
+            if w is not None:
+                msg.append(int(w))
+            else:
+                msg.append(int(0))
+            msg.append(special)
+            # Message terminator
+            msg.append(0x0f)
+
+        # send the message
         try:
             self._send_msg(msg)
         except socket.error:
@@ -902,7 +942,8 @@ class WifiLedBulb():
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
     def _send_msg(self, bytes):
-        if self._use_csum: # calculate checksum of byte array and add to end
+        # calculate checksum of byte array and add to end
+        if self._use_csum:
             csum = sum(bytes) & 0xFF
             bytes.append(csum)
         with self._lock:
@@ -1144,8 +1185,7 @@ class  BulbScanner():
 
         self.found_bulbs = response_list
         return response_list
-#=========================================================================
-def showUsageExamples():
+#=======================================================================def showUsageExamples():
     example_text = """
 Examples:
 
