@@ -514,6 +514,7 @@ class WifiLedBulb():
         self._cold_white = 0
         self._socket = None
         self._lock = threading.Lock()
+        self._query_len = 0
         self._use_csum = True
 
         self.connect(2)
@@ -582,34 +583,50 @@ class WifiLedBulb():
             mode = "preset"
         elif BuiltInTimer.valid(pattern_code):
             mode = BuiltInTimer.valtostr(pattern_code)
-
         return mode
 
+ 
+    def _determine_query_len(self):
+
+        # determine the type of protocol based of first 2 bytes.
+        self._send_msg(bytearray([0x81, 0x8a, 0x8b]))
+        rx = self._read_msg(2)
+        # if any response is recieved, use the default protocol
+        if len(rx) == 2:
+            self._query_len = 14
+            return
+        # if no response from default recieved, next try the original protocol
+        self._send_msg(bytearray([0xef, 0x01, 0x77]))
+        rx = self._read_msg(2)
+        if rx[1] == 0x01:
+            self.protocol = 'LEDENET_ORIGINAL'
+            self._use_csum = False
+            self._query_len = 11
+ 
     def query_state(self, retry=2, led_type = None):
 
-        # default values
+        if self._query_len == 0:
+            self._determine_query_len()
+            
+        # default value
         msg = bytearray([0x81, 0x8a, 0x8b])
-        msg_len = 14
-
+        # alternative for original protocol
         if self.protocol == 'LEDENET_ORIGINAL' or led_type == 'LEDENET_ORIGINAL':
             msg =  bytearray([0xef, 0x01, 0x77])
-            msg_len = 11
             led_type = 'LEDENET_ORIGINAL'
-            self._use_csum = False
+
         try:
             self._send_msg(msg)
-            rx = self._read_msg(msg_len)
+            rx = self._read_msg(self._query_len)
         except socket.error:
             if retry < 1:
                 self._is_on = False
                 return
             self.connect()
             return self.query_state(max(retry-1, 0), led_type)
-        if rx is None or len(rx) < msg_len:
+        if rx is None or len(rx) < self._query_len:
             if retry < 1:
                 self._is_on = False
-                if led_type == None:
-                    rx = self.query_state(retry = 2, led_type = 'LEDENET_ORIGINAL')
                 return rx
             return self.query_state(max(retry-1, 0), led_type)
         return rx
@@ -948,7 +965,6 @@ class WifiLedBulb():
             bytes.append(csum)
         with self._lock:
             self._socket.send(bytes)
-            print('sending   ', bytes.hex())
 
     def _read_msg(self, expected):
         remaining = expected
@@ -969,7 +985,6 @@ class WifiLedBulb():
                 pass
             finally:
                 self._socket.setblocking(1)
-        print('recieving ', rx.hex())
         return rx
 
     def getClock(self):
@@ -1187,7 +1202,8 @@ class  BulbScanner():
 
         self.found_bulbs = response_list
         return response_list
-#=======================================================================def showUsageExamples():
+#=======================================================================
+def showUsageExamples():
     example_text = """
 Examples:
 
