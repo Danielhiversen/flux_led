@@ -762,14 +762,14 @@ class WifiLedBulb():
         try:
             self._send_msg(msg)
         except socket.error:
-            if retry:
+            if retry > 0:
                 self.connect()
-                self.turnOn(max(retry-1, 0), turn_on)
+                self._change_state(max(retry-1, 0), turn_on)
                 return
             self._is_on = False
 
 
-    def turnOn(self, retry=2, turn_on = True):
+    def turnOn(self, retry=2):
         self._is_on = True
         self._change_state(retry, turn_on = True)
 
