@@ -520,6 +520,7 @@ class WifiLedBulb():
         self.connect(2)
         self.update_state()
 
+
     @property
     def is_on(self):
         return self._is_on
@@ -589,6 +590,7 @@ class WifiLedBulb():
     def _determine_query_len(self):
 
         # determine the type of protocol based of first 2 bytes.
+        self._use_csum = True
         self._send_msg(bytearray([0x81, 0x8a, 0x8b]))
         rx = self._read_msg(2)
         # if any response is recieved, use the default protocol
@@ -596,15 +598,17 @@ class WifiLedBulb():
             self._query_len = 14
             return
         # if no response from default recieved, next try the original protocol
+        self._use_csum = False
         self._send_msg(bytearray([0xef, 0x01, 0x77]))
         rx = self._read_msg(2)
         if rx[1] == 0x01:
             self.protocol = 'LEDENET_ORIGINAL'
             self._use_csum = False
             self._query_len = 11
+        else:
+            self._use_csum = True
  
     def query_state(self, retry=2, led_type = None):
-
         if self._query_len == 0:
             self._determine_query_len()
             

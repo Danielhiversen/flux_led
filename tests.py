@@ -288,3 +288,113 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.warm_white, 0)
         self.assertEqual(light.brightness, 247)
         self.assertEqual(light.getRgb(), (3, 77, 247))
+
+    @patch('flux_led.WifiLedBulb._send_msg')
+    @patch('flux_led.WifiLedBulb._read_msg')
+    def test_original_ledenet(self, mock_read, mock_send):
+        calls = 0
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b'')
+            if calls == 2:
+                self.assertEqual(expected, 2)
+                return bytearray(b'\f\x01')
+            if calls == 3:
+                self.assertEqual(expected, 11)
+                return bytearray(b'f\x01#A!\x08\xff\x80*\x01\x99')
+            if calls == 4:
+                self.assertEqual(expected, 11)
+                return bytearray(b'f\x01#A!\x08\x01\x19P\x01\x99')
+            if calls == 5:
+                self.assertEqual(expected, 11)
+                return bytearray(b'f\x01$A!\x08\x01\x19P\x01\x99')
+            if calls == 6:
+                self.assertEqual(expected, 11)
+                return bytearray(b'f\x01#A!\x08\x01\x19P\x01\x99')
+
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 3) 
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\xef\x01w'))
+        )
+
+        light.setRgb(1, 25, 80)
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 4)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'V\x01\x19P\xaa'))
+        )
+
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 4)
+        self.assertEqual(mock_send.call_count, 5)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\xef\x01w'))
+        )
+
+        self.assertEqual(light.__str__(), "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 102,1,35,65,33,8,1,25,80,1,153,]")
+        self.assertEqual(light.protocol, 'LEDENET_ORIGINAL')
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 80)
+        self.assertEqual(light.getRgb(), (1, 25, 80))
+
+
+        light.turnOff()
+        self.assertEqual(mock_read.call_count, 4)
+        self.assertEqual(mock_send.call_count, 6)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\xcc$3'))
+        )
+
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 5)
+        self.assertEqual(mock_send.call_count, 7)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\xef\x01w'))
+        )
+
+        self.assertEqual(light.__str__(), 'False [Color: (1, 25, 80) Brightness: 80 raw state: 102,1,36,65,33,8,1,25,80,1,153,]')
+        self.assertEqual(light.protocol, 'LEDENET_ORIGINAL')
+        self.assertEqual(light.is_on, False)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 80)
+        self.assertEqual(light.getRgb(), (1, 25, 80))
+
+
+        light.turnOn()
+        self.assertEqual(mock_read.call_count, 5)
+        self.assertEqual(mock_send.call_count, 8)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\xcc#3'))
+        )
+
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 6)
+        self.assertEqual(mock_send.call_count, 9)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\xef\x01w'))
+        )
+
+        self.assertEqual(light.__str__(), "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 102,1,35,65,33,8,1,25,80,1,153,]")
+        self.assertEqual(light.protocol, 'LEDENET_ORIGINAL')
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 80)
+        self.assertEqual(light.getRgb(), (1, 25, 80))
