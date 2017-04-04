@@ -643,7 +643,7 @@ class WifiLedBulb():
 
     def update_state(self, retry=2 ):
         rx = self.query_state(retry)
-        if rx is None:
+        if rx is None or len(rx) < self._query_len:
             self._is_on = False
             return
       
