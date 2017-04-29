@@ -572,7 +572,9 @@ class WifiLedBulb():
     def _determineMode(self, ww_level, pattern_code):
         mode = "unknown"
         if pattern_code in [ 0x61, 0x62]:
-            if ww_level != 0:
+            if self.rgbwcapable:
+                mode = "color"
+            elif ww_level != 0:
                 mode = "ww"
             else:
                 mode = "color"
@@ -730,9 +732,10 @@ class WifiLedBulb():
             green = rx[7]
             blue = rx[8]
             mode_str = "Color: {}".format((red, green, blue))
-            mode_str += " Brightness: {}".format(self.brightness)
-
-
+            if self.rgbwcapable:
+                mode_str += " White: {}".format(rx[9])
+            else:
+                mode_str += " Brightness: {}".format(self.brightness)
         elif mode == "ww":
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "preset":
