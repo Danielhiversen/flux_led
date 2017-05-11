@@ -506,6 +506,7 @@ class WifiLedBulb():
         self.rgbwcapable = False
         self.rgbwprotocol = False
         self.badrgbw = False
+        self.v1extrabyte = False
 
         self.raw_state = None
         self._is_on = False
@@ -639,6 +640,9 @@ class WifiLedBulb():
                 self._is_on = False
                 return rx
             return self.query_state(max(retry-1, 0), led_type)
+            
+        print("got State ")
+        print(' '.join("0x" + format(tmp, "02x") for tmp in rx))
         return rx
 
 
@@ -649,6 +653,7 @@ class WifiLedBulb():
             self._is_on = False
             return
       
+
         # typical response:
         #pos  0  1  2  3  4  5  6  7  8  9 10
         #    66 01 24 39 21 0a ff 00 00 01 99
@@ -686,6 +691,7 @@ class WifiLedBulb():
         # Devices that support RGBW, but only as two separate commands
         if rx[1] == 0x25:
             self.badrgbw = True
+            self.v1extrabyte = True #hacking this here for now
             self.protocol = "BadRGBW"
 
         # Devices that use the original LEDENET protocol
@@ -699,6 +705,7 @@ class WifiLedBulb():
         if mode == "unknown":
             if retry < 1:
                 return
+            print("retry")
             self.connect()
             self.update_state(max(retry-1, 0))
             return
@@ -940,6 +947,9 @@ class WifiLedBulb():
                 msg.append(int(w))
             else:
                 msg.append(int(0))
+            
+            if(self.v1extrabyte):
+                msg.append(0)
             msg.append(special)
             # Message terminator
             msg.append(0x0f)
@@ -979,6 +989,7 @@ class WifiLedBulb():
             bytes.append(csum)
         with self._lock:
             self._socket.send(bytes)
+        print("Sending message: " + ' '.join("0x" + format(tmp, "02x") for tmp in bytes))
 
     def _read_msg(self, expected):
         remaining = expected
@@ -1036,6 +1047,9 @@ class WifiLedBulb():
 
     def setProtocol(self, protocol):
         self.protocol = protocol.upper()
+        
+    def getProtocol(self):
+        return self.protocol
 
     def setPresetPattern(self, pattern, speed):
 
@@ -1776,6 +1790,8 @@ def main():
                 print("  Timer #{}: {}".format(num, t))
             print("")
 
+        print("protocol used was " + str(bulb.getProtocol()))
+        
     sys.exit(0)
 
 
