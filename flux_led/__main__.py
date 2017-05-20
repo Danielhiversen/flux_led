@@ -497,7 +497,7 @@ class LedTimer():
         return txt
 
 class WifiLedBulb():
-    def __init__(self, ipaddr, verbose=False, port=5577, timeout=5 ):
+    def __init__(self, ipaddr, port=5577, timeout=5, verbose=False):
         self.ipaddr = ipaddr
         self.port = port
         self.timeout = timeout
@@ -521,8 +521,6 @@ class WifiLedBulb():
 
         self.connect(2)
         self.update_state()
-        
-
 
 
     @property
@@ -958,7 +956,7 @@ class WifiLedBulb():
         # Some devices provide RGBW control, but require two separate writes
         # If we've been given both colours and whites, split them up
         if self.badrgbw == True and (r != None and (w != None or w2 != None)):
-            self.setRgbw(w=w, retry=retry, persist=persist, w2=w2)
+            self.setRgbw(w=w, w2=w2, retry=retry, persist=persist)
             self.setRgbw(r, g, b, retry=retry, persist=persist)
             return
 
@@ -976,7 +974,7 @@ class WifiLedBulb():
             # all other devices
             # determine how to set the special byte
             # For devices that can't set RGB+W simultaneously, indicate whether
-            # we should set the white outputs or the RGB outputs.
+            # we should set the white outputs or the RGB outputs
             if not self.rgbwprotocol:
                 if w is not None or w2 is not None:
                     special = 0x0f
@@ -1027,7 +1025,7 @@ class WifiLedBulb():
             
             # Message terminator
             msg.append(0x0f)
-            
+
         self.dbgPrint("Generated Color Command: ")
         self.dbgPrint("    R-" + str(r) + " G-" + str(g) + " B-" + str(b) + " WW-" + str(w) + " CW-" + str(w2))
         # send the message
@@ -1807,7 +1805,7 @@ def main():
         except Exception as e:
             print("Unable to connect to bulb at [{}]: {}".format(info['ipaddr'],e))
             continue
-            
+
         if options.getclock:
             print("{} [{}] {}".format(info['id'], info['ipaddr'],bulb.getClock()))
 
@@ -1876,7 +1874,7 @@ def main():
                 num += 1
                 print("  Timer #{}: {}".format(num, t))
             print("")
-        
+
     sys.exit(0)
 
 
