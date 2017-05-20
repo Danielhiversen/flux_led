@@ -506,7 +506,7 @@ class WifiLedBulb():
         self.rgbwcapable = False
         self.rgbwprotocol = False
         self.badrgbw = False
-        self.v1extrabyte = False
+        self.fivechv1protocol = False
 
         self.raw_state = None
         self._is_on = False
@@ -654,7 +654,7 @@ class WifiLedBulb():
             return
       
 
-        # typical response:
+        # typical response (4 channel - RGB + warm):
         #pos  0  1  2  3  4  5  6  7  8  9 10
         #    66 01 24 39 21 0a ff 00 00 01 99
         #     |  |  |  |  |  |  |  |  |  |  |
@@ -669,7 +669,28 @@ class WifiLedBulb():
         #     |  |  off(23)/on(24)
         #     |  type
         #     msg head
-        #        
+        #    
+
+        # typical response (5 channel - RGB + warm + cool, V1 firmware):
+        #pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
+        #    81 25 23 61 21 06 38 05 06 f9 01 00 0f 9d
+        #     |  |  |  |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |  |  |  mode (0f for whites, f0 for colors)
+        #     |  |  |  |  |  |  |  |  |  |  |  coolwhite
+        #     |  |  |  |  |  |  |  |  |  |  <don't know yet, always 01>
+        #     |  |  |  |  |  |  |  |  |  warmwhite
+        #     |  |  |  |  |  |  |  |  blue
+        #     |  |  |  |  |  |  |  green 
+        #     |  |  |  |  |  |  red
+        #     |  |  |  |  |  speed: 0f = highest f0 is lowest
+        #     |  |  |  |  <don't know yet>
+        #     |  |  |  preset pattern             
+        #     |  |  off(23)/on(24)
+        #     |  type
+        #     msg head
+        #     
+        
         # Devices that don't require a separate rgb/w bit
         if (rx[1] == 0x04 or
             rx[1] == 0x33 or
@@ -691,8 +712,15 @@ class WifiLedBulb():
         # Devices that support RGBW, but only as two separate commands
         if rx[1] == 0x25:
             self.badrgbw = True
-            self.v1extrabyte = True #hacking this here for now
             self.protocol = "BadRGBW"
+            
+        # Devices with five-channel V1 firmware protocol    
+        if (rx[0] == 0x81 and
+            rx[1] == 0x25 and
+            size(rx) == 14):
+            self.badrgbw = True
+            self.fivechv1protocol = True
+            self.protocol = "5chV1Firmware"
 
         # Devices that use the original LEDENET protocol
         if rx[1] == 0x01:
@@ -858,9 +886,23 @@ class WifiLedBulb():
         #  head
 
         
+        # sample message 5-channel devices
+        #  0  1  2  3  4  5  6  7 
+        # 31 bc c1 ff 00 00 f0 0f 
+        #  |  |  |  |  |  |  |  |  
+        #  |  |  |  |  |  |  |  terminator
+        #  |  |  |  |  |  |  special (f0 to set RGB, f0 to set white)
+        #  |  |  |  |  |  cool white
+        #  |  |  |  |  warm white
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  persisitence (31 for true / 41 for false)
+        
+        
         # sample message for the other protocols
-        #  0  1  2  3  4  5  6
-        # 31 90 fa 77 00 00 0f
+        #  0  1  2  3  4  5  6 
+        # 31 90 fa 77 00 00 0f 
         #  |  |  |  |  |  |  |
         #  |  |  |  |  |  |  terminator
         #  |  |  |  |  |  special/white2 (see below)
@@ -869,18 +911,23 @@ class WifiLedBulb():
         #  |  |  green
         #  |  red
         #  persisitence (31 for true / 41 for false)
-        #
+        
         # the special byte
         # the special byte can have different values depending on the type
         # of device:
-        # For devices that support 2 types of white value (warm and cold
+        # For some devices that support 2 types of white value (warm and cold
         # white) this value is the cold white value. These use the LEDENET
         # protocol. If a second value is not given, reuse the first white value.
         #
-        # For devices that cannot set both rbg and white values at the same time
-        # (including devices that only support white) this value
-        # specifies if this command is to set white value (0f) or the rgb
-        # value (f0). 
+        # We classify devices that cannot set both rbg and white values 
+        # at the same time as "badRGBW".
+        #
+        # For all badRGBW devices (including devices that only support
+        # white) this value specifies if this command is to set
+        # white values (0f) or the rgb value (f0).
+        #
+        # Some badRGBW devices which support two white channels (warm/cool)
+        # have additional bytes for the extra white channel
         #
         # For all other rgb and rgbw devices, the value is 00
 
@@ -907,7 +954,7 @@ class WifiLedBulb():
             # all other devices
             # determine how to set the special byte
             # For devices that can't set RGB+W simultaneously, indicate whether
-            # we should set the white outputs or the RGB outputs
+            # we should set the white outputs or the RGB outputs.
             if not self.rgbwprotocol:
                 if w is not None or w2 is not None:
                     special = 0x0f
@@ -947,10 +994,15 @@ class WifiLedBulb():
                 msg.append(int(w))
             else:
                 msg.append(int(0))
-            
-            if(self.v1extrabyte):
-                msg.append(0)
+                
+            if(self.fivechv1protocol):
+                if(w2 is not None):
+                    msg.append(w2)
+                else:
+                    msg.append(0)
+               
             msg.append(special)
+            
             # Message terminator
             msg.append(0x0f)
 
