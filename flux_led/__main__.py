@@ -59,7 +59,7 @@ class utils:
         global webcolors_available
 
         # see if it's already a color tuple
-        if type(color) is tuple and (len(color) == 3 or len(color == 4)):
+        if type(color) is tuple and (len(color) >= 3 and len(color) <= 5):
             return color
 
         # can't convert non-string
@@ -87,7 +87,7 @@ class utils:
         # try to convert a string RGB tuple
         try:
             val = ast.literal_eval(color)
-            if type(val) is not tuple or (len(val) != 3 and len(val) != 4):
+            if type(val) is not tuple or len(val) < 3 or len(val) > 5:
                 raise Exception
             return val
         except:
@@ -505,7 +505,6 @@ class WifiLedBulb():
         self.protocol = None
         self.rgbwcapable = False
         self.rgbwprotocol = False
-        self.badrgbw = False
 
         self.raw_state = None
         self._is_on = False
@@ -598,8 +597,7 @@ class WifiLedBulb():
         if len(rx) == 2:
             self._query_len = 14
             return
-        # if no response from default recieved, next try the original protocol
-        self._use_csum = False
+        # if no response from default received, next try the original protocol
         self._send_msg(bytearray([0xef, 0x01, 0x77]))
         rx = self._read_msg(2)
         if rx[1] == 0x01:
@@ -665,8 +663,30 @@ class WifiLedBulb():
         #     |  type
         #     msg head
         #        
+
+        # response from a 5-channel LEDENET controller:
+        #pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
+        #    81 25 23 61 21 06 38 05 06 f9 01 00 0f 9d
+        #     |  |  |  |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |  |  |  color mode (f0 colors were set, 0f whites, 00 all were set)
+        #     |  |  |  |  |  |  |  |  |  |  |  cold-white
+        #     |  |  |  |  |  |  |  |  |  |  <don't know yet>
+        #     |  |  |  |  |  |  |  |  |  warmwhite
+        #     |  |  |  |  |  |  |  |  blue
+        #     |  |  |  |  |  |  |  green
+        #     |  |  |  |  |  |  red
+        #     |  |  |  |  |  speed: 0f = highest f0 is lowest
+        #     |  |  |  |  <don't know yet>
+        #     |  |  |  preset pattern
+        #     |  |  off(23)/on(24)
+        #     |  type
+        #     msg head
+        #
+
         # Devices that don't require a separate rgb/w bit
         if (rx[1] == 0x04 or
+            rx[1] == 0x25 or
             rx[1] == 0x33 or
             rx[1] == 0x81):
             self.rgbwprotocol = True
@@ -682,11 +702,6 @@ class WifiLedBulb():
             rx[1] == 0x27 or
             rx[1] == 0x35):
             self.protocol = "LEDENET"
-
-        # Devices that support RGBW, but only as two separate commands
-        if rx[1] == 0x25:
-            self.badrgbw = True
-            self.protocol = "BadRGBW"
 
         # Devices that use the original LEDENET protocol
         if rx[1] == 0x01:
@@ -723,7 +738,7 @@ class WifiLedBulb():
         if power_state == 0x23:
             power_str = "ON "
         elif power_state == 0x24:
-            power_str = False
+            power_str = "OFF "
 
         delay = rx[5]
         speed = utils.delayToSpeed(delay)
@@ -836,11 +851,11 @@ class WifiLedBulb():
     def setRgbw(self, r=None, g=None, b=None, w=None, persist=True,
                 brightness=None, retry=2, w2=None):
 
-        if (r or g or b) and w and not self.rgbwcapable:
+        if (r or g or b) and (w or w2) and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise Exception
 
-        # sample message for original LEDENET protocol
+        # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
         # 56 90 fa 77 aa
         #  |  |  |  |  |
@@ -851,20 +866,19 @@ class WifiLedBulb():
         #  head
 
         
-        # sample message for the other protocols
+        # sample message for 8-byte protocols (w/ checksum at end)
         #  0  1  2  3  4  5  6
         # 31 90 fa 77 00 00 0f
         #  |  |  |  |  |  |  |
         #  |  |  |  |  |  |  terminator
-        #  |  |  |  |  |  special/white2 (see below)
+        #  |  |  |  |  |  write mask / white2 (see below)
         #  |  |  |  |  white
         #  |  |  |  blue
         #  |  |  green
         #  |  red
-        #  persisitence (31 for true / 41 for false)
+        #  persistence (31 for true / 41 for false)
         #
-        # the special byte
-        # the special byte can have different values depending on the type
+        # byte 5 can have different values depending on the type
         # of device:
         # For devices that support 2 types of white value (warm and cold
         # white) this value is the cold white value. These use the LEDENET
@@ -877,14 +891,19 @@ class WifiLedBulb():
         #
         # For all other rgb and rgbw devices, the value is 00
 
-
-
-        # Some devices provide RGBW control, but require two separate writes
-        # If we've been given both colours and whites, split them up
-        if self.badrgbw == True and (r != None and (w != None or w2 != None)):
-            self.setRgbw(w=w, w2=w2, retry=retry, persist=persist)
-            self.setRgbw(r, g, b, retry=retry, persist=persist)
-            return
+        # sample message for 9-byte LEDENET protocol (w/ checksum at end)
+        #  0  1  2  3  4  5  6  7
+        # 31 bc c1 ff 00 00 f0 0f
+        #  |  |  |  |  |  |  |  |
+        #  |  |  |  |  |  |  |  terminator
+        #  |  |  |  |  |  |  write mode (f0 colors, 0f whites, 00 colors & whites)
+        #  |  |  |  |  |  cold white
+        #  |  |  |  |  warm white
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  persistence (31 for true / 41 for false)
+        #
 
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
@@ -898,25 +917,6 @@ class WifiLedBulb():
             msg.append(0xaa)
         else:
             # all other devices
-            # determine how to set the special byte
-            # For devices that can't set RGB+W simultaneously, indicate whether
-            # we should set the white outputs or the RGB outputs
-            if not self.rgbwprotocol:
-                if w is not None or w2 is not None:
-                    special = 0x0f
-                else:
-                    special = 0xf0
-            # LEDENET devices support two white outputs for cool and warm. We set
-            # the second one here - if we're only setting a single white value,
-            # we set the second output to be the same as the first
-            elif self.protocol == "LEDENET":
-                if w2 is not None:
-                    special = int(w2)
-                elif w is not None:
-                    special = int(w)
-            else:
-            # These devices can simultaneously control the RGB and white output
-                special = 0x00
 
             #assemble the message
             if persist:
@@ -940,7 +940,30 @@ class WifiLedBulb():
                 msg.append(int(w))
             else:
                 msg.append(int(0))
-            msg.append(special)
+
+            if self.protocol == "LEDENET":
+                # LEDENET devices support two white outputs for cold and warm. We set
+                # the second one here - if we're only setting a single white value,
+                # we set the second output to be the same as the first
+                if w2 is not None:
+                    msg.append(int(w2))
+                elif w is not None:
+                    msg.append(int(w))
+                else:
+                    msg.append(0)
+
+            # write mask, default to writing color and whites simultaneously
+            write_mask = 0x00
+            if self.rgbwprotocol:
+                if w is None and w2 is None:
+                    # Mask out whites
+                    write_mask |= 0xf0
+                elif r is None and g is None and b is None:
+                    # Mask out colors
+                    write_mask |= 0x0f
+
+            msg.append(write_mask)
+
             # Message terminator
             msg.append(0x0f)
 
@@ -1552,8 +1575,11 @@ def parseArgs():
                   help="Set single color mode.  Can be either color name, web hex, or comma-separated RGB triple",
                   metavar='COLOR')
     mode_group.add_option("-w", "--warmwhite", dest="ww", default=None,
-                  help="Set warm white mode (LEVEL is percent)",
-                  metavar='LEVEL', type="int")
+                  help="Set warm white mode (LEVELWW is percent)",
+                  metavar='LEVELWW', type="int")
+    mode_group.add_option("", "--coldwhite", dest="cw", default=None,
+                  help="Set cold white mode (LEVELCW is percent)",
+                  metavar='LEVELCW', type="int")
     mode_group.add_option("-p", "--preset", dest="preset", default=None,
                   help="Set preset pattern mode (SPEED is percent)",
                   metavar='CODE SPEED', type="int", nargs=2)
@@ -1628,10 +1654,11 @@ def parseArgs():
     mode_count = 0
     if options.color:  mode_count += 1
     if options.ww:     mode_count += 1
+    if options.cw:     mode_count += 1
     if options.preset: mode_count += 1
     if options.custom: mode_count += 1
     if mode_count > 1:
-        parser.error("options --color, --warmwhite, --preset, and --custom are mutually exclusive")
+        parser.error("options --color, --*white, --preset, and --custom are mutually exclusive")
 
     if options.on and options.off:
         parser.error("options --on and --off are mutually exclusive")
@@ -1723,7 +1750,11 @@ def main():
             print("Setting warm white mode, level: {}%".format(options.ww))
             bulb.setWarmWhite(options.ww, not options.volatile)
 
-        elif options.color is not None:
+        if options.cw is not None:
+            print("Setting cold white mode, level: {}%".format(options.cw))
+            bulb.setColdWhite(options.cw, not options.volatile)
+
+        if options.color is not None:
             print("Setting color RGB:{}".format(options.color),)
             name = utils.color_tuple_to_string(options.color)
             if name is None:
@@ -1734,6 +1765,8 @@ def main():
                 bulb.setRgb(options.color[0],options.color[1],options.color[2], not options.volatile)
             elif len(options.color) == 4:
                 bulb.setRgbw(options.color[0],options.color[1],options.color[2],options.color[3], not options.volatile)
+            elif len(options.color) == 5:
+                bulb.setRgbw(options.color[0],options.color[1],options.color[2],options.color[3], not options.volatile, None, options.color[4])
 
         elif options.custom is not None:
             bulb.setCustomPattern(options.custom[2],
