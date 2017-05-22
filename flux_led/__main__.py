@@ -509,8 +509,6 @@ class WifiLedBulb():
         self.raw_state = None
         self._is_on = False
         self._mode = None
-        self._warm_white = 0
-        self._cold_white = 0
         self._socket = None
         self._lock = threading.Lock()
         self._query_len = 0
@@ -530,11 +528,17 @@ class WifiLedBulb():
 
     @property
     def warm_white(self):
-        return self._warm_white
+        if self.protocol == 'LEDENET':
+            return self.raw_state[9]
+        else:
+            return 0
 
     @property
     def cold_white(self):
-        return self._cold_white
+        if self.protocol == 'LEDENET':
+            return self.raw_state[11]
+        else:
+            return 0
 
     @property
     def brightness(self):
@@ -686,7 +690,6 @@ class WifiLedBulb():
 
         # Devices that don't require a separate rgb/w bit
         if (rx[1] == 0x04 or
-            rx[1] == 0x25 or
             rx[1] == 0x33 or
             rx[1] == 0x81):
             self.rgbwprotocol = True
@@ -694,6 +697,7 @@ class WifiLedBulb():
         # Devices that actually support rgbw
         if (rx[1] == 0x04 or
             rx[1] == 0x25 or
+            rx[1] == 0x33 or
             rx[1] == 0x81):
             self.rgbwcapable = True
 
@@ -843,6 +847,16 @@ class WifiLedBulb():
         white = self.raw_state[9]
         return (red, green, blue, white)
     
+    def getRgbww(self):
+        if self.mode != "color":
+            return (255, 255, 255, 255, 255)
+        red = self.raw_state[6]
+        green = self.raw_state[7]
+        blue = self.raw_state[8]
+        white = self.raw_state[9]
+        white2 = self.raw_state[11]
+        return (red, green, blue, white, white2)
+
     def getSpeed(self):
         delay = self.raw_state[5]
         speed = utils.delayToSpeed(delay)
@@ -954,7 +968,8 @@ class WifiLedBulb():
 
             # write mask, default to writing color and whites simultaneously
             write_mask = 0x00
-            if self.rgbwprotocol:
+            # rgbwprotocol devices always overwrite both color & whites
+            if not self.rgbwprotocol:
                 if w is None and w2 is None:
                     # Mask out whites
                     write_mask |= 0xf0
@@ -974,7 +989,7 @@ class WifiLedBulb():
             if retry:
                 self.connect()
                 self.setRgbw(r,g,b,w, persist=persist, brightness=brightness,
-                             retry=max(retry-1, 0))
+                             retry=max(retry-1, 0), w2=w2)
 
     def getRgb(self):
         if self.mode != "color":

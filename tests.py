@@ -291,6 +291,67 @@ class TestLight(unittest.TestCase):
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
+    def test_rgbwwcw(self, mock_read, mock_send):
+        calls = 0
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b'\x81D')
+            if calls == 2:
+                self.assertEqual(expected, 14)
+                return bytearray(b'\x81\x25\x23\x61\x21\x10\xb6\x00\x98\x00\x04\x00\xf0\xbc')
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(b'\x81\x25\x23\x61\x21\x10\xb6\x00\x98\x19\x04\x25\x0f\xa6')
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\x81\x8a\x8b'))
+        )
+
+        self.assertEqual(light.protocol, 'LEDENET')
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 182)
+        self.assertEqual(light.getRgb(), (182, 0, 152))
+        self.assertEqual(light.rgbwcapable, True)
+        self.assertEqual(light.__str__(), "ON  [Color: (182, 0, 152) White: 0 raw state: 129,37,35,97,33,16,182,0,152,0,4,0,240,188,]")
+
+        light.setWarmWhite255(25)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'1\x00\x00\x00\x19\x19\x0f\x0f'))
+        )
+
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 4)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\x81\x8a\x8b'))
+        )
+
+        self.assertEqual(light.protocol, 'LEDENET')
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 25)
+        self.assertEqual(light.cold_white, 37)
+        self.assertEqual(light.brightness, 182)
+        self.assertEqual(light.getRgbww(), (182, 0, 152, 25, 37))
+        self.assertEqual(light.rgbwcapable, True)
+        self.assertEqual(light.__str__(), "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,33,16,182,0,152,25,4,37,15,166,]")
+
+    @patch('flux_led.WifiLedBulb._send_msg')
+    @patch('flux_led.WifiLedBulb._read_msg')
     def test_original_ledenet(self, mock_read, mock_send):
         calls = 0
         def read_data(expected):
