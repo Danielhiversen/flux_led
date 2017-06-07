@@ -59,7 +59,7 @@ class utils:
         global webcolors_available
 
         # see if it's already a color tuple
-        if type(color) is tuple and (len(color) >= 3 and len(color) <= 5):
+        if type(color) is tuple and len(color) in [3, 4, 5]:
             return color
 
         # can't convert non-string
@@ -87,7 +87,7 @@ class utils:
         # try to convert a string RGB tuple
         try:
             val = ast.literal_eval(color)
-            if type(val) is not tuple or len(val) < 3 or len(val) > 5:
+            if type(val) is not tuple or len(val) not in [3, 4, 5]:
                 raise Exception
             return val
         except:
