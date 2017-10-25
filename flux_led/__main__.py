@@ -1602,7 +1602,7 @@ def parseArgs():
                             default=None, nargs=3,
                             help="Set custom pattern mode. " +
                               "TYPE should be jump, gradual, or strobe. SPEED is percent. " +
-                              "COLORLIST is a should be a space-separated list of color names, web hex values, or comma-separated RGB triples")
+                              "COLORLIST is a space-separated list of color names, web hex values, or comma-separated RGB triples")
     parser.add_option_group(mode_group)
 
     parser.add_option("-i", "--info",
