@@ -130,8 +130,9 @@ Options:
                         Set preset pattern mode (SPEED is percent)
     -C TYPE SPEED COLORLIST, --custom=TYPE SPEED COLORLIST
                         Set custom pattern mode. TYPE should be jump, gradual,
-                        or strobe. SPEED is percent. COLORLIST is a should be
-                        a space-separated list of color names, web hex values,
-                        or comma-separated RGB triples
+                        or strobe. SPEED is percent. COLORLIST is a space-
+                        separated list of color names, web hex values, or
+                        comma-separated RGB triples
+
 
 ```
