@@ -1014,8 +1014,6 @@ class WifiLedBulb():
             csum = sum(bytes) & 0xFF
             bytes.append(csum)
         with self._lock:
-            # print("Sending: ")
-            # utils.dump_bytes(bytes)
             self._socket.send(bytes)
 
     def _read_msg(self, expected):
@@ -1037,8 +1035,6 @@ class WifiLedBulb():
                 pass
             finally:
                 self._socket.setblocking(1)
-        # print("Read: ")
-        # utils.dump_bytes(rx)
         return rx
 
     def getClock(self):
