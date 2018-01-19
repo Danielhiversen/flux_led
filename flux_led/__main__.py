@@ -452,7 +452,7 @@ class LedTimer():
     def __str__(self):
         txt = ""
         if not self.active:
-          return "Unset"
+            return "Unset"
 
         if self.turn_on:
             txt += "[ON ]"
@@ -613,7 +613,6 @@ class WifiLedBulb():
             self._use_csum = True
         if rx == None and retry > 0:
             self._determine_query_len(max(retry -1,0))
-
         
  
     def query_state(self, retry=2, led_type = None):
@@ -628,6 +627,7 @@ class WifiLedBulb():
             led_type = 'LEDENET_ORIGINAL'
 
         try:
+            self.connect()
             self._send_msg(msg)
             rx = self._read_msg(self._query_len)
         except socket.error:
@@ -642,7 +642,6 @@ class WifiLedBulb():
                 return rx
             return self.query_state(max(retry-1, 0), led_type)
         return rx
-
 
 
     def update_state(self, retry=2 ):
@@ -718,7 +717,6 @@ class WifiLedBulb():
         if mode == "unknown":
             if retry < 1:
                 return
-            self.connect()
             self.update_state(max(retry-1, 0))
             return
         power_state = rx[2]
