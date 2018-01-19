@@ -4,9 +4,9 @@ from setuptools import setup
 setup(
     name = 'flux_led',
     packages = ['flux_led'],
-    version = '0.20',
+    version = '0.21',
     description = 'A Python library to communicate with the flux_led smart bulbs',
-    author = 'Daniel Høyer Iversen, Beville',
+    author = 'Daniel Høyer Iversen',
     author_email = 'mail@dahoiv.net',
     url = 'https://github.com/Danielhiversen/flux_led',
     license = 'LGPLv3+',
