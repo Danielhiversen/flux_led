@@ -697,7 +697,8 @@ class WifiLedBulb():
         if (rx[1] == 0x04 or
             rx[1] == 0x25 or
             rx[1] == 0x33 or
-            rx[1] == 0x81):
+            rx[1] == 0x81 or
+            rx[1] == 0x44):
             self.rgbwcapable = True
 
         # Devices that use an 8-byte protocol
