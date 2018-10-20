@@ -19,7 +19,7 @@ class TestLight(unittest.TestCase):
                 return bytearray(b'\x81D')
             if calls == 2:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10g\xffh\x00\x04\x00\xf0<')
+                return bytearray(b'\x81E#a!\x10g\xffh\x00\x04\x00\xf0<')
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.166")
@@ -30,7 +30,7 @@ class TestLight(unittest.TestCase):
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
 
-        self.assertEqual(light.__str__(), "ON  [Color: (103, 255, 104) Brightness: 255 raw state: 129,68,35,97,33,16,103,255,104,0,4,0,240,60,]")
+        self.assertEqual(light.__str__(), "ON  [Color: (103, 255, 104) Brightness: 255 raw state: 129,69,35,97,33,16,103,255,104,0,4,0,240,60,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
@@ -53,10 +53,10 @@ class TestLight(unittest.TestCase):
                 return bytearray(b'\x81D')
             if calls == 2:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10g\xffh\x00\x04\x00\xf0<')
+                return bytearray(b'\x81E#a!\x10g\xffh\x00\x04\x00\xf0<')
             if calls == 3:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10\x01\x19P\x00\x04\x00\xf0\xd8')
+                return bytearray(b'\x81E#a!\x10\x01\x19P\x00\x04\x00\xf0\xd8')
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
@@ -83,7 +83,7 @@ class TestLight(unittest.TestCase):
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
 
-        self.assertEqual(light.__str__(), "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 129,68,35,97,33,16,1,25,80,0,4,0,240,216,]")
+        self.assertEqual(light.__str__(), "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 129,69,35,97,33,16,1,25,80,0,4,0,240,216,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
@@ -100,17 +100,17 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b'\x81D')
+                return bytearray(b'\x81E')
             if calls == 2:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10\x00\x00\x00\xa6\x04\x00\x0f3')
+                return bytearray(b'\x81E#a!\x10\x00\x00\x00\xa6\x04\x00\x0f3')
             if calls == 3:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D$a!\x10\x00\x00\x00\xa6\x04\x00\x0f4')
+                return bytearray(b'\x81E$a!\x10\x00\x00\x00\xa6\x04\x00\x0f4')
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
-        self.assertEqual(light.__str__(), "ON  [Warm White: 65% raw state: 129,68,35,97,33,16,0,0,0,166,4,0,15,51,]")
+        self.assertEqual(light.__str__(), "ON  [Warm White: 65% raw state: 129,69,35,97,33,16,0,0,0,166,4,0,15,51,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "ww")
@@ -141,7 +141,7 @@ class TestLight(unittest.TestCase):
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
 
-        self.assertEqual(light.__str__(), "OFF  [Warm White: 65% raw state: 129,68,36,97,33,16,0,0,0,166,4,0,15,52,]")
+        self.assertEqual(light.__str__(), "OFF  [Warm White: 65% raw state: 129,69,36,97,33,16,0,0,0,166,4,0,15,52,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, False)
         self.assertEqual(light.mode, "ww")
@@ -159,13 +159,13 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b'\x81D')
+                return bytearray(b'\x81E')
             if calls == 2:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10\xb6\x00\x98\x00\x04\x00\xf0\xbc')
+                return bytearray(b'\x81E#a!\x10\xb6\x00\x98\x00\x04\x00\xf0\xbc')
             if calls == 3:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10\x00\x00\x00\x19\x04\x00\x0f\xa6')
+                return bytearray(b'\x81E#a!\x10\x00\x00\x00\x19\x04\x00\x0f\xa6')
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
@@ -176,7 +176,7 @@ class TestLight(unittest.TestCase):
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
 
-        self.assertEqual(light.__str__(), "ON  [Color: (182, 0, 152) Brightness: 182 raw state: 129,68,35,97,33,16,182,0,152,0,4,0,240,188,]")
+        self.assertEqual(light.__str__(), "ON  [Color: (182, 0, 152) Brightness: 182 raw state: 129,69,35,97,33,16,182,0,152,0,4,0,240,188,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
@@ -201,7 +201,7 @@ class TestLight(unittest.TestCase):
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
 
-        self.assertEqual(light.__str__(), "ON  [Warm White: 9% raw state: 129,68,35,97,33,16,0,0,0,25,4,0,15,166,]")
+        self.assertEqual(light.__str__(), "ON  [Warm White: 9% raw state: 129,69,35,97,33,16,0,0,0,25,4,0,15,166,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "ww")
@@ -220,13 +220,13 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b'\x81D')
+                return bytearray(b'\x81E')
             if calls == 2:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D$a!\x10\xff[\xd4\x00\x04\x00\xf0\x9d')
+                return bytearray(b'\x81E$a!\x10\xff[\xd4\x00\x04\x00\xf0\x9d')
             if calls == 3:
                 self.assertEqual(expected, 14)
-                return bytearray(b'\x81D#a!\x10\x03M\xf7\x00\x04\x00\xf0\xb5')
+                return bytearray(b'\x81E#a!\x10\x03M\xf7\x00\x04\x00\xf0\xb5')
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
@@ -236,7 +236,7 @@ class TestLight(unittest.TestCase):
             mock_send.call_args,
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
-        self.assertEqual(light.__str__(), "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,68,36,97,33,16,255,91,212,0,4,0,240,157,]")
+        self.assertEqual(light.__str__(), "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,157,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, False)
         self.assertEqual(light.mode, "color")
@@ -251,7 +251,7 @@ class TestLight(unittest.TestCase):
             mock_send.call_args,
             mock.call(bytearray(b'q#\x0f'))
         )
-        self.assertEqual(light.__str__(), "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,68,36,97,33,16,255,91,212,0,4,0,240,157,]")
+        self.assertEqual(light.__str__(), "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,157,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
@@ -266,7 +266,7 @@ class TestLight(unittest.TestCase):
             mock_send.call_args,
             mock.call(bytearray(b'1\x03M\xf7\x00\xf0\x0f'))
         )
-        self.assertEqual(light.__str__(), "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,68,36,97,33,16,255,91,212,0,4,0,240,157,]")
+        self.assertEqual(light.__str__(), "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,157,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
@@ -281,7 +281,7 @@ class TestLight(unittest.TestCase):
             mock_send.call_args,
             mock.call(bytearray(b'\x81\x8a\x8b'))
         )
-        self.assertEqual(light.__str__(), "ON  [Color: (3, 77, 247) Brightness: 247 raw state: 129,68,35,97,33,16,3,77,247,0,4,0,240,181,]")
+        self.assertEqual(light.__str__(), "ON  [Color: (3, 77, 247) Brightness: 247 raw state: 129,69,35,97,33,16,3,77,247,0,4,0,240,181,]")
         self.assertEqual(light.protocol, None)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
