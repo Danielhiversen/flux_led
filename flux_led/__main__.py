@@ -496,6 +496,21 @@ class LedTimer():
 
         return txt
 
+class Constants:
+    # On/Off
+    ON = 0x23
+    OFF = 0x24
+
+    # IC selection for RGB strips
+    UCS1903 = 1
+    SM16703 = 2
+    WS2811 = 3
+    WS2812B = 4
+    SK6812 = 5
+    INK1003 = 6
+    WS2801 = 7
+    LB1914 = 8
+
 class WifiLedBulb():
     def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
@@ -505,6 +520,10 @@ class WifiLedBulb():
         self.protocol = None
         self.rgbwcapable = False
         self.rgbwprotocol = False
+        self.stripprotocol = False
+        self.strip_led_count = None
+        self.strip_wiring = None
+        self.strip_ic = None
 
         self.raw_state = None
         self._is_on = False
@@ -574,7 +593,7 @@ class WifiLedBulb():
 
     def _determineMode(self, ww_level, pattern_code):
         mode = "unknown"
-        if pattern_code in [ 0x61, 0x62]:
+        if pattern_code in [0x61, 0x62]:
             if self.rgbwcapable:
                 mode = "color"
             elif ww_level != 0:
@@ -591,9 +610,7 @@ class WifiLedBulb():
             mode = BuiltInTimer.valtostr(pattern_code)
         return mode
 
- 
     def _determine_query_len(self, retry = 2):
-
         # determine the type of protocol based of first 2 bytes.
         self._send_msg(bytearray([0x81, 0x8a, 0x8b]))
         rx = self._read_msg(2)
@@ -613,8 +630,7 @@ class WifiLedBulb():
             self._use_csum = True
         if rx == None and retry > 0:
             self._determine_query_len(max(retry -1,0))
-        
- 
+
     def query_state(self, retry=2, led_type = None):
         if self._query_len == 0:
             self._determine_query_len()
@@ -643,7 +659,6 @@ class WifiLedBulb():
             return self.query_state(max(retry-1, 0), led_type)
         return rx
 
-
     def update_state(self, retry=2 ):
         rx = self.query_state(retry)
         if rx is None or len(rx) < self._query_len:
@@ -666,7 +681,7 @@ class WifiLedBulb():
         #     |  type
         #     msg head
         #        
-
+        #    81 a1 23 00 b2 51 00 ff 00 02 03 00 3c 88
         # response from a 5-channel LEDENET controller:
         #pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
         #    81 25 23 61 21 06 38 05 06 f9 01 00 0f 9d
@@ -700,7 +715,9 @@ class WifiLedBulb():
             rx[1] == 0x81 or
             rx[1] == 0x44):
             self.rgbwcapable = True
-
+        # LED strip controllers
+        if (rx[1] == 0xa1):
+            self.stripprotocol = True
         # Devices that use an 8-byte protocol
         if (rx[1] == 0x25 or
             rx[1] == 0x27 or
@@ -711,15 +728,15 @@ class WifiLedBulb():
         if rx[1] == 0x01:
             self.protocol = "LEDENET_ORIGINAL"
             self._use_csum = False
-
-        pattern = rx[3]
-        ww_level = rx[9]
-        mode = self._determineMode(ww_level, pattern)
-        if mode == "unknown":
-            if retry < 1:
+        if not self.stripprotocol:
+            pattern = rx[3]
+            ww_level = rx[9]
+            mode = self._determineMode(ww_level, pattern)
+            if mode == "unknown":
+                if retry < 1:
+                    return
+                self.update_state(max(retry-1, 0))
                 return
-            self.update_state(max(retry-1, 0))
-            return
         power_state = rx[2]
 
         if power_state == 0x23:
@@ -772,7 +789,6 @@ class WifiLedBulb():
           mode_str += str(_r) + ","
         return "{} [{}]".format(power_str, mode_str)
 
-
     def _change_state(self, retry, turn_on = True):
 
         if self.protocol == 'LEDENET_ORIGINAL':
@@ -796,7 +812,6 @@ class WifiLedBulb():
                 return
             self._is_on = False
 
-
     def turnOn(self, retry=2):
         self._is_on = True
         self._change_state(retry, turn_on = True)
@@ -804,7 +819,6 @@ class WifiLedBulb():
     def turnOff(self, retry=2):
         self._is_on = False
         self._change_state(retry, turn_on = False)
-
 
     def isOn(self):
         return self.is_on
@@ -1003,15 +1017,12 @@ class WifiLedBulb():
                      retry=retry)
 
     def _calculateBrightness(self, rgb, level):
-        r = rgb[0]
-        g = rgb[1]
-        b = rgb[2]
-        hsv = colorsys.rgb_to_hsv(r, g, b)
+        hsv = colorsys.rgb_to_hsv(*rgb)
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
-    def _send_msg(self, bytes):
+    def _send_msg(self, bytes, checksum=True):
         # calculate checksum of byte array and add to end
-        if self._use_csum:
+        if checksum and self._use_csum:
             csum = sum(bytes) & 0xFF
             bytes.append(csum)
         with self._lock:
