@@ -511,6 +511,16 @@ class Constants:
     WS2801 = 7
     LB1914 = 8
 
+    # Wiring selection for RBG strips
+
+
+    REQUEST_STRIP_SETTINGS = bytearray([0x63, 0x12, 0x21, 0x36])
+    REQUEST_QUERY_STATE = bytearray([0x81, 0x8a, 0x8b])
+
+
+    LEDENET_ORIGINAL_REQUEST_QUERY_STATE = bytearray([0xef, 0x01, 0x77])
+
+
 class WifiLedBulb():
     def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
@@ -533,9 +543,8 @@ class WifiLedBulb():
         self._query_len = 0
         self._use_csum = True
 
-        self.connect(2)
-        self.update_state()
-
+        if self.connect(2):
+            self.update_state()
 
     @property
     def is_on(self):
@@ -578,9 +587,10 @@ class WifiLedBulb():
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.settimeout(self.timeout)
             self._socket.connect((self.ipaddr, self.port))
+            return True
         except socket.error:
             if retry < 1:
-                return
+                return False
             self.connect(max(retry-1, 0))
 
     def close(self):
@@ -612,14 +622,14 @@ class WifiLedBulb():
 
     def _determine_query_len(self, retry = 2):
         # determine the type of protocol based of first 2 bytes.
-        self._send_msg(bytearray([0x81, 0x8a, 0x8b]))
+        self._send_msg(Constants.REQUEST_QUERY_STATE)
         rx = self._read_msg(2)
         # if any response is recieved, use the default protocol
         if len(rx) == 2:
             self._query_len = 14
             return
         # if no response from default received, next try the original protocol
-        self._send_msg(bytearray([0xef, 0x01, 0x77]))
+        self._send_msg(Constants.LEDENET_ORIGINAL_REQUEST_QUERY_STATE)
         rx = self._read_msg(2)
         if rx[1] == 0x01:
             self.protocol = 'LEDENET_ORIGINAL'
@@ -629,19 +639,18 @@ class WifiLedBulb():
         else:
             self._use_csum = True
         if rx == None and retry > 0:
-            self._determine_query_len(max(retry -1,0))
+            self._determine_query_len(max(retry - 1,0))
 
     def query_state(self, retry=2, led_type = None):
         if self._query_len == 0:
             self._determine_query_len()
             
         # default value
-        msg = bytearray([0x81, 0x8a, 0x8b])
+        msg = Constants.REQUEST_QUERY_STATE
         # alternative for original protocol
         if self.protocol == 'LEDENET_ORIGINAL' or led_type == 'LEDENET_ORIGINAL':
-            msg =  bytearray([0xef, 0x01, 0x77])
+            msg = Constants.LEDENET_ORIGINAL_REQUEST_QUERY_STATE
             led_type = 'LEDENET_ORIGINAL'
-
         try:
             self.connect()
             self._send_msg(msg)
@@ -649,7 +658,7 @@ class WifiLedBulb():
         except socket.error:
             if retry < 1:
                 self._is_on = False
-                return
+                return None
             self.connect()
             return self.query_state(max(retry-1, 0), led_type)
         if rx is None or len(rx) < self._query_len:
@@ -680,7 +689,8 @@ class WifiLedBulb():
         #     |  |  off(23)/on(24)
         #     |  type
         #     msg head
-        #        
+        #    
+        # response from a 3-channel LED strip controller:
         #    81 a1 23 00 b2 51 00 ff 00 02 03 00 3c 88
         # response from a 5-channel LEDENET controller:
         #pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
@@ -707,7 +717,7 @@ class WifiLedBulb():
             rx[1] == 0x33 or
             rx[1] == 0x81):
             self.rgbwprotocol = True
-
+        
         # Devices that actually support rgbw
         if (rx[1] == 0x04 or
             rx[1] == 0x25 or
@@ -715,9 +725,11 @@ class WifiLedBulb():
             rx[1] == 0x81 or
             rx[1] == 0x44):
             self.rgbwcapable = True
+        
         # LED strip controllers
         if (rx[1] == 0xa1):
             self.stripprotocol = True
+        
         # Devices that use an 8-byte protocol
         if (rx[1] == 0x25 or
             rx[1] == 0x27 or
@@ -728,6 +740,7 @@ class WifiLedBulb():
         if rx[1] == 0x01:
             self.protocol = "LEDENET_ORIGINAL"
             self._use_csum = False
+        
         if not self.stripprotocol:
             pattern = rx[3]
             ww_level = rx[9]
@@ -737,11 +750,13 @@ class WifiLedBulb():
                     return
                 self.update_state(max(retry-1, 0))
                 return
+        else:
+            pattern = rx[3] << 8 + rx[4]
         power_state = rx[2]
 
-        if power_state == 0x23:
+        if power_state == Constants.ON:
             self._is_on = True
-        elif power_state == 0x24:
+        else:
             self._is_on = False
         self.raw_state = rx
         self._mode = mode
