@@ -202,7 +202,7 @@ class PresetPattern(IntEnum):
         return (pattern > 100 and pattern <= 400)
 
     @staticmethod
-    def valtostr(pattern: PresetPattern):
+    def valtostr(pattern):
         return pattern.name
 
 class BuiltInTimer():
@@ -502,6 +502,7 @@ class Constants:
     OFF = 0x24
 
     REQUEST_STRIP_SETTINGS = bytearray([0x63, 0x12, 0x21, 0x36])
+    RESPONSE_STRIP_SETTINGS_LENGTH = 12
     REQUEST_QUERY_STATE = bytearray([0x81, 0x8a, 0x8b])
 
     LEDENET_ORIGINAL_REQUEST_QUERY_STATE = bytearray([0xef, 0x01, 0x77])
@@ -676,6 +677,38 @@ class WifiLedBulb():
                 return rx
             return self.query_state(max(retry-1, 0), led_type)
         return rx
+
+    def query_strip_state(self, retry=2):
+
+        #pos  0  1  2  3  4  5  6  7  8  9 10 11 
+        #    63 00 3c 04 00 00 00 00  00 00 02 a5  
+        #     |  |  |  |  |  |  |  |  |  |  |  |  
+        #     |  |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |  wiring
+        #     |  |  |  |  |  |  |  |  |  ??
+        #     |  |  |  |  |  |  |  |  ??
+        #     |  |  |  |  |  |  |  ??
+        #     |  |  |  |  |  |  ??
+        #     |  |  |  |  |  ???
+        #     |  |  |  |  ????
+        #     |  |  |  ic
+        #     |  |  num pixels (16 bit, low byte)
+        #     |  num pixels (16 bit, high byte)
+        #     msg head
+        #
+        msg = Constants.REQUEST_STRIP_SETTINGS
+        query_len = Constants.RESPONSE_STRIP_SETTINGS_LENGTH
+        if self.stripprotocol:
+            try:
+                self.connect()
+                self._send_msg(msg, False)
+                rx = self._read_msg(query_len)
+                if rx is None or len(rx) < query_len:
+                    return False
+                else:
+                    return rx
+            except:
+                return False
 
     def update_state(self, retry=2):
         rx = self.query_state(retry)
@@ -1015,7 +1048,7 @@ class WifiLedBulb():
             write_mask = 0x00
             # rgbwprotocol devices always overwrite both color & whites
             if not self.rgbwprotocol:
-                if w != None or w2 != None:
+                if w is not None or w2 is not None:
                     write_mask |= 0x0f
                 else:
                     write_mask |= 0xf0
