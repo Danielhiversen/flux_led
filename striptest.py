@@ -21,6 +21,8 @@ def askyesno(str, index):
 
 print("Thank you for doing the testing of Magic Home RGB strip controllers.")
 print("Before starting, please open the Magic Home App and look how your strip setup is for checking.")
+print("When the test stops before finishes, please post the text into the thread on GitHub.")
+print
 ipaddress = input("Please enter the ip address of the strip controller: ")
 while re.match("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", ipaddress) is None:
     print("Wrong IP Adress")
@@ -87,3 +89,15 @@ else:
         askyesno("Is the light now blue?", 9)
         if answers[9][1] == 0:
             print("Communication error")
+
+print("Testing whether effects can be addressed...")
+controller.setPresetPattern(102, 50)
+askyesno("Is the effect now ""7 colors change gradually""?", 10)
+if answers[10][1] == 0:
+    print("Changing effects not possible")
+controller.setRgb(255, 0, 0)
+askyesno("Is the color now static red again?", 11)
+if answers[11][1] == 0:
+    print("Changing from effects to color not possible")
+print("The test is now finished! Now there will be an array of the answers printed, which you may post into the GitHub thread if there were problems. Thank you very much for your participation, it would be fine if you can response to the GitHub thread whether everything worked or there were any problems.")
+print(answers)

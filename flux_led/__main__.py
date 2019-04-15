@@ -1153,14 +1153,18 @@ class WifiLedBulb():
     def setPresetPattern(self, pattern, speed):
 
         PresetPattern.valtostr(pattern)
-        if not PresetPattern.valid(pattern):
+        if not PresetPattern.valid(pattern) or (self.stripprotocol and PresetPattern.valid_strip(pattern)):
             #print "Pattern must be between 0x25 and 0x38"
             raise Exception
 
         delay = utils.speedToDelay(speed)
         #print "speed {}, delay 0x{:02x}".format(speed,delay)
         pattern_set_msg = bytearray([0x61])
-        pattern_set_msg.append(pattern)
+        if self.stripprotocol:
+            pattern_set_msg.append(pattern >> 8)
+            pattern_set_msg.append(pattern % 0xFF)
+        else:
+            pattern_set_msg.append(pattern)
         pattern_set_msg.append(delay)
         pattern_set_msg.append(0x0f)
 
