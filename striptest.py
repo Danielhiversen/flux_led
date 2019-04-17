@@ -38,7 +38,7 @@ assertion(stripdata != False, "Checking if the strip controller status can be re
 
 assertion(stripdata[0] == 0x63, "Checking whether the strip setup data can be understood... ")
 from binascii import hexlify
-print("Received strip data: "+hexlify(stripdata))
+print("Received strip data: "+str(hexlify(stripdata)))
 led_count = (stripdata[1] << 8) + stripdata[2]
 try:
     ic = flux.StripIC(stripdata[3:10])
