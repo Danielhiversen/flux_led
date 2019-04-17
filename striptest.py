@@ -38,9 +38,10 @@ assertion(stripdata != False, "Checking if the strip controller status can be re
 
 assertion(stripdata[0] == 0x63, "Checking whether the strip setup data can be understood... ")
 
-led_count = stripdata[1] << 8 + stripdata[2]
+led_count = (stripdata[1] << 8) + stripdata[2]
 try:
     ic = flux.StripIC(stripdata[3:10])
+    ic = flux.StripIC.getICFromFirstByte(stripdata[3])
 except:
     ic = None
 assertion(ic is not None, "Checking whether the strip IC value can be understood... ")
@@ -51,7 +52,7 @@ except:
     wiring = None
 assertion(wiring is not None, "Checking whether the strip wiring value can be understood... ")
 
-askyesno("Is the LED count = "+led_count+"?", 0)
+askyesno("Is the LED count = "+str(led_count)+"?", 0)
 askyesno("Is the strip IC = "+ic.name+"?", 1)
 askyesno("Is the strip wiring = "+wiring.name+"?", 2)
 assertion(all(item[1] == 1 for item in answers), "Checking whether values are recognized correctly... ")
@@ -92,7 +93,7 @@ else:
 
 print("Testing whether effects can be addressed...")
 controller.setPresetPattern(102, 50)
-askyesno("Is the effect now ""7 colors change gradually""?", 10)
+askyesno("Is the effect now \"7 colors change gradually\"?", 10)
 if answers[10][1] == 0:
     print("Changing effects not possible")
 controller.setRgb(255, 0, 0)

@@ -527,6 +527,10 @@ class StripIC(Enum):
     WS2801 = bytearray([0x07, 0x0c, 0x0c, 0x06, 0x84, 0x06, 0x40])
     LB1914 = bytearray([0x08, 0x0c, 0x0c, 0x06, 0x84, 0x06, 0x40])
 
+    @staticmethod
+    def getICFromFirstByte(first_byte):
+        return [e for e in StripIC if e.value[0] == first_byte][0]
+
 class WifiLedBulb():
     def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
