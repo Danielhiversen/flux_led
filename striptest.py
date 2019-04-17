@@ -42,9 +42,11 @@ print("Received strip data: "+str(hexlify(stripdata)))
 led_count = (stripdata[1] << 8) + stripdata[2]
 try:
     ic = flux.StripIC(stripdata[3:10])
-    ic = flux.StripIC.getICFromFirstByte(stripdata[3])
 except:
-    ic = None
+    try:
+        ic = flux.StripIC.getICFromFirstByte(stripdata[3])
+    except:
+        ic = None
 assertion(ic is not None, "Checking whether the strip IC value can be understood... ")
 
 try:
