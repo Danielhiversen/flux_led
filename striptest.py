@@ -4,6 +4,9 @@ import re
 printnonl = lambda s : print(s, end='')
 answers = []
 
+def getAnswer(n):
+    return [a[1] for a in answers if a[0] == n][0]
+
 def assertion(f, msg):
     printnonl(msg)
     if (f):
@@ -38,13 +41,15 @@ assertion(stripdata != False, "Checking if the strip controller status can be re
 
 assertion(stripdata[0] == 0x63, "Checking whether the strip setup data can be understood... ")
 from binascii import hexlify
-print("Received strip data: "+hexlify(stripdata))
+print("Received strip data: "+str(hexlify(stripdata)))
 led_count = (stripdata[1] << 8) + stripdata[2]
 try:
     ic = flux.StripIC(stripdata[3:10])
-    ic = flux.StripIC.getICFromFirstByte(stripdata[3])
 except:
-    ic = None
+    try:
+        ic = flux.StripIC.getICFromFirstByte(stripdata[3])
+    except:
+        ic = None
 assertion(ic is not None, "Checking whether the strip IC value can be understood... ")
 
 try:
@@ -61,35 +66,35 @@ assertion(all(item[1] == 1 for item in answers), "Checking whether values are re
 print("Now it will be tested whether the communication with the strip controller works...")
 state = 'on' if controller.isOn() else 'off'
 askyesno("Is the controller currently "+state+"?", 3)
-if (state == 'off' and answers[3][1] == 1) or (state == 'on' and answers[3][1] == 0):
+if (state == 'off' and getAnswer(3) == 1) or (state == 'on' and getAnswer(3) == 0):
     controller.turnOn()
     controller.update_state()
     state = 'on' if controller.isOn() else 'off'
     askyesno("Is the controller now "+state+"?", 4)
-    assertion(answers[4][1] == 1, "Checking whether the on/off state is recognized correctly... ")
+    assertion(getAnswer(4) == 1, "Checking whether the on/off state is recognized correctly... ")
 controller.setRgb(255, 0, 0)
 askyesno("Is the light now red?", 5)
-if answers[5][1] == 0:
+if getAnswer(5) == 0:
     controller.setRgb(255, 255, 0)
     askyesno("Is the light now light blue?", 6)
-    if answers[6][1] == 0:
+    if getAnswer(6) == 0:
         print("Communication error")
     else:
         print("Wrong wiring set")
 else:
     controller.setRgb(0, 255, 0)
     askyesno("Is the light now green?", 7)
-    if answers[7][1] == 0:
+    if getAnswer(7) == 0:
         controller.setRgb(255, 255, 0)
         askyesno("Is the light now magenta?", 8)
-        if answers[8][1] == 0:
+        if getAnswer(8) == 0:
             print("Communication error")
         else:
             print("Wrong wiring set")
     else:
         controller.setRgb(0, 0, 255)
         askyesno("Is the light now blue?", 9)
-        if answers[9][1] == 0:
+        if getAnswer(9) == 0:
             print("Communication error")
 
 print("Testing whether effects can be addressed...")
