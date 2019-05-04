@@ -1,4 +1,5 @@
 import flux_led as flux
+from binascii import hexlify
 import re
 
 printnonl = lambda s : print(s, end='')
@@ -33,14 +34,14 @@ while re.match("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[
 
 controller = flux.WifiLedBulb(ipaddress)
 assertion(controller.connect(2), "Checking whether connection to controller works... ")
-
+print("Received controller status: " + str(hexlify(controller.query_state())))
 assertion(controller.stripprotocol == True, "Checking whether controller is a strip controller... ")
 
 stripdata = controller.query_strip_state()
 assertion(stripdata != False, "Checking if the strip controller status can be received... ")
 
 assertion(stripdata[0] == 0x63, "Checking whether the strip setup data can be understood... ")
-from binascii import hexlify
+
 print("Received strip data: "+str(hexlify(stripdata)))
 led_count = (stripdata[1] << 8) + stripdata[2]
 try:
@@ -100,11 +101,12 @@ else:
 print("Testing whether effects can be addressed...")
 controller.setPresetPattern(102, 50)
 askyesno("Is the effect now \"7 colors change gradually\"?", 10)
-if answers[10][1] == 0:
+if getAnswer(10) == 0:
     print("Changing effects not possible")
-controller.setRgb(255, 0, 0)
-askyesno("Is the color now static red again?", 11)
-if answers[11][1] == 0:
-    print("Changing from effects to color not possible")
+else:
+    controller.setRgb(255, 0, 0)
+    askyesno("Is the color now static red again?", 11)
+    if getAnswer(11) == 0:
+        print("Changing from effects to color not possible")
 print("The test is now finished! Now there will be an array of the answers printed, which you may post into the GitHub thread if there were problems. Thank you very much for your participation, it would be fine if you can response to the GitHub thread whether everything worked or there were any problems.")
 print(answers)
