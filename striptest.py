@@ -99,8 +99,8 @@ else:
             print("Communication error")
 
 print("Testing whether effects can be addressed...")
-controller.setPresetPattern(102, 50)
-askyesno("Is the effect now \"7 colors change gradually\"?", 10)
+controller.setPresetPattern(103, 50)
+askyesno("Is the effect now \"7 colors change quickly\"?", 10)
 if getAnswer(10) == 0:
     print("Changing effects not possible")
 else:
