@@ -818,7 +818,7 @@ class WifiLedBulb():
         self.setWarmWhite255(utils.percentToByte(level), persist, retry)
 
     def setWarmWhite255(self, level, persist=True, retry=2):
-        self.setRgbw(w=level, persist=persist, brightness=None, retry=retry)
+        self.setRgbw(w=level, persist=persist, brightness=None, retry=retry, w2=0)
 
     def setColdWhite(self, level, persist=True, retry=2):
         self.setColdWhite255(utils.percentToByte(level), persist, retry)
