@@ -6,7 +6,7 @@ setup(
     packages = ['flux_led'],
     version = '0.22',
     description = 'A Python library to communicate with the flux_led smart bulbs',
-    author = 'Daniel Høyer',
+    author = 'Daniel Hjelseth Høyer',
     author_email = 'mail@dahoiv.net',
     url = 'https://github.com/Danielhiversen/flux_led',
     license = 'LGPLv3+',
