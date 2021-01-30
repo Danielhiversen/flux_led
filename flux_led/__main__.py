@@ -694,12 +694,7 @@ class WifiLedBulb():
             self.rgbwprotocol = True
 
         # Devices that actually support rgbw
-        if (rx[1] == 0x04 or
-            rx[1] == 0x25 or
-            rx[1] == 0x33 or
-            rx[1] == 0x81 or
-            rx[1] == 0x44 or
-            rx[1] == 0x06):
+        if (rx[1] in (0x04, 0x25, 0x33, 0x81, 0x44, 0x06, 0x35)):
             self.rgbwcapable = True
 
         # Devices that use an 8-byte protocol
@@ -735,7 +730,6 @@ class WifiLedBulb():
         mode = self.mode
 
         pattern = rx[3]
-        ww_level = rx[9]
         power_state = rx[2]
         power_str = "Unknown power state"
 
@@ -752,7 +746,12 @@ class WifiLedBulb():
             blue = rx[8]
             mode_str = "Color: {}".format((red, green, blue))
             if self.rgbwcapable:
-                mode_str += " White: {}".format(rx[9])
+                ww_level = rx[9]
+                cw_level = rx[11]
+                if ww_level != 0:
+                    mode_str += " Warm White: {}".format(ww_level)
+                if cw_level != 0:
+                    mode_str += " Cold White: {}".format(cw_level)
             else:
                 mode_str += " Brightness: {}".format(self.brightness)
         elif mode == "ww":
@@ -961,8 +960,6 @@ class WifiLedBulb():
                 # we set the second output to be the same as the first
                 if w2 is not None:
                     msg.append(int(w2))
-                elif w is not None:
-                    msg.append(int(w))
                 else:
                     msg.append(0)
 
