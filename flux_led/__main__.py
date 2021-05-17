@@ -757,7 +757,7 @@ class WifiLedBulb():
 
         if self.protocol == "LEDNET":
             cw_level = rx[11]
-        
+
         if power_state == 0x23:
             power_str = "ON "
         elif power_state == 0x24:
@@ -775,7 +775,7 @@ class WifiLedBulb():
                 mode_str += " White: {}".format(ww_level)
             else:
                 mode_str += " Brightness: {}".format(self.brightness)
-        elif mode in ["DIM", "CCT"]:
+        elif mode in ["DIM", "ww"]:
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "CCT":
             cct_value = self.getWhiteTemperature()
