@@ -775,7 +775,7 @@ class WifiLedBulb():
                 mode_str += " White: {}".format(ww_level)
             else:
                 mode_str += " Brightness: {}".format(self.brightness)
-        elif mode in [ "DIM", "CCT"]:
+        elif mode in ["DIM", "CCT"]:
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "CCT":
             cct_value = self.getWhiteTemperature()
