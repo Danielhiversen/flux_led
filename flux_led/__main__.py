@@ -546,10 +546,14 @@ class WifiLedBulb():
         """Return current brightness 0-255.
 
         For warm white return current led level. For RGB
-        calculate the HSV and return the 'value'.
+        calculate the HSV and return the 'value'. 
+        for CCT calculate the brightness
         """
-        if self.mode == "ww":fix
+        if self.mode == "DIM":
             return int(self.raw_state[9])
+        elif self.mode == "CCT":
+            _, b = getWhiteTemperature()
+            return b
         else:
             _, _, v = colorsys.rgb_to_hsv(*self.getRgb())
             return v
@@ -575,16 +579,16 @@ class WifiLedBulb():
 
     def _determineMode(self, pattern_code, mode_code):
         mode = "unknown"
-        if pattern_code = 0x61
-            if mode_code = 0x01:
+        if pattern_code == 0x61:
+            if mode_code == 0x01:
                 mode = "DIM"
-            elif mode_code = 0x02:
+            elif mode_code == 0x02:
                 mode = "CCT"
-            elif mode_code = 0x03:
+            elif mode_code == 0x03:
                 mode = "RGB"
-            elif mode_code = 0x04:
+            elif mode_code == 0x04:
                 mode = "RGBW"
-            elif mode_code = 0x05:
+            elif mode_code == 0x05:
                 mode = "RGBWW"
         elif pattern_code == 0x60:
             mode = "custom"
@@ -722,7 +726,7 @@ class WifiLedBulb():
 
         pattern = rx[3]
         ww_level = rx[9] 
-        mode = self._determineMode(ww_level, pattern, rx[4])
+        mode = self._determineMode(pattern, rx[4])
         if mode == "unknown":
             if retry < 1:
                 return
@@ -767,7 +771,8 @@ class WifiLedBulb():
         elif mode == "DIM":
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "CCT":
-            mode_str = "CCT: {}%".format(utils.byteToPercent(ww_level),utils.byteToPercent(cw_level))
+            cct_value = self.getWhiteTemperature()
+            mode_str = "CCT: {}K Brightness: {}%" format(cct_value[0], cct_value[1])
         elif mode == "preset":
             pat = PresetPattern.valtostr(pattern)
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
@@ -827,26 +832,27 @@ class WifiLedBulb():
         return self.brightness
 
     def setWarmWhite(self, level, persist=True, retry=2):
-        level = level/2
+        level = level
         self.setWarmWhite255(utils.percentToByte(level), persist, retry)
 
-    def setWarmWhite255(self, level, persist=True, retry=2)
+    def setWarmWhite255(self, level, persist=True, retry=2):
         self.setRgbw(w=level, persist=persist, brightness=None, retry=retry)
 
     def setColdWhite(self, level, persist=True, retry=2):
-        level = level/2
+        level = level
         self.setColdWhite255(utils.percentToByte(level), persist, retry)
 
     def setColdWhite255(self, level, persist=True, retry=2):
         self.setRgbw(persist=persist, brightness=None, retry=retry, w2=level)
 
-    def setWhiteTemperature(self, temperature, brightness, persist=True,
-                            retry=2):
+    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
         # Assume output temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
-        cold = ((6500-temperature)/(6500-2700))*(brightness/255)
-        warm = 1-cold
-        self.setRgbw(w=warm, w2=cold, persist=persist, retry=retry)
+        cold = ((6500-temperature)/(6500-2700))*(brightness/100)
+        warm = (brightness/100)-cold
+        cold = round(255*cold)
+        warm = round(255*warm)
+        self.setRgbw(w=cold, w2=warm, persist=persist, retry=retry)
         
     def getWhiteTemperature(self):
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
@@ -855,6 +861,8 @@ class WifiLedBulb():
         cold = self.raw_state[11]/255
         brightness = warm + cold
         temperature = ((cold/brightness) * (6500-2700)) +2700
+        brightness = round(brightness)
+        temperature = round(temperature)
         return (temperature, brightness)
 
     def getRgbw(self):
@@ -987,8 +995,6 @@ class WifiLedBulb():
                 # we set the second output to be the same as the first
                 if w2 is not None:
                     msg.append(int(w2))
-                elif w is not None:
-                    msg.append(int(w))
                 else:
                     msg.append(0)
 
@@ -1623,7 +1629,7 @@ def parseArgs():
                   metavar='LEVELCW', type="int")
     mode_group.add_option("", "--CCT", dest="cct", default=None,
                   help="Temperture and brightness (CCT is percent, brightness percent)",
-                  metavar='LEVELCCT')
+                  metavar='LEVELCCT', type="int", nargs=2)
     mode_group.add_option("-p", "--preset", dest="preset", default=None,
                   help="Set preset pattern mode (SPEED is percent)",
                   metavar='CODE SPEED', type="int", nargs=2)
@@ -1800,8 +1806,8 @@ def main():
             bulb.setColdWhite(options.cw, not options.volatile)
            
         if options.cct is not None:
-            print("Setting LED temperature and brightness: {}%".format(options.cct))
-            bulb.setWhiteTemperature(options.cct[0], options.cct[1], not options.volatile):
+            print("Setting LED temperature {} and brightness: {}%".format(options.cct, options))
+            bulb.setWhiteTemperature(options.cct[0], options.cct[1], not options.volatile)
 
         if options.color is not None:
             print("Setting color RGB:{}".format(options.color),)
