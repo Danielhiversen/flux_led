@@ -549,7 +549,7 @@ class WifiLedBulb():
         for CCT calculate the brightness.
         for ww send led level
         """
-        if self.mode in [ "DIM", "ww"]:
+        if self.mode in ["DIM", "ww"]:
             return int(self.raw_state[9])
         elif self.mode == "CCT":
             _, b = getWhiteTemperature()
@@ -834,7 +834,7 @@ class WifiLedBulb():
         return self.is_on
 
     def getWarmWhite255(self):
-        if self.mode != "ww":
+        if self.mode not in ["ww", "CCT"]:
             return 255
         return self.brightness
 
@@ -871,7 +871,7 @@ class WifiLedBulb():
         return (temperature, brightness)
 
     def getRgbw(self):
-        if self.mode not in [ "RGBW", "color"]:
+        if self.mode not in ["RGBW", "color"]:
             return (255, 255, 255, 255)
         red = self.raw_state[6]
         green = self.raw_state[7]
@@ -880,7 +880,7 @@ class WifiLedBulb():
         return (red, green, blue, white)
     
     def getRgbww(self):
-        if self.mode not in [ "RGBWW", "color"]:
+        if self.mode not in ["RGBWW", "color"]:
             return (255, 255, 255, 255, 255)
         red = self.raw_state[6]
         green = self.raw_state[7]
@@ -1811,7 +1811,7 @@ def main():
         if options.cw is not None:
             print("Setting cold white mode, level: {}%".format(options.cw))
             bulb.setColdWhite(options.cw, not options.volatile)
-           
+
         if options.cct is not None:
             print("Setting LED temperature {}K and brightness: {}%".format(options.cct[0], options.cct[1]))
             bulb.setWhiteTemperature(options.cct[0], options.cct[1], not options.volatile)
