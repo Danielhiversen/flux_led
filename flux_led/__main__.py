@@ -544,7 +544,6 @@ class WifiLedBulb():
     @property
     def brightness(self):
         """Return current brightness 0-255.
-
         For warm white return current led level. For RGB
         calculate the HSV and return the 'value'. 
         for CCT calculate the brightness
@@ -772,7 +771,7 @@ class WifiLedBulb():
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
         elif mode == "CCT":
             cct_value = self.getWhiteTemperature()
-            mode_str = "CCT: {}K Brightness: {}%" format(cct_value[0], cct_value[1])
+            mode_str = "CCT: {}K Brightness: {}%".format(cct_value[0], cct_value[1])
         elif mode == "preset":
             pat = PresetPattern.valtostr(pattern)
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
@@ -861,7 +860,7 @@ class WifiLedBulb():
         cold = self.raw_state[11]/255
         brightness = warm + cold
         temperature = ((cold/brightness) * (6500-2700)) +2700
-        brightness = round(brightness)
+        brightness = round(brightness*100)
         temperature = round(temperature)
         return (temperature, brightness)
 
@@ -1806,7 +1805,7 @@ def main():
             bulb.setColdWhite(options.cw, not options.volatile)
            
         if options.cct is not None:
-            print("Setting LED temperature {} and brightness: {}%".format(options.cct, options))
+            print("Setting LED temperature {}K and brightness: {}%".format(options.cct[0], options.cct[1]))
             bulb.setWhiteTemperature(options.cct[0], options.cct[1], not options.volatile)
 
         if options.color is not None:
