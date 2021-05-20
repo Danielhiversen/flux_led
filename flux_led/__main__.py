@@ -192,11 +192,12 @@ class PresetPattern:
     white_strobe_flash =       0x37
     seven_color_jumping =      0x38
 
+
     @staticmethod
     def valid(pattern):
-        if pattern < 0x25 or pattern > 0x38:
-            return False
-        return True
+        if pattern >= 0x25 and pattern <= 0x38 or pattern >= 0x61 and pattern <= 0x63:
+            return True
+        return False
 
     @staticmethod
     def valtostr(pattern):
@@ -359,7 +360,7 @@ class LedTimer():
         10: g
         11: b
         12: warm white level
-        13: 0f = off, f0 = on ?
+        13: 0f = turn off, f0 = turn on 
     """
     def fromBytes(self, bytes):
         #utils.dump_bytes(bytes)
@@ -543,12 +544,16 @@ class WifiLedBulb():
     @property
     def brightness(self):
         """Return current brightness 0-255.
-
         For warm white return current led level. For RGB
-        calculate the HSV and return the 'value'.
+        calculate the HSV and return the 'value'. 
+        for CCT calculate the brightness.
+        for ww send led level
         """
-        if self.mode == "ww":
+        if self.mode in ["DIM", "ww"]:
             return int(self.raw_state[9])
+        elif self.mode == "CCT":
+            _, b = getWhiteTemperature()
+            return b
         else:
             _, _, v = colorsys.rgb_to_hsv(*self.getRgb())
             return v
@@ -572,17 +577,29 @@ class WifiLedBulb():
         except socket.error:
             pass
 
-    def _determineMode(self, ww_level, pattern_code):
+    def _determineMode(self, ww_level, pattern_code, mode_code):
         mode = "unknown"
-        if pattern_code in [ 0x61, 0x62]:
-            if self.rgbwcapable:
+        if pattern_code == 0x61:
+            if mode_code == 0x01:
+                mode = "DIM"
+            elif mode_code == 0x02:
+                mode = "CCT"
+            elif mode_code == 0x03:
+                mode = "RGB"
+            elif mode_code == 0x04:
+                mode = "RGBW"
+            elif mode_code == 0x05:
+                mode = "RGBWW"
+            elif self.rgbwcapable:
                 mode = "color"
             elif ww_level != 0:
-                mode = "ww"
+                mode = 'ww'
             else:
                 mode = "color"
         elif pattern_code == 0x60:
             mode = "custom"
+        elif pattern_code == 0x62:
+            mode = "music"
         elif pattern_code == 0x41:
             mode = "color"
         elif PresetPattern.valid(pattern_code):
@@ -673,14 +690,14 @@ class WifiLedBulb():
         #     |  |  |  |  |  |  |  |  |  |  |  |  |  |
         #     |  |  |  |  |  |  |  |  |  |  |  |  |  checksum
         #     |  |  |  |  |  |  |  |  |  |  |  |  color mode (f0 colors were set, 0f whites, 00 all were set)
-        #     |  |  |  |  |  |  |  |  |  |  |  cold-white
-        #     |  |  |  |  |  |  |  |  |  |  <don't know yet>
-        #     |  |  |  |  |  |  |  |  |  warmwhite
-        #     |  |  |  |  |  |  |  |  blue
-        #     |  |  |  |  |  |  |  green
-        #     |  |  |  |  |  |  red
-        #     |  |  |  |  |  speed: 0f = highest f0 is lowest
-        #     |  |  |  |  <don't know yet>
+        #     |  |  |  |  |  |  |  |  |  |  |  cool-white  0x00 to 0xFF
+        #     |  |  |  |  |  |  |  |  |  |  version number
+        #     |  |  |  |  |  |  |  |  |  warmwhite  0x00 to 0xFF
+        #     |  |  |  |  |  |  |  |  blue  0x00 to 0xFF
+        #     |  |  |  |  |  |  |  green  0x00 to 0xFF
+        #     |  |  |  |  |  |  red 0x00 to 0xFF
+        #     |  |  |  |  |  speed: 0x01 = highest 0x1f is lowest
+        #     |  |  |  |  Mode WW(01), WW+CW(02), RGB(03), RGBW(04), RGBWW(05)
         #     |  |  |  preset pattern
         #     |  |  off(23)/on(24)
         #     |  type
@@ -714,8 +731,8 @@ class WifiLedBulb():
             self._use_csum = False
 
         pattern = rx[3]
-        ww_level = rx[9]
-        mode = self._determineMode(ww_level, pattern)
+        ww_level = rx[9] 
+        mode = self._determineMode(ww_level, pattern, rx[4])
         if mode == "unknown":
             if retry < 1:
                 return
@@ -733,11 +750,13 @@ class WifiLedBulb():
     def __str__(self):
         rx = self.raw_state
         mode = self.mode
-
         pattern = rx[3]
         ww_level = rx[9]
         power_state = rx[2]
         power_str = "Unknown power state"
+
+        if self.protocol == "LEDNET":
+            cw_level = rx[11]
 
         if power_state == 0x23:
             power_str = "ON "
@@ -746,17 +765,21 @@ class WifiLedBulb():
 
         delay = rx[5]
         speed = utils.delayToSpeed(delay)
-        if mode == "color":
+        if mode in ["RGB","RGBW","RGBWW", "color"]:
             red = rx[6]
             green = rx[7]
             blue = rx[8]
             mode_str = "Color: {}".format((red, green, blue))
+            #Should add ability to get CCT from rgbwcapable*
             if self.rgbwcapable:
-                mode_str += " White: {}".format(rx[9])
+                mode_str += " White: {}".format(ww_level)
             else:
                 mode_str += " Brightness: {}".format(self.brightness)
-        elif mode == "ww":
+        elif mode in ["DIM", "ww"]:
             mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
+        elif mode == "CCT":
+            cct_value = self.getWhiteTemperature()
+            mode_str = "CCT: {}K Brightness: {}%".format(cct_value[0], cct_value[1])
         elif mode == "preset":
             pat = PresetPattern.valtostr(pattern)
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
@@ -764,10 +787,10 @@ class WifiLedBulb():
             mode_str = "Custom pattern (Speed {}%)".format(speed)
         elif BuiltInTimer.valid(pattern):
             mode_str = BuiltInTimer.valtostr(pattern)
+        elif mode == "music":
+            mode_str = "Music"
         else:
             mode_str = "Unknown mode 0x{:x}".format(pattern)
-        if pattern == 0x62:
-            mode_str += " (tmp)"
         mode_str += " raw state: "
         for _r in rx:
           mode_str += str(_r) + ","
@@ -811,7 +834,7 @@ class WifiLedBulb():
         return self.is_on
 
     def getWarmWhite255(self):
-        if self.mode != "ww":
+        if self.mode not in ["ww", "CCT"]:
             return 255
         return self.brightness
 
@@ -827,19 +850,28 @@ class WifiLedBulb():
     def setColdWhite255(self, level, persist=True, retry=2):
         self.setRgbw(persist=persist, brightness=None, retry=retry, w2=level)
 
-    def setWhiteTemperature(self, temperature, brightness, persist=True,
-                            retry=2):
+    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
         # Assume output temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
-        temperature = max(temperature-2700, 0)
-        warm = 255 * (1 - (temperature/3800))
-        cold = min(255 * temperature/3800, 255)
-        warm *= brightness/255
-        cold *= brightness/255
-        self.setRgbw(w=warm, w2=cold, persist=persist, retry=retry)
+        cold = ((6500-temperature)/(6500-2700))*(brightness/100)
+        warm = (brightness/100)-cold
+        cold = round(255*cold)
+        warm = round(255*warm)
+        self.setRgbw(w=cold, w2=warm, persist=persist, retry=retry)
+        
+    def getWhiteTemperature(self):
+        # Assume input temperature of between 2700 and 6500 Kelvin, and scale
+        # the warm and cold LEDs linearly to provide that
+        warm = self.raw_state[9]/255
+        cold = self.raw_state[11]/255
+        brightness = warm + cold
+        temperature = ((cold/brightness) * (6500-2700)) +2700
+        brightness = round(brightness*100)
+        temperature = round(temperature)
+        return (temperature, brightness)
 
     def getRgbw(self):
-        if self.mode != "color":
+        if self.mode not in ["RGBW", "color"]:
             return (255, 255, 255, 255)
         red = self.raw_state[6]
         green = self.raw_state[7]
@@ -848,7 +880,7 @@ class WifiLedBulb():
         return (red, green, blue, white)
     
     def getRgbww(self):
-        if self.mode != "color":
+        if self.mode not in ["RGBWW", "color"]:
             return (255, 255, 255, 255, 255)
         red = self.raw_state[6]
         green = self.raw_state[7]
@@ -856,14 +888,21 @@ class WifiLedBulb():
         white = self.raw_state[9]
         white2 = self.raw_state[11]
         return (red, green, blue, white, white2)
-
+       
+    def getCCT(self):
+        if self.mode != "CCT":
+            return (255, 255)
+        white = self.raw_state[9]
+        white2 = self.raw_state[11]
+        return (white, white2)
+       
     def getSpeed(self):
         delay = self.raw_state[5]
         speed = utils.delayToSpeed(delay)
         return speed
 
     def setRgbw(self, r=None, g=None, b=None, w=None, persist=True,
-                brightness=None, retry=2, w2=None):
+                brightness=None, w2=None, retry=2):
 
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
@@ -961,7 +1000,7 @@ class WifiLedBulb():
                 # we set the second output to be the same as the first
                 if w2 is not None:
                     msg.append(int(w2))
-                elif w is not None:
+                elif self.mode != "CCT" and w is not None:
                     msg.append(int(w))
                 else:
                     msg.append(0)
@@ -992,7 +1031,7 @@ class WifiLedBulb():
                              retry=max(retry-1, 0), w2=w2)
 
     def getRgb(self):
-        if self.mode != "color":
+        if self.mode not in [ "RGB", "color"]:
             return (255, 255, 255)
         red = self.raw_state[6]
         green = self.raw_state[7]
@@ -1595,6 +1634,9 @@ def parseArgs():
     mode_group.add_option("", "--coldwhite", dest="cw", default=None,
                   help="Set cold white mode (LEVELCW is percent)",
                   metavar='LEVELCW', type="int")
+    mode_group.add_option("", "--CCT", dest="cct", default=None,
+                  help="Temperture and brightness (CCT is percent, brightness percent)",
+                  metavar='LEVELCCT', type="int", nargs=2)
     mode_group.add_option("-p", "--preset", dest="preset", default=None,
                   help="Set preset pattern mode (SPEED is percent)",
                   metavar='CODE SPEED', type="int", nargs=2)
@@ -1670,10 +1712,11 @@ def parseArgs():
     if options.color:  mode_count += 1
     if options.ww:     mode_count += 1
     if options.cw:     mode_count += 1
+    if options.cct:     mode_count += 1
     if options.preset: mode_count += 1
     if options.custom: mode_count += 1
     if mode_count > 1:
-        parser.error("options --color, --*white, --preset, and --custom are mutually exclusive")
+        parser.error("options --color, --*white, --preset, --CCT, and --custom are mutually exclusive")
 
     if options.on and options.off:
         parser.error("options --on and --off are mutually exclusive")
@@ -1768,6 +1811,10 @@ def main():
         if options.cw is not None:
             print("Setting cold white mode, level: {}%".format(options.cw))
             bulb.setColdWhite(options.cw, not options.volatile)
+
+        if options.cct is not None:
+            print("Setting LED temperature {}K and brightness: {}%".format(options.cct[0], options.cct[1]))
+            bulb.setWhiteTemperature(options.cct[0], options.cct[1], not options.volatile)
 
         if options.color is not None:
             print("Setting color RGB:{}".format(options.color),)
