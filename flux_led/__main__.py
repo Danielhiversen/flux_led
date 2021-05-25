@@ -767,7 +767,6 @@ class WifiLedBulb():
             mode_str = "Color: {}".format((red, green, blue))
             #Should add ability to get CCT from rgbwcapable*
             if self.rgbwcapable:
-                cw_level = rx[11]
                 if ww_level != 0:
                     mode_str += " Warm White: {}".format(ww_level)
                 if cw_level != 0:
