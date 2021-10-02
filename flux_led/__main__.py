@@ -715,7 +715,7 @@ class WifiLedBulb:
         #     |  |  |  |  |  speed: 0f = highest f0 is lowest
         #     |  |  |  |  <don't know yet>
         #     |  |  |  preset pattern
-        #     |  |  off(23)/on(24)
+        #     |  |  off(24)/on(23)
         #     |  type
         #     msg head
         #
@@ -735,7 +735,7 @@ class WifiLedBulb:
         #     |  |  |  |  |  speed: 0x01 = highest 0x1f is lowest
         #     |  |  |  |  Mode WW(01), WW+CW(02), RGB(03), RGBW(04), RGBWW(05)
         #     |  |  |  preset pattern
-        #     |  |  off(23)/on(24) [bulbs], off(36)/on(35) [switches]
+        #     |  |  off(24)/on(23)
         #     |  type
         #     msg head
         #
