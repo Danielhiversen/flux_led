@@ -1,4 +1,18 @@
 """Init file for Flux LED"""
-from .__main__ import PresetPattern, LedTimer, WifiLedBulb, BulbScanner, utils
+from .__main__ import (
+    DeviceType,
+    PresetPattern,
+    LedTimer,
+    WifiLedBulb,
+    BulbScanner,
+    utils,
+)
 
-__all__ = ['PresetPattern', 'LedTimer', 'WifiLedBulb', 'BulbScanner', 'utils']
+__all__ = [
+    "DeviceType",
+    "PresetPattern",
+    "LedTimer",
+    "WifiLedBulb",
+    "BulbScanner",
+    "utils",
+]

@@ -2,13 +2,14 @@ import unittest
 import unittest.mock as mock
 from unittest.mock import Mock, MagicMock, patch
 
-import flux_led   
+import flux_led
 
 
 class TestLight(unittest.TestCase):
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-    def test_connect(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_connect(self, mock_connect, mock_read, mock_send):
         """Test setup with minimum configuration."""
         calls = 0
         def read_data(expected):
@@ -38,12 +39,12 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 255)
         self.assertEqual(light.getRgb(), (103, 255, 104))
         self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-
-
-    def test_rgb(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_rgb(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
@@ -90,10 +91,12 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.warm_white, 0)
         self.assertEqual(light.brightness, 80)
         self.assertEqual(light.getRgb(), (1, 25, 80))
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-    def test_off_on(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_off_on(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
@@ -149,10 +152,12 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 166)
         self.assertEqual(light.getRgb(), (255, 255, 255))
         self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-    def test_ww(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_ww(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
@@ -184,6 +189,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 182)
         self.assertEqual(light.getRgb(), (182, 0, 152))
         self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
         light.setWarmWhite255(25)
         self.assertEqual(mock_read.call_count, 2)
@@ -209,11 +215,65 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 25)
         self.assertEqual(light.getRgb(), (255, 255, 255))
         self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-    def test_rgb_brightness(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_switch(self, mock_connect, mock_read, mock_send):
+        calls = 0
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b'\x81\x97')
+            if calls == 2:
+                self.assertEqual(expected, 14)
+                return bytearray(b'\x81\x97$$\x00\x00\x00\x00\x00\x00\x02\x00\x00b')
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(b'\x81\x97##\x00\x00\x00\x00\x00\x00\x02\x00\x00`')
+
+        mock_read.side_effect = read_data
+        switch = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'\x81\x8a\x8b'))
+        )
+
+        self.assertEqual(switch.__str__(), "OFF  [Switch raw state: 129,151,36,36,0,0,0,0,0,0,2,0,0,98,]")
+        self.assertEqual(switch.protocol, None)
+        self.assertEqual(switch.is_on, False)
+        self.assertEqual(switch.mode, "switch")
+        self.assertEqual(switch.device_type, flux_led.DeviceType.Switch)
+
+        switch.turnOn()
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b'q#\x0f'))
+        )
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 3)
+
+        switch.update_state()
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 4)
+
+
+        self.assertEqual(switch.__str__(), 'ON  [Switch raw state: 129,151,35,35,0,0,0,0,0,0,2,0,0,96,]')
+        self.assertEqual(switch.protocol, None)
+        self.assertEqual(switch.is_on, True)
+        self.assertEqual(switch.device_type, flux_led.DeviceType.Switch)
+
+
+    @patch('flux_led.WifiLedBulb._send_msg')
+    @patch('flux_led.WifiLedBulb._read_msg')
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_rgb_brightness(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
@@ -243,6 +303,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.warm_white, 0)
         self.assertEqual(light.brightness, 255)
         self.assertEqual(light.getRgb(), (255, 91, 212))
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
         light.turnOn()
         self.assertEqual(mock_read.call_count, 2)
@@ -291,7 +352,8 @@ class TestLight(unittest.TestCase):
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-    def test_rgbwwcw(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_rgbwwcw(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
@@ -352,7 +414,8 @@ class TestLight(unittest.TestCase):
 
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
-    def test_original_ledenet(self, mock_read, mock_send):
+    @patch('flux_led.WifiLedBulb.connect')
+    def test_original_ledenet(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
