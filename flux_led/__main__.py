@@ -137,6 +137,13 @@ class utils:
     def dump_bytes(bytes):
         print("".join("{:02x} ".format(x) for x in bytearray(bytes)))
 
+    @staticmethod
+    def raw_state_to_dec(rx):
+        raw_state_str = ""
+        for _r in rx:
+            raw_state_str += str(_r) + ","
+        return raw_state_str
+
     max_delay = 0x1F
 
     @staticmethod
@@ -757,11 +764,10 @@ class WifiLedBulb:
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern, rx[4])
         if mode == "unknown":
-            mode_str = ""
-            for _r in rx:
-                mode_str += str(_r) + ","
             _LOGGER.debug(
-                "%s: Unable to determine mode from raw state: %s", self.ipaddr, mode_str
+                "%s: Unable to determine mode from raw state: %s",
+                self.ipaddr,
+                utils.raw_state_to_dec(rx),
             )
             if retry < 1:
                 return
@@ -773,6 +779,8 @@ class WifiLedBulb:
             self._is_on = True
         elif power_state == 0x24:
             self._is_on = False
+        if rx != self.raw_state:
+            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
         self.raw_state = rx
         self._mode = mode
 
@@ -825,8 +833,7 @@ class WifiLedBulb:
         else:
             mode_str = "Unknown mode 0x{:x}".format(pattern)
         mode_str += " raw state: "
-        for _r in rx:
-            mode_str += str(_r) + ","
+        mode_str += utils.raw_state_to_dec(rx)
         return "{} [{}]".format(power_str, mode_str)
 
     def _change_state(self, retry, turn_on=True):
