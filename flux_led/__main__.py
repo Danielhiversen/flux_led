@@ -38,6 +38,8 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
 """
 
 from __future__ import print_function
+from enum import Enum
+import logging
 import socket
 import time
 import sys
@@ -53,6 +55,13 @@ try:
     webcolors_available = True
 except:
     webcolors_available = False
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class DeviceType(Enum):
+    Bulb = 0
+    Switch = 1
 
 
 class utils:
@@ -534,6 +543,8 @@ class WifiLedBulb:
         self._query_len = 0
         self._use_csum = True
 
+        self.device_type = DeviceType.Bulb
+
         self.connect(2)
         self.update_state()
 
@@ -581,6 +592,7 @@ class WifiLedBulb:
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.settimeout(self.timeout)
+            _LOGGER.debug("%s: connect", self.ipaddr)
             self._socket.connect((self.ipaddr, self.port))
         except socket.error:
             if retry < 1:
@@ -597,6 +609,8 @@ class WifiLedBulb:
 
     def _determineMode(self, ww_level, pattern_code, mode_code):
         mode = "unknown"
+        if self.device_type == DeviceType.Switch:
+            return "switch"
         if pattern_code == 0x61:
             if mode_code == 0x01:
                 mode = "DIM"
@@ -714,28 +728,24 @@ class WifiLedBulb:
         #     |  |  |  |  |  speed: 0x01 = highest 0x1f is lowest
         #     |  |  |  |  Mode WW(01), WW+CW(02), RGB(03), RGBW(04), RGBWW(05)
         #     |  |  |  preset pattern
-        #     |  |  off(23)/on(24)
+        #     |  |  off(23)/on(24) [bulbs], off(36)/on(35) [switches]
         #     |  type
         #     msg head
         #
+        type_ = rx[1]
 
         # Devices that don't require a separate rgb/w bit
-        if rx[1] == 0x04 or rx[1] == 0x33 or rx[1] == 0x81:
+        if type_ in (0x04, 0x33, 0x81):
             self.rgbwprotocol = True
 
         # Devices that actually support rgbw
-        if (
-            rx[1] == 0x04
-            or rx[1] == 0x25
-            or rx[1] == 0x33
-            or rx[1] == 0x81
-            or rx[1] == 0x44
-            or rx[1] == 0x06
-        ):
+        if type_ in (0x04, 0x25, 0x33, 0x81, 0x44, 0x06):
             self.rgbwcapable = True
 
+        self.device_type = DeviceType.Switch if type_ == 0x97 else DeviceType.Bulb
+
         # Devices that use an 8-byte protocol
-        if rx[1] == 0x25 or rx[1] == 0x27 or rx[1] == 0x35:
+        if type_ in (0x25, 0x27, 0x35):
             self.protocol = "LEDENET"
 
         # Devices that use the original LEDENET protocol
@@ -747,6 +757,12 @@ class WifiLedBulb:
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern, rx[4])
         if mode == "unknown":
+            mode_str = ""
+            for _r in rx:
+                mode_str += str(_r) + ","
+            _LOGGER.debug(
+                "%s: Unable to determine mode from raw state: %s", self.ipaddr, mode_str
+            )
             if retry < 1:
                 return
             self.update_state(max(retry - 1, 0))
@@ -804,6 +820,8 @@ class WifiLedBulb:
             mode_str = BuiltInTimer.valtostr(pattern)
         elif mode == "music":
             mode_str = "Music"
+        elif mode == "switch":
+            mode_str = "Switch"
         else:
             mode_str = "Unknown mode 0x{:x}".format(pattern)
         mode_str += " raw state: "
@@ -1083,6 +1101,7 @@ class WifiLedBulb:
             csum = sum(bytes) & 0xFF
             bytes.append(csum)
         with self._lock:
+            _LOGGER.debug("%s => %s", self.ipaddr, bytes)
             self._socket.send(bytes)
 
     def _read_msg(self, expected):
@@ -1096,6 +1115,7 @@ class WifiLedBulb:
                 with self._lock:
                     self._socket.setblocking(0)
                     chunk = self._socket.recv(remaining)
+                    _LOGGER.debug("%s <= %s (%d)", self.ipaddr, chunk, len(chunk))
                     if chunk:
                         begin = time.time()
                     remaining -= len(chunk)
