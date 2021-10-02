@@ -570,7 +570,7 @@ class WifiLedBulb:
         if self.mode in ["DIM", "ww"]:
             return int(self.raw_state[9])
         elif self.mode == "CCT":
-            _, b = getWhiteTemperature()
+            _, b = self.getWhiteTemperature()
             return b
         else:
             _, _, v = colorsys.rgb_to_hsv(*self.getRgb())
@@ -606,7 +606,7 @@ class WifiLedBulb:
                 mode = "RGB"
             elif mode_code == 0x04:
                 mode = "RGBW"
-            elif mode_code == 0x05:
+            elif mode_code == 0x05 or mode_code == 0x17:
                 mode = "RGBWW"
             elif self.rgbwcapable:
                 mode = "color"
@@ -731,6 +731,7 @@ class WifiLedBulb:
             or rx[1] == 0x81
             or rx[1] == 0x44
             or rx[1] == 0x06
+            or rx[1] == 0x35
         ):
             self.rgbwcapable = True
 
@@ -1377,7 +1378,7 @@ Use --timerhelp for more details on setting timers
 
 def showTimerHelp():
     timerhelp_text = """
-There are 6 timers available for each bulb.
+    There are 6 timers available for each bulb.
 
 Mode Details:
     inactive:   timer is inactive and unused
