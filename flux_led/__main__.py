@@ -2,8 +2,10 @@
 
 """
 This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
+
 The protocol was reverse-engineered by studying packet captures between a
 bulb and the controlling "Magic Home" mobile app.  The code here dealing 
+
 with the network protocol is littered with magic numbers, and ain't so pretty.
 But it does seem to work!
 
@@ -43,6 +45,7 @@ import logging
 import select
 import socket
 import time
+import select
 import sys
 import datetime
 import colorsys
@@ -595,6 +598,11 @@ class WifiLedBulb:
             _, _, v = colorsys.rgb_to_hsv(*self.getRgb())
             return v
 
+    def _connect_if_disconnected(self):
+        """Connect only if not already connected."""
+        if self._socket is None:
+            self.connect()
+
     def connect(self, retry=0):
         self.close()
         try:
@@ -602,7 +610,8 @@ class WifiLedBulb:
             self._socket.settimeout(self.timeout)
             _LOGGER.debug("%s: connect", self.ipaddr)
             self._socket.connect((self.ipaddr, self.port))
-        except socket.error:
+        except socket.error as ex:
+            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
             if retry < 1:
                 return
             self.connect(max(retry - 1, 0))
@@ -614,6 +623,8 @@ class WifiLedBulb:
             self._socket.close()
         except socket.error:
             pass
+        finally:
+            self._socket = None
 
     def _determineMode(self, ww_level, pattern_code, mode_code):
         mode = "unknown"
@@ -649,30 +660,39 @@ class WifiLedBulb:
         return mode
 
     def _determine_query_len(self, retry=2):
-
         # determine the type of protocol based of first 2 bytes.
-        self._send_msg(bytearray([0x81, 0x8A, 0x8B]))
-        rx = self._read_msg(2)
-        # if any response is recieved, use the default protocol
-        if len(rx) == 2:
-            self._query_len = 14
-            return
-        # if no response from default received, next try the original protocol
-        self._send_msg(bytearray([0xEF, 0x01, 0x77]))
-        rx = self._read_msg(2)
-        if rx[1] == 0x01:
-            self.protocol = "LEDENET_ORIGINAL"
-            self._use_csum = False
-            self._query_len = 11
-            return
-        else:
-            self._use_csum = True
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(bytearray([0x81, 0x8A, 0x8B]))
+            rx = self._read_msg(2)
+            # if any response is recieved, use the default protocol
+            if len(rx) == 2:
+                rx += self._read_msg(12)
+                self._query_len = 14
+                return rx
+
+        # We just sent a garage query which the old procotol
+        # cannot process, recycle the connection
+        self.connect()
+        with self._lock:
+            # if no response from default received, next try the original protocol
+            self._send_msg(bytearray([0xEF, 0x01, 0x77]))
+            rx = self._read_msg(2)
+            if rx[1] == 0x01:
+                self.protocol = "LEDENET_ORIGINAL"
+                self._use_csum = False
+                rx += self._read_msg(9)
+                self._query_len = 11
+                return rx
+            else:
+                self._use_csum = True
         if rx == None and retry > 0:
+            self.connect()
             self._determine_query_len(max(retry - 1, 0))
 
     def query_state(self, retry=2, led_type=None):
         if self._query_len == 0:
-            self._determine_query_len()
+            return self._determine_query_len()
 
         # default value
         msg = bytearray([0x81, 0x8A, 0x8B])
@@ -682,10 +702,12 @@ class WifiLedBulb:
             led_type = "LEDENET_ORIGINAL"
 
         try:
-            self.connect()
-            self._send_msg(msg)
-            rx = self._read_msg(self._query_len)
-        except socket.error:
+            with self._lock:
+                self.connect()
+                self._send_msg(msg)
+                rx = self._read_msg(self._query_len)
+        except socket.error as ex:
+            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
             if retry < 1:
                 self._is_on = False
                 return
@@ -696,14 +718,30 @@ class WifiLedBulb:
                 self._is_on = False
                 return rx
             return self.query_state(max(retry - 1, 0), led_type)
+
         return rx
 
     def update_state(self, retry=2):
         rx = self.query_state(retry)
+        if rx and self.process_state_response(rx):
+            return
+        if retry < 1:
+            return
+        self.update_state(max(retry - 1, 0))
+
+    def process_state_response(self, rx):
         if rx is None or len(rx) < self._query_len:
             self._is_on = False
-            return
+            return False
 
+        expected_first_byte = 0x66 if self.protocol == "LEDENET_ORIGINAL" else 0x81
+        if rx[0] != expected_first_byte:
+            _LOGGER.warning(
+                "%s: Recieved invalid response: %s",
+                self.ipaddr,
+                utils.raw_state_to_dec(rx),
+            )
+            return False
         # typical response:
         # pos  0  1  2  3  4  5  6  7  8  9 10
         #    66 01 24 39 21 0a ff 00 00 01 99
@@ -772,20 +810,22 @@ class WifiLedBulb:
                 self.ipaddr,
                 utils.raw_state_to_dec(rx),
             )
-            if retry < 1:
-                return
-            self.update_state(max(retry - 1, 0))
-            return
-        power_state = rx[2]
+            return False
 
+        if rx != self.raw_state:
+            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
+        self.raw_state = rx
+        self._set_power_state_from_raw_state()
+        self._mode = mode
+        return True
+
+    def _set_power_state_from_raw_state(self):
+        """Set the power state from the raw state."""
+        power_state = self.raw_state[2]
         if power_state == 0x23:
             self._is_on = True
         elif power_state == 0x24:
             self._is_on = False
-        if rx != self.raw_state:
-            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
-        self.raw_state = rx
-        self._mode = mode
 
     def __str__(self):
         rx = self.raw_state
@@ -854,8 +894,25 @@ class WifiLedBulb:
             msg = msg_off
 
         try:
-            self._send_msg(msg)
-        except socket.error:
+            _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
+            with self._lock:
+                self._connect_if_disconnected()
+                self._send_msg(msg)
+                # After changing state, the device replies with
+                expected_response_len = 4
+                # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
+                rx = self._read_msg(expected_response_len)
+                _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
+                if len(rx) == expected_response_len:
+                    self.raw_state[2] = 0x23 if turn_on else 0x24
+                    self._set_power_state_from_raw_state()
+                # The device will send back a state change here
+                # but it will likely be stale so we want to recycle
+                # the connetion so we do not have to wait as sometimes
+                # it stalls
+                self.close()
+        except socket.error as ex:
+            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
             if retry > 0:
                 self.connect()
                 self._change_state(max(retry - 1, 0), turn_on)
@@ -953,7 +1010,17 @@ class WifiLedBulb:
         w2=None,
         retry=2,
     ):
-
+        _LOGGER.debug(
+            "%s: setRgbw: r=%s, g=%s, b=%s, w=%s, persist=%s, brightness=%s, w2=%s",
+            self.ipaddr,
+            r,
+            g,
+            b,
+            w,
+            persist,
+            brightness,
+            w2,
+        )
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise Exception
@@ -1010,15 +1077,21 @@ class WifiLedBulb:
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
 
+        update_colors = True
         # The original LEDENET protocol
         if self.protocol == "LEDENET_ORIGINAL":
+            update_white = False
             msg = bytearray([0x56])
-            msg.append(int(r))
-            msg.append(int(g))
-            msg.append(int(b))
+            r_value = int(r)
+            g_value = int(g)
+            b_value = int(b)
+            msg.append(r_value)
+            msg.append(g_value)
+            msg.append(b_value)
             msg.append(0xAA)
         else:
             # all other devices
+            update_white = True
 
             # assemble the message
             if persist:
@@ -1026,33 +1099,26 @@ class WifiLedBulb:
             else:
                 msg = bytearray([0x41])
 
-            if r is not None:
-                msg.append(int(r))
-            else:
-                msg.append(int(0))
-            if g is not None:
-                msg.append(int(g))
-            else:
-                msg.append(int(0))
-            if b is not None:
-                msg.append(int(b))
-            else:
-                msg.append(int(0))
-            if w is not None:
-                msg.append(int(w))
-            else:
-                msg.append(int(0))
+            r_value = 0 if r is None else int(r)
+            g_value = 0 if g is None else int(g)
+            b_value = 0 if b is None else int(b)
+            w_value = 0 if w is None else int(w)
+            w2_value = 0
+
+            msg.append(r_value)
+            msg.append(g_value)
+            msg.append(b_value)
+            msg.append(w_value)
 
             if self.protocol == "LEDENET":
                 # LEDENET devices support two white outputs for cold and warm. We set
                 # the second one here - if we're only setting a single white value,
                 # we set the second output to be the same as the first
                 if w2 is not None:
-                    msg.append(int(w2))
+                    w2_value = int(w2)
                 elif self.mode != "CCT" and w is not None:
-                    msg.append(int(w))
-                else:
-                    msg.append(0)
+                    w2_value = int(w)
+                msg.append(w2_value)
 
             # write mask, default to writing color and whites simultaneously
             write_mask = 0x00
@@ -1061,9 +1127,11 @@ class WifiLedBulb:
                 if w is None and w2 is None:
                     # Mask out whites
                     write_mask |= 0xF0
+                    update_white = False
                 elif r is None and g is None and b is None:
                     # Mask out colors
                     write_mask |= 0x0F
+                    update_colors = False
 
             msg.append(write_mask)
 
@@ -1072,8 +1140,18 @@ class WifiLedBulb:
 
         # send the message
         try:
-            self._send_msg(msg)
-        except socket.error:
+            with self._lock:
+                self._connect_if_disconnected()
+                self._send_msg(msg)
+                if update_colors:
+                    self.raw_state[6] = r_value
+                    self.raw_state[7] = g_value
+                    self.raw_state[8] = b_value
+                if update_white:
+                    self.raw_state[9] = w_value
+                    self.raw_state[11] = w2_value
+        except socket.error as ex:
+            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
             if retry:
                 self.connect()
                 self.setRgbw(
@@ -1110,27 +1188,43 @@ class WifiLedBulb:
         if self._use_csum:
             csum = sum(bytes) & 0xFF
             bytes.append(csum)
-        with self._lock:
-            _LOGGER.debug("%s => %s", self.ipaddr, bytes)
-            self._socket.send(bytes)
+        _LOGGER.debug(
+            "%s => %s (%d)",
+            self.ipaddr,
+            " ".join("0x{:02X}".format(x) for x in bytes),
+            len(bytes),
+        )
+        self._socket.send(bytes)
 
     def _read_msg(self, expected):
         remaining = expected
         rx = bytearray()
-        begin = time.time()
+        begin = time.monotonic()
         while remaining > 0:
-            if time.time() - begin > self.timeout:
+            timeout_left = self.timeout - (time.monotonic() - begin)
+            if timeout_left <= 0:
                 break
             try:
-                with self._lock:
-                    self._socket.setblocking(0)
-                    chunk = self._socket.recv(remaining)
-                    _LOGGER.debug("%s <= %s (%d)", self.ipaddr, chunk, len(chunk))
-                    if chunk:
-                        begin = time.time()
-                    remaining -= len(chunk)
-                    rx.extend(chunk)
-            except socket.error:
+                self._socket.setblocking(0)
+                read_ready, _, _ = select.select([self._socket], [], [], timeout_left)
+                if not read_ready:
+                    _LOGGER.debug(
+                        "%s: timed out reading %d bytes", self.ipaddr, expected
+                    )
+                    break
+                chunk = self._socket.recv(remaining)
+                _LOGGER.debug(
+                    "%s <= %s (%d)",
+                    self.ipaddr,
+                    " ".join("0x{:02X}".format(x) for x in chunk),
+                    len(chunk),
+                )
+                if chunk:
+                    begin = time.monotonic()
+                remaining -= len(chunk)
+                rx.extend(chunk)
+            except socket.error as ex:
+                _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
                 pass
             finally:
                 self._socket.setblocking(1)
@@ -1138,8 +1232,10 @@ class WifiLedBulb:
 
     def getClock(self):
         msg = bytearray([0x11, 0x1A, 0x1B, 0x0F])
-        self._send_msg(msg)
-        rx = self._read_msg(12)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(msg)
+            rx = self._read_msg(12)
         if len(rx) != 12:
             return
         year = rx[3] + 2000
@@ -1167,7 +1263,12 @@ class WifiLedBulb:
         msg.append(now.isoweekday())  # day of week
         msg.append(0x00)
         msg.append(0x0F)
-        self._send_msg(msg)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(msg)
+            # Setting the clock does not always respond so we
+            # cycle the connection
+            self.close()
 
     def setProtocol(self, protocol):
         self.protocol = protocol.upper()
@@ -1186,13 +1287,17 @@ class WifiLedBulb:
         pattern_set_msg.append(delay)
         pattern_set_msg.append(0x0F)
 
-        self._send_msg(pattern_set_msg)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(pattern_set_msg)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
-        self._send_msg(msg)
         resp_len = 88
-        rx = self._read_msg(resp_len)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(msg)
+            rx = self._read_msg(resp_len)
         if len(rx) != resp_len:
             print("response too short!")
             raise Exception
@@ -1234,11 +1339,11 @@ class WifiLedBulb:
         for t in timer_list:
             msg.extend(t.toBytes())
         msg.extend(msg_end)
-        self._send_msg(msg)
-
-        # not sure what the resp is, prob some sort of ack?
-        rx = self._read_msg(1)
-        rx = self._read_msg(3)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(msg)
+            # not sure what the resp is, prob some sort of ack?
+            rx = self._read_msg(4)
 
     def setCustomPattern(self, rgb_list, speed, transition_type):
         # truncate if more than 16
@@ -1283,7 +1388,9 @@ class WifiLedBulb:
         msg.append(0xFF)
         msg.append(0x0F)
 
-        self._send_msg(msg)
+        with self._lock:
+            self._connect_if_disconnected
+            self._send_msg(msg)
 
     def refreshState(self):
         return self.update_state()

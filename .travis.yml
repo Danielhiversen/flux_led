@@ -11,12 +11,3 @@ install:
 - pip install coveralls
 script:
 - py.test tests.py
-deploy:
-  provider: pypi
-  user: dahoiv
-  password:
-    secure: BBG6aBf0BFbHYvC9nKDUk2omFMWPtUvZWZJpvy1J60L5F+vgqPbdqNDogH04qJsW0RnXhHdq0JIccDcttuus2PoyHkigzq5tDYtDaUlMRw3nLhpsbrbQjMdlw10lFlwP+tO1wEUvqtF+XruM6/FsNhZLHCod7I0buQeURWh9+XzdUS1y+1IzbrChYIfHKXgROmBXC01fja/aylnQPI0n0+qvLm6YsKc2AZqKCdc0XsHYdUX6jHg09qYZpKVmTEi7y7cncc5d0/USc/o+i6LIUwybHSxO6Lc/hIkq/AZgXEL+/gLM8/iw400S3lKfuO9HBrGVs1dKPlx1pYk12IGxhOayn1AmK6+ANlTvkuOHOH1t/JUFToQKlFnTszSz3EvaXIA2wnETvqRa4LXsOH4A8eezxTRc/DWYG+4VcHjlfNsMwfT0jNDbcesXX6Jhn8IHEIjWYQgoIm/6NhR9OIDwpDGjAjv2eBcdaGJmBXvqIuUYQcPkM1bB4rBKJv7gO9JMlYzM3I6omt1jI36vi1nwU2qu3h+zgUSW0kS5EXRD8ctbiAWgLLOuBcDTnWOTQGamuc0AsAJ+P59T3MXrzM8Q/VMTDYp/R9LEootvutNzpLOq4jQYQC1sKEGBC2BjXs/0P1jjEY/KMoBM9OtjTNkg+CpKCgRIKxkJ4lNACt9TqmI=
-  on:
-    tags: true
-    distributions: sdist bdist_wheel
-    repo: Danielhiversen/flux_led
