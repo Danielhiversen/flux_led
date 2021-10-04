@@ -3,7 +3,7 @@
 """
 This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
 The protocol was reverse-engineered by studying packet captures between a
-bulb and the controlling "Magic Home" mobile app.  The code here dealing
+bulb and the controlling "Magic Home" mobile app.  The code here dealing 
 with the network protocol is littered with magic numbers, and ain't so pretty.
 But it does seem to work!
 
