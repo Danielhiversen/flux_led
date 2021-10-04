@@ -1,4 +1,6 @@
-### led_flux.py  [![Build Status](https://travis-ci.org/Danielhiversen/flux_led.svg?branch=master)](https://travis-ci.org/Danielhiversen/flux_led)
+  [![Python package](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml)
+
+### led_flux.py
 
 This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
 The protocol was reverse-engineered by studying packet captures between a 

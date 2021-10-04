@@ -353,7 +353,7 @@ class TestLight(unittest.TestCase):
     @patch('flux_led.WifiLedBulb._send_msg')
     @patch('flux_led.WifiLedBulb._read_msg')
     @patch('flux_led.WifiLedBulb.connect')
-    def test_rgbwwcw(self, mock_connect, mock_read, mock_send):
+    def test_rgbww(self, mock_connect, mock_read, mock_send):
         calls = 0
         def read_data(expected):
             nonlocal calls
