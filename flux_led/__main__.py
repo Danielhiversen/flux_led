@@ -63,6 +63,11 @@ except:
 _LOGGER = logging.getLogger(__name__)
 
 
+PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
+PROTOCOL_LEDENET = "LEDENET"
+PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"
+
+
 class DeviceType(Enum):
     Bulb = 0
     Switch = 1
@@ -537,6 +542,68 @@ class LedTimer:
 
 
 class WifiLedBulb:
+
+    STATE_RESPONSES = {
+        PROTOCOL_LEDENET_ORIGINAL: [
+            "head",
+            "type",
+            "power_state",
+            "preset_pattern",
+            "mode",
+            "speed",
+            "red",
+            "green",
+            "blue",
+            "warm_white",
+            "check_sum",
+        ],
+        PROTOCOL_LEDENET: [
+            "head",
+            "type",
+            "power_state",
+            "preset_pattern",
+            "mode",
+            "speed",
+            "red",
+            "green",
+            "blue",
+            "warm_white",
+            "version_number",
+            "cool_white",
+            "color_mode",
+            "check_sum",
+        ],
+    }
+
+    SET_COMMANDS = {
+        PROTOCOL_LEDENET_ORIGINAL: [
+            "head",
+            "red",
+            "green",
+            "blue",
+            "terminator",
+        ],
+        PROTOCOL_LEDENET_8BYTE: [
+            "head",
+            "red",
+            "green",
+            "blue",
+            "white",
+            "write_mask_white2",
+            "terminator",
+        ],
+        PROTOCOL_LEDENET: [
+            "head",
+            "red",
+            "green",
+            "blue",
+            "warm_white",
+            "cold_write",
+            "write_mode",
+            "terminator",
+        ],
+    }
+
     def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
         self.port = port
@@ -569,14 +636,14 @@ class WifiLedBulb:
 
     @property
     def warm_white(self):
-        if self.protocol == "LEDENET":
+        if self.protocol == PROTOCOL_LEDENET:
             return self.raw_state[9]
         else:
             return 0
 
     @property
     def cold_white(self):
-        if self.protocol == "LEDENET":
+        if self.protocol == PROTOCOL_LEDENET:
             return self.raw_state[11]
         else:
             return 0
@@ -679,7 +746,7 @@ class WifiLedBulb:
             self._send_msg(bytearray([0xEF, 0x01, 0x77]))
             rx = self._read_msg(2)
             if rx[1] == 0x01:
-                self.protocol = "LEDENET_ORIGINAL"
+                self.protocol = PROTOCOL_LEDENET_ORIGINAL
                 self._use_csum = False
                 rx += self._read_msg(9)
                 self._query_len = 11
@@ -697,7 +764,7 @@ class WifiLedBulb:
         # default value
         msg = bytearray([0x81, 0x8A, 0x8B])
         # alternative for original protocol
-        if self.protocol == "LEDENET_ORIGINAL" or led_type == "LEDENET_ORIGINAL":
+        if self.protocol == PROTOCOL_LEDENET_ORIGINAL or led_type == "LEDENET_ORIGINAL":
             msg = bytearray([0xEF, 0x01, 0x77])
             led_type = "LEDENET_ORIGINAL"
 
@@ -734,7 +801,9 @@ class WifiLedBulb:
             self._is_on = False
             return False
 
-        expected_first_byte = 0x66 if self.protocol == "LEDENET_ORIGINAL" else 0x81
+        expected_first_byte = (
+            0x66 if self.protocol == PROTOCOL_LEDENET_ORIGINAL else 0x81
+        )
         if rx[0] != expected_first_byte:
             _LOGGER.warning(
                 "%s: Recieved invalid response: %s",
@@ -778,6 +847,18 @@ class WifiLedBulb:
         #     |  type
         #     msg head
         #
+        byte_names = (
+            self.STATE_RESPONSES.get(self.protocol)
+            or self.STATE_RESPONSES[PROTOCOL_LEDENET]
+        )
+        _LOGGER.debug(
+            "%s: State: %s",
+            self.ipaddr,
+            " ".join(
+                "{}=0x{:02X}".format(byte_names[idx], x) for idx, x in enumerate(rx)
+            ),
+        )
+
         type_ = rx[1]
 
         # Devices that don't require a separate rgb/w bit
@@ -794,11 +875,11 @@ class WifiLedBulb:
 
         # Devices that use an 8-byte protocol
         if type_ in (0x25, 0x27, 0x35):
-            self.protocol = "LEDENET"
+            self.protocol = PROTOCOL_LEDENET
 
         # Devices that use the original LEDENET protocol
         if rx[1] == 0x01:
-            self.protocol = "LEDENET_ORIGINAL"
+            self.protocol = PROTOCOL_LEDENET_ORIGINAL
             self._use_csum = False
 
         pattern = rx[3]
@@ -835,7 +916,7 @@ class WifiLedBulb:
         power_state = rx[2]
         power_str = "Unknown power state"
 
-        if self.protocol == "LEDNET":
+        if self.protocol == PROTOCOL_LEDENET:
             cw_level = rx[11]
 
         if power_state == 0x23:
@@ -881,7 +962,7 @@ class WifiLedBulb:
 
     def _change_state(self, retry, turn_on=True):
 
-        if self.protocol == "LEDENET_ORIGINAL":
+        if self.protocol == PROTOCOL_LEDENET_ORIGINAL:
             msg_on = bytearray([0xCC, 0x23, 0x33])
             msg_off = bytearray([0xCC, 0x24, 0x33])
         else:
@@ -1079,7 +1160,7 @@ class WifiLedBulb:
 
         update_colors = True
         # The original LEDENET protocol
-        if self.protocol == "LEDENET_ORIGINAL":
+        if self.protocol == PROTOCOL_LEDENET_ORIGINAL:
             update_white = False
             msg = bytearray([0x56])
             r_value = int(r)
@@ -1110,7 +1191,7 @@ class WifiLedBulb:
             msg.append(b_value)
             msg.append(w_value)
 
-            if self.protocol == "LEDENET":
+            if self.protocol == PROTOCOL_LEDENET:
                 # LEDENET devices support two white outputs for cold and warm. We set
                 # the second one here - if we're only setting a single white value,
                 # we set the second output to be the same as the first
@@ -1137,6 +1218,17 @@ class WifiLedBulb:
 
             # Message terminator
             msg.append(0x0F)
+
+        protocol = self.protocol or PROTOCOL_LEDENET_8BYTE
+        byte_names = self.SET_COMMANDS[protocol]
+        _LOGGER.debug(
+            "%s: setRgbw using %s: %s",
+            self.ipaddr,
+            protocol,
+            " ".join(
+                "{}=0x{:02X}".format(byte_names[idx], x) for idx, x in enumerate(msg)
+            ),
+        )
 
         # send the message
         try:
