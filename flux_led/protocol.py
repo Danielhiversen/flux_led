@@ -1,12 +1,14 @@
 """FluxLED Protocols."""
 
 from abc import abstractmethod
-
+import logging
 
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ProtocolBase:
@@ -135,7 +137,17 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
-        return len(raw_state) == self.state_response_length and raw_state[0] == 0x81
+        if len(raw_state) != self.state_response_length:
+            return False
+        if raw_state[0] != 0x81:
+            return False
+        expected_sum = sum(raw_state[0:-1]) & 0xFF
+        if expected_sum != raw_state[-1]:
+            _LOGGER.warning(
+                "Checksum mismatch: Expected %s, got %s", expected_sum, raw_state[-1]
+            )
+            return False
+        return True
 
     @property
     def name(self):
