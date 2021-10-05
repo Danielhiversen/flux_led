@@ -74,6 +74,8 @@ from .protocol import (
     ProtocolLEDENETOriginal,
 )
 
+STATE_CHANGE_LATENCY = 0.3
+
 
 class DeviceType(Enum):
     Bulb = 0
@@ -584,6 +586,9 @@ class WifiLedBulb:
         self._is_on = False
         self._mode = None
         self._socket = None
+
+        self._transition_complete_time = 0
+
         self._lock = threading.Lock()
 
         self.connect(retry=2)
@@ -801,9 +806,15 @@ class WifiLedBulb:
         if rx != self.raw_state:
             _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
 
+        if time.monotonic() < self._transition_complete_time:
+            # Do not update the raw state if a transition is
+            # in progress as the state will not be correct
+            # until the transition is completed since devices
+            # "FADE" into the state requested.
+            return True
+
         self.raw_state = rx
         self._set_power_state_from_raw_state()
-
         pattern = rx[3]
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern, rx[4])
@@ -890,6 +901,7 @@ class WifiLedBulb:
                     self._protocol.on_byte if turn_on else self._protocol.off_byte
                 )
                 self._set_power_state_from_raw_state()
+            self._set_transition_complete_time()
             # The device will send back a state change here
             # but it will likely be stale so we want to recycle
             # the connetion so we do not have to wait as sometimes
@@ -1134,6 +1146,26 @@ class WifiLedBulb:
             if update_white:
                 self.raw_state[9] = w_value
                 self.raw_state[11] = w2_value
+            self._set_transition_complete_time()
+
+    def _set_transition_complete_time(self):
+        """Set the time we expect the transition will be completed.
+
+        Devices fade to a specific state so we want to avoid
+        consuming state updates into self.raw_state while a transition
+        is in progress as this will provide unexpected results
+        and the brightness values will be wrong until
+        the transition completes.
+        """
+        transition_time = (
+            STATE_CHANGE_LATENCY + utils.speedToDelay(self.raw_state[5]) / 100
+        )
+        self._transition_complete_time = time.monotonic() + transition_time
+        _LOGGER.debug(
+            "Transition time is %s, set _transition_complete_time to %s",
+            transition_time,
+            self._transition_complete_time,
+        )
 
     def getRgb(self):
         if self.mode not in ["RGB", "color"]:
