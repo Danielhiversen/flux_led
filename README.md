@@ -141,12 +141,12 @@ Options:
 
 ### File Structure 
 
-device.py -> contains code to manipulate device as well as get any information from device that's needed.
-fluxled.py -> command line code for flux_led.
-pattern.py -> contains code to identify pattern as well as set patterns.
-protocol.py -> contains communication protocol to communicate with differnt devices.
-scanner.py -> contins scanner to scan network and identify devices on network.  
-sock.py -> contains code to communicate on network.
-timer.py -> contains code to support setting timers on devices and getting timer information from devices.
-utils.py -> contains helpers to calculate differnt parameters such as color, cct, brightness etc.
+device.py -> contains code to manipulate device as well as get any information from device that's needed.\
+fluxled.py -> command line code for flux_led.\
+pattern.py -> contains code to identify pattern as well as set patterns.\
+protocol.py -> contains communication protocol to communicate with differnt devices.\
+scanner.py -> contins scanner to scan network and identify devices on network.\
+sock.py -> contains code to communicate on network.\
+timer.py -> contains code to support setting timers on devices and getting timer information from devices.\
+utils.py -> contains helpers to calculate differnt parameters such as color, cct, brightness etc.\
 
