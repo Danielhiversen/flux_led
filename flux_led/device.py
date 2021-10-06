@@ -28,7 +28,12 @@ from .const import (
     MODEL_NUM_SWITCH,
     STATIC_MODES,
 )
-from .models_db import MODEL_MAP, RGBW_PROTOCOL_MODELS, USE_9BYTE_PROTOCOL_MODELS
+from .models_db import (
+    BASE_MODE_MAP,
+    MODEL_MAP,
+    RGBW_PROTOCOL_MODELS,
+    USE_9BYTE_PROTOCOL_MODELS,
+)
 from .pattern import PresetPattern
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
@@ -119,7 +124,8 @@ class WifiLedBulb:
         """The available color modes."""
         model_db_entry = MODEL_MAP.get(self.model_num)
         if not model_db_entry:
-            return {DEFAULT_MODE}  # Default mode is RGB
+            # Default mode is RGB
+            return BASE_MODE_MAP.get(self.raw_state.mode & 0x0F, {DEFAULT_MODE})
         return model_db_entry.mode_to_color_mode.get(
             self.raw_state.mode, model_db_entry.color_modes
         )

@@ -25,6 +25,16 @@ LEDENETModel = namedtuple(
     ],
 )
 
+BASE_MODE_MAP = {
+    0x01: {COLOR_MODE_DIM},
+    0x02: {COLOR_MODE_CCT},
+    0x03: {COLOR_MODE_RGB},
+    0x04: {COLOR_MODE_RGBW},
+    0x05: {COLOR_MODE_RGBWW},
+    0x06: COLOR_MODES_RGB_W,
+    0x07: COLOR_MODES_RGB_CCT,
+}
+
 MODELS = [
     LEDENETModel(
         model_num=0x01,
@@ -44,14 +54,28 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x06,
-        description="Generic RGBW Strip Controller",
+        description="Magic Home Branded RGBW Strip Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
         mode_to_color_mode={
             0x14: {COLOR_MODE_RGBW},  # 0x14 (RGB&W) verified on model 0x06
-            0x16: COLOR_MODES_RGB_W,  # 0x16 (RGB/W) verified on model 0x6
+            0x16: COLOR_MODES_RGB_W,  # 0x16 (RGB/W) verified on model 0x06
         },
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+    ),
+    LEDENETModel(
+        model_num=0x07,
+        description="Magic Home Branded RGBWW Strip Controller",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=True,
+        mode_to_color_mode={
+            0x47: {
+                COLOR_MODE_RGB,
+                COLOR_MODE_CCT,
+            },  # 0x47 (RGB/WW) verified on model 0x07
+            0x45: COLOR_MODE_RGBWW,  # 0x45 (RGB&WW) verified on model 0x07
+        },
+        color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
     ),
     LEDENETModel(
         model_num=0xE,
@@ -66,13 +90,7 @@ MODELS = [
         description="Generic RGBWW Strip Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
-        mode_to_color_mode={
-            0x01: {COLOR_MODE_DIM},
-            0x02: {COLOR_MODE_CCT},
-            0x03: {COLOR_MODE_RGB},
-            0x04: {COLOR_MODE_RGBW},
-            0x05: {COLOR_MODE_RGBWW},
-        },
+        mode_to_color_mode=BASE_MODE_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
     ),
     LEDENETModel(
