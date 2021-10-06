@@ -1,5 +1,3 @@
-
-
 class PresetPattern:
     seven_color_cross_fade = 0x25
     red_gradual_change = 0x26

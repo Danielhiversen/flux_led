@@ -1,29 +1,27 @@
 from __future__ import print_function
-from enum import Enum
-import logging
+
 import colorsys
+import datetime
+import logging
+import select
 import socket
 import threading
 import time
-import select
-import datetime
+from enum import Enum
 
-from .sock import _Socket_Retry
 from .pattern import PresetPattern
-from .timer import (BuiltInTimer, LedTimer)
-from .utils import utils
-
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
-    PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_9BYTE,
-)
-from .protocol import (
-    ProtocolLEDENET9Byte,
+    PROTOCOL_LEDENET_ORIGINAL,
+    LevelWriteMode,
     ProtocolLEDENET8Byte,
+    ProtocolLEDENET9Byte,
     ProtocolLEDENETOriginal,
 )
-from .protocol import LevelWriteMode
+from .sock import _Socket_Retry
+from .timer import BuiltInTimer, LedTimer
+from .utils import utils
 
 STATE_CHANGE_LATENCY = 0.3
 MIN_TEMP = 2700
@@ -771,5 +769,3 @@ class WifiLedBulb:
 
     def refreshState(self):
         return self.update_state()
-
-

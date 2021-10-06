@@ -1,7 +1,8 @@
 import datetime
 
-from .utils import utils
 from .pattern import PresetPattern
+from .utils import utils
+
 
 class BuiltInTimer:
     sunrise = 0xA1
