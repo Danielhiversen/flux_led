@@ -72,7 +72,7 @@ class wifiledbulb:
     @property
     def rgbwprotocol(self):
         """Devices that don't require a separate rgb/w bit."""
-        return self.model_num in (0x04, 0x33, 0x81)
+        return self.raw_state.model_num if self.raw_state else None
 
     @property
     def rgbwcapable(self):
@@ -110,11 +110,16 @@ class wifiledbulb:
 
     @property
     def warm_white(self):
-        return self.raw_state[9] if self._rgbwwprotocol else 0
+        return self.raw_state.warm_white if self._rgbwwprotocol else 0
 
     @property
+    def cool_white(self):
+        return self.raw_state.cool_white if self._rgbwwprotocol else 0
+
+    # Old name is deprecated
+    @property
     def cold_white(self):
-        return self.raw_state[11] if self._rgbwwprotocol else 0
+        return self.cool_white
 
     @property
     def brightness(self):
@@ -125,7 +130,7 @@ class wifiledbulb:
         for ww send led level
         """
         if self.mode in ["DIM", "ww"]:
-            return int(self.raw_state[9])
+            return int(self.raw_state.warm_white)
         elif self.mode == "CCT":
             _, b = self.getWhiteTemperature()
             return b
@@ -264,16 +269,10 @@ class wifiledbulb:
             )
             return False
 
-        byte_names = self._protocol.state_response_names
-        _LOGGER.debug(
-            "%s: State: %s",
-            self.ipaddr,
-            " ".join(
-                "{}=0x{:02X}".format(byte_names[idx], x) for idx, x in enumerate(rx)
-            ),
-        )
+        raw_state = self._protocol.named_raw_state(rx)
+        _LOGGER.debug("%s: State: %s", self.ipaddr, raw_state)
 
-        if rx != self.raw_state:
+        if raw_state != self.raw_state:
             _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
 
         if time.monotonic() < self._transition_complete_time:
@@ -283,7 +282,7 @@ class wifiledbulb:
             # "FADE" into the state requested.
             return True
 
-        self.raw_state = rx
+        self.raw_state = raw_state
         self._set_power_state_from_raw_state()
         pattern = rx[3]
         ww_level = rx[9]
@@ -301,7 +300,7 @@ class wifiledbulb:
 
     def _set_power_state_from_raw_state(self):
         """Set the power state from the raw state."""
-        power_state = self.raw_state[2]
+        power_state = self.raw_state.power_state
         if power_state == self._protocol.on_byte:
             self._is_on = True
         elif power_state == self._protocol.off_byte:
@@ -312,21 +311,21 @@ class wifiledbulb:
         if not rx:
             return "No state data"
         mode = self.mode
-        pattern = rx[3]
-        ww_level = rx[9]
-        power_state = rx[2]
+        pattern = rx.preset_pattern
+        ww_level = rx.warm_white
+        power_state = rx.power_state
         power_str = "Unknown power state"
         if power_state == self._protocol.on_byte:
             power_str = "ON "
         elif power_state == self._protocol.off_byte:
             power_str = "OFF "
 
-        delay = rx[5]
+        delay = rx.speed
         speed = utils.delayToSpeed(delay)
         if mode in ["RGB", "RGBW", "RGBWW", "color"]:
-            red = rx[6]
-            green = rx[7]
-            blue = rx[8]
+            red = rx.red
+            green = rx.green
+            blue = rx.blue
             mode_str = "Color: {}".format((red, green, blue))
             # Should add ability to get CCT from rgbwcapable*
             if self.rgbwcapable:
@@ -369,9 +368,10 @@ class wifiledbulb:
             rx = self._read_msg(expected_response_len)
             _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
             if len(rx) == expected_response_len:
-                self.raw_state[2] = (
+                new_power_state = (
                     self._protocol.on_byte if turn_on else self._protocol.off_byte
                 )
+                self._replace_raw_state({"power_state": new_power_state})
                 self._set_power_state_from_raw_state()
             self._set_transition_complete_time()
             # The device will send back a state change here
@@ -379,6 +379,9 @@ class wifiledbulb:
             # the connetion so we do not have to wait as sometimes
             # it stalls
             self.close()
+
+    def _replace_raw_state(self, new_state):
+        self.raw_state = self.raw_state._replace(**new_state)
 
     def turnOn(self, retry=2):
         self._change_state(retry=retry, turn_on=True)
@@ -419,8 +422,8 @@ class wifiledbulb:
     def getWhiteTemperature(self):
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
-        warm = self.raw_state[9] / 255
-        cold = self.raw_state[11] / 255
+        warm = self.raw_state.warm_white / 255
+        cold = self.raw_state.cool_white / 255
         brightness = warm + cold
         temperature = ((cold / brightness) * (6493 - 2703)) + 2703
         brightness = round(brightness * 255)
@@ -430,31 +433,31 @@ class wifiledbulb:
     def getRgbw(self):
         if self.mode not in ["RGBW", "color"]:
             return (255, 255, 255, 255)
-        red = self.raw_state[6]
-        green = self.raw_state[7]
-        blue = self.raw_state[8]
-        white = self.raw_state[9]
+        red = self.raw_state.red
+        green = self.raw_state.green
+        blue = self.raw_state.blue
+        white = self.raw_state.warm_white
         return (red, green, blue, white)
 
     def getRgbww(self):
         if self.mode not in ["RGBWW", "color"]:
             return (255, 255, 255, 255, 255)
-        red = self.raw_state[6]
-        green = self.raw_state[7]
-        blue = self.raw_state[8]
-        white = self.raw_state[9]
-        white2 = self.raw_state[11]
+        red = self.raw_state.red
+        green = self.raw_state.green
+        blue = self.raw_state.blue
+        white = self.raw_state.warm_white
+        white2 = self.raw_state.cool_white
         return (red, green, blue, white, white2)
 
     def getCCT(self):
         if self.mode != "CCT":
             return (255, 255)
-        white = self.raw_state[9]
-        white2 = self.raw_state[11]
+        white = self.raw_state.warm_white
+        white2 = self.raw_state.cool_white
         return (white, white2)
 
     def getSpeed(self):
-        delay = self.raw_state[5]
+        delay = self.raw_state.speed
         speed = utils.delayToSpeed(delay)
         return speed
 
@@ -611,13 +614,14 @@ class wifiledbulb:
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(self._protocol.construct_message(msg))
+            updates = {}
             if update_colors:
-                self.raw_state[6] = r_value
-                self.raw_state[7] = g_value
-                self.raw_state[8] = b_value
+                updates.update({"red": r_value, "green": g_value, "blue": b_value})
             if update_white:
-                self.raw_state[9] = w_value
-                self.raw_state[11] = w2_value
+                updates.update({"warm_white": w_value, "cool_white": w2_value})
+            if updates:
+                self._replace_raw_state(updates)
+
             self._set_transition_complete_time()
 
     def _set_transition_complete_time(self):
@@ -630,7 +634,7 @@ class wifiledbulb:
         the transition completes.
         """
         transition_time = (
-            STATE_CHANGE_LATENCY + utils.speedToDelay(self.raw_state[5]) / 100
+            STATE_CHANGE_LATENCY + utils.speedToDelay(self.raw_state.speed) / 100
         )
         self._transition_complete_time = time.monotonic() + transition_time
         _LOGGER.debug(
@@ -642,9 +646,9 @@ class wifiledbulb:
     def getRgb(self):
         if self.mode not in ["RGB", "color"]:
             return (255, 255, 255)
-        red = self.raw_state[6]
-        green = self.raw_state[7]
-        blue = self.raw_state[8]
+        red = self.raw_state.red
+        green = self.raw_state.green
+        blue = self.raw_state.blue
         return (red, green, blue)
 
     def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
