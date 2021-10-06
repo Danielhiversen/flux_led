@@ -1,16 +1,8 @@
-from __future__ import print_function
-from enum import Enum
 import logging
-import select
 import socket
 import time
 import select
-import sys
-import datetime
-import colorsys
-from optparse import OptionParser, OptionGroup
-import ast
-import threading
+
 
 
 _LOGGER = logging.getLogger(__name__)

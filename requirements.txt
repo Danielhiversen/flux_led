@@ -1,1 +1,1 @@
-astral==2.2
+webcolors==1.11.1

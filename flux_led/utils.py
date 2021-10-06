@@ -1,30 +1,13 @@
 from __future__ import print_function
-from enum import Enum
-import logging
-import select
-import socket
-import time
-import select
-import sys
 import datetime
-import colorsys
-from optparse import OptionParser, OptionGroup
 import ast
-import threading
+import webcolors
 from .scanner import bulbscanner
-
-try:
-    import webcolors
-
-    webcolors_available = True
-except:
-    webcolors_available = False
 
 
 class utils:
     @staticmethod
     def color_object_to_tuple(color):
-        global webcolors_available
 
         # see if it's already a color tuple
         if type(color) is tuple and len(color) in [3, 4, 5]:
@@ -35,22 +18,21 @@ class utils:
             return None
         color = color.strip()
 
-        if webcolors_available:
-            # try to convert from an english name
-            try:
-                return webcolors.name_to_rgb(color)
-            except ValueError:
-                pass
-            except:
-                pass
+        # try to convert from an english name
+        try:
+            return webcolors.name_to_rgb(color)
+        except ValueError:
+            pass
+        except:
+            pass
 
-            # try to convert an web hex code
-            try:
-                return webcolors.hex_to_rgb(webcolors.normalize_hex(color))
-            except ValueError:
-                pass
-            except:
-                pass
+        # try to convert an web hex code
+        try:
+            return webcolors.hex_to_rgb(webcolors.normalize_hex(color))
+        except ValueError:
+            pass
+        except:
+            pass
 
         # try to convert a string RGB tuple
         try:
@@ -75,14 +57,14 @@ class utils:
     @staticmethod
     def get_color_names_list():
         names = set()
-        for key in list(webcolors.css2_hex_to_names.keys()):
-            names.add(webcolors.css2_hex_to_names[key])
-        for key in list(webcolors.css21_hex_to_names.keys()):
-            names.add(webcolors.css21_hex_to_names[key])
-        for key in list(webcolors.css3_hex_to_names.keys()):
-            names.add(webcolors.css3_hex_to_names[key])
-        for key in list(webcolors.html4_hex_to_names.keys()):
-            names.add(webcolors.html4_hex_to_names[key])
+        for key in list(webcolors.CSS2_HEX_TO_NAMES.keys()):
+            names.add(webcolors.CSS2_HEX_TO_NAMES[key])
+        for key in list(webcolors.CSS21_HEX_TO_NAMES.keys()):
+            names.add(webcolors.CSS21_HEX_TO_NAMES[key])
+        for key in list(webcolors.CSS3_HEX_TO_NAMES.keys()):
+            names.add(webcolors.CSS3_HEX_TO_NAMES[key])
+        for key in list(webcolors.HTML4_HEX_TO_NAMES.keys()):
+            names.add(webcolors.HTML4_HEX_TO_NAMES[key])
         return sorted(names)
 
     @staticmethod
