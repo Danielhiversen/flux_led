@@ -39,19 +39,18 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
 
 """
 from __future__ import print_function
+
+import datetime
 import logging
 import sys
-import datetime
-from optparse import OptionParser, OptionGroup
+from optparse import OptionGroup, OptionParser
 
-from .device import WifiLedBulb
-from .scanner import BulbScanner
-from .utils import utils
-from .timer import(BuiltInTimer, LedTimer)
+from .device import DeviceType, WifiLedBulb
 from .pattern import PresetPattern
+from .scanner import BulbScanner
 from .sock import _Socket_Retry
-from .device import(DeviceType, WifiLedBulb)
-
+from .timer import BuiltInTimer, LedTimer
+from .utils import utils
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -590,7 +589,6 @@ def parseArgs():
         ):
             print("{:2} {}".format(c, PresetPattern.valtostr(c)))
         sys.exit(0)
-
 
     if options.listcolors:
         for c in utils.get_color_names_list():

@@ -1,7 +1,10 @@
 from __future__ import print_function
-import datetime
+
 import ast
+import datetime
+
 import webcolors
+
 from .scanner import BulbScanner
 
 
