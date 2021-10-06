@@ -35,7 +35,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'flux_led = flux_led.__main__:main'
+            'flux_led = flux_led.fluxled:main'
         ]
     },
 )
