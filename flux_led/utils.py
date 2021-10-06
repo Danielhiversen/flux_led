@@ -2,7 +2,7 @@ from __future__ import print_function
 import datetime
 import ast
 import webcolors
-from .scanner import bulbscanner
+from .scanner import BulbScanner
 
 
 class utils:

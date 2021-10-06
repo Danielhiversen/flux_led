@@ -8,9 +8,9 @@ import time
 import select
 import datetime
 
-from .sock import _socket_retry
-from .pattern import presetpattern
-from .timer import (builtintimer, ledtimer)
+from .sock import _Socket_Retry
+from .pattern import PresetPattern
+from .timer import (BuiltInTimer, LedTimer)
 from .utils import utils
 
 from .protocol import (
@@ -32,12 +32,12 @@ MAX_TEMP = 6500
 _LOGGER = logging.getLogger(__name__)
 
 
-class devicetype(Enum):
+class DeviceType(Enum):
     Bulb = 0
     Switch = 1
 
 
-class wifiledbulb:
+class WifiLedBulb:
     def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
         self.port = port
@@ -76,7 +76,7 @@ class wifiledbulb:
     @property
     def device_type(self):
         """Return the device type."""
-        return devicetype.Switch if self.model_num == 0x97 else devicetype.Bulb
+        return DeviceType.Switch if self.model_num == 0x97 else DeviceType.Bulb
 
     @property
     def _rgbwwprotocol(self):
@@ -137,7 +137,7 @@ class wifiledbulb:
         if self._socket is None:
             self.connect()
 
-    @_socket_retry(attempts=0)
+    @_Socket_Retry(attempts=0)
     def connect(self):
         self.close()
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -157,7 +157,7 @@ class wifiledbulb:
 
     def _determineMode(self, ww_level, pattern_code, mode_code):
         mode = "unknown"
-        if self.device_type == devicetype.Switch:
+        if self.device_type == DeviceType.Switch:
             return "switch"
         if pattern_code == 0x61:
             if mode_code == 0x01:
@@ -182,10 +182,10 @@ class wifiledbulb:
             mode = "music"
         elif pattern_code == 0x41:
             mode = "color"
-        elif presetpattern.valid(pattern_code):
+        elif PresetPattern.valid(pattern_code):
             mode = "preset"
-        elif builtintimer.valid(pattern_code):
-            mode = builtintimer.valtostr(pattern_code)
+        elif BuiltInTimer.valid(pattern_code):
+            mode = BuiltInTimer.valtostr(pattern_code)
         return mode
 
     def _determine_protocol(self):
@@ -224,7 +224,7 @@ class wifiledbulb:
 
         raise Exception("Cannot determine protocol")
 
-    @_socket_retry(attempts=2)
+    @_Socket_Retry(attempts=2)
     def query_state(self, led_type=None):
         if led_type:
             self.setProtocol(led_type)
@@ -334,12 +334,12 @@ class wifiledbulb:
                 cct_value[0], cct_value[1] / 255
             )
         elif mode == "preset":
-            pat = presetpattern.valtostr(pattern)
+            pat = PresetPattern.valtostr(pattern)
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
         elif mode == "custom":
             mode_str = "Custom pattern (Speed {}%)".format(speed)
-        elif builtintimer.valid(pattern):
-            mode_str = builtintimer.valtostr(pattern)
+        elif BuiltInTimer.valid(pattern):
+            mode_str = BuiltInTimer.valtostr(pattern)
         elif mode == "music":
             mode_str = "Music"
         elif mode == "switch":
@@ -350,7 +350,7 @@ class wifiledbulb:
         mode_str += utils.raw_state_to_dec(rx)
         return "{} [{}]".format(power_str, mode_str)
 
-    @_socket_retry(attempts=2)
+    @_Socket_Retry(attempts=2)
     def _change_state(self, turn_on=True):
         _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
         with self._lock:
@@ -459,7 +459,7 @@ class wifiledbulb:
         speed = utils.delayToSpeed(delay)
         return speed
 
-    @_socket_retry(attempts=2)
+    @_Socket_Retry(attempts=2)
     def setRgbw(
         self,
         r=None,
@@ -650,10 +650,10 @@ class wifiledbulb:
         else:
             raise ValueError(f"Invalid protocol: {protocol}")
 
-    def setpresetpattern(self, pattern, speed):
+    def setPresetPattern(self, pattern, speed):
 
-        presetpattern.valtostr(pattern)
-        if not presetpattern.valid(pattern):
+        PresetPattern.valtostr(pattern)
+        if not PresetPattern.valid(pattern):
             # print "Pattern must be between 0x25 and 0x38"
             raise Exception
 
@@ -685,7 +685,7 @@ class wifiledbulb:
         # pass in the 14-byte timer structs
         for i in range(6):
             timer_bytes = rx[start:][:14]
-            timer = ledtimer(timer_bytes)
+            timer = LedTimer(timer_bytes)
             timer_list.append(timer)
             start += 14
 
@@ -705,7 +705,7 @@ class wifiledbulb:
         # pad list to 6 with inactive timers
         if len(timer_list) != 6:
             for i in range(6 - len(timer_list)):
-                timer_list.append(ledtimer())
+                timer_list.append(LedTimer())
 
         msg_start = bytearray([0x21])
         msg_end = bytearray([0x00, 0xF0])

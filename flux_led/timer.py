@@ -1,25 +1,25 @@
 import datetime
 
 from .utils import utils
-from .pattern import presetpattern
+from .pattern import PresetPattern
 
-class builtintimer:
+class BuiltInTimer:
     sunrise = 0xA1
     sunset = 0xA2
 
     @staticmethod
     def valid(byte_value):
-        return byte_value == builtintimer.sunrise or byte_value == builtintimer.sunset
+        return byte_value == BuiltInTimer.sunrise or byte_value == BuiltInTimer.sunset
 
     @staticmethod
     def valtostr(pattern):
-        for key, value in list(builtintimer.__dict__.items()):
+        for key, value in list(BuiltInTimer.__dict__.items()):
             if type(value) is int and value == pattern:
                 return key.replace("_", " ").title()
         return None
 
 
-class ledtimer:
+class LedTimer:
     Mo = 0x02
     Tu = 0x04
     We = 0x08
@@ -33,7 +33,7 @@ class ledtimer:
 
     @staticmethod
     def dayMaskToStr(mask):
-        for key, value in ledtimer.__dict__.items():
+        for key, value in LedTimer.__dict__.items():
             if type(value) is int and value == mask:
                 return key
         return None
@@ -120,7 +120,7 @@ class ledtimer:
     def setModeSunrise(self, startBrightness, endBrightness, duration):
         self.mode = "sunrise"
         self.turn_on = True
-        self.pattern_code = builtintimer.sunrise
+        self.pattern_code = BuiltInTimer.sunrise
         self.brightness_start = utils.percentToByte(startBrightness)
         self.brightness_end = utils.percentToByte(endBrightness)
         self.warmth_level = utils.percentToByte(endBrightness)
@@ -129,7 +129,7 @@ class ledtimer:
     def setModeSunset(self, startBrightness, endBrightness, duration):
         self.mode = "sunrise"
         self.turn_on = True
-        self.pattern_code = builtintimer.sunset
+        self.pattern_code = BuiltInTimer.sunset
         self.brightness_start = utils.percentToByte(startBrightness)
         self.brightness_end = utils.percentToByte(endBrightness)
         self.warmth_level = utils.percentToByte(endBrightness)
@@ -186,12 +186,12 @@ class ledtimer:
             self.red = bytes[9]
             self.green = bytes[10]
             self.blue = bytes[11]
-        elif builtintimer.valid(self.pattern_code):
-            self.mode = builtintimer.valtostr(self.pattern_code)
+        elif BuiltInTimer.valid(self.pattern_code):
+            self.mode = BuiltInTimer.valtostr(self.pattern_code)
             self.duration = bytes[9]  # same byte as red
             self.brightness_start = bytes[10]  # same byte as green
             self.brightness_end = bytes[11]  # same byte as blue
-        elif presetpattern.valid(self.pattern_code):
+        elif PresetPattern.valid(self.pattern_code):
             self.mode = "preset"
             self.delay = bytes[9]  # same byte as red
         else:
@@ -233,11 +233,11 @@ class ledtimer:
         bytes[13] = 0xF0
 
         bytes[8] = self.pattern_code
-        if presetpattern.valid(self.pattern_code):
+        if PresetPattern.valid(self.pattern_code):
             bytes[9] = self.delay
             bytes[10] = 0
             bytes[11] = 0
-        elif builtintimer.valid(self.pattern_code):
+        elif BuiltInTimer.valid(self.pattern_code):
             bytes[9] = self.duration
             bytes[10] = self.brightness_start
             bytes[11] = self.brightness_end
@@ -267,17 +267,17 @@ class ledtimer:
             txt += "Once: {:04}-{:02}-{:02}".format(self.year, self.month, self.day)
         else:
             bits = [
-                ledtimer.Su,
-                ledtimer.Mo,
-                ledtimer.Tu,
-                ledtimer.We,
-                ledtimer.Th,
-                ledtimer.Fr,
-                ledtimer.Sa,
+                LedTimer.Su,
+                LedTimer.Mo,
+                LedTimer.Tu,
+                LedTimer.We,
+                LedTimer.Th,
+                LedTimer.Fr,
+                LedTimer.Sa,
             ]
             for b in bits:
                 if self.repeat_mask & b:
-                    txt += ledtimer.dayMaskToStr(b)
+                    txt += LedTimer.dayMaskToStr(b)
                 else:
                     txt += "--"
             txt += "  "
@@ -292,13 +292,13 @@ class ledtimer:
                 )
                 txt += "Color: {}".format(color_str)
 
-        elif presetpattern.valid(self.pattern_code):
-            pat = presetpattern.valtostr(self.pattern_code)
+        elif PresetPattern.valid(self.pattern_code):
+            pat = PresetPattern.valtostr(self.pattern_code)
             speed = utils.delayToSpeed(self.delay)
             txt += "{} (Speed:{}%)".format(pat, speed)
 
-        elif builtintimer.valid(self.pattern_code):
-            type = builtintimer.valtostr(self.pattern_code)
+        elif BuiltInTimer.valid(self.pattern_code):
+            type = BuiltInTimer.valtostr(self.pattern_code)
 
             txt += "{} (Duration:{} minutes, Brightness: {}% -> {}%)".format(
                 type,
