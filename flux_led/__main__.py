@@ -73,8 +73,11 @@ from .protocol import (
     ProtocolLEDENET8Byte,
     ProtocolLEDENETOriginal,
 )
+from .protocol import LevelWriteMode
 
 STATE_CHANGE_LATENCY = 0.3
+MIN_TEMP = 2700
+MAX_TEMP = 6500
 
 
 class DeviceType(Enum):
@@ -814,9 +817,9 @@ class WifiLedBulb:
 
         self.raw_state = raw_state
         self._set_power_state_from_raw_state()
-        pattern = rx[3]
-        ww_level = rx[9]
-        mode = self._determineMode(ww_level, pattern, rx[4])
+        mode = self._determineMode(
+            raw_state.warm_white, raw_state.preset_pattern, raw_state.mode
+        )
         if mode == "unknown":
             _LOGGER.debug(
                 "%s: Unable to determine mode from raw state: %s",
@@ -942,8 +945,12 @@ class WifiLedBulb:
     def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
         # Assume output temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
+        if not (MIN_TEMP <= temperature <= MAX_TEMP):
+            raise ValueError(
+                f"Temperature of {temperature} is not valid and must be between {MIN_TEMP} and {MAX_TEMP}"
+            )
         brightness = round(brightness / 255, 2)
-        cold = ((6500 - temperature) / (6500 - 2700)) * (brightness)
+        cold = ((6500 - temperature) / (MAX_TEMP - MIN_TEMP)) * (brightness)
         warm = (brightness) - cold
         cold = round(255 * cold)
         warm = round(255 * warm)
@@ -963,28 +970,28 @@ class WifiLedBulb:
     def getRgbw(self):
         if self.mode not in ["RGBW", "color"]:
             return (255, 255, 255, 255)
-        red = self.raw_state.red
-        green = self.raw_state.green
-        blue = self.raw_state.blue
-        white = self.raw_state.warm_white
-        return (red, green, blue, white)
+        return (
+            self.raw_state.red,
+            self.raw_state.green,
+            self.raw_state.blue,
+            self.raw_state.warm_white,
+        )
 
     def getRgbww(self):
         if self.mode not in ["RGBWW", "color"]:
             return (255, 255, 255, 255, 255)
-        red = self.raw_state.red
-        green = self.raw_state.green
-        blue = self.raw_state.blue
-        white = self.raw_state.warm_white
-        white2 = self.raw_state.cool_white
-        return (red, green, blue, white, white2)
+        return (
+            self.raw_state.red,
+            self.raw_state.green,
+            self.raw_state.blue,
+            self.raw_state.warm_white,
+            self.raw_state.cool_white,
+        )
 
     def getCCT(self):
         if self.mode != "CCT":
             return (255, 255)
-        white = self.raw_state.warm_white
-        white2 = self.raw_state.cool_white
-        return (white, white2)
+        return (self.raw_state.warm_white, self.raw_state.cool_white)
 
     def getSpeed(self):
         delay = self.raw_state.speed
@@ -1002,156 +1009,60 @@ class WifiLedBulb:
         brightness=None,
         w2=None,
     ):
-        _LOGGER.debug(
-            "%s: setRgbw: r=%s, g=%s, b=%s, w=%s, persist=%s, brightness=%s, w2=%s",
-            self.ipaddr,
-            r,
-            g,
-            b,
-            w,
-            persist,
-            brightness,
-            w2,
-        )
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise Exception
 
-        # sample message for original LEDENET protocol (w/o checksum at end)
-        #  0  1  2  3  4
-        # 56 90 fa 77 aa
-        #  |  |  |  |  |
-        #  |  |  |  |  terminator
-        #  |  |  |  blue
-        #  |  |  green
-        #  |  red
-        #  head
-
-        # sample message for 8-byte protocols (w/ checksum at end)
-        #  0  1  2  3  4  5  6
-        # 31 90 fa 77 00 00 0f
-        #  |  |  |  |  |  |  |
-        #  |  |  |  |  |  |  terminator
-        #  |  |  |  |  |  write mask / white2 (see below)
-        #  |  |  |  |  white
-        #  |  |  |  blue
-        #  |  |  green
-        #  |  red
-        #  persistence (31 for true / 41 for false)
-        #
-        # byte 5 can have different values depending on the type
-        # of device:
-        # For devices that support 2 types of white value (warm and cold
-        # white) this value is the cold white value. These use the LEDENET
-        # protocol. If a second value is not given, reuse the first white value.
-        #
-        # For devices that cannot set both rbg and white values at the same time
-        # (including devices that only support white) this value
-        # specifies if this command is to set white value (0f) or the rgb
-        # value (f0).
-        #
-        # For all other rgb and rgbw devices, the value is 00
-
-        # sample message for 9-byte LEDENET protocol (w/ checksum at end)
-        #  0  1  2  3  4  5  6  7
-        # 31 bc c1 ff 00 00 f0 0f
-        #  |  |  |  |  |  |  |  |
-        #  |  |  |  |  |  |  |  terminator
-        #  |  |  |  |  |  |  write mode (f0 colors, 0f whites, 00 colors & whites)
-        #  |  |  |  |  |  cold white
-        #  |  |  |  |  warm white
-        #  |  |  |  blue
-        #  |  |  green
-        #  |  red
-        #  persistence (31 for true / 41 for false)
-        #
-
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
 
-        update_colors = True
-        # The original LEDENET protocol
-        if isinstance(self._protocol, ProtocolLEDENETOriginal):
-            update_white = False
-            msg = bytearray([0x56])
-            r_value = int(r)
-            g_value = int(g)
-            b_value = int(b)
-            msg.append(r_value)
-            msg.append(g_value)
-            msg.append(b_value)
-            msg.append(0xAA)
+        r_value = 0 if r is None else int(r)
+        g_value = 0 if g is None else int(g)
+        b_value = 0 if b is None else int(b)
+        w_value = 0 if w is None else int(w)
+        # ProtocolLEDENET9Byte devices support two white outputs for cold and warm.
+        if w2 is None:
+            # If we're only setting a single white value,
+            # we set the second output to be the same as the first
+            w2_value = int(w) if w is not None and self.mode != "CCT" else 0
         else:
-            # all other devices
-            update_white = True
+            w2_value = int(w2)
 
-            # assemble the message
-            if persist:
-                msg = bytearray([0x31])
-            else:
-                msg = bytearray([0x41])
+        write_mode = LevelWriteMode.ALL
+        # rgbwprotocol devices always overwrite both color & whites
+        if not self.rgbwprotocol:
+            if w is None and w2 is None:
+                write_mode = LevelWriteMode.COLORS
+            elif r is None and g is None and b is None:
+                write_mode = LevelWriteMode.WHITES
 
-            r_value = 0 if r is None else int(r)
-            g_value = 0 if g is None else int(g)
-            b_value = 0 if b is None else int(b)
-            w_value = 0 if w is None else int(w)
-            w2_value = 0
-
-            msg.append(r_value)
-            msg.append(g_value)
-            msg.append(b_value)
-            msg.append(w_value)
-
-            if isinstance(self._protocol, ProtocolLEDENET9Byte):
-                # ProtocolLEDENET9Byte devices support two white outputs for cold and warm. We set
-                # the second one here - if we're only setting a single white value,
-                # we set the second output to be the same as the first
-                if w2 is not None:
-                    w2_value = int(w2)
-                elif self.mode != "CCT" and w is not None:
-                    w2_value = int(w)
-                msg.append(w2_value)
-
-            # write mask, default to writing color and whites simultaneously
-            write_mask = 0x00
-            # rgbwprotocol devices always overwrite both color & whites
-            if not self.rgbwprotocol:
-                if w is None and w2 is None:
-                    # Mask out whites
-                    write_mask |= 0xF0
-                    update_white = False
-                elif r is None and g is None and b is None:
-                    # Mask out colors
-                    write_mask |= 0x0F
-                    update_colors = False
-
-            msg.append(write_mask)
-
-            # Message terminator
-            msg.append(0x0F)
-
-        byte_names = self._protocol.set_command_names
         _LOGGER.debug(
-            "%s: setRgbw using %s: %s",
+            "%s: setRgbw using %s: persist=%s r=%s, g=%s b=%s, w=%s w2=%s write_mode=%s",
             self.ipaddr,
             self.protocol,
-            " ".join(
-                "{}=0x{:02X}".format(byte_names[idx], x) for idx, x in enumerate(msg)
-            ),
+            persist,
+            r_value,
+            g_value,
+            b_value,
+            w_value,
+            w2_value,
+            write_mode,
+        )
+        msg = self._protocol.construct_levels_change(
+            persist, r_value, g_value, b_value, w_value, w2_value, write_mode
         )
 
         # send the message
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_message(msg))
+            self._send_msg(msg)
             updates = {}
-            if update_colors:
+            if write_mode in (LevelWriteMode.ALL, LevelWriteMode.COLORS):
                 updates.update({"red": r_value, "green": g_value, "blue": b_value})
-            if update_white:
+            if write_mode in (LevelWriteMode.ALL, LevelWriteMode.WHITES):
                 updates.update({"warm_white": w_value, "cool_white": w2_value})
             if updates:
                 self._replace_raw_state(updates)
-
             self._set_transition_complete_time()
 
     def _set_transition_complete_time(self):
@@ -1176,19 +1087,13 @@ class WifiLedBulb:
     def getRgb(self):
         if self.mode not in ["RGB", "color"]:
             return (255, 255, 255)
-        red = self.raw_state.red
-        green = self.raw_state.green
-        blue = self.raw_state.blue
-        return (red, green, blue)
+        return (self.raw_state.red, self.raw_state.green, self.raw_state.blue)
 
     def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
         self.setRgbw(r, g, b, persist=persist, brightness=brightness, retry=retry)
 
     def _calculateBrightness(self, rgb, level):
-        r = rgb[0]
-        g = rgb[1]
-        b = rgb[2]
-        hsv = colorsys.rgb_to_hsv(r, g, b)
+        hsv = colorsys.rgb_to_hsv(*rgb)
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
     def _send_msg(self, bytes):
