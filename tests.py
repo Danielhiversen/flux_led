@@ -6,12 +6,12 @@ import flux_led
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
 
+from flux_led.const import COLOR_MODE_DIM, COLOR_MODE_RGB, COLOR_MODE_RGBWW
 from flux_led.protocol import (
-    PROTOCOL_LEDENET_ORIGINAL,
-    PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_ORIGINAL,
 )
-
 from flux_led.utils import rgbw_brightness, rgbww_brightness
 
 
@@ -36,6 +36,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.166")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
@@ -74,6 +76,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
@@ -128,6 +132,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
+
         self.assertEqual(
             light.__str__(),
             "ON  [Warm White: 65% raw state: 129,69,35,97,33,16,0,0,0,166,4,0,15,52,]",
@@ -188,6 +194,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
@@ -255,6 +263,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         switch = flux_led.WifiLedBulb("192.168.1.164")
+        assert switch.color_modes == {}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\x81\x8a\x8b\x96")))
@@ -310,6 +320,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
@@ -388,15 +400,17 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"\x81\x25")
             if calls == 2:
                 self.assertEqual(expected, 12)
-                return bytearray(b"\x23\x61\x21\x10\xb6\x00\x98\x00\x04\x00\xf0\x9d")
+                return bytearray(b"\x23\x61\x05\x10\xb6\x00\x98\x00\x04\x00\xf0\x81")
             if calls == 3:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\x25\x23\x61\x21\x10\xb6\x00\x98\x19\x04\x25\x0f\xfa"
+                    b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
                 )
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGBWW}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
@@ -405,12 +419,12 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
-        self.assertEqual(light.brightness, 182)
+        self.assertEqual(light.brightness, 61)  # RGBWW brightness
         self.assertEqual(light.getRgb(), (182, 0, 152))
         self.assertEqual(light.rgbwcapable, True)
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (182, 0, 152) White: 0 raw state: 129,37,35,97,33,16,182,0,152,0,4,0,240,157,]",
+            "ON  [Color: (182, 0, 152) White: 0 raw state: 129,37,35,97,5,16,182,0,152,0,4,0,240,129,]",
         )
 
         light.setWarmWhite255(25)
@@ -432,12 +446,12 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 25)
         self.assertEqual(light.cold_white, 37)
-        self.assertEqual(light.brightness, 182)
+        self.assertEqual(light.brightness, 81)  # RGBWW brighness
         self.assertEqual(light.getRgbww(), (182, 0, 152, 25, 37))
         self.assertEqual(light.rgbwcapable, True)
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,33,16,182,0,152,25,4,37,15,250,]",
+            "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,4,37,15,222,]",
         )
 
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -476,6 +490,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB}
+
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xef\x01w")))
@@ -570,6 +586,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
