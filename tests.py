@@ -6,19 +6,13 @@ import flux_led
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
 
+from flux_led.const import COLOR_MODE_DIM, COLOR_MODE_RGB, COLOR_MODE_RGBWW
 from flux_led.protocol import (
-    PROTOCOL_LEDENET_ORIGINAL,
-    PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_ORIGINAL,
 )
-
-from flux_led.const import (
-    COLOR_MODE_DIM,
-    COLOR_MODE_RGBWW,
-    COLOR_MODE_RGB,
-    COLOR_MODE_RGBW,
-    COLOR_MODE_CCT,
-)
+from flux_led.utils import rgbw_brightness, rgbww_brightness
 
 
 class TestLight(unittest.TestCase):
@@ -631,3 +625,35 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 80)
         self.assertEqual(light.getRgb(), (1, 25, 80))
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
+
+    def test_rgbww_brightness(self):
+        assert rgbww_brightness((128, 128, 128, 128, 128), 255) == (
+            255,
+            255,
+            255,
+            255,
+            255,
+        )
+        assert rgbww_brightness((128, 128, 128, 128, 128), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbww_brightness((255, 255, 255, 255, 255), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbww_brightness((0, 255, 0, 0, 0), 255) == (0, 255, 0, 255, 255)
+        assert rgbww_brightness((0, 255, 0, 0, 0), 128) == (0, 255, 0, 64, 64)
+
+    def test_rgbw_brightness(self):
+        assert rgbw_brightness((128, 128, 128, 128), 255) == (255, 255, 255, 255)
+        assert rgbw_brightness((128, 128, 128, 128), 128) == (128, 128, 128, 128)
+        assert rgbw_brightness((255, 255, 255, 255), 128) == (128, 128, 128, 128)
+        assert rgbw_brightness((0, 255, 0, 0), 255) == (0, 255, 0, 255)
+        assert rgbw_brightness((0, 255, 0, 0), 128) == (0, 255, 0, 0)
