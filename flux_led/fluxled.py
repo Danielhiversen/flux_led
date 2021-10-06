@@ -53,6 +53,9 @@ from optparse import OptionParser, OptionGroup
 import ast
 import threading
 from .scanner import bulbscanner
+from .utils import utils
+from .timer import(builtintimer, ledtimer)
+from .pattern import presetpattern
 
 try:
     import webcolors
@@ -107,474 +110,6 @@ def _socket_retry(attempts=2):
         return _retry_wrap
 
     return decorator_retry
-
-
-class utils:
-    @staticmethod
-    def color_object_to_tuple(color):
-        global webcolors_available
-
-        # see if it's already a color tuple
-        if type(color) is tuple and len(color) in [3, 4, 5]:
-            return color
-
-        # can't convert non-string
-        if type(color) is not str:
-            return None
-        color = color.strip()
-
-        if webcolors_available:
-            # try to convert from an english name
-            try:
-                return webcolors.name_to_rgb(color)
-            except ValueError:
-                pass
-            except:
-                pass
-
-            # try to convert an web hex code
-            try:
-                return webcolors.hex_to_rgb(webcolors.normalize_hex(color))
-            except ValueError:
-                pass
-            except:
-                pass
-
-        # try to convert a string RGB tuple
-        try:
-            val = ast.literal_eval(color)
-            if type(val) is not tuple or len(val) not in [3, 4, 5]:
-                raise Exception
-            return val
-        except:
-            pass
-        return None
-
-    @staticmethod
-    def color_tuple_to_string(rgb):
-        # try to convert to an english name
-        try:
-            return webcolors.rgb_to_name(rgb)
-        except Exception:
-            # print e
-            pass
-        return str(rgb)
-
-    @staticmethod
-    def get_color_names_list():
-        names = set()
-        for key in list(webcolors.css2_hex_to_names.keys()):
-            names.add(webcolors.css2_hex_to_names[key])
-        for key in list(webcolors.css21_hex_to_names.keys()):
-            names.add(webcolors.css21_hex_to_names[key])
-        for key in list(webcolors.css3_hex_to_names.keys()):
-            names.add(webcolors.css3_hex_to_names[key])
-        for key in list(webcolors.html4_hex_to_names.keys()):
-            names.add(webcolors.html4_hex_to_names[key])
-        return sorted(names)
-
-    @staticmethod
-    def date_has_passed(dt):
-        delta = dt - datetime.datetime.now()
-        return delta.total_seconds() < 0
-
-    @staticmethod
-    def dump_bytes(bytes):
-        print("".join("{:02x} ".format(x) for x in bytearray(bytes)))
-
-    @staticmethod
-    def raw_state_to_dec(rx):
-        raw_state_str = ""
-        for _r in rx:
-            raw_state_str += str(_r) + ","
-        return raw_state_str
-
-    max_delay = 0x1F
-
-    @staticmethod
-    def delayToSpeed(delay):
-        # speed is 0-100, delay is 1-31
-        # 1st translate delay to 0-30
-        delay = delay - 1
-        if delay > utils.max_delay - 1:
-            delay = utils.max_delay - 1
-        if delay < 0:
-            delay = 0
-        inv_speed = int((delay * 100) / (utils.max_delay - 1))
-        speed = 100 - inv_speed
-        return speed
-
-    @staticmethod
-    def speedToDelay(speed):
-        # speed is 0-100, delay is 1-31
-        if speed > 100:
-            speed = 100
-        if speed < 0:
-            speed = 0
-        inv_speed = 100 - speed
-        delay = int((inv_speed * (utils.max_delay - 1)) / 100)
-        # translate from 0-30 to 1-31
-        delay = delay + 1
-        return delay
-
-    @staticmethod
-    def byteToPercent(byte):
-        if byte > 255:
-            byte = 255
-        if byte < 0:
-            byte = 0
-        return int((byte * 100) / 255)
-
-    @staticmethod
-    def percentToByte(percent):
-        if percent > 100:
-            percent = 100
-        if percent < 0:
-            percent = 0
-        return int((percent * 255) / 100)
-
-
-class PresetPattern:
-    seven_color_cross_fade = 0x25
-    red_gradual_change = 0x26
-    green_gradual_change = 0x27
-    blue_gradual_change = 0x28
-    yellow_gradual_change = 0x29
-    cyan_gradual_change = 0x2A
-    purple_gradual_change = 0x2B
-    white_gradual_change = 0x2C
-    red_green_cross_fade = 0x2D
-    red_blue_cross_fade = 0x2E
-    green_blue_cross_fade = 0x2F
-    seven_color_strobe_flash = 0x30
-    red_strobe_flash = 0x31
-    green_strobe_flash = 0x32
-    blue_strobe_flash = 0x33
-    yellow_strobe_flash = 0x34
-    cyan_strobe_flash = 0x35
-    purple_strobe_flash = 0x36
-    white_strobe_flash = 0x37
-    seven_color_jumping = 0x38
-
-    @staticmethod
-    def valid(pattern):
-        if pattern >= 0x25 and pattern <= 0x38 or pattern >= 0x61 and pattern <= 0x63:
-            return True
-        return False
-
-    @staticmethod
-    def valtostr(pattern):
-        for key, value in PresetPattern.__dict__.items():
-            if type(value) is int and value == pattern:
-                return key.replace("_", " ").title()
-        return None
-
-
-class BuiltInTimer:
-    sunrise = 0xA1
-    sunset = 0xA2
-
-    @staticmethod
-    def valid(byte_value):
-        return byte_value == BuiltInTimer.sunrise or byte_value == BuiltInTimer.sunset
-
-    @staticmethod
-    def valtostr(pattern):
-        for key, value in list(BuiltInTimer.__dict__.items()):
-            if type(value) is int and value == pattern:
-                return key.replace("_", " ").title()
-        return None
-
-
-class LedTimer:
-    Mo = 0x02
-    Tu = 0x04
-    We = 0x08
-    Th = 0x10
-    Fr = 0x20
-    Sa = 0x40
-    Su = 0x80
-    Everyday = Mo | Tu | We | Th | Fr | Sa | Su
-    Weekdays = Mo | Tu | We | Th | Fr
-    Weekend = Sa | Su
-
-    @staticmethod
-    def dayMaskToStr(mask):
-        for key, value in LedTimer.__dict__.items():
-            if type(value) is int and value == mask:
-                return key
-        return None
-
-    def __init__(self, bytes=None):
-        if bytes is not None:
-            self.fromBytes(bytes)
-            return
-
-        the_time = datetime.datetime.now() + datetime.timedelta(hours=1)
-        self.setTime(the_time.hour, the_time.minute)
-        self.setDate(the_time.year, the_time.month, the_time.day)
-        self.setModeTurnOff()
-        self.setActive(False)
-
-    def setActive(self, active=True):
-        self.active = active
-
-    def isActive(self):
-        return self.active
-
-    def isExpired(self):
-        # if no repeat mask and datetime is in past, return True
-        if self.repeat_mask != 0:
-            return False
-        elif self.year != 0 and self.month != 0 and self.day != 0:
-            dt = datetime.datetime(
-                self.year, self.month, self.day, self.hour, self.minute
-            )
-            if utils.date_has_passed(dt):
-                return True
-        return False
-
-    def setTime(self, hour, minute):
-        self.hour = hour
-        self.minute = minute
-
-    def setDate(self, year, month, day):
-        self.year = year
-        self.month = month
-        self.day = day
-        self.repeat_mask = 0
-
-    def setRepeatMask(self, repeat_mask):
-        self.year = 0
-        self.month = 0
-        self.day = 0
-        self.repeat_mask = repeat_mask
-
-    def setModeDefault(self):
-        self.mode = "default"
-        self.pattern_code = 0
-        self.turn_on = True
-        self.red = 0
-        self.green = 0
-        self.blue = 0
-        self.warmth_level = 0
-
-    def setModePresetPattern(self, pattern, speed):
-        self.mode = "preset"
-        self.warmth_level = 0
-        self.pattern_code = pattern
-        self.delay = utils.speedToDelay(speed)
-        self.turn_on = True
-
-    def setModeColor(self, r, g, b):
-        self.mode = "color"
-        self.warmth_level = 0
-        self.red = r
-        self.green = g
-        self.blue = b
-        self.pattern_code = 0x61
-        self.turn_on = True
-
-    def setModeWarmWhite(self, level):
-        self.mode = "ww"
-        self.warmth_level = utils.percentToByte(level)
-        self.pattern_code = 0x61
-        self.red = 0
-        self.green = 0
-        self.blue = 0
-        self.turn_on = True
-
-    def setModeSunrise(self, startBrightness, endBrightness, duration):
-        self.mode = "sunrise"
-        self.turn_on = True
-        self.pattern_code = BuiltInTimer.sunrise
-        self.brightness_start = utils.percentToByte(startBrightness)
-        self.brightness_end = utils.percentToByte(endBrightness)
-        self.warmth_level = utils.percentToByte(endBrightness)
-        self.duration = int(duration)
-
-    def setModeSunset(self, startBrightness, endBrightness, duration):
-        self.mode = "sunrise"
-        self.turn_on = True
-        self.pattern_code = BuiltInTimer.sunset
-        self.brightness_start = utils.percentToByte(startBrightness)
-        self.brightness_end = utils.percentToByte(endBrightness)
-        self.warmth_level = utils.percentToByte(endBrightness)
-        self.duration = int(duration)
-
-    def setModeTurnOff(self):
-        self.mode = "off"
-        self.turn_on = False
-        self.pattern_code = 0
-
-    """
-
-    timer are in six 14-byte structs
-        f0 0f 08 10 10 15 00 00 25 1f 00 00 00 f0 0f
-         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
-
-        0: f0 when active entry/ 0f when not active
-        1: (0f=15) year when no repeat, else 0
-        2:  month when no repeat, else 0
-        3:  dayofmonth when no repeat, else 0
-        4: hour
-        5: min
-        6: 0
-        7: repeat mask, Mo=0x2,Tu=0x04, We 0x8, Th=0x10 Fr=0x20, Sa=0x40, Su=0x80
-        8:  61 for solid color or warm, or preset pattern code
-        9:  r (or delay for preset pattern)
-        10: g
-        11: b
-        12: warm white level
-        13: 0f = turn off, f0 = turn on
-    """
-
-    def fromBytes(self, bytes):
-        # utils.dump_bytes(bytes)
-        self.red = 0
-        self.green = 0
-        self.blue = 0
-        if bytes[0] == 0xF0:
-            self.active = True
-        else:
-            self.active = False
-        self.year = bytes[1] + 2000
-        self.month = bytes[2]
-        self.day = bytes[3]
-        self.hour = bytes[4]
-        self.minute = bytes[5]
-        self.repeat_mask = bytes[7]
-        self.pattern_code = bytes[8]
-
-        if self.pattern_code == 0x00:
-            self.mode = "default"
-        elif self.pattern_code == 0x61:
-            self.mode = "color"
-            self.red = bytes[9]
-            self.green = bytes[10]
-            self.blue = bytes[11]
-        elif BuiltInTimer.valid(self.pattern_code):
-            self.mode = BuiltInTimer.valtostr(self.pattern_code)
-            self.duration = bytes[9]  # same byte as red
-            self.brightness_start = bytes[10]  # same byte as green
-            self.brightness_end = bytes[11]  # same byte as blue
-        elif PresetPattern.valid(self.pattern_code):
-            self.mode = "preset"
-            self.delay = bytes[9]  # same byte as red
-        else:
-            self.mode = "unknown"
-
-        self.warmth_level = bytes[12]
-        if self.warmth_level != 0:
-            self.mode = "ww"
-
-        if bytes[13] == 0xF0:
-            self.turn_on = True
-        else:
-            self.turn_on = False
-            self.mode = "off"
-
-    def toBytes(self):
-        bytes = bytearray(14)
-        if not self.active:
-            bytes[0] = 0x0F
-            # quit since all other zeros is good
-            return bytes
-
-        bytes[0] = 0xF0
-
-        if self.year >= 2000:
-            bytes[1] = self.year - 2000
-        else:
-            bytes[1] = self.year
-        bytes[2] = self.month
-        bytes[3] = self.day
-        bytes[4] = self.hour
-        bytes[5] = self.minute
-        # what is 6?
-        bytes[7] = self.repeat_mask
-
-        if not self.turn_on:
-            bytes[13] = 0x0F
-            return bytes
-        bytes[13] = 0xF0
-
-        bytes[8] = self.pattern_code
-        if PresetPattern.valid(self.pattern_code):
-            bytes[9] = self.delay
-            bytes[10] = 0
-            bytes[11] = 0
-        elif BuiltInTimer.valid(self.pattern_code):
-            bytes[9] = self.duration
-            bytes[10] = self.brightness_start
-            bytes[11] = self.brightness_end
-        else:
-            bytes[9] = self.red
-            bytes[10] = self.green
-            bytes[11] = self.blue
-        bytes[12] = self.warmth_level
-
-        return bytes
-
-    def __str__(self):
-        txt = ""
-        if not self.active:
-            return "Unset"
-
-        if self.turn_on:
-            txt += "[ON ]"
-        else:
-            txt += "[OFF]"
-
-        txt += " "
-
-        txt += "{:02}:{:02}  ".format(self.hour, self.minute)
-
-        if self.repeat_mask == 0:
-            txt += "Once: {:04}-{:02}-{:02}".format(self.year, self.month, self.day)
-        else:
-            bits = [
-                LedTimer.Su,
-                LedTimer.Mo,
-                LedTimer.Tu,
-                LedTimer.We,
-                LedTimer.Th,
-                LedTimer.Fr,
-                LedTimer.Sa,
-            ]
-            for b in bits:
-                if self.repeat_mask & b:
-                    txt += LedTimer.dayMaskToStr(b)
-                else:
-                    txt += "--"
-            txt += "  "
-
-        txt += "  "
-        if self.pattern_code == 0x61:
-            if self.warmth_level != 0:
-                txt += "Warm White: {}%".format(utils.byteToPercent(self.warmth_level))
-            else:
-                color_str = utils.color_tuple_to_string(
-                    (self.red, self.green, self.blue)
-                )
-                txt += "Color: {}".format(color_str)
-
-        elif PresetPattern.valid(self.pattern_code):
-            pat = PresetPattern.valtostr(self.pattern_code)
-            speed = utils.delayToSpeed(self.delay)
-            txt += "{} (Speed:{}%)".format(pat, speed)
-
-        elif BuiltInTimer.valid(self.pattern_code):
-            type = BuiltInTimer.valtostr(self.pattern_code)
-
-            txt += "{} (Duration:{} minutes, Brightness: {}% -> {}%)".format(
-                type,
-                self.duration,
-                utils.byteToPercent(self.brightness_start),
-                utils.byteToPercent(self.brightness_end),
-            )
-
-        return txt
 
 
 class WifiLedBulb:
@@ -722,10 +257,10 @@ class WifiLedBulb:
             mode = "music"
         elif pattern_code == 0x41:
             mode = "color"
-        elif PresetPattern.valid(pattern_code):
+        elif presetpattern.valid(pattern_code):
             mode = "preset"
-        elif BuiltInTimer.valid(pattern_code):
-            mode = BuiltInTimer.valtostr(pattern_code)
+        elif builtintimer.valid(pattern_code):
+            mode = builtintimer.valtostr(pattern_code)
         return mode
 
     def _determine_protocol(self):
@@ -874,12 +409,12 @@ class WifiLedBulb:
                 cct_value[0], cct_value[1] / 255
             )
         elif mode == "preset":
-            pat = PresetPattern.valtostr(pattern)
+            pat = presetpattern.valtostr(pattern)
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
         elif mode == "custom":
             mode_str = "Custom pattern (Speed {}%)".format(speed)
-        elif BuiltInTimer.valid(pattern):
-            mode_str = BuiltInTimer.valtostr(pattern)
+        elif builtintimer.valid(pattern):
+            mode_str = builtintimer.valtostr(pattern)
         elif mode == "music":
             mode_str = "Music"
         elif mode == "switch":
@@ -1190,10 +725,10 @@ class WifiLedBulb:
         else:
             raise ValueError(f"Invalid protocol: {protocol}")
 
-    def setPresetPattern(self, pattern, speed):
+    def setpresetpattern(self, pattern, speed):
 
-        PresetPattern.valtostr(pattern)
-        if not PresetPattern.valid(pattern):
+        presetpattern.valtostr(pattern)
+        if not presetpattern.valid(pattern):
             # print "Pattern must be between 0x25 and 0x38"
             raise Exception
 
@@ -1225,7 +760,7 @@ class WifiLedBulb:
         # pass in the 14-byte timer structs
         for i in range(6):
             timer_bytes = rx[start:][:14]
-            timer = LedTimer(timer_bytes)
+            timer = ledtimer(timer_bytes)
             timer_list.append(timer)
             start += 14
 
@@ -1245,7 +780,7 @@ class WifiLedBulb:
         # pad list to 6 with inactive timers
         if len(timer_list) != 6:
             for i in range(6 - len(timer_list)):
-                timer_list.append(LedTimer())
+                timer_list.append(ledtimer())
 
         msg_start = bytearray([0x21])
         msg_end = bytearray([0x00, 0xF0])
@@ -1460,7 +995,7 @@ def processSetTimerArgs(parser, args):
         settings_dict[key] = val
 
     keys = list(settings_dict.keys())
-    timer = LedTimer()
+    timer = ledtimer()
 
     if mode == "inactive":
         # no setting needed
@@ -1523,19 +1058,19 @@ def processSetTimerArgs(parser, args):
 
             repeat = 0
             if 0 in days:
-                repeat |= LedTimer.Su
+                repeat |= ledtimer.Su
             if 1 in days:
-                repeat |= LedTimer.Mo
+                repeat |= ledtimer.Mo
             if 2 in days:
-                repeat |= LedTimer.Tu
+                repeat |= ledtimer.Tu
             if 3 in days:
-                repeat |= LedTimer.We
+                repeat |= ledtimer.We
             if 4 in days:
-                repeat |= LedTimer.Th
+                repeat |= ledtimer.Th
             if 5 in days:
-                repeat |= LedTimer.Fr
+                repeat |= ledtimer.Fr
             if 6 in days:
-                repeat |= LedTimer.Sa
+                repeat |= ledtimer.Sa
             timer.setRepeatMask(repeat)
 
         if mode == "default":
@@ -1562,9 +1097,9 @@ def processSetTimerArgs(parser, args):
             speed = settings_dict["speed"]
             if not speed.isdigit() or int(speed) > 100:
                 parser.error("preset speed must be a percentage (0-100)")
-            if not code.isdigit() or not PresetPattern.valid(int(code)):
+            if not code.isdigit() or not presetpattern.valid(int(code)):
                 parser.error("preset code must be in valid range")
-            timer.setModePresetPattern(int(code), int(speed))
+            timer.setModepresetpattern(int(code), int(speed))
 
         if mode == "warmwhite":
             if "level" not in keys:
@@ -1845,9 +1380,9 @@ def parseArgs():
 
     if options.listpresets:
         for c in range(
-            PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping + 1
+            presetpattern.seven_color_cross_fade, presetpattern.seven_color_jumping + 1
         ):
-            print("{:2} {}".format(c, PresetPattern.valtostr(c)))
+            print("{:2} {}".format(c, presetpattern.valtostr(c)))
         sys.exit(0)
 
     global webcolors_available
@@ -1898,7 +1433,7 @@ def parseArgs():
             parser.error("bad color specification")
 
     if options.preset:
-        if not PresetPattern.valid(options.preset[0]):
+        if not presetpattern.valid(options.preset[0]):
             parser.error("Preset code is not in range")
 
     # asking for timer info, implicitly gets the state
@@ -2047,10 +1582,10 @@ def main():
         elif options.preset is not None:
             print(
                 "Setting preset pattern: {}, Speed={}%".format(
-                    PresetPattern.valtostr(options.preset[0]), options.preset[1]
+                    presetpattern.valtostr(options.preset[0]), options.preset[1]
                 )
             )
-            bulb.setPresetPattern(options.preset[0], options.preset[1])
+            bulb.setpresetpattern(options.preset[0], options.preset[1])
 
         if options.on:
             print("Turning on bulb at {}".format(bulb.ipaddr))
