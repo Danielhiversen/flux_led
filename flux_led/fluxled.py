@@ -45,11 +45,10 @@ import logging
 import sys
 from optparse import OptionGroup, OptionParser
 
-from .device import DeviceType, WifiLedBulb
+from .device import WifiLedBulb
 from .pattern import PresetPattern
 from .scanner import BulbScanner
-from .sock import _Socket_Retry
-from .timer import BuiltInTimer, LedTimer
+from .timer import LedTimer
 from .utils import utils
 
 _LOGGER = logging.getLogger(__name__)

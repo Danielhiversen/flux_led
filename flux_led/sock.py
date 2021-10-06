@@ -4,7 +4,7 @@ import socket
 _LOGGER = logging.getLogger(__name__)
 
 
-def _Socket_Retry(attempts=2):
+def _socket_retry(attempts=2):
     """Define a wrapper to retry on socket failures."""
 
     def decorator_retry(func):

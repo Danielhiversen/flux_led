@@ -9,6 +9,26 @@ import threading
 import time
 from enum import Enum
 
+from .const import (
+    COLOR_MODE_CCT,
+    COLOR_MODE_DIM,
+    COLOR_MODE_RGB,
+    COLOR_MODE_RGBW,
+    COLOR_MODE_RGBWW,
+    COLOR_MODES_RGB,
+    COLOR_MODES_RGB_CCT,
+    COLOR_MODES_RGB_W,
+    DEFAULT_MODE,
+    MODE_COLOR,
+    MODE_CUSTOM,
+    MODE_MUSIC,
+    MODE_PRESET,
+    MODE_SWITCH,
+    MODE_WW,
+    MODEL_NUM_SWITCH,
+    STATIC_MODES,
+)
+from .models_db import MODEL_MAP, RGBW_PROTOCOL_MODELS, USE_9BYTE_PROTOCOL_MODELS
 from .pattern import PresetPattern
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
@@ -19,13 +39,14 @@ from .protocol import (
     ProtocolLEDENET9Byte,
     ProtocolLEDENETOriginal,
 )
-from .sock import _Socket_Retry
+from .sock import _socket_retry
 from .timer import BuiltInTimer, LedTimer
 from .utils import utils
 
-STATE_CHANGE_LATENCY = 0.3
+STATE_CHANGE_LATENCY = 1
 MIN_TEMP = 2700
 MAX_TEMP = 6500
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,17 +85,20 @@ class WifiLedBulb:
     @property
     def rgbwprotocol(self):
         """Devices that don't require a separate rgb/w bit."""
-        return self.model_num in (0x04, 0x33, 0x81)
+        return self.model_num in RGBW_PROTOCOL_MODELS
 
     @property
     def rgbwcapable(self):
         """Devices that actually support rgbw."""
-        return self.model_num in (0x04, 0x25, 0x81, 0x44, 0x06, 0x35)
+        color_modes = self.color_modes
+        return COLOR_MODE_RGBW in color_modes or COLOR_MODE_RGBWW in color_modes
 
     @property
     def device_type(self):
         """Return the device type."""
-        return DeviceType.Switch if self.model_num == 0x97 else DeviceType.Bulb
+        return (
+            DeviceType.Switch if self.model_num == MODEL_NUM_SWITCH else DeviceType.Bulb
+        )
 
     @property
     def _rgbwwprotocol(self):
@@ -83,7 +107,36 @@ class WifiLedBulb:
 
     def _uses_9byte_protocol(self, model_num):
         """Devices that use a 9-byte protocol."""
-        return model_num in (0x25, 0x27, 0x35)
+        return model_num in USE_9BYTE_PROTOCOL_MODELS
+
+    @property
+    def white_active(self):
+        """Any white channel is active."""
+        return bool(self.raw_state.warm_white or self.raw_state.cool_white)
+
+    @property
+    def color_modes(self):
+        """The available color modes."""
+        model_db_entry = MODEL_MAP.get(self.model_num)
+        if not model_db_entry:
+            return {DEFAULT_MODE}  # Default mode is RGB
+        return model_db_entry.mode_to_color_mode.get(
+            self.raw_state.mode, model_db_entry.color_modes
+        )
+
+    @property
+    def color_mode(self):
+        """The current color mode."""
+        color_modes = self.color_modes
+        if (
+            color_modes == COLOR_MODES_RGB_CCT
+        ):  # RGB/CCT split, only one active at a time
+            return COLOR_MODE_CCT if self.white_active else COLOR_MODE_RGB
+        if color_modes == COLOR_MODES_RGB_W:  # RGB/W split, only one active at a time
+            return COLOR_MODE_DIM if self.white_active else COLOR_MODE_RGB
+        if color_modes:
+            return list(color_modes)[0]
+        return None  # Usually a switch or non-light device
 
     @property
     def protocol(self):
@@ -121,21 +174,32 @@ class WifiLedBulb:
         for CCT calculate the brightness.
         for ww send led level
         """
-        if self.mode in ["DIM", "ww"]:
-            return int(self.raw_state.warm_white)
-        elif self.mode == "CCT":
+        color_mode = self.color_mode
+        raw_state = self.raw_state
+
+        if color_mode == COLOR_MODE_DIM:
+            return int(raw_state.warm_white)
+        elif color_mode == COLOR_MODE_CCT:
             _, b = self.getWhiteTemperature()
             return b
-        else:
-            _, _, v = colorsys.rgb_to_hsv(*self.getRgb())
-            return v
+
+        r, g, b = self.getRgb()
+        _, _, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+        v_255 = v * 255
+        if color_mode == COLOR_MODE_RGBW:
+            return round((v_255 + raw_state.warm_white) / 2)
+        if color_mode == COLOR_MODE_RGBWW:
+            return round((v_255 + raw_state.warm_white + raw_state.cool_white) / 3)
+
+        # Default color mode (RGB)
+        return int(v_255)
 
     def _connect_if_disconnected(self):
         """Connect only if not already connected."""
         if self._socket is None:
             self.connect()
 
-    @_Socket_Retry(attempts=0)
+    @_socket_retry(attempts=0)
     def connect(self):
         self.close()
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,38 +217,23 @@ class WifiLedBulb:
         finally:
             self._socket = None
 
-    def _determineMode(self, ww_level, pattern_code, mode_code):
-        mode = "unknown"
+    def _determineMode(self):
+        pattern_code = self.raw_state.preset_pattern
         if self.device_type == DeviceType.Switch:
-            return "switch"
-        if pattern_code == 0x61:
-            if mode_code == 0x01:
-                mode = "DIM"
-            elif mode_code == 0x02:
-                mode = "CCT"
-            elif mode_code == 0x03:
-                mode = "RGB"
-            elif mode_code == 0x04:
-                mode = "RGBW"
-            elif mode_code == 0x05 or mode_code == 0x17:
-                mode = "RGBWW"
-            elif self.rgbwcapable:
-                mode = "color"
-            elif ww_level != 0:
-                mode = "ww"
-            else:
-                mode = "color"
+            return MODE_SWITCH
+        if pattern_code in (0x41, 0x61):
+            if self.color_mode in {COLOR_MODE_DIM, COLOR_MODE_CCT}:
+                return MODE_WW
+            return MODE_COLOR
         elif pattern_code == 0x60:
-            mode = "custom"
+            return MODE_CUSTOM
         elif pattern_code == 0x62:
-            mode = "music"
-        elif pattern_code == 0x41:
-            mode = "color"
+            return MODE_MUSIC
         elif PresetPattern.valid(pattern_code):
-            mode = "preset"
+            return MODE_PRESET
         elif BuiltInTimer.valid(pattern_code):
-            mode = BuiltInTimer.valtostr(pattern_code)
-        return mode
+            return BuiltInTimer.valtostr(pattern_code)
+        return "unknown"
 
     def _determine_protocol(self):
         # determine the type of protocol based of first 2 bytes.
@@ -222,7 +271,7 @@ class WifiLedBulb:
 
         raise Exception("Cannot determine protocol")
 
-    @_Socket_Retry(attempts=2)
+    @_socket_retry(attempts=2)
     def query_state(self, led_type=None):
         if led_type:
             self.setProtocol(led_type)
@@ -276,9 +325,8 @@ class WifiLedBulb:
 
         self.raw_state = raw_state
         self._set_power_state_from_raw_state()
-        mode = self._determineMode(
-            raw_state.warm_white, raw_state.preset_pattern, raw_state.mode
-        )
+        mode = self._determineMode()
+
         if mode == "unknown":
             _LOGGER.debug(
                 "%s: Unable to determine mode from raw state: %s",
@@ -303,6 +351,7 @@ class WifiLedBulb:
         if not rx:
             return "No state data"
         mode = self.mode
+        color_mode = self.color_mode
         pattern = rx.preset_pattern
         ww_level = rx.warm_white
         power_state = rx.power_state
@@ -314,33 +363,34 @@ class WifiLedBulb:
 
         delay = rx.speed
         speed = utils.delayToSpeed(delay)
-        if mode in ["RGB", "RGBW", "RGBWW", "color"]:
-            red = rx.red
-            green = rx.green
-            blue = rx.blue
-            mode_str = "Color: {}".format((red, green, blue))
-            # Should add ability to get CCT from rgbwcapable*
-            if self.rgbwcapable:
-                mode_str += " White: {}".format(ww_level)
-            else:
-                mode_str += " Brightness: {}".format(self.brightness)
-        elif mode in ["DIM", "ww"]:
-            mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
-        elif mode == "CCT":
-            cct_value = self.getWhiteTemperature()
-            mode_str = "CCT: {}K Brightness: {}%".format(
-                cct_value[0], cct_value[1] / 255
-            )
-        elif mode == "preset":
+        if mode in STATIC_MODES:
+            if color_mode in COLOR_MODES_RGB:
+                red = rx.red
+                green = rx.green
+                blue = rx.blue
+                mode_str = "Color: {}".format((red, green, blue))
+                # Should add ability to get CCT from rgbwcapable*
+                if self.rgbwcapable:
+                    mode_str += " White: {}".format(ww_level)
+                else:
+                    mode_str += " Brightness: {}".format(self.brightness)
+            elif color_mode == COLOR_MODE_DIM:
+                mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
+            elif color_mode == COLOR_MODE_CCT:
+                cct_value = self.getWhiteTemperature()
+                mode_str = "CCT: {}K Brightness: {}%".format(
+                    cct_value[0], cct_value[1] / 255
+                )
+        elif mode == MODE_PRESET:
             pat = PresetPattern.valtostr(pattern)
             mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
-        elif mode == "custom":
+        elif mode == MODE_CUSTOM:
             mode_str = "Custom pattern (Speed {}%)".format(speed)
         elif BuiltInTimer.valid(pattern):
             mode_str = BuiltInTimer.valtostr(pattern)
-        elif mode == "music":
+        elif mode == MODE_MUSIC:
             mode_str = "Music"
-        elif mode == "switch":
+        elif mode == MODE_SWITCH:
             mode_str = "Switch"
         else:
             mode_str = "Unknown mode 0x{:x}".format(pattern)
@@ -348,7 +398,7 @@ class WifiLedBulb:
         mode_str += utils.raw_state_to_dec(rx)
         return "{} [{}]".format(power_str, mode_str)
 
-    @_Socket_Retry(attempts=2)
+    @_socket_retry(attempts=2)
     def _change_state(self, turn_on=True):
         _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
         with self._lock:
@@ -385,7 +435,7 @@ class WifiLedBulb:
         return self.is_on
 
     def getWarmWhite255(self):
-        if self.mode not in ["ww", "CCT", "DIM"]:
+        if self.color_mode not in {COLOR_MODE_CCT, COLOR_MODE_DIM}:
             return 255
         return self.brightness
 
@@ -427,7 +477,7 @@ class WifiLedBulb:
         return (temperature, brightness)
 
     def getRgbw(self):
-        if self.mode not in ["RGBW", "color"]:
+        if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255)
         return (
             self.raw_state.red,
@@ -437,7 +487,7 @@ class WifiLedBulb:
         )
 
     def getRgbww(self):
-        if self.mode not in ["RGBWW", "color"]:
+        if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
         return (
             self.raw_state.red,
@@ -448,7 +498,7 @@ class WifiLedBulb:
         )
 
     def getCCT(self):
-        if self.mode != "CCT":
+        if self.color_mode != COLOR_MODE_CCT:
             return (255, 255)
         return (self.raw_state.warm_white, self.raw_state.cool_white)
 
@@ -457,7 +507,7 @@ class WifiLedBulb:
         speed = utils.delayToSpeed(delay)
         return speed
 
-    @_Socket_Retry(attempts=2)
+    @_socket_retry(attempts=2)
     def setRgbw(
         self,
         r=None,
@@ -470,7 +520,7 @@ class WifiLedBulb:
     ):
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
-            raise Exception
+            raise ValueError("RGBW command sent to non-RGBW device")
 
         if brightness != None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
@@ -483,12 +533,14 @@ class WifiLedBulb:
         if w2 is None:
             # If we're only setting a single white value,
             # we set the second output to be the same as the first
-            w2_value = int(w) if w is not None and self.mode != "CCT" else 0
+            w2_value = (
+                int(w) if w is not None and self.color_mode != COLOR_MODE_CCT else 0
+            )
         else:
             w2_value = int(w2)
 
         write_mode = LevelWriteMode.ALL
-        # rgbwprotocol devices always overwrite both color & whites
+        # rgbwprotocol always overwrite both color & whites
         if not self.rgbwprotocol:
             if w is None and w2 is None:
                 write_mode = LevelWriteMode.COLORS
@@ -516,9 +568,15 @@ class WifiLedBulb:
             self._connect_if_disconnected()
             self._send_msg(msg)
             updates = {}
-            if write_mode in (LevelWriteMode.ALL, LevelWriteMode.COLORS):
+            if len(self.color_modes) > 1 or write_mode in (
+                LevelWriteMode.ALL,
+                LevelWriteMode.COLORS,
+            ):
                 updates.update({"red": r_value, "green": g_value, "blue": b_value})
-            if write_mode in (LevelWriteMode.ALL, LevelWriteMode.WHITES):
+            if len(self.color_modes) > 1 or write_mode in (
+                LevelWriteMode.ALL,
+                LevelWriteMode.WHITES,
+            ):
                 updates.update({"warm_white": w_value, "cool_white": w2_value})
             if updates:
                 self._replace_raw_state(updates)
@@ -544,7 +602,7 @@ class WifiLedBulb:
         )
 
     def getRgb(self):
-        if self.mode not in ["RGB", "color"]:
+        if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255)
         return (self.raw_state.red, self.raw_state.green, self.raw_state.blue)
 
