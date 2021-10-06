@@ -1,11 +1,11 @@
 from __future__ import print_function
 
 import ast
+import colorsys
 import datetime
+from typing import Optional, Tuple
 
 import webcolors
-
-from .scanner import BulbScanner
 
 
 class utils:
@@ -129,3 +129,81 @@ class utils:
         if percent < 0:
             percent = 0
         return int((percent * 255) / 100)
+
+
+def rgbw_brightness(
+    rgbw_data: Tuple[int, int, int, int],
+    brightness: Optional[int] = None,
+) -> Tuple[int, int, int, int]:
+    """Convert rgbw to brightness."""
+    original_r, original_g, original_b = rgbw_data[0:3]
+    h, s, v = colorsys.rgb_to_hsv(original_r / 255, original_g / 255, original_b / 255)
+    color_brightness = round(v * 255)
+    ww_brightness = rgbw_data[3]
+    current_brightness = round((color_brightness + ww_brightness) / 2)
+
+    if not brightness or brightness == current_brightness:
+        return rgbw_data
+
+    if brightness < current_brightness:
+        change_brightness_pct = (current_brightness - brightness) / current_brightness
+        ww_brightness = round(ww_brightness * (1 - change_brightness_pct))
+        color_brightness = round(color_brightness * (1 - change_brightness_pct))
+
+    else:
+        change_brightness_pct = (brightness - current_brightness) / (
+            255 - current_brightness
+        )
+        ww_brightness = round(
+            (255 - ww_brightness) * change_brightness_pct + ww_brightness
+        )
+        color_brightness = round(
+            (255 - color_brightness) * change_brightness_pct + color_brightness
+        )
+
+    r, g, b = colorsys.hsv_to_rgb(h, s, color_brightness / 255)
+    return (round(r * 255), round(g * 255), round(b * 255), ww_brightness)
+
+
+def rgbww_brightness(
+    rgbww_data: Tuple[int, int, int, int, int],
+    brightness: Optional[int] = None,
+) -> Tuple[int, int, int, int, int]:
+    """Convert rgbww to brightness."""
+    original_r, original_g, original_b = rgbww_data[0:3]
+    h, s, v = colorsys.rgb_to_hsv(original_r / 255, original_g / 255, original_b / 255)
+    color_brightness = round(v * 255)
+    ww_brightness = rgbww_data[3]
+    cw_brightness = rgbww_data[4]
+    current_brightness = round((color_brightness + ww_brightness + cw_brightness) / 3)
+
+    if not brightness or brightness == current_brightness:
+        return rgbww_data
+
+    if brightness < current_brightness:
+        change_brightness_pct = (current_brightness - brightness) / current_brightness
+        ww_brightness = round(ww_brightness * (1 - change_brightness_pct))
+        color_brightness = round(color_brightness * (1 - change_brightness_pct))
+        cw_brightness = round(cw_brightness * (1 - change_brightness_pct))
+    else:
+        change_brightness_pct = (brightness - current_brightness) / (
+            255 - current_brightness
+        )
+        ww_brightness = round(
+            (255 - ww_brightness) * change_brightness_pct + ww_brightness
+        )
+        color_brightness = round(
+            (255 - color_brightness) * change_brightness_pct + color_brightness
+        )
+        cw_brightness = round(
+            (255 - cw_brightness) * change_brightness_pct + cw_brightness
+        )
+
+    r, g, b = colorsys.hsv_to_rgb(h, s, color_brightness / 255)
+    return (
+        round(r * 255),
+        round(g * 255),
+        round(b * 255),
+        ww_brightness,
+        cw_brightness,
+    )

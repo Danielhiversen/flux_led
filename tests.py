@@ -12,6 +12,8 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,
 )
 
+from flux_led.utils import rgbw_brightness, rgbww_brightness
+
 
 class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -605,3 +607,35 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 80)
         self.assertEqual(light.getRgb(), (1, 25, 80))
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
+
+    def test_rgbww_brightness(self):
+        assert rgbww_brightness((128, 128, 128, 128, 128), 255) == (
+            255,
+            255,
+            255,
+            255,
+            255,
+        )
+        assert rgbww_brightness((128, 128, 128, 128, 128), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbww_brightness((255, 255, 255, 255, 255), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbww_brightness((0, 255, 0, 0, 0), 255) == (0, 255, 0, 255, 255)
+        assert rgbww_brightness((0, 255, 0, 0, 0), 128) == (0, 255, 0, 64, 64)
+
+    def test_rgbw_brightness(self):
+        assert rgbw_brightness((128, 128, 128, 128), 255) == (255, 255, 255, 255)
+        assert rgbw_brightness((128, 128, 128, 128), 128) == (128, 128, 128, 128)
+        assert rgbw_brightness((255, 255, 255, 255), 128) == (128, 128, 128, 128)
+        assert rgbw_brightness((0, 255, 0, 0), 255) == (0, 255, 0, 255)
+        assert rgbw_brightness((0, 255, 0, 0), 128) == (0, 255, 0, 0)
