@@ -1,5 +1,5 @@
 """Init file for Flux LED"""
-from .__main__ import (
+from .fluxled import (
     DeviceType,
     PresetPattern,
     LedTimer,
