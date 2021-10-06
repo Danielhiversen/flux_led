@@ -839,6 +839,8 @@ class WifiLedBulb:
 
     def __str__(self):
         rx = self.raw_state
+        if not rx:
+            return "No state data"
         mode = self.mode
         pattern = rx[3]
         ww_level = rx[9]
