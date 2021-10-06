@@ -1,6 +1,6 @@
 
 
-class presetpattern:
+class PresetPattern:
     seven_color_cross_fade = 0x25
     red_gradual_change = 0x26
     green_gradual_change = 0x27
@@ -30,7 +30,7 @@ class presetpattern:
 
     @staticmethod
     def valtostr(pattern):
-        for key, value in presetpattern.__dict__.items():
+        for key, value in PresetPattern.__dict__.items():
             if type(value) is int and value == pattern:
                 return key.replace("_", " ").title()
         return None

@@ -8,7 +8,7 @@ import select
 _LOGGER = logging.getLogger(__name__)
 
 
-class bulbscanner:
+class BulbScanner:
 
     DISCOVERY_PORT = 48899
     BROADCAST_FREQUENCY = 3

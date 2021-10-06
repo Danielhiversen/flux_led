@@ -44,13 +44,13 @@ import sys
 import datetime
 from optparse import OptionParser, OptionGroup
 
-from .device import wifiledbulb
-from .scanner import bulbscanner
+from .device import WifiLedBulb
+from .scanner import BulbScanner
 from .utils import utils
-from .timer import(builtintimer, ledtimer)
-from .pattern import presetpattern
-from .sock import _socket_retry
-from .device import(devicetype, wifiledbulb)
+from .timer import(BuiltInTimer, LedTimer)
+from .pattern import PresetPattern
+from .sock import _Socket_Retry
+from .device import(DeviceType, WifiLedBulb)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -201,7 +201,7 @@ def processSetTimerArgs(parser, args):
         settings_dict[key] = val
 
     keys = list(settings_dict.keys())
-    timer = ledtimer()
+    timer = LedTimer()
 
     if mode == "inactive":
         # no setting needed
@@ -264,19 +264,19 @@ def processSetTimerArgs(parser, args):
 
             repeat = 0
             if 0 in days:
-                repeat |= ledtimer.Su
+                repeat |= LedTimer.Su
             if 1 in days:
-                repeat |= ledtimer.Mo
+                repeat |= LedTimer.Mo
             if 2 in days:
-                repeat |= ledtimer.Tu
+                repeat |= LedTimer.Tu
             if 3 in days:
-                repeat |= ledtimer.We
+                repeat |= LedTimer.We
             if 4 in days:
-                repeat |= ledtimer.Th
+                repeat |= LedTimer.Th
             if 5 in days:
-                repeat |= ledtimer.Fr
+                repeat |= LedTimer.Fr
             if 6 in days:
-                repeat |= ledtimer.Sa
+                repeat |= LedTimer.Sa
             timer.setRepeatMask(repeat)
 
         if mode == "default":
@@ -303,7 +303,7 @@ def processSetTimerArgs(parser, args):
             speed = settings_dict["speed"]
             if not speed.isdigit() or int(speed) > 100:
                 parser.error("preset speed must be a percentage (0-100)")
-            if not code.isdigit() or not presetpattern.valid(int(code)):
+            if not code.isdigit() or not PresetPattern.valid(int(code)):
                 parser.error("preset code must be in valid range")
             timer.setModePresetPattern(int(code), int(speed))
 
@@ -586,9 +586,9 @@ def parseArgs():
 
     if options.listpresets:
         for c in range(
-            presetpattern.seven_color_cross_fade, presetpattern.seven_color_jumping + 1
+            PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping + 1
         ):
-            print("{:2} {}".format(c, presetpattern.valtostr(c)))
+            print("{:2} {}".format(c, PresetPattern.valtostr(c)))
         sys.exit(0)
 
 
@@ -634,7 +634,7 @@ def parseArgs():
             parser.error("bad color specification")
 
     if options.preset:
-        if not presetpattern.valid(options.preset[0]):
+        if not PresetPattern.valid(options.preset[0]):
             parser.error("Preset code is not in range")
 
     # asking for timer info, implicitly gets the state
@@ -676,7 +676,7 @@ def main():
     (options, args) = parseArgs()
 
     if options.scan:
-        scanner = bulbscanner()
+        scanner = BulbScanner()
         scanner.scan(timeout=2)
         bulb_info_list = scanner.getBulbInfo()
         # we have a list of buld info dicts
@@ -703,7 +703,7 @@ def main():
     # now we have our bulb list, perform same operation on all of them
     for info in bulb_info_list:
         try:
-            bulb = wifiledbulb(info["ipaddr"])
+            bulb = WifiLedBulb(info["ipaddr"])
         except Exception as e:
             print("Unable to connect to bulb at [{}]: {}".format(info["ipaddr"], e))
             continue
@@ -783,10 +783,10 @@ def main():
         elif options.preset is not None:
             print(
                 "Setting preset pattern: {}, Speed={}%".format(
-                    presetpattern.valtostr(options.preset[0]), options.preset[1]
+                    PresetPattern.valtostr(options.preset[0]), options.preset[1]
                 )
             )
-            bulb.setpresetpattern(options.preset[0], options.preset[1])
+            bulb.setPresetPattern(options.preset[0], options.preset[1])
 
         if options.on:
             print("Turning on bulb at {}".format(bulb.ipaddr))
