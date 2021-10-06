@@ -4,9 +4,11 @@ from .fluxled import (
     PresetPattern,
     LedTimer,
     WifiLedBulb,
-    BulbScanner,
     utils,
 )
+
+
+from .scanner import bulbscanner
 
 __all__ = [
     "DeviceType",
