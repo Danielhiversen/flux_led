@@ -40,14 +40,9 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
 """
 from __future__ import print_function
 import logging
-import select
-import socket
 import sys
 import datetime
-
-
 from optparse import OptionParser, OptionGroup
-import ast
 
 from .device import wifiledbulb
 from .scanner import bulbscanner
@@ -57,12 +52,6 @@ from .pattern import presetpattern
 from .sock import _socket_retry
 from .device import(devicetype, wifiledbulb)
 
-try:
-    import webcolors
-
-    webcolors_available = True
-except:
-    webcolors_available = False
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -602,16 +591,11 @@ def parseArgs():
             print("{:2} {}".format(c, presetpattern.valtostr(c)))
         sys.exit(0)
 
-    global webcolors_available
+
     if options.listcolors:
-        if webcolors_available:
-            for c in utils.get_color_names_list():
-                print("{}, ".format(c))
-            print("")
-        else:
-            print(
-                "webcolors package doesn't seem to be installed. No color names available"
-            )
+        for c in utils.get_color_names_list():
+            print("{}, ".format(c))
+        print("")
         sys.exit(0)
 
     if options.settimer:
