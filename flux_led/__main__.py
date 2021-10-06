@@ -63,14 +63,46 @@ except:
 _LOGGER = logging.getLogger(__name__)
 
 
-PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
-PROTOCOL_LEDENET = "LEDENET"
-PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"
+from .protocol import (
+    PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_ORIGINAL,
+    PROTOCOL_LEDENET_9BYTE,
+)
+from .protocol import (
+    ProtocolLEDENET9Byte,
+    ProtocolLEDENET8Byte,
+    ProtocolLEDENETOriginal,
+)
+
+STATE_CHANGE_LATENCY = 0.3
 
 
 class DeviceType(Enum):
     Bulb = 0
     Switch = 1
+
+
+def _socket_retry(attempts=2):
+    """Define a wrapper to retry on socket failures."""
+
+    def decorator_retry(func):
+        def _retry_wrap(self, *args, retry=attempts, **kwargs) -> None:
+            attempts_remaining = retry + 1
+            while attempts_remaining:
+                attempts_remaining -= 1
+                try:
+                    ret = func(self, *args, **kwargs)
+                    self.set_available()
+                    return ret
+                except socket.error as ex:
+                    _LOGGER.debug(
+                        "%s: socket error while calling %s: %s", self.ipaddr, func, ex
+                    )
+            self.set_unavailable()
+
+        return _retry_wrap
+
+    return decorator_retry
 
 
 class utils:
@@ -542,89 +574,61 @@ class LedTimer:
 
 
 class WifiLedBulb:
-
-    STATE_RESPONSES = {
-        PROTOCOL_LEDENET_ORIGINAL: [
-            "head",
-            "type",
-            "power_state",
-            "preset_pattern",
-            "mode",
-            "speed",
-            "red",
-            "green",
-            "blue",
-            "warm_white",
-            "check_sum",
-        ],
-        PROTOCOL_LEDENET: [
-            "head",
-            "type",
-            "power_state",
-            "preset_pattern",
-            "mode",
-            "speed",
-            "red",
-            "green",
-            "blue",
-            "warm_white",
-            "version_number",
-            "cool_white",
-            "color_mode",
-            "check_sum",
-        ],
-    }
-
-    SET_COMMANDS = {
-        PROTOCOL_LEDENET_ORIGINAL: [
-            "head",
-            "red",
-            "green",
-            "blue",
-            "terminator",
-        ],
-        PROTOCOL_LEDENET_8BYTE: [
-            "head",
-            "red",
-            "green",
-            "blue",
-            "white",
-            "write_mask_white2",
-            "terminator",
-        ],
-        PROTOCOL_LEDENET: [
-            "head",
-            "red",
-            "green",
-            "blue",
-            "warm_white",
-            "cold_write",
-            "write_mode",
-            "terminator",
-        ],
-    }
-
     def __init__(self, ipaddr, port=5577, timeout=5):
         self.ipaddr = ipaddr
         self.port = port
         self.timeout = timeout
-
-        self.protocol = None
-        self.rgbwcapable = False
-        self.rgbwprotocol = False
-
         self.raw_state = None
+
+        self._protocol = None
+
+        self.available = None
         self._is_on = False
         self._mode = None
         self._socket = None
+
+        self._transition_complete_time = 0
+
         self._lock = threading.Lock()
-        self._query_len = 0
-        self._use_csum = True
 
-        self.device_type = DeviceType.Bulb
-
-        self.connect(2)
+        self.connect(retry=2)
         self.update_state()
+
+    @property
+    def model_num(self):
+        """Return the model number."""
+        return self.raw_state[1] if self.raw_state else None
+
+    @property
+    def rgbwprotocol(self):
+        """Devices that don't require a separate rgb/w bit."""
+        return self.model_num in (0x04, 0x33, 0x81)
+
+    @property
+    def rgbwcapable(self):
+        """Devices that actually support rgbw."""
+        return self.model_num in (0x04, 0x25, 0x81, 0x44, 0x06, 0x35)
+
+    @property
+    def device_type(self):
+        """Return the device type."""
+        return DeviceType.Switch if self.model_num == 0x97 else DeviceType.Bulb
+
+    @property
+    def _rgbwwprotocol(self):
+        """Device that uses the 9-byte protocol."""
+        return self._uses_9byte_protocol(self.model_num)
+
+    def _uses_9byte_protocol(self, model_num):
+        """Devices that use a 9-byte protocol."""
+        return model_num in (0x25, 0x27, 0x35)
+
+    @property
+    def protocol(self):
+        """Returns the name of the protocol in use."""
+        if not self._protocol:
+            return None
+        return self._protocol.name
 
     @property
     def is_on(self):
@@ -636,17 +640,11 @@ class WifiLedBulb:
 
     @property
     def warm_white(self):
-        if self.protocol == PROTOCOL_LEDENET:
-            return self.raw_state[9]
-        else:
-            return 0
+        return self.raw_state[9] if self._rgbwwprotocol else 0
 
     @property
     def cold_white(self):
-        if self.protocol == PROTOCOL_LEDENET:
-            return self.raw_state[11]
-        else:
-            return 0
+        return self.raw_state[11] if self._rgbwwprotocol else 0
 
     @property
     def brightness(self):
@@ -670,18 +668,13 @@ class WifiLedBulb:
         if self._socket is None:
             self.connect()
 
-    def connect(self, retry=0):
+    @_socket_retry(attempts=0)
+    def connect(self):
         self.close()
-        try:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.settimeout(self.timeout)
-            _LOGGER.debug("%s: connect", self.ipaddr)
-            self._socket.connect((self.ipaddr, self.port))
-        except socket.error as ex:
-            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
-            if retry < 1:
-                return
-            self.connect(max(retry - 1, 0))
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.settimeout(self.timeout)
+        _LOGGER.debug("%s: connect", self.ipaddr)
+        self._socket.connect((self.ipaddr, self.port))
 
     def close(self):
         if self._socket is None:
@@ -726,131 +719,82 @@ class WifiLedBulb:
             mode = BuiltInTimer.valtostr(pattern_code)
         return mode
 
-    def _determine_query_len(self, retry=2):
+    def _determine_protocol(self):
         # determine the type of protocol based of first 2 bytes.
+        read_bytes = 2
+
+        protocol = ProtocolLEDENET8Byte()
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(bytearray([0x81, 0x8A, 0x8B]))
-            rx = self._read_msg(2)
+            self._send_msg(protocol.construct_state_query())
+            rx = self._read_msg(read_bytes)
             # if any response is recieved, use the default protocol
-            if len(rx) == 2:
-                rx += self._read_msg(12)
-                self._query_len = 14
-                return rx
+            if len(rx) == read_bytes:
+                # Devices that use an 9-byte protocol
+                if self._uses_9byte_protocol(rx[1]):
+                    self._protocol = ProtocolLEDENET9Byte()
+                else:
+                    self._protocol = protocol
+                return rx + self._read_msg(
+                    self._protocol.state_response_length - read_bytes
+                )
 
         # We just sent a garage query which the old procotol
         # cannot process, recycle the connection
+        protocol = ProtocolLEDENETOriginal()
         self.connect()
         with self._lock:
             # if no response from default received, next try the original protocol
-            self._send_msg(bytearray([0xEF, 0x01, 0x77]))
-            rx = self._read_msg(2)
-            if rx[1] == 0x01:
-                self.protocol = PROTOCOL_LEDENET_ORIGINAL
-                self._use_csum = False
-                rx += self._read_msg(9)
-                self._query_len = 11
-                return rx
-            else:
-                self._use_csum = True
-        if rx == None and retry > 0:
+            self._send_msg(protocol.construct_state_query())
+            rx = self._read_msg(read_bytes)
+            if len(rx) == read_bytes and rx[1] == 0x01:
+                self._protocol = protocol
+                return rx + self._read_msg(
+                    self._protocol.state_response_length - read_bytes
+                )
+
+        raise Exception("Cannot determine protocol")
+
+    @_socket_retry(attempts=2)
+    def query_state(self, led_type=None):
+        if led_type:
+            self.setProtocol(led_type)
+        elif not self._protocol:
+            return self._determine_protocol()
+
+        with self._lock:
             self.connect()
-            self._determine_query_len(max(retry - 1, 0))
-
-    def query_state(self, retry=2, led_type=None):
-        if self._query_len == 0:
-            return self._determine_query_len()
-
-        # default value
-        msg = bytearray([0x81, 0x8A, 0x8B])
-        # alternative for original protocol
-        if self.protocol == PROTOCOL_LEDENET_ORIGINAL or led_type == "LEDENET_ORIGINAL":
-            msg = bytearray([0xEF, 0x01, 0x77])
-            led_type = "LEDENET_ORIGINAL"
-
-        try:
-            with self._lock:
-                self.connect()
-                self._send_msg(msg)
-                rx = self._read_msg(self._query_len)
-        except socket.error as ex:
-            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
-            if retry < 1:
-                self._is_on = False
-                return
-            self.connect()
-            return self.query_state(max(retry - 1, 0), led_type)
-        if rx is None or len(rx) < self._query_len:
-            if retry < 1:
-                self._is_on = False
-                return rx
-            return self.query_state(max(retry - 1, 0), led_type)
-
-        return rx
+            self._send_msg(self._protocol.construct_state_query())
+            return self._read_msg(self._protocol.state_response_length)
 
     def update_state(self, retry=2):
-        rx = self.query_state(retry)
+        rx = self.query_state(retry=retry)
         if rx and self.process_state_response(rx):
+            self.available = True
             return
-        if retry < 1:
-            return
-        self.update_state(max(retry - 1, 0))
+        self.set_unavailable()
+
+    def set_unavailable(self):
+        self._is_on = False
+        self.available = False
+
+    def set_available(self):
+        self.available = True
 
     def process_state_response(self, rx):
-        if rx is None or len(rx) < self._query_len:
-            self._is_on = False
+        if rx is None or len(rx) < self._protocol.state_response_length:
+            self.set_unavailable()
             return False
 
-        expected_first_byte = (
-            0x66 if self.protocol == PROTOCOL_LEDENET_ORIGINAL else 0x81
-        )
-        if rx[0] != expected_first_byte:
+        if not self._protocol.is_valid_state_response(rx):
             _LOGGER.warning(
                 "%s: Recieved invalid response: %s",
                 self.ipaddr,
                 utils.raw_state_to_dec(rx),
             )
             return False
-        # typical response:
-        # pos  0  1  2  3  4  5  6  7  8  9 10
-        #    66 01 24 39 21 0a ff 00 00 01 99
-        #     |  |  |  |  |  |  |  |  |  |  |
-        #     |  |  |  |  |  |  |  |  |  |  checksum
-        #     |  |  |  |  |  |  |  |  |  warmwhite
-        #     |  |  |  |  |  |  |  |  blue
-        #     |  |  |  |  |  |  |  green
-        #     |  |  |  |  |  |  red
-        #     |  |  |  |  |  speed: 0f = highest f0 is lowest
-        #     |  |  |  |  <don't know yet>
-        #     |  |  |  preset pattern
-        #     |  |  off(24)/on(23)
-        #     |  type
-        #     msg head
-        #
 
-        # response from a 5-channel LEDENET controller:
-        # pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
-        #    81 25 23 61 21 06 38 05 06 f9 01 00 0f 9d
-        #     |  |  |  |  |  |  |  |  |  |  |  |  |  |
-        #     |  |  |  |  |  |  |  |  |  |  |  |  |  checksum
-        #     |  |  |  |  |  |  |  |  |  |  |  |  color mode (f0 colors were set, 0f whites, 00 all were set)
-        #     |  |  |  |  |  |  |  |  |  |  |  cool-white  0x00 to 0xFF
-        #     |  |  |  |  |  |  |  |  |  |  version number
-        #     |  |  |  |  |  |  |  |  |  warmwhite  0x00 to 0xFF
-        #     |  |  |  |  |  |  |  |  blue  0x00 to 0xFF
-        #     |  |  |  |  |  |  |  green  0x00 to 0xFF
-        #     |  |  |  |  |  |  red 0x00 to 0xFF
-        #     |  |  |  |  |  speed: 0x01 = highest 0x1f is lowest
-        #     |  |  |  |  Mode WW(01), WW+CW(02), RGB(03), RGBW(04), RGBWW(05)
-        #     |  |  |  preset pattern
-        #     |  |  off(24)/on(23)
-        #     |  type
-        #     msg head
-        #
-        byte_names = (
-            self.STATE_RESPONSES.get(self.protocol)
-            or self.STATE_RESPONSES[PROTOCOL_LEDENET]
-        )
+        byte_names = self._protocol.state_response_names
         _LOGGER.debug(
             "%s: State: %s",
             self.ipaddr,
@@ -859,29 +803,18 @@ class WifiLedBulb:
             ),
         )
 
-        type_ = rx[1]
+        if rx != self.raw_state:
+            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
 
-        # Devices that don't require a separate rgb/w bit
-        if type_ in (0x04, 0x33, 0x81):
-            self.rgbwprotocol = True
+        if time.monotonic() < self._transition_complete_time:
+            # Do not update the raw state if a transition is
+            # in progress as the state will not be correct
+            # until the transition is completed since devices
+            # "FADE" into the state requested.
+            return True
 
-        # Devices that actually support rgbw
-
-        if type_ in (0x04, 0x25, 0x81, 0x44, 0x06, 0x35):
-
-            self.rgbwcapable = True
-
-        self.device_type = DeviceType.Switch if type_ == 0x97 else DeviceType.Bulb
-
-        # Devices that use an 8-byte protocol
-        if type_ in (0x25, 0x27, 0x35):
-            self.protocol = PROTOCOL_LEDENET
-
-        # Devices that use the original LEDENET protocol
-        if rx[1] == 0x01:
-            self.protocol = PROTOCOL_LEDENET_ORIGINAL
-            self._use_csum = False
-
+        self.raw_state = rx
+        self._set_power_state_from_raw_state()
         pattern = rx[3]
         ww_level = rx[9]
         mode = self._determineMode(ww_level, pattern, rx[4])
@@ -893,35 +826,29 @@ class WifiLedBulb:
             )
             return False
 
-        if rx != self.raw_state:
-            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
-        self.raw_state = rx
-        self._set_power_state_from_raw_state()
         self._mode = mode
         return True
 
     def _set_power_state_from_raw_state(self):
         """Set the power state from the raw state."""
         power_state = self.raw_state[2]
-        if power_state == 0x23:
+        if power_state == self._protocol.on_byte:
             self._is_on = True
-        elif power_state == 0x24:
+        elif power_state == self._protocol.off_byte:
             self._is_on = False
 
     def __str__(self):
         rx = self.raw_state
+        if not rx:
+            return "No state data"
         mode = self.mode
         pattern = rx[3]
         ww_level = rx[9]
         power_state = rx[2]
         power_str = "Unknown power state"
-
-        if self.protocol == PROTOCOL_LEDENET:
-            cw_level = rx[11]
-
-        if power_state == 0x23:
+        if power_state == self._protocol.on_byte:
             power_str = "ON "
-        elif power_state == 0x24:
+        elif power_state == self._protocol.off_byte:
             power_str = "OFF "
 
         delay = rx[5]
@@ -960,53 +887,34 @@ class WifiLedBulb:
         mode_str += utils.raw_state_to_dec(rx)
         return "{} [{}]".format(power_str, mode_str)
 
-    def _change_state(self, retry, turn_on=True):
-
-        if self.protocol == PROTOCOL_LEDENET_ORIGINAL:
-            msg_on = bytearray([0xCC, 0x23, 0x33])
-            msg_off = bytearray([0xCC, 0x24, 0x33])
-        else:
-            msg_on = bytearray([0x71, 0x23, 0x0F])
-            msg_off = bytearray([0x71, 0x24, 0x0F])
-
-        if turn_on:
-            msg = msg_on
-        else:
-            msg = msg_off
-
-        try:
-            _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
-            with self._lock:
-                self._connect_if_disconnected()
-                self._send_msg(msg)
-                # After changing state, the device replies with
-                expected_response_len = 4
-                # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
-                rx = self._read_msg(expected_response_len)
-                _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
-                if len(rx) == expected_response_len:
-                    self.raw_state[2] = 0x23 if turn_on else 0x24
-                    self._set_power_state_from_raw_state()
-                # The device will send back a state change here
-                # but it will likely be stale so we want to recycle
-                # the connetion so we do not have to wait as sometimes
-                # it stalls
-                self.close()
-        except socket.error as ex:
-            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
-            if retry > 0:
-                self.connect()
-                self._change_state(max(retry - 1, 0), turn_on)
-                return
-            self._is_on = False
+    @_socket_retry(attempts=2)
+    def _change_state(self, turn_on=True):
+        _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(self._protocol.construct_state_change(turn_on))
+            # After changing state, the device replies with
+            expected_response_len = 4
+            # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
+            rx = self._read_msg(expected_response_len)
+            _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
+            if len(rx) == expected_response_len:
+                self.raw_state[2] = (
+                    self._protocol.on_byte if turn_on else self._protocol.off_byte
+                )
+                self._set_power_state_from_raw_state()
+            self._set_transition_complete_time()
+            # The device will send back a state change here
+            # but it will likely be stale so we want to recycle
+            # the connetion so we do not have to wait as sometimes
+            # it stalls
+            self.close()
 
     def turnOn(self, retry=2):
-        self._is_on = True
-        self._change_state(retry, turn_on=True)
+        self._change_state(retry=retry, turn_on=True)
 
     def turnOff(self, retry=2):
-        self._is_on = False
-        self._change_state(retry, turn_on=False)
+        self._change_state(retry=retry, turn_on=False)
 
     def isOn(self):
         return self.is_on
@@ -1080,6 +988,7 @@ class WifiLedBulb:
         speed = utils.delayToSpeed(delay)
         return speed
 
+    @_socket_retry(attempts=2)
     def setRgbw(
         self,
         r=None,
@@ -1089,7 +998,6 @@ class WifiLedBulb:
         persist=True,
         brightness=None,
         w2=None,
-        retry=2,
     ):
         _LOGGER.debug(
             "%s: setRgbw: r=%s, g=%s, b=%s, w=%s, persist=%s, brightness=%s, w2=%s",
@@ -1160,7 +1068,7 @@ class WifiLedBulb:
 
         update_colors = True
         # The original LEDENET protocol
-        if self.protocol == PROTOCOL_LEDENET_ORIGINAL:
+        if isinstance(self._protocol, ProtocolLEDENETOriginal):
             update_white = False
             msg = bytearray([0x56])
             r_value = int(r)
@@ -1191,8 +1099,8 @@ class WifiLedBulb:
             msg.append(b_value)
             msg.append(w_value)
 
-            if self.protocol == PROTOCOL_LEDENET:
-                # LEDENET devices support two white outputs for cold and warm. We set
+            if isinstance(self._protocol, ProtocolLEDENET9Byte):
+                # ProtocolLEDENET9Byte devices support two white outputs for cold and warm. We set
                 # the second one here - if we're only setting a single white value,
                 # we set the second output to be the same as the first
                 if w2 is not None:
@@ -1219,43 +1127,47 @@ class WifiLedBulb:
             # Message terminator
             msg.append(0x0F)
 
-        protocol = self.protocol or PROTOCOL_LEDENET_8BYTE
-        byte_names = self.SET_COMMANDS[protocol]
+        byte_names = self._protocol.set_command_names
         _LOGGER.debug(
             "%s: setRgbw using %s: %s",
             self.ipaddr,
-            protocol,
+            self.protocol,
             " ".join(
                 "{}=0x{:02X}".format(byte_names[idx], x) for idx, x in enumerate(msg)
             ),
         )
 
         # send the message
-        try:
-            with self._lock:
-                self._connect_if_disconnected()
-                self._send_msg(msg)
-                if update_colors:
-                    self.raw_state[6] = r_value
-                    self.raw_state[7] = g_value
-                    self.raw_state[8] = b_value
-                if update_white:
-                    self.raw_state[9] = w_value
-                    self.raw_state[11] = w2_value
-        except socket.error as ex:
-            _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
-            if retry:
-                self.connect()
-                self.setRgbw(
-                    r,
-                    g,
-                    b,
-                    w,
-                    persist=persist,
-                    brightness=brightness,
-                    retry=max(retry - 1, 0),
-                    w2=w2,
-                )
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(self._protocol.construct_message(msg))
+            if update_colors:
+                self.raw_state[6] = r_value
+                self.raw_state[7] = g_value
+                self.raw_state[8] = b_value
+            if update_white:
+                self.raw_state[9] = w_value
+                self.raw_state[11] = w2_value
+            self._set_transition_complete_time()
+
+    def _set_transition_complete_time(self):
+        """Set the time we expect the transition will be completed.
+
+        Devices fade to a specific state so we want to avoid
+        consuming state updates into self.raw_state while a transition
+        is in progress as this will provide unexpected results
+        and the brightness values will be wrong until
+        the transition completes.
+        """
+        transition_time = (
+            STATE_CHANGE_LATENCY + utils.speedToDelay(self.raw_state[5]) / 100
+        )
+        self._transition_complete_time = time.monotonic() + transition_time
+        _LOGGER.debug(
+            "Transition time is %s, set _transition_complete_time to %s",
+            transition_time,
+            self._transition_complete_time,
+        )
 
     def getRgb(self):
         if self.mode not in ["RGB", "color"]:
@@ -1276,10 +1188,6 @@ class WifiLedBulb:
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
 
     def _send_msg(self, bytes):
-        # calculate checksum of byte array and add to end
-        if self._use_csum:
-            csum = sum(bytes) & 0xFF
-            bytes.append(csum)
         _LOGGER.debug(
             "%s => %s (%d)",
             self.ipaddr,
@@ -1326,7 +1234,7 @@ class WifiLedBulb:
         msg = bytearray([0x11, 0x1A, 0x1B, 0x0F])
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(msg)
+            self._send_msg(self._protocol.construct_message(msg))
             rx = self._read_msg(12)
         if len(rx) != 12:
             return
@@ -1357,13 +1265,20 @@ class WifiLedBulb:
         msg.append(0x0F)
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(msg)
+            self._send_msg(self._protocol.construct_message(msg))
             # Setting the clock does not always respond so we
             # cycle the connection
             self.close()
 
     def setProtocol(self, protocol):
-        self.protocol = protocol.upper()
+        if protocol == PROTOCOL_LEDENET_ORIGINAL:
+            self._protocol = ProtocolLEDENETOriginal()
+        elif protocol == PROTOCOL_LEDENET_8BYTE:
+            self._protocol = ProtocolLEDENET8Byte()
+        elif protocol == PROTOCOL_LEDENET_9BYTE:
+            self._protocol = ProtocolLEDENET9Byte()
+        else:
+            raise ValueError(f"Invalid protocol: {protocol}")
 
     def setPresetPattern(self, pattern, speed):
 
@@ -1381,14 +1296,14 @@ class WifiLedBulb:
 
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(pattern_set_msg)
+            self._send_msg(self._protocol.construct_message(pattern_set_msg))
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
         resp_len = 88
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(msg)
+            self._send_msg(self._protocol.construct_message(msg))
             rx = self._read_msg(resp_len)
         if len(rx) != resp_len:
             print("response too short!")
@@ -1433,7 +1348,7 @@ class WifiLedBulb:
         msg.extend(msg_end)
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(msg)
+            self._send_msg(self._protocol.construct_message(msg))
             # not sure what the resp is, prob some sort of ack?
             rx = self._read_msg(4)
 
@@ -1482,7 +1397,7 @@ class WifiLedBulb:
 
         with self._lock:
             self._connect_if_disconnected
-            self._send_msg(msg)
+            self._send_msg(self._protocol.construct_message(msg))
 
     def refreshState(self):
         return self.update_state()
