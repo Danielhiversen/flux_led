@@ -3,6 +3,7 @@
 import logging
 from abc import abstractmethod
 from collections import namedtuple
+from enum import Enum
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +27,12 @@ LEDENET_BASE_STATE = [
     "blue",
     "warm_white",
 ]
+
+
+class LevelWriteMode(Enum):
+    ALL = 0x00
+    COLORS = 0xF0
+    WHITES = 0x0F
 
 
 LEDENETOriginalRawState = namedtuple(
@@ -109,6 +116,12 @@ class ProtocolBase:
     def construct_state_change(self, turn_on):
         """The bytes to send for a state change request."""
 
+    @abstractmethod
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, color_mask
+    ):
+        """The bytes to send for a level change request."""
+
     @property
     @abstractmethod
     def name(self):
@@ -151,17 +164,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """The length of the query response."""
         return LEDENET_ORIGINAL_STATE_RESPONSE_LEN
 
-    @property
-    def set_command_names(self):
-        """The names of the values in the set command."""
-        return [
-            "head",
-            "red",
-            "green",
-            "blue",
-            "terminator",
-        ]
-
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
         return len(raw_state) == self.state_response_length and raw_state[1] == 0x01
@@ -175,6 +177,21 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         return self.construct_message(
             bytearray([0xCC, self.on_byte if turn_on else self.off_byte, 0x33])
         )
+
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, color_mask
+    ):
+        """The bytes to send for a level change request."""
+        # sample message for original LEDENET protocol (w/o checksum at end)
+        #  0  1  2  3  4
+        # 56 90 fa 77 aa
+        #  |  |  |  |  |
+        #  |  |  |  |  terminator
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  head
+        return self.construct_message(bytearray([0x56, red, green, blue, 0xAA]))
 
     def construct_message(self, raw_bytes):
         """Original protocol uses no checksum."""
@@ -198,19 +215,6 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The length of the query response."""
         return LEDENET_STATE_RESPONSE_LEN
 
-    @property
-    def set_command_names(self):
-        """The names of the values in the set command."""
-        return [
-            "head",
-            "red",
-            "green",
-            "blue",
-            "white",
-            "write_mask_white2",
-            "terminator",
-        ]
-
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
@@ -229,6 +233,48 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The bytes to send for a state change request."""
         return self.construct_message(
             bytearray([0x71, self.on_byte if turn_on else self.off_byte, 0x0F])
+        )
+
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, write_mode
+    ):
+        """The bytes to send for a level change request."""
+        # sample message for 8-byte protocols (w/ checksum at end)
+        #  0  1  2  3  4  5  6
+        # 31 90 fa 77 00 00 0f
+        #  |  |  |  |  |  |  |
+        #  |  |  |  |  |  |  terminator
+        #  |  |  |  |  |  write mask / white2 (see below)
+        #  |  |  |  |  white
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  persistence (31 for true / 41 for false)
+        #
+        # byte 5 can have different values depending on the type
+        # of device:
+        # For devices that support 2 types of white value (warm and cold
+        # white) this value is the cold white value. These use the LEDENET
+        # protocol. If a second value is not given, reuse the first white value.
+        #
+        # For devices that cannot set both rbg and white values at the same time
+        # (including devices that only support white) this value
+        # specifies if this command is to set white value (0f) or the rgb
+        # value (f0).
+        #
+        # For all other rgb and rgbw devices, the value is 00
+        return self.construct_message(
+            bytearray(
+                [
+                    0x31 if persist else 0x41,
+                    red,
+                    green,
+                    blue,
+                    warm_white,
+                    write_mode.value,
+                    0x0F,
+                ]
+            )
         )
 
     def construct_message(self, raw_bytes):
@@ -254,16 +300,34 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE
 
-    @property
-    def set_command_names(self):
-        """The names of the values in the set command."""
-        return [
-            "head",
-            "red",
-            "green",
-            "blue",
-            "warm_white",
-            "cold_write",
-            "write_mode",
-            "terminator",
-        ]
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, write_mode
+    ):
+        """The bytes to send for a level change request."""
+        # sample message for 9-byte LEDENET protocol (w/ checksum at end)
+        #  0  1  2  3  4  5  6  7
+        # 31 bc c1 ff 00 00 f0 0f
+        #  |  |  |  |  |  |  |  |
+        #  |  |  |  |  |  |  |  terminator
+        #  |  |  |  |  |  |  write mode (f0 colors, 0f whites, 00 colors & whites)
+        #  |  |  |  |  |  cold white
+        #  |  |  |  |  warm white
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  persistence (31 for true / 41 for false)
+        #
+        return self.construct_message(
+            bytearray(
+                [
+                    0x31 if persist else 0x41,
+                    red,
+                    green,
+                    blue,
+                    warm_white,
+                    cool_white,
+                    write_mode.value,
+                    0x0F,
+                ]
+            )
+        )
