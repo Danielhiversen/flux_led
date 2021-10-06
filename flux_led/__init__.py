@@ -1,20 +1,15 @@
 """Init file for Flux LED"""
-from .fluxled import (
-    DeviceType,
-    WifiLedBulb,
-)
-
-
+from .device import (devicetype, wifiledbulb)
 from .scanner import bulbscanner
 from .pattern import presetpattern
 from .timer import ledtimer
 from .utils import utils
 
 __all__ = [
-    "DeviceType",
+    "devicetype",
     "presetpattern",
     "ledtimer",
-    "WifiLedBulb",
+    "wifiledbulb",
     "bulbscanner",
     "utils",
 ]
