@@ -30,7 +30,7 @@ class presetpattern:
 
     @staticmethod
     def valtostr(pattern):
-        for key, value in PresetPattern.__dict__.items():
+        for key, value in presetpattern.__dict__.items():
             if type(value) is int and value == pattern:
                 return key.replace("_", " ").title()
         return None
