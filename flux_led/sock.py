@@ -20,7 +20,14 @@ def _socket_retry(attempts=2):
                     _LOGGER.debug(
                         "%s: socket error while calling %s: %s", self.ipaddr, func, ex
                     )
-            self.set_unavailable()
+                    if attempts_remaining:
+                        continue
+                    self.set_unavailable()
+                    self.close()
+                    # We need to raise or the bulb will
+                    # always be seen as available in Home Assistant
+                    # when it goes offline
+                    raise
 
         return _retry_wrap
 
