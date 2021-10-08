@@ -575,7 +575,7 @@ class LEDENETDevice:
             print("RGBW command sent to non-RGBW device")
             raise ValueError("RGBW command sent to non-RGBW device")
 
-        if brightness != None:
+        if brightness != None and r is not None and g is not None and b is not None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
 
         r_value = 0 if r is None else int(r)
