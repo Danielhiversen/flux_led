@@ -133,6 +133,20 @@ class utils:
         return int((percent * 255) / 100)
 
 
+def rgbww_to_rgbcw(
+    rgbww_data: Tuple[int, int, int, int, int]
+) -> Tuple[int, int, int, int, int]:
+    r, g, b, w, c = rgbww_data
+    return r, g, b, c, w
+
+
+def rgbcw_to_rgbww(
+    rgbww_data: Tuple[int, int, int, int, int]
+) -> Tuple[int, int, int, int, int]:
+    r, g, b, c, w = rgbww_data
+    return r, g, b, w, c
+
+
 def rgbw_brightness(
     rgbw_data: Tuple[int, int, int, int],
     brightness: Optional[int] = None,
