@@ -293,5 +293,8 @@ def white_levels_to_color_temp(warm_white, cool_white):
     warm = warm_white / 255
     cold = cool_white / 255
     brightness = warm + cold
-    temperature = ((cold / brightness) * (MAX_TEMP - MIN_TEMP)) + MIN_TEMP
+    if brightness == 0:
+        temperature = ((cold / brightness) * (MAX_TEMP - MIN_TEMP)) + MIN_TEMP
+    else:
+        temperature = MIN_TEMP
     return round(temperature), min(255, round(brightness * 255))
