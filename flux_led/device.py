@@ -9,13 +9,7 @@ import threading
 import time
 from enum import Enum
 
-from .const import (
-    MAX_TEMP,
-)  # imported for back compat, remove once Home Assistant no longer uses
-from .const import (
-    MIN_TEMP,
-)  # imported for back compat, remove once Home Assistant no longer uses
-from .const import (
+from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -26,6 +20,8 @@ from .const import (
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
+    MAX_TEMP,
+    MIN_TEMP,
     MODE_COLOR,
     MODE_CUSTOM,
     MODE_MUSIC,
@@ -475,6 +471,11 @@ class LEDENETDevice:
         """Returns red,green,blue,white (usually warm)."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255)
+        return self.rgbw
+
+    @property
+    def rgbw(self):
+        """Returns red,green,blue,white (usually warm)."""
         return (
             self.raw_state.red,
             self.raw_state.green,
@@ -486,6 +487,11 @@ class LEDENETDevice:
         """Returns red,green,blue,warm,cool."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
+        return self.rgbww
+
+    @property
+    def rgbww(self):
+        """Returns red,green,blue,warm,cool."""
         return (
             self.raw_state.red,
             self.raw_state.green,
@@ -498,6 +504,11 @@ class LEDENETDevice:
         """Returns red,green,blue,cool,warm."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
+        return self.rgbcw
+
+    @property
+    def rgbcw(self):
+        """Returns red,green,blue,cool,warm."""
         return (
             self.raw_state.red,
             self.raw_state.green,
@@ -635,6 +646,10 @@ class LEDENETDevice:
     def getRgb(self):
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255)
+        return self.rgb
+
+    @property
+    def rgb(self):
         return (self.raw_state.red, self.raw_state.green, self.raw_state.blue)
 
     def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
