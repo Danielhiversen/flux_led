@@ -4,9 +4,10 @@ import ast
 import colorsys
 import datetime
 from typing import Optional, Tuple
-from .const import MIN_TEMP, MAX_TEMP
 
 import webcolors
+
+from .const import MAX_TEMP, MIN_TEMP
 
 
 class utils:
@@ -211,6 +212,21 @@ def rgbww_brightness(
 
 
 def color_temp_to_white_levels(temperature, brightness):
+    # Assume output temperature of between 2700 and 6500 Kelvin, and scale
+    # the warm and cold LEDs linearly to provide that
+    if not (MIN_TEMP <= temperature <= MAX_TEMP):
+        raise ValueError(
+            f"Temperature of {temperature} is not valid and must be between {MIN_TEMP} and {MAX_TEMP}"
+        )
+    brightness = round(brightness / 255, 2)
+    cold = ((6500 - temperature) / (MAX_TEMP - MIN_TEMP)) * (brightness)
+    warm = (brightness) - cold
+    cold = round(255 * cold)
+    warm = round(255 * warm)
+    return cold, warm
+
+
+def white_levels_to_color_temp(temperature, brightness):
     # Assume output temperature of between 2700 and 6500 Kelvin, and scale
     # the warm and cold LEDs linearly to provide that
     if not (MIN_TEMP <= temperature <= MAX_TEMP):

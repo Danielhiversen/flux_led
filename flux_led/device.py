@@ -10,6 +10,12 @@ import time
 from enum import Enum
 
 from .const import (
+    MAX_TEMP,
+)  # imported for back compat, remove once Home Assistant no longer uses
+from .const import (
+    MIN_TEMP,
+)  # imported for back compat, remove once Home Assistant no longer uses
+from .const import (
     COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -20,8 +26,6 @@ from .const import (
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
-    MAX_TEMP,  # imported for back compat, remove once Home Assistant no longer uses
-    MIN_TEMP,  # imported for back compat, remove once Home Assistant no longer uses
     MODE_COLOR,
     MODE_CUSTOM,
     MODE_MUSIC,
@@ -52,7 +56,7 @@ from .protocol import (
 )
 from .sock import _socket_retry
 from .timer import BuiltInTimer, LedTimer
-from .utils import utils, color_temp_to_white_levels
+from .utils import color_temp_to_white_levels, utils, white_levels_to_color_temp
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -458,21 +462,17 @@ class LEDENETDevice:
         self.set_levels(w2=level, persist=persist, retry=retry)
 
     def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
-        w, w2 = color_temp_to_white_levels(temperature, brightness)
-        self.set_levels(w=w, w2=w2, persist=persist, retry=retry)
+        cold, warm = color_temp_to_white_levels(temperature, brightness)
+        self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
     def getWhiteTemperature(self):
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
-        warm = self.raw_state.warm_white / 255
-        cold = self.raw_state.cool_white / 255
-        brightness = warm + cold
-        temperature = ((cold / brightness) * (6493 - 2703)) + 2703
-        brightness = round(brightness * 255)
-        temperature = round(temperature)
-        return (temperature, brightness)
+        raw_state = self.raw_state
+        return white_levels_to_color_temp(raw_state.warm_white, raw_state.cool_white)
 
     def getRgbw(self):
+        """Returns red,green,blue,white (usually warm)."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255)
         return (
@@ -483,6 +483,7 @@ class LEDENETDevice:
         )
 
     def getRgbww(self):
+        """Returns red,green,blue,warm,cool."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
         return (
@@ -491,6 +492,18 @@ class LEDENETDevice:
             self.raw_state.blue,
             self.raw_state.warm_white,
             self.raw_state.cool_white,
+        )
+
+    def getRgbcw(self):
+        """Returns red,green,blue,cool,warm."""
+        if self.color_mode not in COLOR_MODES_RGB:
+            return (255, 255, 255, 255, 255)
+        return (
+            self.raw_state.red,
+            self.raw_state.green,
+            self.raw_state.blue,
+            self.raw_state.cool_white,
+            self.raw_state.warm_white,
         )
 
     def getCCT(self):

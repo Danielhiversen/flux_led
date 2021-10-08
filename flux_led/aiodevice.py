@@ -2,7 +2,6 @@ import asyncio
 import logging
 from typing import Callable, Optional
 
-from .utils import color_temp_to_white_levels
 from .aioprotocol import AIOLEDENETProtocol
 from .device import LEDENETDevice
 from .protocol import (
@@ -10,6 +9,7 @@ from .protocol import (
     ProtocolLEDENET9Byte,
     ProtocolLEDENETOriginal,
 )
+from .utils import color_temp_to_white_levels
 
 _LOGGER = logging.getLogger(__name__)
 
