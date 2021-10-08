@@ -118,6 +118,12 @@ class LEDENETDevice:
         return bool(self.raw_state.warm_white or self.raw_state.cool_white)
 
     @property
+    def color_active(self):
+        """Any color channel is active."""
+        raw_state = self.raw_state
+        return bool(raw_state.red or raw_state.green or raw_state.blue)
+
+    @property
     def multi_color_mode(self):
         """The device supports multiple color modes."""
         return len(self.color_modes) > 1
@@ -137,6 +143,8 @@ class LEDENETDevice:
     def color_mode(self):
         """The current color mode."""
         color_modes = self.color_modes
+        if COLOR_MODE_RGBWW in color_modes and not self.color_active:
+            return COLOR_MODE_CCT
         if (
             color_modes == COLOR_MODES_RGB_CCT
         ):  # RGB/CCT split, only one active at a time
