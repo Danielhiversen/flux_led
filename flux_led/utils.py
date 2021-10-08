@@ -271,6 +271,10 @@ def color_temp_to_white_levels(temperature, brightness):
         raise ValueError(
             f"Temperature of {temperature} is not valid and must be between {MIN_TEMP} and {MAX_TEMP}"
         )
+    if not (0 <= brightness <= 255):
+        raise ValueError(
+            f"Brightness of {brightness} is not valid and must be between 0 and 255"
+        )
     brightness = round(brightness / 255, 2)
     warm = ((MAX_TEMP - temperature) / (MAX_TEMP - MIN_TEMP)) * (brightness)
     cold = (brightness) - warm
@@ -278,6 +282,14 @@ def color_temp_to_white_levels(temperature, brightness):
 
 
 def white_levels_to_color_temp(warm_white, cool_white):
+    if not (0 <= warm_white <= 255):
+        raise ValueError(
+            f"Warm White of {warm_white} is not valid and must be between 0 and 255"
+        )
+    if not (0 <= cool_white <= 255):
+        raise ValueError(
+            f"Cool White of {cool_white} is not valid and must be between 0 and 255"
+        )
     warm = warm_white / 255
     cold = cool_white / 255
     brightness = warm + cold
