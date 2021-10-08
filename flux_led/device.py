@@ -465,7 +465,10 @@ class LEDENETDevice:
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
         raw_state = self.raw_state
-        return white_levels_to_color_temp(raw_state.warm_white, raw_state.cool_white)
+        temp, brightness = white_levels_to_color_temp(
+            raw_state.warm_white, raw_state.cool_white
+        )
+        return temp, brightness
 
     def getRgbw(self):
         """Returns red,green,blue,white (usually warm)."""
