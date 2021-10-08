@@ -2,7 +2,6 @@ import asyncio
 import logging
 from typing import Callable, Optional
 
-from .utils import color_temp_to_white_levels
 from .aioprotocol import AIOLEDENETProtocol
 from .device import LEDENETDevice
 from .protocol import (
@@ -10,6 +9,7 @@ from .protocol import (
     ProtocolLEDENET9Byte,
     ProtocolLEDENETOriginal,
 )
+from .utils import color_temp_to_white_levels
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,8 +52,8 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_white_temp(self, temperature, brightness, persist=True):
         """Set the white tempature."""
-        w, w2 = color_temp_to_white_levels(temperature, brightness)
-        await self.async_set_levels(w=w, w2=w2, persist=persist)
+        cold, warm = color_temp_to_white_levels(temperature, brightness)
+        await self.async_set_levels(w=warm, w2=cold, persist=persist)
 
     async def async_update(self):
         """Request an update.
