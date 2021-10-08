@@ -147,7 +147,6 @@ def rgbcw_to_rgbwc(
     return r, g, b, w, c
 
 
-
 def _adjust_brightness(
     current_brightness, new_brightness, color_brightness, cw_brightness, ww_brightness
 ):
@@ -173,7 +172,6 @@ def _adjust_brightness(
         )
 
     return color_brightness, cw_brightness, ww_brightness
-
 
 
 def rgbw_brightness(
@@ -264,7 +262,6 @@ def rgbcw_brightness(
         cw_brightness,
         ww_brightness,
     )
-
 
 
 def color_temp_to_white_levels(temperature, brightness):
