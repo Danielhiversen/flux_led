@@ -4,6 +4,22 @@ import logging
 from abc import abstractmethod
 from collections import namedtuple
 from enum import Enum
+from .const import (
+    STATE_HEAD,
+    STATE_MODEL_NUM,
+    STATE_POWER_STATE,
+    STATE_PRESET_PATTERN,
+    STATE_MODE,
+    STATE_SPEED,
+    STATE_RED,
+    STATE_GREEN,
+    STATE_BLUE,
+    STATE_WARM_WHITE,
+    STATE_VERSION_NUMBER,
+    STATE_COOL_WHITE,
+    STATE_COLOR_MODE,
+    STATE_CHECK_SUM,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,16 +32,16 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 
 LEDENET_BASE_STATE = [
-    "head",
-    "model_num",
-    "power_state",
-    "preset_pattern",
-    "mode",
-    "speed",
-    "red",
-    "green",
-    "blue",
-    "warm_white",
+    STATE_HEAD,
+    STATE_MODEL_NUM,
+    STATE_POWER_STATE,
+    STATE_PRESET_PATTERN,
+    STATE_MODE,
+    STATE_SPEED,
+    STATE_RED,
+    STATE_GREEN,
+    STATE_BLUE,
+    STATE_WARM_WHITE,
 ]
 
 
@@ -39,7 +55,7 @@ LEDENETOriginalRawState = namedtuple(
     "LEDENETOriginalRawState",
     [
         *LEDENET_BASE_STATE,
-        "check_sum",
+        STATE_CHECK_SUM,
     ],
 )
 # typical response:
@@ -64,10 +80,10 @@ LEDENETRawState = namedtuple(
     "LEDENETRawState",
     [
         *LEDENET_BASE_STATE,
-        "version_number",
-        "cool_white",
-        "color_mode",
-        "check_sum",
+        STATE_VERSION_NUMBER,
+        STATE_COOL_WHITE,
+        STATE_COLOR_MODE,
+        STATE_CHECK_SUM,
     ],
 )
 # response from a 5-channel LEDENET controller:

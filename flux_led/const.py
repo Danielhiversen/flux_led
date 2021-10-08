@@ -32,3 +32,20 @@ COLOR_MODES_RGB_W = {  # AKA RGB/W in the Magic Home Pro app
 }
 
 DEFAULT_MODE = COLOR_MODE_RGB
+
+
+# States
+STATE_HEAD = "head"
+STATE_MODEL_NUM = "model_num"
+STATE_POWER_STATE = "power_state"
+STATE_PRESET_PATTERN = "preset_pattern"
+STATE_MODE = "mode"
+STATE_SPEED = "speed"
+STATE_RED = "red"
+STATE_GREEN = "green"
+STATE_BLUE = "blue"
+STATE_WARM_WHITE = "warm_white"
+STATE_VERSION_NUMBER = "version_number"
+STATE_COOL_WHITE = "cool_white"
+STATE_COLOR_MODE = "color_mode"
+STATE_CHECK_SUM = "check_sum"

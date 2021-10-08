@@ -12,6 +12,8 @@ from .const import (
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     MODEL_NUM_SWITCH,
+    STATE_RED,
+    STATE_WARM_WHITE,
 )
 
 LEDENETModel = namedtuple(
@@ -24,6 +26,7 @@ LEDENETModel = namedtuple(
         "nine_byte_read_protocol",  # Devices that use the 9 byte protocol to read state
         "mode_to_color_mode",  # A mapping of mode aka byte 2 to color mode that overrides color_modes
         "color_modes",  # The color modes to use if there is no mode_to_color_mode_mapping
+        "channel_map",  # Used to remap channels
     ],
 )
 
@@ -46,6 +49,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x04,
@@ -55,6 +59,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x06,
@@ -67,6 +72,7 @@ MODELS = [
             0x16: COLOR_MODES_RGB_W,  # 0x16 (RGB/W) verified on model 0x06
         },
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x07,
@@ -82,6 +88,7 @@ MODELS = [
             0x45: COLOR_MODE_RGBWW,  # 0x45 (RGB&WW) verified on model 0x07
         },
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0xE,
@@ -91,6 +98,7 @@ MODELS = [
         nine_byte_read_protocol=True,
         mode_to_color_mode={},
         color_modes=COLOR_MODES_RGB_CCT,
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x25,
@@ -100,6 +108,7 @@ MODELS = [
         nine_byte_read_protocol=True,
         mode_to_color_mode=BASE_MODE_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x33,
@@ -109,6 +118,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x35,
@@ -118,6 +128,7 @@ MODELS = [
         nine_byte_read_protocol=True,
         mode_to_color_mode={},
         color_modes=COLOR_MODES_RGB_CCT,
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x41,
@@ -127,6 +138,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},  # Only mode should be 0x41
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
+        channel_map={STATE_WARM_WHITE: STATE_RED},
     ),
     LEDENETModel(
         model_num=0x44,
@@ -136,6 +148,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x45,
@@ -145,6 +158,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB, COLOR_MODE_DIM},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0x81,
@@ -154,6 +168,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+        channel_map={},
     ),
     LEDENETModel(
         model_num=MODEL_NUM_SWITCH,  # 0x97
@@ -163,6 +178,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={},  # no color modes
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0xA2,
@@ -172,6 +188,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_ADDRESSABLE},
+        channel_map={},
     ),
     LEDENETModel(
         model_num=0xA3,
@@ -181,6 +198,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_ADDRESSABLE},
+        channel_map={},
     ),
 ]
 
