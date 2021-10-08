@@ -120,6 +120,15 @@ MODELS = [
         color_modes=COLOR_MODES_RGB_CCT,
     ),
     LEDENETModel(
+        model_num=0x41,
+        models=[],
+        description="Magic Home Branded Single Channel Controller",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},  # Only mode should be 0x41
+        color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
+    ),
+    LEDENETModel(
         model_num=0x44,
         models=[],
         description="Unknown",
