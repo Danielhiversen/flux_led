@@ -147,6 +147,35 @@ def rgbcw_to_rgbwc(
     return r, g, b, w, c
 
 
+
+def _adjust_brightness(
+    current_brightness, new_brightness, color_brightness, cw_brightness, ww_brightness
+):
+    if new_brightness < current_brightness:
+        change_brightness_pct = (
+            current_brightness - new_brightness
+        ) / current_brightness
+        ww_brightness = round(ww_brightness * (1 - change_brightness_pct))
+        color_brightness = round(color_brightness * (1 - change_brightness_pct))
+        cw_brightness = round(cw_brightness * (1 - change_brightness_pct))
+    else:
+        change_brightness_pct = (new_brightness - current_brightness) / (
+            255 - current_brightness
+        )
+        ww_brightness = round(
+            (255 - ww_brightness) * change_brightness_pct + ww_brightness
+        )
+        color_brightness = round(
+            (255 - color_brightness) * change_brightness_pct + color_brightness
+        )
+        cw_brightness = round(
+            (255 - cw_brightness) * change_brightness_pct + cw_brightness
+        )
+
+    return color_brightness, cw_brightness, ww_brightness
+
+
+
 def rgbw_brightness(
     rgbw_data: Tuple[int, int, int, int],
     brightness: Optional[int] = None,
@@ -236,32 +265,6 @@ def rgbcw_brightness(
         ww_brightness,
     )
 
-
-def _adjust_brightness(
-    current_brightness, new_brightness, color_brightness, cw_brightness, ww_brightness
-):
-    if new_brightness < current_brightness:
-        change_brightness_pct = (
-            current_brightness - new_brightness
-        ) / current_brightness
-        ww_brightness = round(ww_brightness * (1 - change_brightness_pct))
-        color_brightness = round(color_brightness * (1 - change_brightness_pct))
-        cw_brightness = round(cw_brightness * (1 - change_brightness_pct))
-    else:
-        change_brightness_pct = (new_brightness - current_brightness) / (
-            255 - current_brightness
-        )
-        ww_brightness = round(
-            (255 - ww_brightness) * change_brightness_pct + ww_brightness
-        )
-        color_brightness = round(
-            (255 - color_brightness) * change_brightness_pct + color_brightness
-        )
-        cw_brightness = round(
-            (255 - cw_brightness) * change_brightness_pct + cw_brightness
-        )
-
-    return color_brightness, cw_brightness, ww_brightness
 
 
 def color_temp_to_white_levels(temperature, brightness):
