@@ -37,6 +37,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
 )
 from .models_db import (
     BASE_MODE_MAP,
+    CHANNEL_REMAP,
     MODEL_MAP,
     RGBW_PROTOCOL_MODELS,
     USE_9BYTE_PROTOCOL_MODELS,
@@ -322,7 +323,11 @@ class LEDENETDevice:
         _LOGGER.debug("%s: State: %s", self.ipaddr, raw_state)
 
         if raw_state != self.raw_state:
-            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
+            _LOGGER.debug(
+                "%s: unmapped raw state: %s",
+                self.ipaddr,
+                utils.raw_state_to_dec(raw_state),
+            )
 
         if time.monotonic() < self._transition_complete_time:
             # Do not update the raw state if a transition is
@@ -331,7 +336,7 @@ class LEDENETDevice:
             # "FADE" into the state requested.
             return True
 
-        self.raw_state = raw_state
+        self._set_raw_state(raw_state)
         self._set_power_state_from_raw_state()
         mode = self._determineMode()
 
@@ -345,6 +350,22 @@ class LEDENETDevice:
 
         self._mode = mode
         return True
+
+    def _set_raw_state(self, raw_state):
+        """Set the raw state remapping channels as needed."""
+        channel_map = CHANNEL_REMAP.get(raw_state.model_num)
+        if not channel_map:  # Remap channels
+            self.raw_state = raw_state
+            return
+        _LOGGER.debug(
+            "%s: remapped raw state: %s", self.ipaddr, utils.raw_state_to_dec(raw_state)
+        )
+        self.raw_state = raw_state._replace(
+            **{
+                mapped: getattr(raw_state, actual)
+                for mapped, actual in channel_map.items()
+            }
+        )
 
     def _set_power_state_from_raw_state(self):
         """Set the power state from the raw state."""
@@ -437,7 +458,7 @@ class LEDENETDevice:
         self._set_transition_complete_time()
 
     def _replace_raw_state(self, new_state):
-        self.raw_state = self.raw_state._replace(**new_state)
+        self._set_raw_state(self.raw_state._replace(**new_state))
 
     def turnOn(self, retry=2):
         self._change_state(retry=retry, turn_on=True)
