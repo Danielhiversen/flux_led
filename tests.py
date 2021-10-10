@@ -747,3 +747,42 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         switch = flux_led.WifiLedBulb("192.168.1.164")
         assert switch.color_modes == {COLOR_MODE_RGBW}
+
+    @patch("flux_led.WifiLedBulb._send_msg")
+    @patch("flux_led.WifiLedBulb._read_msg")
+    @patch("flux_led.WifiLedBulb.connect")
+    def test_single_channel_remapping(self, mock_connect, mock_read, mock_send):
+        calls = 0
+
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b"\x81\x41")
+            if calls == 2:
+                self.assertEqual(expected, 12)
+                return bytearray(b"#a\x41\x10\xff\x00\x00\x00\x04\x00\xf0\x8a")
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_DIM}
+
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        import pprint
+
+        pprint.pprint(light.raw_state)
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,255,0,0,255,4,0,240,138,]",
+        )
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "ww")
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 255)
+        self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)

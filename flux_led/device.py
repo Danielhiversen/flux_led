@@ -92,11 +92,6 @@ class LEDENETDevice:
         return self.model_num in RGBW_PROTOCOL_MODELS
 
     @property
-    def _channel_map(self):
-        """Return the channel (re)map for the device."""
-        return CHANNEL_REMAP.get(self.model_num)
-
-    @property
     def rgbwcapable(self):
         """Devices that actually support rgbw."""
         color_modes = self.color_modes
@@ -354,17 +349,16 @@ class LEDENETDevice:
 
     def _set_raw_state(self, raw_state):
         """Set the raw state remapping channels as needed."""
-        channel_map = self._channel_map
-        if channel_map:
-            # Remap channels
-            self.raw_state = raw_state._replace(
-                **{
-                    mapped: getattr(raw_state, actual)
-                    for mapped, actual in channel_map.items()
-                }
-            )
-        else:
+        channel_map = CHANNEL_REMAP.get(raw_state.model_num)
+        if not channel_map:  # Remap channels
             self.raw_state = raw_state
+            return
+        self.raw_state = raw_state._replace(
+            **{
+                mapped: getattr(raw_state, actual)
+                for mapped, actual in channel_map.items()
+            }
+        )
 
     def _set_power_state_from_raw_state(self):
         """Set the power state from the raw state."""
