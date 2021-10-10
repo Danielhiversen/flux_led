@@ -322,8 +322,8 @@ class LEDENETDevice:
         raw_state = self._protocol.named_raw_state(rx)
         _LOGGER.debug("%s: State: %s", self.ipaddr, raw_state)
 
-        if raw_state != self.raw_state:
-            _LOGGER.debug("%s: new_state: %s", self.ipaddr, utils.raw_state_to_dec(rx))
+        if raw_state == self.raw_state:
+            return
 
         if time.monotonic() < self._transition_complete_time:
             # Do not update the raw state if a transition is
@@ -350,9 +350,15 @@ class LEDENETDevice:
     def _set_raw_state(self, raw_state):
         """Set the raw state remapping channels as needed."""
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
+        _LOGGER.debug(
+            "%s: unmapped raw state: %s", self.ipaddr, utils.raw_state_to_dec(raw_state)
+        )
         if not channel_map:  # Remap channels
             self.raw_state = raw_state
             return
+        _LOGGER.debug(
+            "%s: remapped raw state: %s", self.ipaddr, utils.raw_state_to_dec(raw_state)
+        )
         self.raw_state = raw_state._replace(
             **{
                 mapped: getattr(raw_state, actual)
