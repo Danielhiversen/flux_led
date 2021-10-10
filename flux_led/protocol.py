@@ -4,23 +4,23 @@ import logging
 from abc import abstractmethod
 from collections import namedtuple
 from enum import Enum
+
 from .const import (
+    STATE_BLUE,
+    STATE_CHECK_SUM,
+    STATE_COLOR_MODE,
+    STATE_COOL_WHITE,
+    STATE_GREEN,
     STATE_HEAD,
+    STATE_MODE,
     STATE_MODEL_NUM,
     STATE_POWER_STATE,
     STATE_PRESET_PATTERN,
-    STATE_MODE,
-    STATE_SPEED,
     STATE_RED,
-    STATE_GREEN,
-    STATE_BLUE,
-    STATE_WARM_WHITE,
+    STATE_SPEED,
     STATE_VERSION_NUMBER,
-    STATE_COOL_WHITE,
-    STATE_COLOR_MODE,
-    STATE_CHECK_SUM,
+    STATE_WARM_WHITE,
 )
-
 from .utils import utils
 
 _LOGGER = logging.getLogger(__name__)
