@@ -86,6 +86,17 @@ class LEDENETDevice:
         return self.raw_state.model_num if self.raw_state else None
 
     @property
+    def version_num(self):
+        """Return the version number."""
+        raw_state = self.raw_state
+        return raw_state.version_number if hasattr(raw_state, "version_number") else 1
+
+    @property
+    def preset_pattern_num(self):
+        """Return the preset pattern number."""
+        return self.raw_state.preset_pattern
+
+    @property
     def rgbwprotocol(self):
         """Devices that don't require a separate rgb/w bit."""
         return self.model_num in RGBW_PROTOCOL_MODELS

@@ -113,6 +113,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 80)
         self.assertEqual(light.getRgb(), (1, 25, 80))
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
+        self.assertEqual(light.version_num, 4)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -567,6 +568,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.warm_white, 0)
         self.assertEqual(light.brightness, 80)
         self.assertEqual(light.getRgb(), (1, 25, 80))
+        self.assertEqual(light.version_num, 1)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
