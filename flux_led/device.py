@@ -37,6 +37,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
 )
 from .models_db import (
     BASE_MODE_MAP,
+    CHANNEL_REMAP,
     MODEL_MAP,
     RGBW_PROTOCOL_MODELS,
     USE_9BYTE_PROTOCOL_MODELS,
@@ -89,6 +90,11 @@ class LEDENETDevice:
     def rgbwprotocol(self):
         """Devices that don't require a separate rgb/w bit."""
         return self.model_num in RGBW_PROTOCOL_MODELS
+
+    @property
+    def _channel_map(self):
+        """Return the channel (re)map for the device."""
+        return CHANNEL_REMAP.get(self.model_num)
 
     @property
     def rgbwcapable(self):
@@ -331,7 +337,7 @@ class LEDENETDevice:
             # "FADE" into the state requested.
             return True
 
-        self.raw_state = raw_state
+        self._set_raw_state(raw_state)
         self._set_power_state_from_raw_state()
         mode = self._determineMode()
 
@@ -345,6 +351,20 @@ class LEDENETDevice:
 
         self._mode = mode
         return True
+
+    def _set_raw_state(self, raw_state):
+        """Set the raw state remapping channels as needed."""
+        channel_map = self._channel_map
+        if channel_map:
+            # Remap channels
+            self.raw_state = raw_state._replace(
+                **{
+                    mapped: getattr(raw_state, actual)
+                    for mapped, actual in channel_map.items()
+                }
+            )
+        else:
+            self.raw_state = raw_state
 
     def _set_power_state_from_raw_state(self):
         """Set the power state from the raw state."""
@@ -437,7 +457,7 @@ class LEDENETDevice:
         self._set_transition_complete_time()
 
     def _replace_raw_state(self, new_state):
-        self.raw_state = self.raw_state._replace(**new_state)
+        self._set_raw_state(self.raw_state._replace(**new_state))
 
     def turnOn(self, retry=2):
         self._change_state(retry=retry, turn_on=True)

@@ -203,6 +203,7 @@ MODELS = [
 ]
 
 MODEL_MAP = {model.model_num: model for model in MODELS}
+CHANNEL_REMAP = {model.model_num: model.channel_map for model in MODELS}
 RGBW_PROTOCOL_MODELS = {
     model.model_num for model in MODELS if model.always_writes_white_and_colors
 }
