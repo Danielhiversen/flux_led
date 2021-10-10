@@ -324,8 +324,10 @@ class LEDENETDevice:
 
         if raw_state != self.raw_state:
             _LOGGER.debug(
-                "%s: unmapped raw state: %s", self.ipaddr, utils.raw_state_to_dec(raw_state)
-            )            
+                "%s: unmapped raw state: %s",
+                self.ipaddr,
+                utils.raw_state_to_dec(raw_state),
+            )
 
         if time.monotonic() < self._transition_complete_time:
             # Do not update the raw state if a transition is
