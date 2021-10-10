@@ -40,6 +40,55 @@ BASE_MODE_MAP = {
     0x07: COLOR_MODES_RGB_CCT,
 }
 
+
+GENERIC_RGB_MAP = {
+    0x13: {COLOR_MODE_RGB},  # RGB (RGB) verified on model 0x33
+    0x23: {COLOR_MODE_RGB},  # RGB (GRB) verified on model 0x33
+    0x33: {COLOR_MODE_RGB},  # RGB (BRG) verified on model 0x33
+}
+
+GENERIC_RGBW_MAP = {
+    0x14: {COLOR_MODE_RGBW},  # RGB&W (RGBW) verified on model 0x06
+    0x24: {COLOR_MODE_RGBW},  # RGB&W (GRBW) verified on model 0x06
+    0x34: {COLOR_MODE_RGBW},  # RGB&W (BRGW) verified on model 0x06
+    0x16: COLOR_MODES_RGB_W,  # RGB/W (RGBW) verified on model 0x06
+    0x26: COLOR_MODES_RGB_W,  # RGB/W (GRBW) verified on model 0x06
+    0x36: COLOR_MODES_RGB_W,  # RGB/W (BRGW) verified on model 0x06
+}
+
+GENERIC_RGBWW_MAP = {
+    0x17: COLOR_MODES_RGB_CCT,  # RGB/CCT (RGBCW) verified on model 0x07
+    0x27: COLOR_MODES_RGB_CCT,  # RGB/CCT (GRBCW) verified on model 0x07
+    0x37: COLOR_MODES_RGB_CCT,  # RGB/CCT (BRGCW) verified on model 0x07
+    0x47: COLOR_MODES_RGB_CCT,  # RGB/CCT (RGBWC) verified on model 0x07
+    0x57: COLOR_MODES_RGB_CCT,  # RGB/CCT (GRBWC) verified on model 0x07
+    0x67: COLOR_MODES_RGB_CCT,  # RGB/CCT (BRGWC) verified on model 0x07
+    0x77: COLOR_MODES_RGB_CCT,  # RGB/CCT (WRGBC) verified on model 0x07
+    0x87: COLOR_MODES_RGB_CCT,  # RGB/CCT (WGRBC) verified on model 0x07
+    0x97: COLOR_MODES_RGB_CCT,  # RGB/CCT (WBRGC) verified on model 0x07
+    0xA7: COLOR_MODES_RGB_CCT,  # RGB/CCT (CRGBW) verified on model 0x07
+    0xB7: COLOR_MODES_RGB_CCT,  # RGB/CCT (CBRBW) verified on model 0x07
+    0xC7: COLOR_MODES_RGB_CCT,  # RGB/CCT (CBRGW) verified on model 0x07
+    0xD7: COLOR_MODES_RGB_CCT,  # RGB/CCT (WCRGB) verified on model 0x07
+    0xE7: COLOR_MODES_RGB_CCT,  # RGB/CCT (WCGRB) verified on model 0x07
+    0xF7: COLOR_MODES_RGB_CCT,  # RGB/CCT (WCBRG) verified on model 0x07
+    0x15: {COLOR_MODE_RGBWW},  # RGB&CCT (RGBCW) verified on model 0x07
+    0x25: {COLOR_MODE_RGBWW},  # RGB&CCT (GRBCW) verified on model 0x07
+    0x35: {COLOR_MODE_RGBWW},  # RGB&CCT (BRGCW) verified on model 0x07
+    0x45: {COLOR_MODE_RGBWW},  # RGB&CCT (RGBWC) verified on model 0x07
+    0x55: {COLOR_MODE_RGBWW},  # RGB&CCT (GRBWC) verified on model 0x07
+    0x65: {COLOR_MODE_RGBWW},  # RGB&CCT (BRGWC) verified on model 0x07
+    0x75: {COLOR_MODE_RGBWW},  # RGB&CCT (WRGBC) verified on model 0x07
+    0x85: {COLOR_MODE_RGBWW},  # RGB&CCT (WGRBC) verified on model 0x07
+    0x95: {COLOR_MODE_RGBWW},  # RGB&CCT (WBRGC) verified on model 0x07
+    0xA5: {COLOR_MODE_RGBWW},  # RGB&CCT (CRGBW) verified on model 0x07
+    0xB5: {COLOR_MODE_RGBWW},  # RGB&CCT (CBRBW) verified on model 0x07
+    0xC5: {COLOR_MODE_RGBWW},  # RGB&CCT (CBRGW) verified on model 0x07
+    0xD5: {COLOR_MODE_RGBWW},  # RGB&CCT (WCRGB) verified on model 0x07
+    0xE5: {COLOR_MODE_RGBWW},  # RGB&CCT (WCGRB) verified on model 0x07
+    0xF5: {COLOR_MODE_RGBWW},  # RGB&CCT (WCBRG) verified on model 0x07
+}
+
 MODELS = [
     LEDENETModel(
         model_num=0x01,
@@ -67,10 +116,7 @@ MODELS = [
         description="Magic Home Branded RGBW Strip Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
-        mode_to_color_mode={
-            0x14: {COLOR_MODE_RGBW},  # 0x14 (RGB&W) verified on model 0x06
-            0x16: COLOR_MODES_RGB_W,  # 0x16 (RGB/W) verified on model 0x06
-        },
+        mode_to_color_mode=GENERIC_RGBW_MAP,
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
     ),
@@ -80,13 +126,7 @@ MODELS = [
         description="Magic Home Branded RGBWW Strip Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
-        mode_to_color_mode={
-            0x47: {
-                COLOR_MODE_RGB,
-                COLOR_MODE_CCT,
-            },  # 0x47 (RGB/WW) verified on model 0x07
-            0x45: COLOR_MODE_RGBWW,  # 0x45 (RGB&WW) verified on model 0x07
-        },
+        mode_to_color_mode=GENERIC_RGBWW_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
         channel_map={},
     ),
@@ -96,7 +136,7 @@ MODELS = [
         description="Floor Lamp",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
-        mode_to_color_mode={},
+        mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
     ),
@@ -116,7 +156,7 @@ MODELS = [
         description="Magic Home Branded RGB Strip Controller",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
-        mode_to_color_mode={},
+        mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
     ),
@@ -126,7 +166,7 @@ MODELS = [
         description="Smart Bulbs",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
-        mode_to_color_mode={},
+        mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
     ),
@@ -185,7 +225,7 @@ MODELS = [
         models=["AK001-ZJ2104"],
         description="Generic Addressable",
         always_writes_white_and_colors=False,
-        nine_byte_read_protocol=False,
+        nine_byte_read_protocol=False,  # unverified
         mode_to_color_mode={},
         color_modes={COLOR_MODE_ADDRESSABLE},
         channel_map={},
@@ -195,7 +235,7 @@ MODELS = [
         models=["K001-ZJ2148"],
         description="Magic Home Branded Addressable",
         always_writes_white_and_colors=False,
-        nine_byte_read_protocol=False,
+        nine_byte_read_protocol=False,  # unverified
         mode_to_color_mode={},
         color_modes={COLOR_MODE_ADDRESSABLE},
         channel_map={},
