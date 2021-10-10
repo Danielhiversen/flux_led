@@ -3,12 +3,12 @@
 from collections import namedtuple
 
 from .const import (
+    COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
-    COLOR_MODE_ADDRESSABLE,
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     MODEL_NUM_SWITCH,

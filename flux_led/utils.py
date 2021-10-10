@@ -7,6 +7,8 @@ from typing import Optional, Tuple
 
 import webcolors
 
+from .const import MAX_TEMP, MIN_TEMP
+
 
 class utils:
     @staticmethod
@@ -131,6 +133,47 @@ class utils:
         return int((percent * 255) / 100)
 
 
+def rgbwc_to_rgbcw(
+    rgbwc_data: Tuple[int, int, int, int, int]
+) -> Tuple[int, int, int, int, int]:
+    r, g, b, w, c = rgbwc_data
+    return r, g, b, c, w
+
+
+def rgbcw_to_rgbwc(
+    rgbcw_data: Tuple[int, int, int, int, int]
+) -> Tuple[int, int, int, int, int]:
+    r, g, b, c, w = rgbcw_data
+    return r, g, b, w, c
+
+
+def _adjust_brightness(
+    current_brightness, new_brightness, color_brightness, cw_brightness, ww_brightness
+):
+    if new_brightness < current_brightness:
+        change_brightness_pct = (
+            current_brightness - new_brightness
+        ) / current_brightness
+        ww_brightness = round(ww_brightness * (1 - change_brightness_pct))
+        color_brightness = round(color_brightness * (1 - change_brightness_pct))
+        cw_brightness = round(cw_brightness * (1 - change_brightness_pct))
+    else:
+        change_brightness_pct = (new_brightness - current_brightness) / (
+            255 - current_brightness
+        )
+        ww_brightness = round(
+            (255 - ww_brightness) * change_brightness_pct + ww_brightness
+        )
+        color_brightness = round(
+            (255 - color_brightness) * change_brightness_pct + color_brightness
+        )
+        cw_brightness = round(
+            (255 - cw_brightness) * change_brightness_pct + cw_brightness
+        )
+
+    return color_brightness, cw_brightness, ww_brightness
+
+
 def rgbw_brightness(
     rgbw_data: Tuple[int, int, int, int],
     brightness: Optional[int] = None,
@@ -180,25 +223,9 @@ def rgbww_brightness(
     if not brightness or brightness == current_brightness:
         return rgbww_data
 
-    if brightness < current_brightness:
-        change_brightness_pct = (current_brightness - brightness) / current_brightness
-        ww_brightness = round(ww_brightness * (1 - change_brightness_pct))
-        color_brightness = round(color_brightness * (1 - change_brightness_pct))
-        cw_brightness = round(cw_brightness * (1 - change_brightness_pct))
-    else:
-        change_brightness_pct = (brightness - current_brightness) / (
-            255 - current_brightness
-        )
-        ww_brightness = round(
-            (255 - ww_brightness) * change_brightness_pct + ww_brightness
-        )
-        color_brightness = round(
-            (255 - color_brightness) * change_brightness_pct + color_brightness
-        )
-        cw_brightness = round(
-            (255 - cw_brightness) * change_brightness_pct + cw_brightness
-        )
-
+    color_brightness, cw_brightness, ww_brightness = _adjust_brightness(
+        current_brightness, brightness, color_brightness, cw_brightness, ww_brightness
+    )
     r, g, b = colorsys.hsv_to_rgb(h, s, color_brightness / 255)
     return (
         round(r * 255),
@@ -207,3 +234,67 @@ def rgbww_brightness(
         ww_brightness,
         cw_brightness,
     )
+
+
+def rgbcw_brightness(
+    rgbcw_data: Tuple[int, int, int, int, int],
+    brightness: Optional[int] = None,
+) -> Tuple[int, int, int, int, int]:
+    """Convert rgbww to brightness."""
+    original_r, original_g, original_b = rgbcw_data[0:3]
+    h, s, v = colorsys.rgb_to_hsv(original_r / 255, original_g / 255, original_b / 255)
+    color_brightness = round(v * 255)
+    cw_brightness = rgbcw_data[3]
+    ww_brightness = rgbcw_data[4]
+    current_brightness = round((color_brightness + ww_brightness + cw_brightness) / 3)
+
+    if not brightness or brightness == current_brightness:
+        return rgbcw_data
+
+    color_brightness, cw_brightness, ww_brightness = _adjust_brightness(
+        current_brightness, brightness, color_brightness, cw_brightness, ww_brightness
+    )
+    r, g, b = colorsys.hsv_to_rgb(h, s, color_brightness / 255)
+    return (
+        round(r * 255),
+        round(g * 255),
+        round(b * 255),
+        cw_brightness,
+        ww_brightness,
+    )
+
+
+def color_temp_to_white_levels(temperature, brightness):
+    # Assume output temperature of between 2700 and 6500 Kelvin, and scale
+    # the warm and cold LEDs linearly to provide that
+    if not (MIN_TEMP <= temperature <= MAX_TEMP):
+        raise ValueError(
+            f"Temperature of {temperature} is not valid and must be between {MIN_TEMP} and {MAX_TEMP}"
+        )
+    if not (0 <= brightness <= 255):
+        raise ValueError(
+            f"Brightness of {brightness} is not valid and must be between 0 and 255"
+        )
+    brightness = round(brightness / 255, 2)
+    warm = ((MAX_TEMP - temperature) / (MAX_TEMP - MIN_TEMP)) * (brightness)
+    cold = (brightness) - warm
+    return round(255 * cold), round(255 * warm)
+
+
+def white_levels_to_color_temp(warm_white, cool_white):
+    if not (0 <= warm_white <= 255):
+        raise ValueError(
+            f"Warm White of {warm_white} is not valid and must be between 0 and 255"
+        )
+    if not (0 <= cool_white <= 255):
+        raise ValueError(
+            f"Cool White of {cool_white} is not valid and must be between 0 and 255"
+        )
+    warm = warm_white / 255
+    cold = cool_white / 255
+    brightness = warm + cold
+    if brightness == 0:
+        temperature = MIN_TEMP
+    else:
+        temperature = ((cold / brightness) * (MAX_TEMP - MIN_TEMP)) + MIN_TEMP
+    return round(temperature), min(255, round(brightness * 255))

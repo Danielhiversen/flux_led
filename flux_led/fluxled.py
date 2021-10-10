@@ -729,7 +729,7 @@ def main():
                 )
             )
             bulb.setWhiteTemperature(
-                options.cct[0], options.cct[1], not options.volatile
+                options.cct[0], options.cct[1] * 2.55, not options.volatile
             )
 
         if options.color is not None:
