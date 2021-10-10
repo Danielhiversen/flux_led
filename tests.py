@@ -772,9 +772,6 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
 
-        import pprint
-
-        pprint.pprint(light.raw_state)
         self.assertEqual(
             light.__str__(),
             "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,255,0,0,255,4,0,240,138,]",
