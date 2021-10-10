@@ -416,7 +416,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
-        assert light.color_modes == {COLOR_MODE_RGBWW}
+        assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
@@ -727,7 +727,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         switch = flux_led.WifiLedBulb("192.168.1.164")
-        assert switch.color_modes == {COLOR_MODE_RGBWW}
+        assert switch.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
