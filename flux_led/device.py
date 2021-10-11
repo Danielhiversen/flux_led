@@ -29,7 +29,12 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_SWITCH,
     MODE_WW,
     MODEL_NUM_SWITCH,
+    STATE_BLUE,
     STATE_CHANGE_LATENCY,
+    STATE_COOL_WHITE,
+    STATE_GREEN,
+    STATE_RED,
+    STATE_WARM_WHITE,
     STATIC_MODES,
     WRITE_ALL_COLORS,
     WRITE_ALL_WHITES,
@@ -182,9 +187,9 @@ class LEDENETDevice:
     def color_mode(self):
         """The current color mode."""
         color_modes = self._internal_color_modes
-        if COLOR_MODE_RGBWW in color_modes and not self.color_active:
+        if COLOR_MODE_RGBWW in color_modes:
             # We support CCT mode if the device supports RGBWW
-            return COLOR_MODE_CCT
+            return COLOR_MODE_RGBWW if self.color_active else COLOR_MODE_CCT
         if (
             color_modes == COLOR_MODES_RGB_CCT
         ):  # RGB/CCT split, only one active at a time
@@ -290,7 +295,7 @@ class LEDENETDevice:
             return MODE_PRESET
         elif BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
-        return "unknown"
+        return None
 
     def _determine_protocol(self):
         # determine the type of protocol based of first 2 bytes.
@@ -379,7 +384,7 @@ class LEDENETDevice:
         self._set_power_state_from_raw_state()
         mode = self._determineMode()
 
-        if mode == "unknown":
+        if mode is None:
             _LOGGER.debug(
                 "%s: Unable to determine mode from raw state: %s",
                 self.ipaddr,
@@ -622,7 +627,17 @@ class LEDENETDevice:
         persist=True,
         brightness=None,
     ):
-        msg, updates = self._generate_levels_change(r, g, b, w, w2, persist, brightness)
+        msg, updates = self._generate_levels_change(
+            {
+                STATE_RED: r,
+                STATE_GREEN: g,
+                STATE_BLUE: b,
+                STATE_WARM_WHITE: w,
+                STATE_COOL_WHITE: w2,
+            },
+            persist,
+            brightness,
+        )
         # send the message
         with self._lock:
             self._connect_if_disconnected()
@@ -633,15 +648,26 @@ class LEDENETDevice:
 
     def _generate_levels_change(
         self,
-        r=None,
-        g=None,
-        b=None,
-        w=None,
-        w2=None,
+        channels,
         persist=True,
         brightness=None,
     ):
         """Generate the levels change request."""
+        channel_map = CHANNEL_REMAP.get(self.model_num)
+        if channel_map:
+            mapped_channels = {
+                channel: channels[channel_map.get(channel, channel)]
+                for channel in channels
+            }
+        else:
+            mapped_channels = channels
+
+        r = mapped_channels[STATE_RED]
+        g = mapped_channels[STATE_GREEN]
+        b = mapped_channels[STATE_BLUE]
+        w = mapped_channels[STATE_WARM_WHITE]
+        w2 = mapped_channels[STATE_COOL_WHITE]
+
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
             print("RGBW command sent to non-RGBW device")
             raise ValueError("RGBW command sent to non-RGBW device")
