@@ -40,7 +40,6 @@ BASE_MODE_MAP = {
     0x07: COLOR_MODES_RGB_CCT,
 }
 
-
 GENERIC_RGB_MAP = {
     0x13: {COLOR_MODE_RGB},  # RGB (RGB) verified on model 0x33
     0x23: {COLOR_MODE_RGB},  # RGB (GRB) verified on model 0x33
@@ -178,7 +177,7 @@ MODELS = [
         nine_byte_read_protocol=False,
         mode_to_color_mode={},  # Only mode should be 0x41
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
-        channel_map={STATE_WARM_WHITE: STATE_RED},
+        channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
     ),
     LEDENETModel(
         model_num=0x44,

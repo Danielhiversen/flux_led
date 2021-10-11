@@ -9,6 +9,14 @@ from .protocol import (
     ProtocolLEDENET9Byte,
     ProtocolLEDENETOriginal,
 )
+from .const import (
+    STATE_RED,
+    STATE_GREEN,
+    STATE_BLUE,
+    STATE_WARM_WHITE,
+    STATE_COOL_WHITE,
+)
+
 from .utils import color_temp_to_white_levels
 
 _LOGGER = logging.getLogger(__name__)
@@ -79,7 +87,17 @@ class AIOWifiLedBulb(LEDENETDevice):
         brightness=None,
     ):
         """Set any of the levels."""
-        msg, updates = self._generate_levels_change(r, g, b, w, w2, persist, brightness)
+        msg, updates = self._generate_levels_change(
+            {
+                STATE_RED: r,
+                STATE_GREEN: g,
+                STATE_BLUE: b,
+                STATE_WARM_WHITE: w,
+                STATE_COOL_WHITE: w2,
+            },
+            persist,
+            brightness,
+        )
         await self._async_send_msg(msg)
         if updates:
             self._replace_raw_state(updates)

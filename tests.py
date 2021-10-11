@@ -765,6 +765,10 @@ class TestLight(unittest.TestCase):
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"#a\x41\x10\xff\x00\x00\x00\x04\x00\xf0\x8a")
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(b"\x81\x41#a\x41\x10\x64\x00\x00\x00\x04\x00\xf0\xef")
+            raise ValueError("Too many calls")
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
@@ -776,7 +780,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,255,0,0,255,4,0,240,138,]",
+            "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,0,0,255,4,0,240,138,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -785,3 +789,27 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 255)
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
+
+        light.setRgbw(0, 0, 0, w=0x80)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args, mock.call(bytearray(b"1\x80\x00\x00\x00\x00\x0f\xc0"))
+        )
+        assert light.raw_state.warm_white == 0x80
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 50% raw state: 129,65,35,97,65,16,0,0,0,128,4,0,240,138,]",
+        )
+
+        # Update state now assumes its externally set to 100
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 3)
+        assert light.raw_state.warm_white == 100
+        self.assertEqual(light.getWarmWhite255(), 100)
+        self.assertEqual(light.brightness, 100)
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 39% raw state: 129,65,35,97,65,16,0,0,0,100,4,0,240,239,]",
+        )
