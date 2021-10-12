@@ -262,10 +262,10 @@ class LedTimer:
 
         txt += " "
 
-        txt += "{:02}:{:02}  ".format(self.hour, self.minute)
+        txt += f"{self.hour:02}:{self.minute:02}  "
 
         if self.repeat_mask == 0:
-            txt += "Once: {:04}-{:02}-{:02}".format(self.year, self.month, self.day)
+            txt += f"Once: {self.year:04}-{self.month:02}-{self.day:02}"
         else:
             bits = [
                 LedTimer.Su,
@@ -286,17 +286,17 @@ class LedTimer:
         txt += "  "
         if self.pattern_code == 0x61:
             if self.warmth_level != 0:
-                txt += "Warm White: {}%".format(utils.byteToPercent(self.warmth_level))
+                txt += f"Warm White: {utils.byteToPercent(self.warmth_level)}%"
             else:
                 color_str = utils.color_tuple_to_string(
                     (self.red, self.green, self.blue)
                 )
-                txt += "Color: {}".format(color_str)
+                txt += f"Color: {color_str}"
 
         elif PresetPattern.valid(self.pattern_code):
             pat = PresetPattern.valtostr(self.pattern_code)
             speed = utils.delayToSpeed(self.delay)
-            txt += "{} (Speed:{}%)".format(pat, speed)
+            txt += f"{pat} (Speed:{speed}%)"
 
         elif BuiltInTimer.valid(self.pattern_code):
             type = BuiltInTimer.valtostr(self.pattern_code)

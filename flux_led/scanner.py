@@ -12,7 +12,7 @@ class BulbScanner:
     DISCOVERY_PORT = 48899
     BROADCAST_FREQUENCY = 3
     RESPONSE_SIZE = 64
-    DISCOVER_MESSAGE = "HF-A11ASSISTHREAD".encode("ascii")
+    DISCOVER_MESSAGE = b"HF-A11ASSISTHREAD"
     BROADCAST_ADDRESS = "<broadcast>"
 
     def __init__(self):
