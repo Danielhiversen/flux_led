@@ -43,6 +43,8 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
 from .models_db import (
     BASE_MODE_MAP,
     CHANNEL_REMAP,
+    MODEL_DESCRIPTIONS,
+    UNKNOWN_MODEL,
     MODEL_MAP,
     RGBW_PROTOCOL_MODELS,
     USE_9BYTE_PROTOCOL_MODELS,
@@ -90,6 +92,13 @@ class LEDENETDevice:
     def model_num(self):
         """Return the model number."""
         return self.raw_state.model_num if self.raw_state else None
+
+    @property
+    def model(self):
+        """Return the human readable model description."""
+        model_num = self.model_num
+        description = MODEL_DESCRIPTIONS.get(model_num) or UNKNOWN_MODEL
+        return "{} (0x{:02X})".format(description, model_num)
 
     @property
     def version_num(self):
