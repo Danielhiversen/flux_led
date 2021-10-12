@@ -38,7 +38,6 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
  See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
 """
-from __future__ import print_function
 
 import datetime
 import logging
@@ -217,9 +216,9 @@ def processSetTimerArgs(parser, args):
         timer.setActive(True)
 
         if "time" not in keys:
-            parser.error("This mode needs a time: {}".format(mode))
+            parser.error(f"This mode needs a time: {mode}")
         if "repeat" in keys and "date" in keys:
-            parser.error("This mode only a repeat or a date, not both: {}".format(mode))
+            parser.error(f"This mode only a repeat or a date, not both: {mode}")
 
         # validate time format
         if len(settings_dict["time"]) != 4 or not settings_dict["time"].isdigit():
@@ -294,9 +293,9 @@ def processSetTimerArgs(parser, args):
 
         if mode == "preset":
             if "code" not in keys:
-                parser.error("preset mode needs a code: {}".format(mode))
+                parser.error(f"preset mode needs a code: {mode}")
             if "speed" not in keys:
-                parser.error("preset mode needs a speed: {}".format(mode))
+                parser.error(f"preset mode needs a speed: {mode}")
             code = settings_dict["code"]
             speed = settings_dict["speed"]
             if not speed.isdigit() or int(speed) > 100:
@@ -307,7 +306,7 @@ def processSetTimerArgs(parser, args):
 
         if mode == "warmwhite":
             if "level" not in keys:
-                parser.error("warmwhite mode needs a level: {}".format(mode))
+                parser.error(f"warmwhite mode needs a level: {mode}")
             level = settings_dict["level"]
             if not level.isdigit() or int(level) > 100:
                 parser.error("warmwhite level must be a percentage (0-100)")
@@ -316,16 +315,16 @@ def processSetTimerArgs(parser, args):
         if mode == "sunrise" or mode == "sunset":
             if "startbrightness" not in keys:
                 parser.error(
-                    "{} mode needs a startBrightness (0% -> 100%)".format(mode)
+                    f"{mode} mode needs a startBrightness (0% -> 100%)"
                 )
             startBrightness = int(settings_dict["startbrightness"])
 
             if "endbrightness" not in keys:
-                parser.error("{} mode needs an endBrightness (0% -> 100%)".format(mode))
+                parser.error(f"{mode} mode needs an endBrightness (0% -> 100%)")
             endBrightness = int(settings_dict["endbrightness"])
 
             if "duration" not in keys:
-                parser.error("{} mode needs a duration (minutes)".format(mode))
+                parser.error(f"{mode} mode needs a duration (minutes)")
             duration = int(settings_dict["duration"])
 
             if mode == "sunrise":
@@ -335,14 +334,14 @@ def processSetTimerArgs(parser, args):
                 timer.setModeSunset(startBrightness, endBrightness, duration)
 
     else:
-        parser.error("Not a valid timer mode: {}".format(mode))
+        parser.error(f"Not a valid timer mode: {mode}")
 
     return timer
 
 
 def processCustomArgs(parser, args):
     if args[0] not in ["gradual", "jump", "strobe"]:
-        parser.error("bad pattern type: {}".format(args[0]))
+        parser.error(f"bad pattern type: {args[0]}")
         return None
 
     speed = int(args[1])
@@ -586,12 +585,12 @@ def parseArgs():
         for c in range(
             PresetPattern.seven_color_cross_fade, PresetPattern.seven_color_jumping + 1
         ):
-            print("{:2} {}".format(c, PresetPattern.valtostr(c)))
+            print(f"{c:2} {PresetPattern.valtostr(c)}")
         sys.exit(0)
 
     if options.listcolors:
         for c in utils.get_color_names_list():
-            print("{}, ".format(c))
+            print(f"{c}, ")
         print("")
         sys.exit(0)
 
@@ -682,7 +681,7 @@ def main():
             for b in bulb_info_list:
                 addrs.append(b["ipaddr"])
         else:
-            print("{} bulbs found".format(len(bulb_info_list)))
+            print(f"{len(bulb_info_list)} bulbs found")
             for b in bulb_info_list:
                 print("  {} {}".format(b["id"], b["ipaddr"]))
             sys.exit(0)
@@ -715,11 +714,11 @@ def main():
             bulb.setProtocol(options.protocol)
 
         if options.ww is not None:
-            print("Setting warm white mode, level: {}%".format(options.ww))
+            print(f"Setting warm white mode, level: {options.ww}%")
             bulb.setWarmWhite(options.ww, not options.volatile)
 
         if options.cw is not None:
-            print("Setting cold white mode, level: {}%".format(options.cw))
+            print(f"Setting cold white mode, level: {options.cw}%")
             bulb.setColdWhite(options.cw, not options.volatile)
 
         if options.cct is not None:
@@ -734,13 +733,13 @@ def main():
 
         if options.color is not None:
             print(
-                "Setting color RGB:{}".format(options.color),
+                f"Setting color RGB:{options.color}",
             )
             name = utils.color_tuple_to_string(options.color)
             if name is None:
                 print()
             else:
-                print("[{}]".format(name))
+                print(f"[{name}]")
             if len(options.color) == 3:
                 bulb.setRgb(
                     options.color[0],
@@ -786,10 +785,10 @@ def main():
             bulb.setPresetPattern(options.preset[0], options.preset[1])
 
         if options.on:
-            print("Turning on bulb at {}".format(bulb.ipaddr))
+            print(f"Turning on bulb at {bulb.ipaddr}")
             bulb.turnOn()
         elif options.off:
-            print("Turning off bulb at {}".format(bulb.ipaddr))
+            print(f"Turning off bulb at {bulb.ipaddr}")
             bulb.turnOff()
 
         if options.info:
@@ -799,7 +798,7 @@ def main():
         if options.settimer:
             timers = bulb.getTimers()
             num = int(options.settimer[0])
-            print("New Timer ---- #{}: {}".format(num, options.new_timer))
+            print(f"New Timer ---- #{num}: {options.new_timer}")
             if options.new_timer.isExpired():
                 print("[timer is already expired, will be deactivated]")
             timers[num - 1] = options.new_timer
@@ -810,7 +809,7 @@ def main():
             num = 0
             for t in timers:
                 num += 1
-                print("  Timer #{}: {}".format(num, t))
+                print(f"  Timer #{num}: {t}")
             print("")
 
     sys.exit(0)

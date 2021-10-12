@@ -14,6 +14,10 @@ and/or programmatically.
 The classes in this project could very easily be used as an API, and incorporated into a GUI app written 
 in PyQt, Kivy, or some other framework.
 
+#### Minimum python version
+
+3.7
+
 ##### Available:
 * Discovering bulbs on LAN
 * Turning on/off bulb

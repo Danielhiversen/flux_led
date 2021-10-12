@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import colorsys
 import datetime
 import logging
@@ -43,6 +41,8 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
 from .models_db import (
     BASE_MODE_MAP,
     CHANNEL_REMAP,
+    MODEL_DESCRIPTIONS,
+    UNKNOWN_MODEL,
     MODEL_MAP,
     RGBW_PROTOCOL_MODELS,
     USE_9BYTE_PROTOCOL_MODELS,
@@ -90,6 +90,13 @@ class LEDENETDevice:
     def model_num(self):
         """Return the model number."""
         return self.raw_state.model_num if self.raw_state else None
+
+    @property
+    def model(self):
+        """Return the human readable model description."""
+        model_num = self.model_num
+        description = MODEL_DESCRIPTIONS.get(model_num) or UNKNOWN_MODEL
+        return f"{description} (0x{model_num:02X})"
 
     @property
     def version_num(self):
@@ -274,7 +281,7 @@ class LEDENETDevice:
             return
         try:
             self._socket.close()
-        except socket.error:
+        except OSError:
             pass
         finally:
             self._socket = None
@@ -441,14 +448,14 @@ class LEDENETDevice:
                 red = rx.red
                 green = rx.green
                 blue = rx.blue
-                mode_str = "Color: {}".format((red, green, blue))
+                mode_str = f"Color: {(red, green, blue)}"
                 # Should add ability to get CCT from rgbwcapable*
                 if self.rgbwcapable:
-                    mode_str += " White: {}".format(ww_level)
+                    mode_str += f" White: {ww_level}"
                 else:
-                    mode_str += " Brightness: {}".format(self.brightness)
+                    mode_str += f" Brightness: {self.brightness}"
             elif color_mode == COLOR_MODE_DIM:
-                mode_str = "Warm White: {}%".format(utils.byteToPercent(ww_level))
+                mode_str = f"Warm White: {utils.byteToPercent(ww_level)}%"
             elif color_mode == COLOR_MODE_CCT:
                 cct_value = self.getWhiteTemperature()
                 mode_str = "CCT: {}K Brightness: {}%".format(
@@ -458,9 +465,9 @@ class LEDENETDevice:
                 mode_str = "Addressable"
         elif mode == MODE_PRESET:
             pat = PresetPattern.valtostr(pattern)
-            mode_str = "Pattern: {} (Speed {}%)".format(pat, speed)
+            mode_str = f"Pattern: {pat} (Speed {speed}%)"
         elif mode == MODE_CUSTOM:
-            mode_str = "Custom pattern (Speed {}%)".format(speed)
+            mode_str = f"Custom pattern (Speed {speed}%)"
         elif BuiltInTimer.valid(pattern):
             mode_str = BuiltInTimer.valtostr(pattern)
         elif mode == MODE_MUSIC:
@@ -468,10 +475,10 @@ class LEDENETDevice:
         elif mode == MODE_SWITCH:
             mode_str = "Switch"
         else:
-            mode_str = "Unknown mode 0x{:x}".format(pattern)
+            mode_str = f"Unknown mode 0x{pattern:x}"
         mode_str += " raw state: "
         mode_str += utils.raw_state_to_dec(rx)
-        return "{} [{}]".format(power_str, mode_str)
+        return f"{power_str} [{mode_str}]"
 
     @_socket_retry(attempts=2)
     def _change_state(self, turn_on=True):
@@ -760,7 +767,7 @@ class LEDENETDevice:
         _LOGGER.debug(
             "%s => %s (%d)",
             self.ipaddr,
-            " ".join("0x{:02X}".format(x) for x in bytes),
+            " ".join(f"0x{x:02X}" for x in bytes),
             len(bytes),
         )
         self._socket.send(bytes)
@@ -785,14 +792,14 @@ class LEDENETDevice:
                 _LOGGER.debug(
                     "%s <= %s (%d)",
                     self.ipaddr,
-                    " ".join("0x{:02X}".format(x) for x in chunk),
+                    " ".join(f"0x{x:02X}" for x in chunk),
                     len(chunk),
                 )
                 if chunk:
                     begin = time.monotonic()
                 remaining -= len(chunk)
                 rx.extend(chunk)
-            except socket.error as ex:
+            except OSError as ex:
                 _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
                 pass
             finally:

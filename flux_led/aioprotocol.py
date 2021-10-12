@@ -28,7 +28,7 @@ class AIOLEDENETProtocol(asyncio.Protocol):
         _LOGGER.debug(
             "%s => %s (%d)",
             self.peername,
-            " ".join("0x{:02X}".format(x) for x in data),
+            " ".join(f"0x{x:02X}" for x in data),
             len(data),
         )
         self.transport.write(data)
@@ -43,7 +43,7 @@ class AIOLEDENETProtocol(asyncio.Protocol):
         _LOGGER.debug(
             "%s <= %s (%d)",
             self.peername,
-            " ".join("0x{:02X}".format(x) for x in data),
+            " ".join(f"0x{x:02X}" for x in data),
             len(data),
         )
         self._data_receive_callback(data)

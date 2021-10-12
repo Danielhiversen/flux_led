@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import ast
 import colorsys
 import datetime
@@ -79,7 +77,7 @@ class utils:
 
     @staticmethod
     def dump_bytes(bytes):
-        print("".join("{:02x} ".format(x) for x in bytearray(bytes)))
+        print("".join(f"{x:02x} " for x in bytearray(bytes)))
 
     @staticmethod
     def raw_state_to_dec(rx):

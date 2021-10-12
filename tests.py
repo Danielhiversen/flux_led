@@ -53,6 +53,8 @@ class TestLight(unittest.TestCase):
             "ON  [Color: (103, 255, 104) Brightness: 255 raw state: 129,69,35,97,33,16,103,255,104,0,4,0,240,61,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(light.model_num, 0x45)
+        self.assertEqual(light.model, "Unknown Model (0x45)")
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
@@ -82,6 +84,8 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.model_num, 0x45)
+        self.assertEqual(light.model, "Unknown Model (0x45)")
         assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_DIM}
 
         self.assertEqual(mock_read.call_count, 2)
@@ -417,6 +421,8 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
+        self.assertEqual(light.model_num, 0x25)
+        self.assertEqual(light.model, "WiFi RGBWW Controller (0x25)")
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
@@ -498,6 +504,8 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGB}
+        self.assertEqual(light.model_num, 0x01)
+        self.assertEqual(light.model, "Original LEDENET (0x01)")
 
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
@@ -684,8 +692,10 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"$$\x47\x00\x00\x00\x00\x00\x02\x00\x00\xf0")
 
         mock_read.side_effect = read_data
-        switch = flux_led.WifiLedBulb("192.168.1.164")
-        assert switch.color_modes == {COLOR_MODE_RGB, COLOR_MODE_CCT}
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_CCT}
+        self.assertEqual(light.model_num, 0xDE)
+        self.assertEqual(light.model, "Unknown Model (0xDE)")
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -772,6 +782,10 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.model_num, 0x41)
+        self.assertEqual(
+            light.model, "Magic Home Branded Single Channel Controller (0x41)"
+        )
         assert light.color_modes == {COLOR_MODE_DIM}
 
         self.assertEqual(mock_read.call_count, 2)

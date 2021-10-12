@@ -16,7 +16,7 @@ def _socket_retry(attempts=2):
                     ret = func(self, *args, **kwargs)
                     self.set_available()
                     return ret
-                except socket.error as ex:
+                except OSError as ex:
                     _LOGGER.debug(
                         "%s: socket error while calling %s: %s", self.ipaddr, func, ex
                     )
