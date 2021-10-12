@@ -82,9 +82,7 @@ class LEDENETDevice:
         self._protocol = None
         self._is_on = False
         self._mode = None
-        self._socket = None
         self._transition_complete_time = 0
-        self._lock = threading.Lock()
 
     @property
     def model_num(self):
@@ -263,29 +261,6 @@ class LEDENETDevice:
         # Default color mode (RGB)
         return int(v_255)
 
-    def _connect_if_disconnected(self):
-        """Connect only if not already connected."""
-        if self._socket is None:
-            self.connect()
-
-    @_socket_retry(attempts=0)
-    def connect(self):
-        self.close()
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.settimeout(self.timeout)
-        _LOGGER.debug("%s: connect", self.ipaddr)
-        self._socket.connect((self.ipaddr, self.port))
-
-    def close(self):
-        if self._socket is None:
-            return
-        try:
-            self._socket.close()
-        except OSError:
-            pass
-        finally:
-            self._socket = None
-
     def _determineMode(self):
         pattern_code = self.raw_state.preset_pattern
         if self.device_type == DeviceType.Switch:
@@ -303,52 +278,6 @@ class LEDENETDevice:
         elif BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
         return None
-
-    def _determine_protocol(self):
-        # determine the type of protocol based of first 2 bytes.
-        read_bytes = 2
-        for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
-            protocol = protocol_cls()
-            with self._lock:
-                self._connect_if_disconnected()
-                self._send_msg(protocol.construct_state_query())
-                rx = self._read_msg(read_bytes)
-                # if any response is recieved, use the protocol
-                if len(rx) != read_bytes:
-                    # We just sent a garage query which the old procotol
-                    # cannot process, recycle the connection
-                    self.close()
-                    continue
-                full_msg = rx + self._read_msg(
-                    protocol.state_response_length - read_bytes
-                )
-                if protocol.is_valid_state_response(full_msg):
-                    # Devices that use an 9-byte protocol
-                    if self._uses_9byte_protocol(rx[1]):
-                        self._protocol = ProtocolLEDENET9Byte()
-                    else:
-                        self._protocol = protocol
-                return full_msg
-        raise Exception("Cannot determine protocol")
-
-    @_socket_retry(attempts=2)
-    def query_state(self, led_type=None):
-        if led_type:
-            self.setProtocol(led_type)
-        elif not self._protocol:
-            return self._determine_protocol()
-
-        with self._lock:
-            self.connect()
-            self._send_msg(self._protocol.construct_state_query())
-            return self._read_msg(self._protocol.state_response_length)
-
-    def update_state(self, retry=2):
-        rx = self.query_state(retry=retry)
-        if rx and self.process_state_response(rx):
-            self.available = True
-            return
-        self.set_unavailable()
 
     def set_unavailable(self):
         self._is_on = False
@@ -480,28 +409,6 @@ class LEDENETDevice:
         mode_str += utils.raw_state_to_dec(rx)
         return f"{power_str} [{mode_str}]"
 
-    @_socket_retry(attempts=2)
-    def _change_state(self, turn_on=True):
-        _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_state_change(turn_on))
-            # After changing state, the device replies with
-            expected_response_len = 4
-            # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
-            rx = self._read_msg(expected_response_len)
-            _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
-            if len(rx) == expected_response_len:
-                new_power_state = (
-                    self._protocol.on_byte if turn_on else self._protocol.off_byte
-                )
-                self._set_power_state(new_power_state)
-            # The device will send back a state change here
-            # but it will likely be stale so we want to recycle
-            # the connetion so we do not have to wait as sometimes
-            # it stalls
-            self.close()
-
     def _set_power_state(self, new_power_state):
         """Set the power state in the raw state."""
         self._replace_raw_state({"power_state": new_power_state})
@@ -511,12 +418,6 @@ class LEDENETDevice:
     def _replace_raw_state(self, new_state):
         self._set_raw_state(self.raw_state._replace(**new_state))
 
-    def turnOn(self, retry=2):
-        self._change_state(retry=retry, turn_on=True)
-
-    def turnOff(self, retry=2):
-        self._change_state(retry=retry, turn_on=False)
-
     def isOn(self):
         return self.is_on
 
@@ -524,22 +425,6 @@ class LEDENETDevice:
         if self.color_mode not in {COLOR_MODE_CCT, COLOR_MODE_DIM}:
             return 255
         return self.brightness
-
-    def setWarmWhite(self, level, persist=True, retry=2):
-        self.set_levels(w=utils.percentToByte(level), persist=persist, retry=retry)
-
-    def setWarmWhite255(self, level, persist=True, retry=2):
-        self.set_levels(w=level, persist=persist, retry=retry)
-
-    def setColdWhite(self, level, persist=True, retry=2):
-        self.set_levels(w2=utils.percentToByte(level), persist=persist, retry=retry)
-
-    def setColdWhite255(self, level, persist=True, retry=2):
-        self.set_levels(w2=level, persist=persist, retry=retry)
-
-    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
-        cold, warm = color_temp_to_white_levels(temperature, brightness)
-        self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
     def getWhiteTemperature(self):
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
@@ -609,49 +494,6 @@ class LEDENETDevice:
         delay = self.raw_state.speed
         speed = utils.delayToSpeed(delay)
         return speed
-
-    def setRgbw(
-        self,
-        r=None,
-        g=None,
-        b=None,
-        w=None,
-        persist=True,
-        brightness=None,
-        w2=None,
-        retry=2,
-    ):
-        return self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
-
-    @_socket_retry(attempts=2)
-    def set_levels(
-        self,
-        r=None,
-        g=None,
-        b=None,
-        w=None,
-        w2=None,
-        persist=True,
-        brightness=None,
-    ):
-        msg, updates = self._generate_levels_change(
-            {
-                STATE_RED: r,
-                STATE_GREEN: g,
-                STATE_BLUE: b,
-                STATE_WARM_WHITE: w,
-                STATE_COOL_WHITE: w2,
-            },
-            persist,
-            brightness,
-        )
-        # send the message
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(msg)
-            if updates:
-                self._replace_raw_state(updates)
-            self._set_transition_complete_time()
 
     def _generate_levels_change(
         self,
@@ -756,12 +598,169 @@ class LEDENETDevice:
     def rgb(self):
         return (self.raw_state.red, self.raw_state.green, self.raw_state.blue)
 
-    def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
-        self.set_levels(r, g, b, persist=persist, brightness=brightness, retry=retry)
-
     def _calculateBrightness(self, rgb, level):
         hsv = colorsys.rgb_to_hsv(*rgb)
         return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
+
+    def setProtocol(self, protocol):
+        if protocol == PROTOCOL_LEDENET_ORIGINAL:
+            self._protocol = ProtocolLEDENETOriginal()
+        elif protocol == PROTOCOL_LEDENET_8BYTE:
+            self._protocol = ProtocolLEDENET8Byte()
+        elif protocol == PROTOCOL_LEDENET_9BYTE:
+            self._protocol = ProtocolLEDENET9Byte()
+        else:
+            raise ValueError(f"Invalid protocol: {protocol}")
+
+    def _generate_preset_pattern(self, pattern, speed):
+        """Generate the preset pattern protocol bytes."""
+        PresetPattern.valtostr(pattern)
+        if not PresetPattern.valid(pattern):
+            raise ValueError("Pattern must be between 0x25 and 0x38")
+        return self._protocol.construct_preset_pattern(pattern, speed)
+
+    def _generate_custom_patterm(self, rgb_list, speed, transition_type):
+        """Generate the custom pattern protocol bytes."""
+        # truncate if more than 16
+        if len(rgb_list) > 16:
+            _LOGGER.warning(
+                "Too many colors in %s, truncating list to %s", len(rgb_list), 16
+            )
+            del rgb_list[16:]
+        # quit if too few
+        if len(rgb_list) == 0:
+            raise ValueError("setCustomPattern requires at least one color tuples")
+
+        return self._protocol.construct_custom_effect(rgb_list, speed, transition_type)
+
+
+class WifiLedBulb(LEDENETDevice):
+    """A LEDENET Wifi bulb device."""
+
+    def __init__(self, ipaddr, port=5577, timeout=5):
+        """Init and setup the bulb."""
+        super().__init__(ipaddr, port, timeout)
+        self._socket = None
+        self._lock = threading.Lock()
+        self.setup()
+
+    def setup(self):
+        """Setup the connection and fetch initial state."""
+        self.connect(retry=2)
+        self.update_state()
+
+    def _connect_if_disconnected(self):
+        """Connect only if not already connected."""
+        if self._socket is None:
+            self.connect()
+
+    @_socket_retry(attempts=0)
+    def connect(self):
+        self.close()
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.settimeout(self.timeout)
+        _LOGGER.debug("%s: connect", self.ipaddr)
+        self._socket.connect((self.ipaddr, self.port))
+
+    def close(self):
+        if self._socket is None:
+            return
+        try:
+            self._socket.close()
+        except OSError:
+            pass
+        finally:
+            self._socket = None
+
+    def turnOn(self, retry=2):
+        self._change_state(retry=retry, turn_on=True)
+
+    def turnOff(self, retry=2):
+        self._change_state(retry=retry, turn_on=False)
+
+    @_socket_retry(attempts=2)
+    def _change_state(self, turn_on=True):
+        _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(self._protocol.construct_state_change(turn_on))
+            # After changing state, the device replies with
+            expected_response_len = 4
+            # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
+            rx = self._read_msg(expected_response_len)
+            _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
+            if len(rx) == expected_response_len:
+                new_power_state = (
+                    self._protocol.on_byte if turn_on else self._protocol.off_byte
+                )
+                self._set_power_state(new_power_state)
+            # The device will send back a state change here
+            # but it will likely be stale so we want to recycle
+            # the connetion so we do not have to wait as sometimes
+            # it stalls
+            self.close()
+
+    def setWarmWhite(self, level, persist=True, retry=2):
+        self.set_levels(w=utils.percentToByte(level), persist=persist, retry=retry)
+
+    def setWarmWhite255(self, level, persist=True, retry=2):
+        self.set_levels(w=level, persist=persist, retry=retry)
+
+    def setColdWhite(self, level, persist=True, retry=2):
+        self.set_levels(w2=utils.percentToByte(level), persist=persist, retry=retry)
+
+    def setColdWhite255(self, level, persist=True, retry=2):
+        self.set_levels(w2=level, persist=persist, retry=retry)
+
+    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
+        cold, warm = color_temp_to_white_levels(temperature, brightness)
+        self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
+
+    def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
+        self.set_levels(r, g, b, persist=persist, brightness=brightness, retry=retry)
+
+    def setRgbw(
+        self,
+        r=None,
+        g=None,
+        b=None,
+        w=None,
+        persist=True,
+        brightness=None,
+        w2=None,
+        retry=2,
+    ):
+        return self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
+
+    @_socket_retry(attempts=2)
+    def set_levels(
+        self,
+        r=None,
+        g=None,
+        b=None,
+        w=None,
+        w2=None,
+        persist=True,
+        brightness=None,
+    ):
+        msg, updates = self._generate_levels_change(
+            {
+                STATE_RED: r,
+                STATE_GREEN: g,
+                STATE_BLUE: b,
+                STATE_WARM_WHITE: w,
+                STATE_COOL_WHITE: w2,
+            },
+            persist,
+            brightness,
+        )
+        # send the message
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(msg)
+            if updates:
+                self._replace_raw_state(updates)
+            self._set_transition_complete_time()
 
     def _send_msg(self, bytes):
         _LOGGER.debug(
@@ -846,22 +845,32 @@ class LEDENETDevice:
             # cycle the connection
             self.close()
 
-    def setProtocol(self, protocol):
-        if protocol == PROTOCOL_LEDENET_ORIGINAL:
-            self._protocol = ProtocolLEDENETOriginal()
-        elif protocol == PROTOCOL_LEDENET_8BYTE:
-            self._protocol = ProtocolLEDENET8Byte()
-        elif protocol == PROTOCOL_LEDENET_9BYTE:
-            self._protocol = ProtocolLEDENET9Byte()
-        else:
-            raise ValueError(f"Invalid protocol: {protocol}")
-
-    def _generate_preset_pattern(self, pattern, speed):
-        """Generate the preset pattern protocol bytes."""
-        PresetPattern.valtostr(pattern)
-        if not PresetPattern.valid(pattern):
-            raise ValueError("Pattern must be between 0x25 and 0x38")
-        return self._protocol.construct_preset_pattern(pattern, speed)
+    def _determine_protocol(self):
+        # determine the type of protocol based of first 2 bytes.
+        read_bytes = 2
+        for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
+            protocol = protocol_cls()
+            with self._lock:
+                self._connect_if_disconnected()
+                self._send_msg(protocol.construct_state_query())
+                rx = self._read_msg(read_bytes)
+                # if any response is recieved, use the protocol
+                if len(rx) != read_bytes:
+                    # We just sent a garage query which the old procotol
+                    # cannot process, recycle the connection
+                    self.close()
+                    continue
+                full_msg = rx + self._read_msg(
+                    protocol.state_response_length - read_bytes
+                )
+                if protocol.is_valid_state_response(full_msg):
+                    # Devices that use an 9-byte protocol
+                    if self._uses_9byte_protocol(rx[1]):
+                        self._protocol = ProtocolLEDENET9Byte()
+                    else:
+                        self._protocol = protocol
+                return full_msg
+        raise Exception("Cannot determine protocol")
 
     def setPresetPattern(self, pattern, speed):
         msg = self._generate_preset_pattern(pattern, speed)
@@ -923,19 +932,24 @@ class LEDENETDevice:
             # not sure what the resp is, prob some sort of ack?
             self._read_msg(4)
 
-    def _generate_custom_patterm(self, rgb_list, speed, transition_type):
-        """Generate the custom pattern protocol bytes."""
-        # truncate if more than 16
-        if len(rgb_list) > 16:
-            _LOGGER.warning(
-                "Too many colors in %s, truncating list to %s", len(rgb_list), 16
-            )
-            del rgb_list[16:]
-        # quit if too few
-        if len(rgb_list) == 0:
-            raise ValueError("setCustomPattern requires at least one color tuples")
+    @_socket_retry(attempts=2)
+    def query_state(self, led_type=None):
+        if led_type:
+            self.setProtocol(led_type)
+        elif not self._protocol:
+            return self._determine_protocol()
 
-        return self._protocol.construct_custom_effect(rgb_list, speed, transition_type)
+        with self._lock:
+            self.connect()
+            self._send_msg(self._protocol.construct_state_query())
+            return self._read_msg(self._protocol.state_response_length)
+
+    def update_state(self, retry=2):
+        rx = self.query_state(retry=retry)
+        if rx and self.process_state_response(rx):
+            self.available = True
+            return
+        self.set_unavailable()
 
     @_socket_retry(attempts=2)
     def setCustomPattern(self, rgb_list, speed, transition_type):
@@ -947,17 +961,3 @@ class LEDENETDevice:
 
     def refreshState(self):
         return self.update_state()
-
-
-class WifiLedBulb(LEDENETDevice):
-    """A LEDENET Wifi bulb device."""
-
-    def __init__(self, ipaddr, port=5577, timeout=5):
-        """Init and setup the bulb."""
-        super().__init__(ipaddr, port, timeout)
-        self.setup()
-
-    def setup(self):
-        """Setup the connection and fetch initial state."""
-        self.connect(retry=2)
-        self.update_state()

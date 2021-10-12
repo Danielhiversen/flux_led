@@ -314,9 +314,7 @@ def processSetTimerArgs(parser, args):
 
         if mode == "sunrise" or mode == "sunset":
             if "startbrightness" not in keys:
-                parser.error(
-                    f"{mode} mode needs a startBrightness (0% -> 100%)"
-                )
+                parser.error(f"{mode} mode needs a startBrightness (0% -> 100%)")
             startBrightness = int(settings_dict["startbrightness"])
 
             if "endbrightness" not in keys:
