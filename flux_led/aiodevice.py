@@ -166,12 +166,12 @@ class AIOWifiLedBulb(LEDENETDevice):
                         self._data_future, timeout=self.timeout
                     )
                 except asyncio.TimeoutError:
-                    self.close()
+                    self._aio_protocol.close()
                     continue
                 if not protocol.is_valid_state_response(full_msg):
                     # We just sent a garage query which the old procotol
                     # cannot process, recycle the connection
-                    self.close()
+                    self._aio_protocol.close()
                     continue
                 # Devices that use an 9-byte protocol
                 if self._uses_9byte_protocol(full_msg[1]):
