@@ -51,12 +51,12 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def async_turn_on(self):
         """Turn on the device."""
         await self._async_send_msg(self._protocol.construct_state_change(True))
-        self._set_power_state(self._protocol.on_byte)
+        self._set_power_state_ignore_next_push(self._protocol.on_byte)
 
     async def async_turn_off(self):
         """Turn off the device."""
         await self._async_send_msg(self._protocol.construct_state_change(False))
-        self._set_power_state(self._protocol.off_byte)
+        self._set_power_state_ignore_next_push(self._protocol.off_byte)
 
     async def async_set_white_temp(self, temperature, brightness, persist=True):
         """Set the white tempature."""

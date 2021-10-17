@@ -70,3 +70,11 @@ STATE_VERSION_NUMBER = "version_number"
 STATE_COOL_WHITE = "cool_white"
 STATE_COLOR_MODE = "color_mode"
 STATE_CHECK_SUM = "check_sum"
+
+CHANNEL_STATES = {
+    STATE_RED,
+    STATE_GREEN,
+    STATE_BLUE,
+    STATE_WARM_WHITE,
+    STATE_COOL_WHITE,
+}
