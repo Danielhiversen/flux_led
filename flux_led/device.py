@@ -18,6 +18,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
+    CHANNEL_STATES,
     MAX_TEMP,
     MIN_TEMP,
     MODE_COLOR,
@@ -78,9 +79,9 @@ class LEDENETDevice:
         self.timeout = timeout
         self.raw_state = None
         self.available = None
+        self._ignore_next_power_state_update = False
 
         self._protocol = None
-        self._is_on = False
         self._mode = None
         self._transition_complete_time = 0
 
@@ -214,7 +215,7 @@ class LEDENETDevice:
 
     @property
     def is_on(self):
-        return self._is_on
+        return self.raw_state.power_state == self._protocol.on_byte
 
     @property
     def mode(self):
@@ -280,7 +281,6 @@ class LEDENETDevice:
         return None
 
     def set_unavailable(self):
-        self._is_on = False
         self.available = False
 
     def set_available(self):
@@ -310,14 +310,20 @@ class LEDENETDevice:
             )
 
         if time.monotonic() < self._transition_complete_time:
-            # Do not update the raw state if a transition is
+            # Do not update the channel states if a transition is
             # in progress as the state will not be correct
             # until the transition is completed since devices
             # "FADE" into the state requested.
-            return True
+            self._replace_raw_state(
+                {
+                    name: value
+                    for name, value in raw_state._asdict().items()
+                    if name not in CHANNEL_STATES
+                }
+            )
+        else:
+            self._set_raw_state(raw_state)
 
-        self._set_raw_state(raw_state)
-        self._set_power_state_from_raw_state()
         mode = self._determineMode()
 
         if mode is None:
@@ -333,6 +339,12 @@ class LEDENETDevice:
 
     def process_power_state_response(self, msg):
         """Process a power state change message."""
+        if self._ignore_next_power_state_update:
+            # These devices frequently push an incorrect power
+            # state right after changing state.
+            self._ignore_next_power_state_update = False
+            return
+
         if not self._protocol.is_valid_power_state_response(msg):
             _LOGGER.warning(
                 "%s: Recieved invalid power state response: %s",
@@ -340,7 +352,26 @@ class LEDENETDevice:
                 utils.raw_state_to_dec(msg),
             )
             return False
-        self._set_power_state(msg[2])
+        if self.is_on and msg[2] == self._protocol.on_byte:
+            # This is a bug in the device firmware
+            _LOGGER.debug(
+                "%s: Device unexpectedly pushed power on when already on, setting to off",
+                self.ipaddr,
+            )
+            self._set_power_state(self._protocol.off_byte)
+        elif not self.is_on and msg[2] == self._protocol.off_byte:
+            # This is a bug in the device firmware
+            _LOGGER.debug(
+                "%s: Device unexpectedly pushed power off when already off, setting to on",
+                self.ipaddr,
+            )
+            self._set_power_state(self._protocol.on_byte)
+        else:
+            _LOGGER.debug(
+                "%s: Setting power state to: %s", self.ipaddr, f"0x{msg[2]:02X}"
+            )
+            self._set_power_state(msg[2])
+
         return True
 
     def _set_raw_state(self, raw_state):
@@ -358,14 +389,6 @@ class LEDENETDevice:
                 for mapped, actual in channel_map.items()
             }
         )
-
-    def _set_power_state_from_raw_state(self):
-        """Set the power state from the raw state."""
-        power_state = self.raw_state.power_state
-        if power_state == self._protocol.on_byte:
-            self._is_on = True
-        elif power_state == self._protocol.off_byte:
-            self._is_on = False
 
     def __str__(self):
         rx = self.raw_state
@@ -421,10 +444,14 @@ class LEDENETDevice:
         mode_str += utils.raw_state_to_dec(rx)
         return f"{power_str} [{mode_str}]"
 
+    def _set_power_state_ignore_next_push(self, new_power_state):
+        """Set the power state in the raw state, and ignore next push update."""
+        self._set_power_state(new_power_state)
+        self._ignore_next_power_state_update = True
+
     def _set_power_state(self, new_power_state):
         """Set the power state in the raw state."""
         self._replace_raw_state({"power_state": new_power_state})
-        self._set_power_state_from_raw_state()
         self._set_transition_complete_time()
 
     def _replace_raw_state(self, new_state):
@@ -702,6 +729,9 @@ class WifiLedBulb(LEDENETDevice):
             rx = self._read_msg(expected_response_len)
             _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
             if len(rx) == expected_response_len:
+                # We cannot use the power state workaround here
+                # since we are not listening for power state changes
+                # like the aio version
                 new_power_state = (
                     self._protocol.on_byte if turn_on else self._protocol.off_byte
                 )
