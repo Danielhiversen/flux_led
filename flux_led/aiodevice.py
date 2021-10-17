@@ -139,10 +139,13 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self._protocol:
             return
         assert self._updated_callback is not None
-        if not self._protocol.is_valid_state_response(msg):
-            return
         prev_state = self.raw_state
-        self.process_state_response(msg)
+        if self._protocol.is_valid_state_response(msg):
+            self.process_state_response(msg)
+        elif self._protocol.is_valid_power_state_response(msg):
+            self.process_power_state_response(msg)
+        else:
+            return
         if self.raw_state != prev_state:
             self._updated_callback()
 

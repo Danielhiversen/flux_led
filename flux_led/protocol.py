@@ -122,6 +122,20 @@ class ProtocolBase:
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
 
+    def is_checksum_correct(self, msg):
+        """Check a checksum of a message."""
+        expected_sum = sum(msg[0:-1]) & 0xFF
+        if expected_sum != msg[-1]:
+            _LOGGER.warning(
+                "Checksum mismatch: Expected %s, got %s", expected_sum, msg[-1]
+            )
+            return False
+        return True
+
+    @abstractmethod
+    def is_valid_power_state_response(self, msg):
+        """Check if a power state response is valid."""
+
     @property
     def on_byte(self):
         """The on byte."""
@@ -214,6 +228,16 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """The length of the query response."""
         return LEDENET_ORIGINAL_STATE_RESPONSE_LEN
 
+    def is_valid_power_state_response(self, msg):
+        """Check if a power state response is valid."""
+        # We do not have dumps of the original ledenet
+        # protocol (these devices are no longer made).
+        # If we get them in the future, we can
+        # implement push updates for these devices by
+        # matching how is_valid_power_state_response works
+        # for the newer protocol
+        return False
+
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
         return len(raw_state) == self.state_response_length and raw_state[1] == 0x01
@@ -265,19 +289,24 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The length of the query response."""
         return LEDENET_STATE_RESPONSE_LEN
 
+    def is_valid_power_state_response(self, msg):
+        """Check if a power state response is valid."""
+        if (
+            len(msg) != 4
+            or msg[0] not in (0xF0, 0x00, 0x0F)
+            or msg[1] != 0x71
+            or msg[2] not in (self.on_byte, self.off_byte)
+        ):
+            return False
+        return self.is_checksum_correct(msg)
+
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
         if raw_state[0] != 0x81:
             return False
-        expected_sum = sum(raw_state[0:-1]) & 0xFF
-        if expected_sum != raw_state[-1]:
-            _LOGGER.warning(
-                "Checksum mismatch: Expected %s, got %s", expected_sum, raw_state[-1]
-            )
-            return False
-        return True
+        return self.is_checksum_correct(raw_state)
 
     def construct_state_change(self, turn_on):
         """The bytes to send for a state change request."""

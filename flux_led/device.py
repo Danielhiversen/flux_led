@@ -331,6 +331,18 @@ class LEDENETDevice:
         self._mode = mode
         return True
 
+    def process_power_state_response(self, msg):
+        """Process a power state change message."""
+        if not self._protocol.is_valid_power_state_response(msg):
+            _LOGGER.warning(
+                "%s: Recieved invalid power state response: %s",
+                self.ipaddr,
+                utils.raw_state_to_dec(msg),
+            )
+            return False
+        self._set_power_state(msg[2])
+        return True
+
     def _set_raw_state(self, raw_state):
         """Set the raw state remapping channels as needed."""
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
