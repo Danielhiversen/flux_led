@@ -142,6 +142,16 @@ MODELS = [
         channel_map={},
     ),
     LEDENETModel(
+        model_num=0x21,
+        models=[],
+        description="Magic Home Branded Single Channel Controller",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
+        channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
+    ),
+    LEDENETModel(
         model_num=0x25,
         models=["AK001-ZJ200"],
         description="WiFi RGBWW Controller",
