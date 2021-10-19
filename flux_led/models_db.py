@@ -252,7 +252,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x21,
-        models=[],
+        models=["AK001-ZJ2101", "AK001-ZJ2104"],
         description="Smart Bulb Dimmable",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
