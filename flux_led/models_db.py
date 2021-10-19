@@ -103,8 +103,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x04,
-        models=[],
-        description=None,  # Unknown
+        models=["AK001-ZJ200"],
+        description="UFO LED WiFi Controller",  # AKA ZJ-WFUF-170F
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
