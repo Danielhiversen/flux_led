@@ -422,7 +422,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
         self.assertEqual(light.model_num, 0x25)
-        self.assertEqual(light.model, "WiFi RGBWW Controller (0x25)")
+        self.assertEqual(light.model, "WiFi RGBCW Controller (0x25)")
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
