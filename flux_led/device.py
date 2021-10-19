@@ -27,7 +27,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_PRESET,
     MODE_SWITCH,
     MODE_WW,
-    MODEL_NUM_SWITCH,
+    MODEL_NUMS_SWITCHS,
     STATE_BLUE,
     STATE_CHANGE_LATENCY,
     STATE_COOL_WHITE,
@@ -122,9 +122,8 @@ class LEDENETDevice:
     @property
     def device_type(self):
         """Return the device type."""
-        return (
-            DeviceType.Switch if self.model_num == MODEL_NUM_SWITCH else DeviceType.Bulb
-        )
+        is_switch = self.model_num in MODEL_NUMS_SWITCHS
+        return DeviceType.Switch if is_switch else DeviceType.Bulb
 
     @property
     def color_temp(self):

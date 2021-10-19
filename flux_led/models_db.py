@@ -11,7 +11,6 @@ from .const import (
     COLOR_MODE_RGBWW,
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
-    MODEL_NUM_SWITCH,
     STATE_RED,
     STATE_WARM_WHITE,
 )
@@ -124,11 +123,41 @@ MODELS = [
     LEDENETModel(
         model_num=0x07,
         models=[],
-        description="Magic Home Branded RGBWW Controller",
+        description="Magic Home Branded RGBCW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
         mode_to_color_mode=GENERIC_RGBWW_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x08,
+        models=[],
+        description="Magic Home Branded RGB Controller with MIC",
+        always_writes_white_and_colors=True,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode=GENERIC_RGB_MAP,
+        color_modes={COLOR_MODE_RGB},
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x09,
+        models=[],
+        description="CCT Ceiling Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x0B,
+        models=[],
+        description="Smart Switch 1c",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes
         channel_map={},
     ),
     LEDENETModel(
@@ -139,6 +168,86 @@ MODELS = [
         nine_byte_read_protocol=True,
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x10,
+        models=[],
+        description="Christmas Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x1A,
+        models=[],
+        description="Christmas Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x16,
+        models=[],
+        description="Magnetic Light CCT",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x17,
+        models=[],
+        description="Magnetic Light Dimable",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
+        channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
+    ),
+    LEDENETModel(
+        model_num=0x18,
+        models=[],
+        description="Plant Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes -- UNVERIFIED
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x1B,
+        models=[],
+        description="Spray Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_RGB},
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x19,
+        models=[],
+        description="Smart Socket 2 USB",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x1C,
+        models=[],
+        description="Table Light CCT",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
         channel_map={},
     ),
     LEDENETModel(
@@ -154,7 +263,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x25,
         models=["AK001-ZJ200"],
-        description="WiFi RGBWW Controller",
+        description="WiFi RGBCW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
         mode_to_color_mode=BASE_MODE_MAP,
@@ -174,7 +283,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x35,
         models=["AK001-ZJ2145", "AK001-ZJ2101", "AK001-ZJ2104"],
-        description="Smart Bulb",
+        description="Smart Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=True,
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
@@ -194,7 +303,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x44,
         models=[],
-        description=None,  # Unknown
+        description="Smart Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
@@ -212,6 +321,36 @@ MODELS = [
         channel_map={},
     ),
     LEDENETModel(
+        model_num=0x52,
+        models=[],
+        description="Smart Bulb CCT",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x54,
+        models=[],
+        description="Downlight RGBW",
+        always_writes_white_and_colors=True,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x62,
+        models=[],
+        description="Magic Home Controller CCT",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
+        channel_map={},
+    ),
+    LEDENETModel(
         model_num=0x81,
         models=[],
         description=None,  # Unknown
@@ -222,9 +361,49 @@ MODELS = [
         channel_map={},
     ),
     LEDENETModel(
-        model_num=MODEL_NUM_SWITCH,  # 0x97
+        model_num=0x93,
+        models=[],
+        description="Smart Switch 1C",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x94,
+        models=[],
+        description="Smart Switch 1c Watt",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x95,
+        models=[],
+        description="Smart Switch 2c",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x96,
+        models=[],
+        description="Smart Switch 4c",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0x97,  # 0x97
         models=["AK001-ZJ2134"],
-        description="Smart Switch",
+        description="Smart Socket 1c",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
@@ -234,7 +413,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA1,
         models=[],
-        description="Unknown Addressable",  # https://github.com/Danielhiversen/flux_led/pull/59/files#diff-09e60df19b61f5ceb8d2aef0ade582c2b84979cab660baa27c1ec65725144d76R776
+        description="RGB Symphony [Addressable]",  # https://github.com/Danielhiversen/flux_led/pull/59/files#diff-09e60df19b61f5ceb8d2aef0ade582c2b84979cab660baa27c1ec65725144d76R776
         always_writes_white_and_colors=False,
         nine_byte_read_protocol=False,  # unverified
         mode_to_color_mode={},
@@ -244,7 +423,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA2,
         models=["AK001-ZJ2104"],
-        description="Generic Addressable",
+        description="RGB Symphony [Addressable]",
         always_writes_white_and_colors=False,
         nine_byte_read_protocol=False,  # unverified
         mode_to_color_mode={},
@@ -254,11 +433,41 @@ MODELS = [
     LEDENETModel(
         model_num=0xA3,
         models=["K001-ZJ2148"],
-        description="Magic Home Branded Addressable",
+        description="Magic Home Branded RGB Symphony [Addressable]",
         always_writes_white_and_colors=False,
         nine_byte_read_protocol=False,  # unverified
         mode_to_color_mode={},
         color_modes={COLOR_MODE_ADDRESSABLE},
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0xD1,
+        models=[],
+        description="Digital Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes -- UNVERIFIED
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0xE1,
+        models=[],
+        description="Ceiling Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes -- UNVERIFIED
+        channel_map={},
+    ),
+    LEDENETModel(
+        model_num=0xE2,
+        models=[],
+        description="Ceiling Light Assist",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        nine_byte_read_protocol=False,
+        mode_to_color_mode={},
+        color_modes={},  # no color modes -- UNVERIFIED
         channel_map={},
     ),
 ]
