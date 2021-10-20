@@ -22,12 +22,11 @@ jobs:
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v2
               with:
-                  python-version: ${{ matrix.python-version }}
+                  python-version: ${{ matrix.python-version }}       
             - name: Install dependencies
               run: |
                   python -m pip install --upgrade pip
-                  python -m pip install flake8 pytest
-                  if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+                  python -m pip install flake8 pytest .[test] -r requirements.txt
             - name: Lint with flake8
               run: |
                   # stop the build if there are Python syntax errors or undefined names
@@ -36,4 +35,6 @@ jobs:
                   flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
             - name: Test with pytest
               run: |
-                  pytest tests.py
+                  pytest --cov=flux_led --cov-report term-missing --cov-report xml -- tests.py
+            - name: Upload codecov
+              uses: codecov/codecov-action@v2

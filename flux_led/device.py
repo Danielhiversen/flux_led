@@ -8,6 +8,7 @@ import time
 from enum import Enum
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
+    CHANNEL_STATES,
     COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -18,7 +19,6 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
-    CHANNEL_STATES,
     MAX_TEMP,
     MIN_TEMP,
     MODE_COLOR,
@@ -43,9 +43,9 @@ from .models_db import (
     BASE_MODE_MAP,
     CHANNEL_REMAP,
     MODEL_DESCRIPTIONS,
-    UNKNOWN_MODEL,
     MODEL_MAP,
     RGBW_PROTOCOL_MODELS,
+    UNKNOWN_MODEL,
     USE_9BYTE_PROTOCOL_MODELS,
 )
 from .pattern import PresetPattern
@@ -373,20 +373,32 @@ class LEDENETDevice:
 
         return True
 
-    def _set_raw_state(self, raw_state):
+    def _set_raw_state(self, raw_state, updated=None):
         """Set the raw state remapping channels as needed."""
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
         if not channel_map:  # Remap channels
             self.raw_state = raw_state
             return
-        _LOGGER.debug(
-            "%s: remapped raw state: %s", self.ipaddr, utils.raw_state_to_dec(raw_state)
-        )
+        # Only remap updated states as we do not want to switch any
+        # state that have not changed since they will already be in
+        # the correct slot
+        #
+        # If updated is None than all raw_state values have been sent
+        #
+        if updated is None:
+            updated = set(channel_map.keys())
         self.raw_state = raw_state._replace(
             **{
-                mapped: getattr(raw_state, actual)
-                for mapped, actual in channel_map.items()
+                name: getattr(raw_state, source)
+                if source in updated
+                else getattr(raw_state, name)
+                for name, source in channel_map.items()
             }
+        )
+        _LOGGER.debug(
+            "%s: remapped raw state: %s",
+            self.ipaddr,
+            utils.raw_state_to_dec(self.raw_state),
         )
 
     def __str__(self):
@@ -453,8 +465,11 @@ class LEDENETDevice:
         self._replace_raw_state({"power_state": new_power_state})
         self._set_transition_complete_time()
 
-    def _replace_raw_state(self, new_state):
-        self._set_raw_state(self.raw_state._replace(**new_state))
+    def _replace_raw_state(self, new_states):
+        _LOGGER.debug("%s: _replace_raw_state: %s", self.ipaddr, new_states)
+        self._set_raw_state(
+            self.raw_state._replace(**new_states), set(new_states.keys())
+        )
 
     def isOn(self):
         return self.is_on
@@ -585,16 +600,22 @@ class LEDENETDevice:
                 write_mode = LevelWriteMode.WHITES
 
         _LOGGER.debug(
-            "%s: _generate_levels_change using %s: persist=%s r=%s, g=%s b=%s, w=%s w2=%s write_mode=%s",
+            "%s: _generate_levels_change using %s: persist=%s r=%s/%s, g=%s/%s b=%s/%s, w=%s/%s w2=%s/%s write_mode=%s/%s",
             self.ipaddr,
             self.protocol,
             persist,
             r_value,
+            f"0x{r_value:02X}",
             g_value,
+            f"0x{g_value:02X}",
             b_value,
+            f"0x{b_value:02X}",
             w_value,
+            f"0x{w_value:02X}",
             w2_value,
+            f"0x{w2_value:02X}",
             write_mode,
+            f"0x{write_mode.value:02X}",
         )
 
         msg = self._protocol.construct_levels_change(
@@ -622,7 +643,8 @@ class LEDENETDevice:
         )
         self._transition_complete_time = time.monotonic() + transition_time
         _LOGGER.debug(
-            "Transition time is %s, set _transition_complete_time to %s",
+            "%s: Transition time is %s, set _transition_complete_time to %s",
+            self.ipaddr,
             transition_time,
             self._transition_complete_time,
         )
@@ -798,10 +820,10 @@ class WifiLedBulb(LEDENETDevice):
         # send the message
         with self._lock:
             self._connect_if_disconnected()
+            self._set_transition_complete_time()
             self._send_msg(msg)
             if updates:
                 self._replace_raw_state(updates)
-            self._set_transition_complete_time()
 
     def _send_msg(self, bytes):
         _LOGGER.debug(
