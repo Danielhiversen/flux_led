@@ -1,9 +1,10 @@
+import asyncio
 import logging
 import pprint
-import asyncio
+
+from flux_led.aioscanner import AIOBulbScanner
 
 logging.basicConfig(level=logging.DEBUG)
-from flux_led.aioscanner import AIOBulbScanner
 
 
 async def go():

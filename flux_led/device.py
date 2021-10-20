@@ -1,11 +1,11 @@
 import colorsys
 import datetime
+from enum import Enum
 import logging
 import select
 import socket
 import threading
 import time
-from enum import Enum
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     CHANNEL_STATES,
@@ -236,6 +236,7 @@ class LEDENETDevice:
     @property
     def brightness(self):
         """Return current brightness 0-255.
+
         For warm white return current led level. For RGB
         calculate the HSV and return the 'value'.
         for CCT calculate the brightness.
@@ -401,7 +402,7 @@ class LEDENETDevice:
             utils.raw_state_to_dec(self.raw_state),
         )
 
-    def __str__(self):
+    def __str__(self):  # noqa: C901
         rx = self.raw_state
         if not rx:
             return "No state data"
@@ -574,7 +575,7 @@ class LEDENETDevice:
             print("RGBW command sent to non-RGBW device")
             raise ValueError("RGBW command sent to non-RGBW device")
 
-        if brightness != None and r is not None and g is not None and b is not None:
+        if brightness is not None and r is not None and g is not None and b is not None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
 
         r_value = 0 if r is None else int(r)
@@ -885,7 +886,7 @@ class WifiLedBulb(LEDENETDevice):
         # dayofweek = rx[9]
         try:
             dt = datetime.datetime(year, month, date, hour, minute, second)
-        except:
+        except Exception:
             dt = None
         return dt
 

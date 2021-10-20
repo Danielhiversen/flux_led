@@ -1,5 +1,4 @@
 import logging
-import socket
 
 _LOGGER = logging.getLogger(__name__)
 

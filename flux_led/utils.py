@@ -10,7 +10,7 @@ from .const import MAX_TEMP, MIN_TEMP
 
 class utils:
     @staticmethod
-    def color_object_to_tuple(color):
+    def color_object_to_tuple(color):  # noqa: C901
 
         # see if it's already a color tuple
         if type(color) is tuple and len(color) in [3, 4, 5]:
@@ -26,7 +26,7 @@ class utils:
             return webcolors.name_to_rgb(color)
         except ValueError:
             pass
-        except:
+        except Exception:
             pass
 
         # try to convert an web hex code
@@ -34,7 +34,7 @@ class utils:
             return webcolors.hex_to_rgb(webcolors.normalize_hex(color))
         except ValueError:
             pass
-        except:
+        except Exception:
             pass
 
         # try to convert a string RGB tuple
@@ -43,7 +43,7 @@ class utils:
             if type(val) is not tuple or len(val) not in [3, 4, 5]:
                 raise Exception
             return val
-        except:
+        except Exception:
             pass
         return None
 
