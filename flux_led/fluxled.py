@@ -4,7 +4,7 @@
 This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
 
 The protocol was reverse-engineered by studying packet captures between a
-bulb and the controlling "Magic Home" mobile app.  The code here dealing 
+bulb and the controlling "Magic Home" mobile app.  The code here dealing
 
 with the network protocol is littered with magic numbers, and ain't so pretty.
 But it does seem to work!
@@ -41,8 +41,8 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
 
 import datetime
 import logging
-import sys
 from optparse import OptionGroup, OptionParser
+import sys
 
 from .device import WifiLedBulb
 from .pattern import PresetPattern
@@ -178,7 +178,7 @@ Example setting strings:
     print(timerhelp_text)
 
 
-def processSetTimerArgs(parser, args):
+def processSetTimerArgs(parser, args):  # noqa: C901
     mode = args[1]
     num = args[0]
     settings = args[2]
@@ -358,7 +358,7 @@ def processCustomArgs(parser, args):
             else:
                 raise Exception
 
-    except:
+    except Exception:
         parser.error(
             "COLORLIST isn't formatted right.  It should be a space separated list of RGB tuples, color names or web hex values"
         )
@@ -366,7 +366,7 @@ def processCustomArgs(parser, args):
     return args[0], speed, color_list
 
 
-def parseArgs():
+def parseArgs():  # noqa: C901
 
     parser = OptionParser()
 
@@ -665,7 +665,7 @@ def parseArgs():
 
 
 # -------------------------------------------
-def main():
+def main():  # noqa: C901
 
     (options, args) = parseArgs()
 

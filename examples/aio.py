@@ -1,9 +1,10 @@
+import asyncio
 import logging
 import pprint
-import asyncio
+
+from flux_led.aio import AIOWifiLedBulb
 
 logging.basicConfig(level=logging.DEBUG)
-from flux_led.aio import AIOWifiLedBulb
 
 
 async def go():

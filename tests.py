@@ -1,20 +1,17 @@
 import unittest
 import unittest.mock as mock
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import flux_led
-
-LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
-
 from flux_led.const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
-    STATE_RED,
-    STATE_GREEN,
     STATE_BLUE,
+    STATE_GREEN,
+    STATE_RED,
     STATE_WARM_WHITE,
 )
 from flux_led.protocol import (
@@ -23,6 +20,8 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 from flux_led.utils import rgbw_brightness, rgbww_brightness
+
+LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
 
 
 class TestLight(unittest.TestCase):

@@ -1,9 +1,8 @@
 """FluxLED Protocols."""
 
-import logging
 from abc import abstractmethod
 from collections import namedtuple
-from enum import Enum
+import logging
 
 from .const import (
     STATE_BLUE,
@@ -20,6 +19,9 @@ from .const import (
     STATE_SPEED,
     STATE_VERSION_NUMBER,
     STATE_WARM_WHITE,
+    TRANSITION_GRADUAL,
+    TRANSITION_JUMP,
+    TRANSITION_STROBE,
 )
 from .utils import utils
 
@@ -30,7 +32,6 @@ PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
 
-from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
 
 TRANSITION_BYTES = {
     TRANSITION_JUMP: 0x3B,

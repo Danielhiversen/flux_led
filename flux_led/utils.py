@@ -1,5 +1,6 @@
 import ast
 import colorsys
+import contextlib
 import datetime
 from typing import Optional, Tuple
 
@@ -22,29 +23,20 @@ class utils:
         color = color.strip()
 
         # try to convert from an english name
-        try:
+        with contextlib.suppress(Exception):
             return webcolors.name_to_rgb(color)
-        except ValueError:
-            pass
-        except:
-            pass
 
         # try to convert an web hex code
-        try:
+        with contextlib.suppress(Exception):
             return webcolors.hex_to_rgb(webcolors.normalize_hex(color))
-        except ValueError:
-            pass
-        except:
-            pass
 
         # try to convert a string RGB tuple
-        try:
+        with contextlib.suppress(Exception):
             val = ast.literal_eval(color)
             if type(val) is not tuple or len(val) not in [3, 4, 5]:
                 raise Exception
             return val
-        except:
-            pass
+
         return None
 
     @staticmethod

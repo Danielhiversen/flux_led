@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
-"""
-Example to cycle a bulb between colors in a list, with a smooth fade
-between.  Assumes the bulb is already on.
+"""Example to cycle a bulb between colors in a list, with a smooth fade between.
+
+Assumes the bulb is already on.
 
 The python file with the Flux LED wrapper classes should live in
 the same folder as this script
 """
-from flux_led import WifiLedBulb, BulbScanner
-
+from itertools import cycle
 import os
 import sys
 import time
-from itertools import cycle
+
+from flux_led import BulbScanner, WifiLedBulb
 
 this_folder = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(this_folder)
@@ -24,10 +24,10 @@ def crossFade(bulb, color1, color2):
     r2, g2, b2 = color2
 
     steps = 100
-    for i in range(1, steps+1):
-        r = r1 - int(i * float(r1 - r2)/steps)
-        g = g1 - int(i * float(g1 - g2)/steps)
-        b = b1 - int(i * float(b1 - b2)/steps)
+    for i in range(1, steps + 1):
+        r = r1 - int(i * float(r1 - r2) / steps)
+        g = g1 - int(i * float(g1 - g2) / steps)
+        b = b1 - int(i * float(b1 - b2) / steps)
         # (use non-persistent mode to help preserve flash)
         bulb.setRgb(r, g, b, persist=False)
 
@@ -39,11 +39,11 @@ def main():
     scanner.scan(timeout=4)
 
     # Specific ID/MAC of the bulb to set
-    bulb_info = scanner.getBulbInfoByID('ACCF235FFFFF')
+    bulb_info = scanner.getBulbInfoByID("ACCF235FFFFF")
 
     if bulb_info:
 
-        bulb = WifiLedBulb(bulb_info['ipaddr'])
+        bulb = WifiLedBulb(bulb_info["ipaddr"])
 
         color_time = 5  # seconds on each color
 
@@ -59,8 +59,20 @@ def main():
         violet = (125, 0, 255)
         magenta = (255, 0, 255)
         raspberry = (255, 0, 125)
-        colorwheel = [red, orange, yellow, springgreen, green, turquoise,
-                      cyan, ocean, blue, violet, magenta, raspberry]
+        colorwheel = [
+            red,
+            orange,
+            yellow,
+            springgreen,
+            green,
+            turquoise,
+            cyan,
+            ocean,
+            blue,
+            violet,
+            magenta,
+            raspberry,
+        ]
 
         # use cycle() to treat the list in a circular fashion
         colorpool = cycle(colorwheel)
@@ -88,5 +100,5 @@ def main():
         print("Can't find bulb")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
