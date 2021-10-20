@@ -1,4 +1,4 @@
-[![Python package](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml) [![Build Status](https://github.com/Danielhiversen/flux_led//workflows/Python package/badge.svg)](https://github.com/Danielhiversen/flux_led) [![codecov](https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg)](https://codecov.io/gh/Danielhiversen/flux_led) 
+[![Python package](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml) [![Build Status](https://github.com/Danielhiversen/flux_led/workflows/Python%20package/badge.svg)](https://github.com/Danielhiversen/flux_led) [![codecov](https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg)](https://codecov.io/gh/Danielhiversen/flux_led) 
 [![Python Versions](https://img.shields.io/pypi/pyversions/flux_led.svg)](https://pypi.python.org/pypi/flux_led/)
 
 ### led_flux.py
