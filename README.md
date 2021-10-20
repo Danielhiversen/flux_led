@@ -1,4 +1,5 @@
-  [![Python package](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml)
+[![Python package](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml) [![Build Status](https://github.com/Danielhiversen/flux_led//workflows/CI/badge.svg)](https://github.com/Danielhiversen/flux_led) [![codecov](https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg)](https://codecov.io/gh/Danielhiversen/flux_led) 
+[![Python Versions](https://img.shields.io/pypi/pyversions/flux_led.svg)](https://pypi.python.org/pypi/flux_led/)
 
 ### led_flux.py
 
@@ -51,52 +52,52 @@ easy_install flux_led
 ##### Examples:
 ```
 Scan network:
-	python -m flux_led -s
+	flux_led -s
 
 Scan network and show info about all:
-	python -m flux_led -sSti
+	flux_led -sSti
 
 Turn on:
-	python -m flux_led 192.168.1.100 --on
-	python -m flux_led 192.168.1.100 -192.168.1.101 -1
+	flux_led 192.168.1.100 --on
+	flux_led 192.168.1.100 -192.168.1.101 -1
 
 Turn on all bulbs on LAN:
-	python -m flux_led -sS --on
+	flux_led -sS --on
 
 Turn off:
-	python -m flux_led 192.168.1.100 --off
-	python -m flux_led 192.168.1.100 --0
-	python -m flux_led -sS --off
+	flux_led 192.168.1.100 --off
+	flux_led 192.168.1.100 --0
+	flux_led -sS --off
 	
 Set warm white, 75%
-	python -m flux_led 192.168.1.100 -w 75 -1
+	flux_led 192.168.1.100 -w 75 -1
 
 Set fixed color red :
-	python -m flux_led 192.168.1.100 -c Red
-	python -m flux_led 192.168.1.100 -c 255,0,0
-	python -m flux_led 192.168.1.100 -c "#FF0000"
+	flux_led 192.168.1.100 -c Red
+	flux_led 192.168.1.100 -c 255,0,0
+	flux_led 192.168.1.100 -c "#FF0000"
 	
 Set preset pattern #35 with 40% speed:	
-	python -m flux_led 192.168.1.100 -p 35 40
+	flux_led 192.168.1.100 -p 35 40
 	
 Set custom pattern 25% speed, red/green/blue, gradual change:
-	python -m flux_led 192.168.1.100 -C gradual 25 "red green (0,0,255)"
+	flux_led 192.168.1.100 -C gradual 25 "red green (0,0,255)"
 
 Sync all bulb's clocks with this computer's:
-	python -m flux_led -sS --setclock
+	flux_led -sS --setclock
 		
 Set timer #1 to turn on red at 5:30pm on weekdays:
-	python -m flux_led 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
+	flux_led 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
 	
 Deactivate timer #4:
-	python -m flux_led 192.168.1.100 -T 4 inactive ""
+	flux_led 192.168.1.100 -T 4 inactive ""
 
 Use --timerhelp for more details on setting timers
 ```
 	
 ##### Show help:
 ```	
-$ python -m flux_led -h
+$ flux_led -h
 Usage: usage: __main__.py [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...].
 
 A utility to control Flux WiFi LED Bulbs.

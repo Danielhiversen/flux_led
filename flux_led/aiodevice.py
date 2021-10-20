@@ -3,20 +3,19 @@ import logging
 from typing import Callable, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
+from .const import (
+    STATE_BLUE,
+    STATE_COOL_WHITE,
+    STATE_GREEN,
+    STATE_RED,
+    STATE_WARM_WHITE,
+)
 from .device import LEDENETDevice
 from .protocol import (
     ProtocolLEDENET8Byte,
     ProtocolLEDENET9Byte,
     ProtocolLEDENETOriginal,
 )
-from .const import (
-    STATE_RED,
-    STATE_GREEN,
-    STATE_BLUE,
-    STATE_WARM_WHITE,
-    STATE_COOL_WHITE,
-)
-
 from .utils import color_temp_to_white_levels
 
 _LOGGER = logging.getLogger(__name__)
@@ -98,10 +97,10 @@ class AIOWifiLedBulb(LEDENETDevice):
             persist,
             brightness,
         )
+        self._set_transition_complete_time()
         await self._async_send_msg(msg)
         if updates:
             self._replace_raw_state(updates)
-        self._set_transition_complete_time()
 
     async def async_set_preset_pattern(self, effect, speed):
         """Set a preset pattern on the device."""

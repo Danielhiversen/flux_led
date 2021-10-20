@@ -12,6 +12,10 @@ from flux_led.const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
+    STATE_RED,
+    STATE_GREEN,
+    STATE_BLUE,
+    STATE_WARM_WHITE,
 )
 from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,
@@ -826,4 +830,34 @@ class TestLight(unittest.TestCase):
         self.assertEqual(
             light.__str__(),
             "ON  [Warm White: 39% raw state: 129,65,35,97,65,16,0,0,0,100,4,0,240,239,]",
+        )
+
+        light._set_power_state(light._protocol.off_byte)
+        self.assertEqual(
+            light.__str__(),
+            "OFF  [Warm White: 39% raw state: 129,65,36,97,65,16,0,0,0,100,4,0,240,239,]",
+        )
+        light._set_power_state(light._protocol.on_byte)
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 39% raw state: 129,65,35,97,65,16,0,0,0,100,4,0,240,239,]",
+        )
+        light._replace_raw_state(
+            {STATE_RED: 255, STATE_GREEN: 0, STATE_BLUE: 0, STATE_WARM_WHITE: 0}
+        )
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,0,0,255,4,0,240,239,]",
+        )
+        # Verify we do not remap states that have not changed
+        light._replace_raw_state({STATE_BLUE: 0})
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,0,0,255,4,0,240,239,]",
+        )
+        # Verify we do not remap states that have not changed
+        light._replace_raw_state({STATE_GREEN: 255, STATE_BLUE: 255})
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,255,255,255,4,0,240,239,]",
         )
