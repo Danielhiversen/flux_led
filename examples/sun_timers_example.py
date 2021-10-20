@@ -56,8 +56,8 @@ def main():
     sun = city.sun(date=datetime.datetime.now(), local=True)
 
     if debug:
-        print("Information for {}/{}\n".format(location, city.region))
-        print("Timezone: {}".format(timezone))
+        print(f"Information for {location}/{city.region}\n")
+        print(f"Timezone: {timezone}")
 
         print(
             "Latitude: {:.02f}; Longitude: {:.02f}\n".format(
