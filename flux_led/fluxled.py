@@ -35,7 +35,7 @@ and looks like it might be a bit of work.
 ##### Cool feature:
 * Specify colors with names or web hex values.  Requires that python "webcolors"
 package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
- See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
+See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
 """
 
@@ -463,7 +463,7 @@ def parseArgs():  # noqa: C901
         type="int",
     )
     mode_group.add_option(
-        "",
+        "-d",
         "--coldwhite",
         dest="cw",
         default=None,
@@ -472,11 +472,11 @@ def parseArgs():  # noqa: C901
         type="int",
     )
     mode_group.add_option(
-        "",
+        "-k",
         "--CCT",
         dest="cct",
         default=None,
-        help="Temperture and brightness (CCT is percent, brightness percent)",
+        help="Temperture and brightness (CCT Kelvin, brightness percent)",
         metavar="LEVELCCT",
         type="int",
         nargs=2,
@@ -568,7 +568,7 @@ def parseArgs():  # noqa: C901
     )
     parser.add_option_group(other_group)
 
-    parser.usage = "usage: %prog [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...]."
+    parser.usage = "usage: %prog [-sS10cwdkpCiltThe] [addr1 [addr2 [addr3] ...]."
     (options, args) = parser.parse_args()
 
     if options.showexamples:
