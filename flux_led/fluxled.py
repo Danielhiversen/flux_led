@@ -77,7 +77,7 @@ Turn off:
     %prog% -sS --off
 
 Set warm white, 75%
-    %prog% 192.168.1.100 -w 75 -0
+    %prog% 192.168.1.100 -w 75
 
 Set fixed color red :
     %prog% 192.168.1.100 -c Red
@@ -712,12 +712,18 @@ def main():  # noqa: C901
             bulb.setProtocol(options.protocol)
 
         if options.ww is not None:
-            print(f"Setting warm white mode, level: {options.ww}%")
-            bulb.setWarmWhite(options.ww, not options.volatile)
+            if options.ww > 100:
+                print(f"Input can not be higher then 100%")
+            else:
+                print(f"Setting warm white mode, level: {options.ww}%")
+                bulb.setWarmWhite(options.ww, not options.volatile)
 
         if options.cw is not None:
-            print(f"Setting cold white mode, level: {options.cw}%")
-            bulb.setColdWhite(options.cw, not options.volatile)
+            if options.cw > 100:
+                print(f"Input can not be higher than 100%")
+            else:
+                print(f"Setting cold white mode, level: {options.cw}%")
+                bulb.setColdWhite(options.cw, not options.volatile)
 
         if options.cct is not None:
             print(
