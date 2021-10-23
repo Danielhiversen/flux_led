@@ -79,10 +79,22 @@ Turn off:
 Set warm white, 75%
     %prog% 192.168.1.100 -w 75
 
+Set cold white, 55%
+    %prog% 192.168.1.100 -d 55
+
+Set CCT, 3500 85%
+    %prog% 192.168.1.100 -k 3500 85
+
 Set fixed color red :
     %prog% 192.168.1.100 -c Red
     %prog% 192.168.1.100 -c 255,0,0
     %prog% 192.168.1.100 -c "#FF0000"
+
+Set RGBW 25 100 200 50:
+    %prog% 192.168.1.100 -c 25,100,200,50
+
+Set RGBWW 25 100 200 50 30:
+    %prog% 192.168.1.100 -c 25,100,200,50,30
 
 Set preset pattern #35 with 40% speed:
     %prog% 192.168.1.100 -p 35 40
@@ -741,9 +753,7 @@ def main():  # noqa: C901
                 )
 
         if options.color is not None:
-            print(
-                f"Setting color RGB:{options.color}",
-            )
+            print(f"Setting color RGB:{options.color}",)
             name = utils.color_tuple_to_string(options.color)
             if name is None:
                 print()
