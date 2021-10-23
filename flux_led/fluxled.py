@@ -759,7 +759,9 @@ def main():  # noqa: C901
                 print()
             else:
                 print(f"[{name}]")
-            if len(options.color) == 3:
+            if any(i < 0 or i > 255 for i in options.color):
+                print(f"invlaid value received must be between 0-255")
+            elif len(options.color) == 3:
                 bulb.setRgb(
                     options.color[0],
                     options.color[1],
