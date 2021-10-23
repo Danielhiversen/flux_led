@@ -462,7 +462,9 @@ def parseArgs():  # noqa: C901
         "--color",
         dest="color",
         default=None,
-        help="Set single color mode.  Can be either color name, web hex, or comma-separated RGB triple",
+        help="""For setting a single color mode.  Can be either color name, web hex, or comma-separated RGB triple.
+        For setting an RGBW can be a comma-seperated RGBW list
+        For setting an RGBWW can be a comma-seperated RGBWW list""",
         metavar="COLOR",
     )
     mode_group.add_option(
