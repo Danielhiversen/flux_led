@@ -727,23 +727,23 @@ def main():  # noqa: C901
 
         if options.ww is not None:
             if options.ww > 100:
-                print(f"Input can not be higher than 100%")
+                print("Input can not be higher than 100%")
             else:
                 print(f"Setting warm white mode, level: {options.ww}%")
                 bulb.setWarmWhite(options.ww, not options.volatile)
 
         if options.cw is not None:
             if options.cw > 100:
-                print(f"Input can not be higher than 100%")
+                print("Input can not be higher than 100%")
             else:
                 print(f"Setting cold white mode, level: {options.cw}%")
                 bulb.setColdWhite(options.cw, not options.volatile)
 
         if options.cct is not None:
             if options.cct[1] > 100:
-                print(f"Brightness can not be higher than 100%")
+                print("Brightness can not be higher than 100%")
             elif options.cct[0] < 2700 or options.cct[0] > 6500:
-                print(f"Color Temp must be between 2700 and 6500")
+                print("Color Temp must be between 2700 and 6500")
             else:
                 print(
                     "Setting LED temperature {}K and brightness: {}%".format(
@@ -762,7 +762,7 @@ def main():  # noqa: C901
             else:
                 print(f"[{name}]")
             if any(i < 0 or i > 255 for i in options.color):
-                print(f"invlaid value received must be between 0-255")
+                print("invlaid value received must be between 0-255")
             elif len(options.color) == 3:
                 bulb.setRgb(
                     options.color[0],
