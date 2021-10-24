@@ -4,7 +4,7 @@
         {
             "label": "Pytest",
             "type": "shell",
-            "command": "pytest --timeout=10 tests",
+            "command": "pytest tests.py",
             "dependsOn": ["Install all Test Requirements"],
             "group": {
                 "kind": "test",
@@ -20,6 +20,7 @@
             "label": "Flake8",
             "type": "shell",
             "command": "flake8 --statistics --show-source --count --select=E9,F63,F7,F82 --max-complexity=10 --max-line-length=127",
+            "dependsOn": ["Install all Test Requirements"],
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -33,7 +34,7 @@
         {
             "label": "Pylint",
             "type": "shell",
-            "command": "python -m pylint flux_led",
+            "command": "python3.10 -m pylint flux_led",
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -51,6 +52,34 @@
             "command": "pytest tests.py/ --cov=flux_led --cov-report term-missing",
             "group": {
                 "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install all Test Requirements",
+            "type": "shell",
+            "command": "pip3 install -r requirements_test.txt",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install all Requirements",
+            "type": "shell",
+            "command": "pip3 install -r requirements.txt",
+            "group": {
+                "kind": "build",
                 "isDefault": true
             },
             "presentation": {
