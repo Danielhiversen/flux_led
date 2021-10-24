@@ -35,7 +35,7 @@ and looks like it might be a bit of work.
 ##### Cool feature:
 * Specify colors with names or web hex values.  Requires that python "webcolors"
 package is installed.  (Easily done via pip, easy_install, or apt-get, etc.)
- See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
+See the following for valid color names: http://www.w3schools.com/html/html_colornames.asp
 
 """
 
@@ -77,12 +77,24 @@ Turn off:
     %prog% -sS --off
 
 Set warm white, 75%
-    %prog% 192.168.1.100 -w 75 -0
+    %prog% 192.168.1.100 -w 75
+
+Set cold white, 55%
+    %prog% 192.168.1.100 -d 55
+
+Set CCT, 3500 85%
+    %prog% 192.168.1.100 -k 3500 85
 
 Set fixed color red :
     %prog% 192.168.1.100 -c Red
     %prog% 192.168.1.100 -c 255,0,0
     %prog% 192.168.1.100 -c "#FF0000"
+
+Set RGBW 25 100 200 50:
+    %prog% 192.168.1.100 -c 25,100,200,50
+
+Set RGBWW 25 100 200 50 30:
+    %prog% 192.168.1.100 -c 25,100,200,50,30
 
 Set preset pattern #35 with 40% speed:
     %prog% 192.168.1.100 -p 35 40
@@ -450,7 +462,9 @@ def parseArgs():  # noqa: C901
         "--color",
         dest="color",
         default=None,
-        help="Set single color mode.  Can be either color name, web hex, or comma-separated RGB triple",
+        help="""For setting a single color mode.  Can be either color name, web hex, or comma-separated RGB triple.
+        For setting an RGBW can be a comma-seperated RGBW list
+        For setting an RGBWW can be a comma-seperated RGBWW list""",
         metavar="COLOR",
     )
     mode_group.add_option(
@@ -463,7 +477,7 @@ def parseArgs():  # noqa: C901
         type="int",
     )
     mode_group.add_option(
-        "",
+        "-d",
         "--coldwhite",
         dest="cw",
         default=None,
@@ -472,11 +486,11 @@ def parseArgs():  # noqa: C901
         type="int",
     )
     mode_group.add_option(
-        "",
+        "-k",
         "--CCT",
         dest="cct",
         default=None,
-        help="Temperture and brightness (CCT is percent, brightness percent)",
+        help="Temperture and brightness (CCT Kelvin, brightness percent)",
         metavar="LEVELCCT",
         type="int",
         nargs=2,
@@ -568,7 +582,7 @@ def parseArgs():  # noqa: C901
     )
     parser.add_option_group(other_group)
 
-    parser.usage = "usage: %prog [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...]."
+    parser.usage = "usage: %prog [-sS10cwdkpCiltThe] [addr1 [addr2 [addr3] ...]."
     (options, args) = parser.parse_args()
 
     if options.showexamples:
@@ -712,33 +726,44 @@ def main():  # noqa: C901
             bulb.setProtocol(options.protocol)
 
         if options.ww is not None:
-            print(f"Setting warm white mode, level: {options.ww}%")
-            bulb.setWarmWhite(options.ww, not options.volatile)
+            if options.ww > 100:
+                print("Input can not be higher than 100%")
+            else:
+                print(f"Setting warm white mode, level: {options.ww}%")
+                bulb.setWarmWhite(options.ww, not options.volatile)
 
         if options.cw is not None:
-            print(f"Setting cold white mode, level: {options.cw}%")
-            bulb.setColdWhite(options.cw, not options.volatile)
+            if options.cw > 100:
+                print("Input can not be higher than 100%")
+            else:
+                print(f"Setting cold white mode, level: {options.cw}%")
+                bulb.setColdWhite(options.cw, not options.volatile)
 
         if options.cct is not None:
-            print(
-                "Setting LED temperature {}K and brightness: {}%".format(
-                    options.cct[0], options.cct[1]
+            if options.cct[1] > 100:
+                print("Brightness can not be higher than 100%")
+            elif options.cct[0] < 2700 or options.cct[0] > 6500:
+                print("Color Temp must be between 2700 and 6500")
+            else:
+                print(
+                    "Setting LED temperature {}K and brightness: {}%".format(
+                        options.cct[0], options.cct[1]
+                    )
                 )
-            )
-            bulb.setWhiteTemperature(
-                options.cct[0], options.cct[1] * 2.55, not options.volatile
-            )
+                bulb.setWhiteTemperature(
+                    options.cct[0], options.cct[1] * 2.55, not options.volatile
+                )
 
         if options.color is not None:
-            print(
-                f"Setting color RGB:{options.color}",
-            )
+            print(f"Setting color RGB:{options.color}",)
             name = utils.color_tuple_to_string(options.color)
             if name is None:
                 print()
             else:
                 print(f"[{name}]")
-            if len(options.color) == 3:
+            if any(i < 0 or i > 255 for i in options.color):
+                print("Invalid value received must be between 0-255")
+            elif len(options.color) == 3:
                 bulb.setRgb(
                     options.color[0],
                     options.color[1],
