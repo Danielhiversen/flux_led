@@ -762,7 +762,7 @@ def main():  # noqa: C901
             else:
                 print(f"[{name}]")
             if any(i < 0 or i > 255 for i in options.color):
-                print("invlaid value received must be between 0-255")
+                print("Invalid value received must be between 0-255")
             elif len(options.color) == 3:
                 bulb.setRgb(
                     options.color[0],
