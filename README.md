@@ -164,16 +164,17 @@ timer.py -> contains code to support setting timers on devices and getting timer
 utils.py -> contains helpers to calculate differnt parameters such as color, cct, brightness etc.\
 
 
+[code-coverage]: https://codecov.io/gh/Danielhiversen/flux_led
+[code-cover-shield]: https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg
 [commits-shield]: https://img.shields.io/github/commit-activity/y/Danielhiversen/flux_led.svg
 [commits]: https://github.com/Danielhiversen/flux_led/commits/main
-[license-shield]: https://img.shields.io/github/license/Danielhiversen/flux_led.svg
-[pypi-shield]: https://img.shields.io/pypi/v/flux_led
-[pypi]: https://pypi.org/project/flux_led/
-[language-shield]: https://img.shields.io/github/languages/top/Danielhiversen/flux_led
 [language]: https://github.com/Danielhiversen/flux_led/search?l=python
-[code-cover-shield]: https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg
-[code-coverage]: https://codecov.io/gh/Danielhiversen/flux_led
-[python-package-shield]: https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master
+[language-shield]: https://img.shields.io/github/languages/top/Danielhiversen/flux_led
+[license-shield]: https://img.shields.io/github/license/Danielhiversen/flux_led.svg
+[pypi]: https://pypi.org/project/flux_led/
+[pypi-shield]: https://img.shields.io/pypi/v/flux_led
 [python-package]: https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml
-[python-ver-shield]: https://img.shields.io/pypi/pyversions/flux_led.svg
+[python-package-shield]: https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master
 [python-ver]: https://pypi.python.org/pypi/flux_led/
+[python-ver-shield]: https://img.shields.io/pypi/pyversions/flux_led.svg
+
