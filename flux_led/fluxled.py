@@ -755,7 +755,9 @@ def main():  # noqa: C901
                 )
 
         if options.color is not None:
-            print(f"Setting color RGB:{options.color}",)
+            print(
+                f"Setting color RGB:{options.color}",
+            )
             name = utils.color_tuple_to_string(options.color)
             if name is None:
                 print()
