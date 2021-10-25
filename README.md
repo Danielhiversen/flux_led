@@ -1,5 +1,13 @@
-[![Python package](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml) [![codecov](https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg)](https://codecov.io/gh/Danielhiversen/flux_led) 
-[![Python Versions](https://img.shields.io/pypi/pyversions/flux_led.svg)](https://pypi.python.org/pypi/flux_led/)
+[![Python package][python-package-shield]][python-package]
+[![codecov][code-cover-shield]][code-coverage] \
+[![Python Versions][python-ver-shield]][python-ver]
+[![PyPi Project][pypi-shield]][pypi]\
+[![GitHub Activity][commits-shield]][commits]
+[![License][license-shield]](LICENSE)\
+[![GitHub Top Language][language-shield]][language]
+
+
+
 
 ### led_flux.py
 
@@ -155,3 +163,17 @@ sock.py -> contains code to communicate on network.\
 timer.py -> contains code to support setting timers on devices and getting timer information from devices.\
 utils.py -> contains helpers to calculate differnt parameters such as color, cct, brightness etc.\
 
+
+[commits-shield]: https://img.shields.io/github/commit-activity/y/Danielhiversen/flux_led.svg
+[commits]: https://github.com/Danielhiversen/flux_led/commits/main
+[license-shield]: https://img.shields.io/github/license/Danielhiversen/flux_led.svg
+[pypi-shield]: https://img.shields.io/pypi/v/flux_led
+[pypi]: https://pypi.org/project/flux_led/
+[language-shield]: https://img.shields.io/github/languages/top/Danielhiversen/flux_led
+[language]: https://github.com/Danielhiversen/flux_led/search?l=python
+[code-cover-shield]: https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg
+[code-coverage]: https://codecov.io/gh/Danielhiversen/flux_led
+[python-package-shield]: https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master
+[python-package]: https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml
+[python-ver-shield]: https://img.shields.io/pypi/pyversions/flux_led.svg
+[python-ver]: https://pypi.python.org/pypi/flux_led/
