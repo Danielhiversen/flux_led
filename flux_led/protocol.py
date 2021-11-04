@@ -123,6 +123,14 @@ class ProtocolBase:
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
 
+    @abstractmethod
+    def is_start_of_state_response(self, data):
+        """Check if a message is the start of a state response."""
+
+    def is_longer_than_state_response(self, data):
+        """Check if a message is longer than a valid state response."""
+        return len(data) > self.state_response_length
+
     def is_checksum_correct(self, msg):
         """Check a checksum of a message."""
         expected_sum = sum(msg[0:-1]) & 0xFF
@@ -243,6 +251,10 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """Check if a state response is valid."""
         return len(raw_state) == self.state_response_length and raw_state[1] == 0x01
 
+    def is_start_of_state_response(self, data):
+        """Check if a message is the start of a state response."""
+        return False
+
     def construct_state_query(self):
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0xEF, 0x01, 0x77]))
@@ -301,11 +313,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             return False
         return self.is_checksum_correct(msg)
 
+    def is_start_of_state_response(self, data):
+        """Check if a message is the start of a state response."""
+        return data[0] == 0x81
+
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
-        if raw_state[0] != 0x81:
+        if not self.is_start_of_state_response(raw_state):
             return False
         return self.is_checksum_correct(raw_state)
 

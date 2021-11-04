@@ -35,6 +35,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._data_future: Optional[asyncio.Future] = None
         self._updated_callback: Optional[Callable] = None
         self._updates_without_response = 0
+        self._buffer = b""
         self.loop = asyncio.get_running_loop()
 
     async def async_setup(self, updated_callback):
@@ -129,9 +130,37 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Called when the connection is lost."""
         self._aio_protocol = None
 
-    def _async_data_recieved(self, msg):
+    def _async_data_recieved(self, data):
         """New data on the socket."""
+        start_empty_buffer = not self._buffer
+        self._buffer += data
         self._updates_without_response = 0
+        # Some of the older bulbs respond to a state request in
+        # multiple packets so we have to reassemble.  Currently
+        # we only know how to reassemble state responses
+        if (
+            # if the buffer has the start of a state response
+            self._protocol.is_start_of_state_response(self._buffer)
+            # If the buffer does not have a full state response
+            and not self._protocol.is_valid_state_response(self._buffer)
+            # .. and the buffer is not longer than the a valid state response
+            and not self._protocol.is_longer_than_state_response(self._buffer)
+        ):
+            # We wait for more data. Otherwise we process the message
+            return
+        msg = self._buffer
+        self._buffer = b""
+        if not start_empty_buffer:
+            _LOGGER.debug(
+                "%s <= Reassembled (%s) (%d)",
+                self._aio_protocol.peername,
+                " ".join(f"0x{x:02X}" for x in msg),
+                len(msg),
+            )
+        self._async_process_message(msg)
+
+    def _async_process_message(self, msg):
+        """Process a full message (maybe reassembled)."""
         if self._data_future and not self._data_future.done():
             self._data_future.set_result(msg)
             return
@@ -158,7 +187,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_determine_protocol(self):
         # determine the type of protocol based of first 2 bytes.
         for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
-            protocol = protocol_cls()
+            self._protocol = protocol = protocol_cls()
             async with self._lock:
                 await self._async_connect()
                 self._data_future = asyncio.Future()
