@@ -332,12 +332,12 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x54,
-        models=[],
+        models=["HF-LPB100-ZJ200"],
         description="Downlight RGBW",
-        always_writes_white_and_colors=True,  # Formerly rgbwprotocol
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         nine_byte_read_protocol=False,
         mode_to_color_mode={},
-        color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
+        color_modes=COLOR_MODES_RGB_W,  # Formerly rgbwcapable
         channel_map={},
     ),
     LEDENETModel(
