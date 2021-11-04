@@ -48,7 +48,7 @@ extra_requirements = {
 setup(
     name="flux_led",
     packages=["flux_led"],
-    version="0.24.12",
+    version="0.24.14",
     description="A Python library to communicate with the flux_led smart bulbs",
     author="Daniel Hjelseth Høyer",
     author_email="mail@dahoiv.net",
