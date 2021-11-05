@@ -8,6 +8,7 @@ import threading
 import time
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
+    ADDRESSABLE_STATE_CHANGE_LATENCY,
     CHANNEL_STATES,
     COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
@@ -40,6 +41,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     LevelWriteMode,
 )
 from .models_db import (
+    ADDRESSABLE_MODELS,
     BASE_MODE_MAP,
     CHANNEL_REMAP,
     MODEL_DESCRIPTIONS,
@@ -52,9 +54,11 @@ from .pattern import PresetPattern
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
     ProtocolLEDENET8Byte,
     ProtocolLEDENET9Byte,
+    ProtocolLEDENETAddressable,
     ProtocolLEDENETOriginal,
 )
 from .sock import _socket_retry
@@ -112,6 +116,15 @@ class LEDENETDevice:
     def rgbwprotocol(self):
         """Devices that don't require a separate rgb/w bit."""
         return self.model_num in RGBW_PROTOCOL_MODELS
+
+    @property
+    def addressable(self):
+        """Devices that have addressable leds."""
+        return self._is_addressable(self.model_num)
+
+    def _is_addressable(self, model_num):
+        """Devices that have addressable leds."""
+        return model_num in ADDRESSABLE_MODELS
 
     @property
     def rgbwcapable(self):
@@ -639,9 +652,10 @@ class LEDENETDevice:
         and the brightness values will be wrong until
         the transition completes.
         """
-        transition_time = (
-            STATE_CHANGE_LATENCY + utils.speedToDelay(self.raw_state.speed) / 100
-        )
+        latency = STATE_CHANGE_LATENCY
+        if self.addressable:
+            latency = ADDRESSABLE_STATE_CHANGE_LATENCY
+        transition_time = latency + utils.speedToDelay(self.raw_state.speed) / 100
         self._transition_complete_time = time.monotonic() + transition_time
         _LOGGER.debug(
             "%s: Transition time is %s, set _transition_complete_time to %s",
@@ -670,8 +684,19 @@ class LEDENETDevice:
             self._protocol = ProtocolLEDENET8Byte()
         elif protocol == PROTOCOL_LEDENET_9BYTE:
             self._protocol = ProtocolLEDENET9Byte()
+        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE:
+            self._protocol = ProtocolLEDENETAddressable()
         else:
             raise ValueError(f"Invalid protocol: {protocol}")
+
+    def _set_protocol_from_msg(self, full_msg, fallback_protocol):
+        if self._is_addressable(full_msg[1]):
+            self._protocol = ProtocolLEDENETAddressable()
+        # Devices that use an 9-byte protocol
+        elif self._uses_9byte_protocol(full_msg[1]):
+            self._protocol = ProtocolLEDENET9Byte()
+        else:
+            self._protocol = fallback_protocol
 
     def _generate_preset_pattern(self, pattern, speed):
         """Generate the preset pattern protocol bytes."""
@@ -928,11 +953,7 @@ class WifiLedBulb(LEDENETDevice):
                     protocol.state_response_length - read_bytes
                 )
                 if protocol.is_valid_state_response(full_msg):
-                    # Devices that use an 9-byte protocol
-                    if self._uses_9byte_protocol(rx[1]):
-                        self._protocol = ProtocolLEDENET9Byte()
-                    else:
-                        self._protocol = protocol
+                    self._set_protocol_from_msg(full_msg, protocol)
                 return full_msg
         raise Exception("Cannot determine protocol")
 
