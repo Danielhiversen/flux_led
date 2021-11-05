@@ -11,11 +11,7 @@ from .const import (
     STATE_WARM_WHITE,
 )
 from .device import LEDENETDevice
-from .protocol import (
-    ProtocolLEDENET8Byte,
-    ProtocolLEDENET9Byte,
-    ProtocolLEDENETOriginal,
-)
+from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .utils import color_temp_to_white_levels
 
 _LOGGER = logging.getLogger(__name__)
@@ -204,11 +200,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                     # cannot process, recycle the connection
                     self._aio_protocol.close()
                     continue
-                # Devices that use an 9-byte protocol
-                if self._uses_9byte_protocol(full_msg[1]):
-                    self._protocol = ProtocolLEDENET9Byte()
-                else:
-                    self._protocol = protocol
+                self._set_protocol_from_msg(full_msg, protocol)
                 self.process_state_response(full_msg)
                 return
         raise RuntimeError("Cannot determine protocol")
