@@ -1,6 +1,7 @@
 import asyncio
+import contextlib
 import logging
-from typing import Callable, Optional
+from typing import Callable, Coroutine, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
 from .const import (
@@ -18,6 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 MAX_UPDATES_WITHOUT_RESPONSE = 4
+POWER_STATE_TIMEOUT = 1  # number of seconds before declaring on/off failed
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -28,6 +30,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
+        self._on_futures: list[asyncio.Future] = []
+        self._off_futures: list[asyncio.Future] = []
         self._data_future: Optional[asyncio.Future] = None
         self._updated_callback: Optional[Callable] = None
         self._updates_without_response = 0
@@ -44,17 +48,66 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._aio_protocol:
             self._aio_protocol.close()
 
-    async def async_turn_on(self):
-        """Turn on the device."""
+    async def _async_execute_and_wait_for(
+        self, futures: list[asyncio.Future], coro: Coroutine
+    ) -> None:
+        future = asyncio.Future()
+        futures.append(future)
+        await coro()
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT / 2)
+            return True
+        await self._async_send_msg(self._protocol.construct_state_query())
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(future, POWER_STATE_TIMEOUT / 2)
+            return True
+        return False
+
+    async def _async_turn_on(self) -> None:
         await self._async_send_msg(self._protocol.construct_state_change(True))
+
+    async def _async_turn_off_on(self) -> None:
+        await self._async_turn_off()
+        await self._async_turn_on()
+
+    async def async_turn_on(self) -> None:
+        """Turn on the device."""
+        await self._async_turn_on_with_retry()
         self._set_power_state_ignore_next_push(self._protocol.on_byte)
 
-    async def async_turn_off(self):
-        """Turn off the device."""
+    async def _async_turn_on_with_retry(self) -> None:
+        calls = (self._async_turn_on, self._async_turn_off_on, self._async_turn_on)
+        for idx, call in enumerate(calls):
+            if (
+                await self._async_execute_and_wait_for(self._on_futures, call)
+                or self.is_on
+            ):
+                return
+            _LOGGER.debug("Failed to turn on (%s/%s)", 1 + idx, len(calls))
+
+    async def _async_turn_off(self) -> None:
         await self._async_send_msg(self._protocol.construct_state_change(False))
+
+    async def _async_turn_on_off(self) -> None:
+        await self._async_turn_on()
+        await self._async_turn_off()
+
+    async def async_turn_off(self) -> None:
+        """Turn off the device."""
+        await self._async_turn_off_with_retry()
         self._set_power_state_ignore_next_push(self._protocol.off_byte)
 
-    async def async_set_white_temp(self, temperature, brightness, persist=True):
+    async def _async_turn_off_with_retry(self) -> None:
+        calls = (self._async_turn_off, self._async_turn_on_off, self._async_turn_off)
+        for idx, call in enumerate(calls):
+            if (
+                await self._async_execute_and_wait_for(self._off_futures, call)
+                or not self.is_on
+            ):
+                return
+            _LOGGER.debug("Failed to turn off (%s/%s)", 1 + idx, len(calls))
+
+    async def async_set_white_temp(self, temperature, brightness, persist=True) -> None:
         """Set the white tempature."""
         cold, warm = color_temp_to_white_levels(temperature, brightness)
         await self.async_set_levels(w=warm, w2=cold, persist=persist)
@@ -171,6 +224,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         else:
             return
         if self.raw_state != prev_state:
+            futures = self._on_futures if self.is_on else self._off_futures
+            for future in futures:
+                if not future.done():
+                    future.set_result(True)
+            futures.clear()
             self._updated_callback()
 
     async def _async_send_msg(self, msg):

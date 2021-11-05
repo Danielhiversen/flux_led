@@ -365,26 +365,8 @@ class LEDENETDevice:
                 utils.raw_state_to_dec(msg),
             )
             return False
-        if self.is_on and msg[2] == self._protocol.on_byte:
-            # This is a bug in the device firmware
-            _LOGGER.debug(
-                "%s: Device unexpectedly pushed power on when already on, setting to off",
-                self.ipaddr,
-            )
-            self._set_power_state(self._protocol.off_byte)
-        elif not self.is_on and msg[2] == self._protocol.off_byte:
-            # This is a bug in the device firmware
-            _LOGGER.debug(
-                "%s: Device unexpectedly pushed power off when already off, setting to on",
-                self.ipaddr,
-            )
-            self._set_power_state(self._protocol.on_byte)
-        else:
-            _LOGGER.debug(
-                "%s: Setting power state to: %s", self.ipaddr, f"0x{msg[2]:02X}"
-            )
-            self._set_power_state(msg[2])
-
+        _LOGGER.debug("%s: Setting power state to: %s", self.ipaddr, f"0x{msg[2]:02X}")
+        self._set_power_state(msg[2])
         return True
 
     def _set_raw_state(self, raw_state, updated=None):
