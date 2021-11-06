@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import logging
-from typing import Callable, Coroutine, Optional
+from typing import Callable, Coroutine, List, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
 from .const import (
@@ -30,8 +30,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
-        self._on_futures: list[asyncio.Future] = []
-        self._off_futures: list[asyncio.Future] = []
+        self._on_futures: List[asyncio.Future] = []
+        self._off_futures: List[asyncio.Future] = []
         self._data_future: Optional[asyncio.Future] = None
         self._updated_callback: Optional[Callable] = None
         self._updates_without_response = 0
@@ -49,7 +49,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._aio_protocol.close()
 
     async def _async_execute_and_wait_for(
-        self, futures: list[asyncio.Future], coro: Coroutine
+        self, futures: List[asyncio.Future], coro: Coroutine
     ) -> None:
         future = asyncio.Future()
         futures.append(future)
