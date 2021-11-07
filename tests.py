@@ -430,6 +430,7 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.model_num, 0x25)
         self.assertEqual(light.model, "WiFi RGBCW Controller (0x25)")
         self.assertEqual(
@@ -465,6 +466,9 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
+        self.assertEqual(light.min_temp, 2700)
+        self.assertEqual(light.max_temp, 6500)
+
         self.assertEqual(light.warm_white, 0)
         self.assertEqual(light.brightness, 61)  # RGBWW brightness
         self.assertEqual(light.getRgb(), (182, 0, 152))
@@ -511,7 +515,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
-
+        self.assertEqual(light.preset_pattern_num, 0x38)
         self.assertEqual(
             light.__str__(),
             "ON  [Pattern: Seven Color Jumping (Speed 50%) raw state: 129,37,35,56,5,16,182,0,152,25,4,37,15,181,]",
@@ -872,6 +876,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_read.call_count, 3)
         assert light.raw_state.warm_white == 100
         self.assertEqual(light.getWarmWhite255(), 100)
+        self.assertEqual(light.color_temp, 2700)
         self.assertEqual(light.brightness, 100)
         self.assertEqual(
             light.__str__(),
