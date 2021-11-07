@@ -2,6 +2,7 @@ import unittest
 import unittest.mock as mock
 from unittest.mock import patch
 
+import pytest
 import flux_led
 from flux_led.const import (
     COLOR_MODE_CCT,
@@ -520,6 +521,9 @@ class TestLight(unittest.TestCase):
         # Library names
         light.set_effect("seven_color_jumping", 50)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+
+        with pytest.raises(ValueError):
+            light.set_effect("unknown", 50)
 
         light._transition_complete_time = 0
         light.update_state()
