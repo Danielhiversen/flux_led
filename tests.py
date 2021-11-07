@@ -768,6 +768,7 @@ class TestLight(unittest.TestCase):
         assert light.color_mode == COLOR_MODE_CCT
         self.assertEqual(light.color_temp, 6500)
         self.assertEqual(light.getCCT(), (0, 255))
+        self.assertEqual(light.getWhiteTemperature(), (6500, 255))
         self.assertEqual(
             light.__str__(),
             "ON  [CCT: 6500K Brightness: 1.0% raw state: 129,222,35,65,71,0,0,0,0,0,2,255,0,11,]",
