@@ -513,13 +513,18 @@ class TestLight(unittest.TestCase):
             "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,4,37,15,222,]",
         )
 
+        # Home Assistant legacy names
         light.set_effect("colorjump", 50)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+
+        # Library names
+        light.set_effect("seven_color_jumping", 50)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
 
         light._transition_complete_time = 0
         light.update_state()
         self.assertEqual(mock_read.call_count, 4)
-        self.assertEqual(mock_send.call_count, 5)
+        self.assertEqual(mock_send.call_count, 6)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
