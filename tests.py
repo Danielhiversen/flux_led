@@ -746,7 +746,7 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"$$\x47\x00\x00\x00\x00\x00\x02\x00\x00\xf0")
             if calls == 3:
                 self.assertEqual(expected, 14)
-                return bytearray(b"\x81\xde$$\x47\x00\x00\x00\x00\x00\x02\xFF\x00\xef")
+                return bytearray(b"\x81\xde\x23\x41\x47\x00\x00\x00\x00\x00\x02\xFF\x00\x0b")
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
@@ -756,6 +756,10 @@ class TestLight(unittest.TestCase):
         assert light.color_mode == COLOR_MODE_RGB
         light.update_state()
         assert light.color_mode == COLOR_MODE_CCT
+        self.assertEqual(
+            light.__str__(),
+            "ON  [CCT: 6500K Brightness: 1.0% raw state: 129,222,35,65,71,0,0,0,0,0,2,255,0,11,]",
+        )
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
