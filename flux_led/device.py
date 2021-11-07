@@ -51,11 +51,11 @@ from .models_db import (
     USE_9BYTE_PROTOCOL_MODELS,
 )
 from .pattern import (
+    ADDRESSABLE_EFFECT_ID_NAME,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
     EFFECT_LIST,
-    ADDRESSABLE_EFFECT_ID_NAME,
     PresetPattern,
 )
 from .protocol import (

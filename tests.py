@@ -506,6 +506,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 4)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
+        self.assertEqual(light.effect, "colorjump")
 
         self.assertEqual(
             light.__str__(),
