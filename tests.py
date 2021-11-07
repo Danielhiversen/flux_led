@@ -1005,3 +1005,4 @@ class TestLight(unittest.TestCase):
             "ON  [Pattern: Seven Color Cross Fade (Speed 50%) raw state: 129,161,35,37,1,16,100,0,0,0,4,0,240,211,]",
         )
         assert light.effect == "7 colors run in olivary + 7 colors change quickly"
+        assert light.getSpeed() == 50
