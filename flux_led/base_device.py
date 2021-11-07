@@ -305,7 +305,7 @@ class LEDENETDevice:
             if self.color_mode in {COLOR_MODE_DIM, COLOR_MODE_CCT}:
                 return MODE_WW
             return MODE_COLOR
-        elif pattern_code == 0x60:
+        elif pattern_code == EFFECT_CUSTOM_CODE:
             return MODE_CUSTOM
         elif pattern_code == 0x62:
             return MODE_MUSIC
