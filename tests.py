@@ -501,8 +501,12 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.warm_white, 25)
         self.assertEqual(light.cold_white, 37)
         self.assertEqual(light.brightness, 81)  # RGBWW brighness
+        self.assertEqual(light.rgbw, (182, 0, 152, 25))
         self.assertEqual(light.getRgbw(), (182, 0, 152, 25))
+        self.assertEqual(light.rgbww, (182, 0, 152, 25, 37))
         self.assertEqual(light.getRgbww(), (182, 0, 152, 25, 37))
+        self.assertEqual(light.rgbcw, (182, 0, 152, 37, 25))
+        self.assertEqual(light.getRgbcw(), (182, 0, 152, 37, 25))
         self.assertEqual(light.rgbwcapable, True)
         self.assertEqual(
             light.__str__(),
