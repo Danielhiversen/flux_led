@@ -52,6 +52,7 @@ from .models_db import (
 )
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
+    ADDRESSABLE_EFFECT_NAME_ID,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
@@ -949,7 +950,7 @@ class WifiLedBulb(LEDENETDevice):
             self.close()
 
     def _determine_protocol(self):
-        # determine the type of protocol based of first 2 bytes.
+        """Determine the type of protocol based of first 2 bytes."""
         read_bytes = 2
         for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
             protocol = protocol_cls()
@@ -977,10 +978,13 @@ class WifiLedBulb(LEDENETDevice):
             self._connect_if_disconnected()
             self._send_msg(msg)
 
-    def set_effect(self, effect):
+    def set_effect(self, effect, speed):
         """Set an effect."""
-
-        return self.setPresetPattern(PresetPattern.str_to_val(effect))
+        if self.addressable:
+            pattern = ADDRESSABLE_EFFECT_NAME_ID[effect]
+        else:
+            pattern = PresetPattern.str_to_val(effect)
+        return self.setPresetPattern(pattern, speed)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])

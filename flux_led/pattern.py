@@ -351,6 +351,7 @@ ADDRESSABLE_EFFECT_ID_NAME = {
     299: "7 colors run in olivary + 7 colors change quickly + 7 colors flash",
     300: "7 colors run gradually + 7 colors run in olivary + 7 colors change quickly + 7 color flash",
 }
+ADDRESSABLE_EFFECT_NAME_ID = {v: k for k, v in ADDRESSABLE_EFFECT_ID_NAME.items()}
 
 
 class PresetPattern:
