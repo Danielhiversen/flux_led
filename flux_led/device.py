@@ -13,7 +13,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .pattern import ADDRESSABLE_EFFECT_NAME_ID, PresetPattern
 from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .sock import _socket_retry
 from .timer import LedTimer
@@ -267,11 +266,7 @@ class WifiLedBulb(LEDENETDevice):
 
     def set_effect(self, effect, speed):
         """Set an effect."""
-        if self.addressable:
-            pattern = ADDRESSABLE_EFFECT_NAME_ID[effect]
-        else:
-            pattern = PresetPattern.str_to_val(effect)
-        return self.setPresetPattern(pattern, speed)
+        return self.setPresetPattern(self._effect_to_pattern(effect), speed)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])

@@ -48,6 +48,7 @@ from .models_db import (
 )
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
+    ADDRESSABLE_EFFECT_NAME_ID,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
@@ -727,3 +728,9 @@ class LEDENETDevice:
             raise ValueError("setCustomPattern requires at least one color tuples")
 
         return self._protocol.construct_custom_effect(rgb_list, speed, transition_type)
+
+    def _effect_to_pattern(self, effect):
+        """Convert an effect to a pattern code."""
+        if self.addressable:
+            return ADDRESSABLE_EFFECT_NAME_ID[effect]
+        return PresetPattern.str_to_val(effect)

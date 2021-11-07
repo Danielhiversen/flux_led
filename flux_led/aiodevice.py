@@ -3,8 +3,6 @@ import contextlib
 import logging
 from typing import Callable, Coroutine, List, Optional
 
-from flux_led.pattern import ADDRESSABLE_EFFECT_NAME_ID, PresetPattern
-
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import LEDENETDevice
 from .const import (
@@ -166,11 +164,9 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_effect(self, effect, speed):
         """Set an effect."""
-        if self.addressable:
-            pattern = ADDRESSABLE_EFFECT_NAME_ID[effect]
-        else:
-            pattern = PresetPattern.str_to_val(effect)
-        return await self.async_set_preset_pattern(pattern, speed)
+        return await self.async_set_preset_pattern(
+            self._effect_to_pattern(effect), speed
+        )
 
     async def _async_connect(self):
         """Create connection."""
