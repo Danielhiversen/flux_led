@@ -746,7 +746,9 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"$$\x47\x00\x00\x00\x00\x00\x02\x00\x00\xf0")
             if calls == 3:
                 self.assertEqual(expected, 14)
-                return bytearray(b"\x81\xde\x23\x41\x47\x00\x00\x00\x00\x00\x02\xFF\x00\x0b")
+                return bytearray(
+                    b"\x81\xde\x23\x41\x47\x00\x00\x00\x00\x00\x02\xFF\x00\x0b"
+                )
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
