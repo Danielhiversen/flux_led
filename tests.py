@@ -932,6 +932,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.addressable, True)
         self.assertEqual(light.model_num, 0xA1)
         self.assertEqual(light.model, "RGB Symphony [Addressable] (0xA1)")
+        assert len(light.effect_list) == 300
         assert light.color_modes == {COLOR_MODE_RGB}
 
         self.assertEqual(mock_read.call_count, 2)

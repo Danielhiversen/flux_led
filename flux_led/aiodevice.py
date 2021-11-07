@@ -6,6 +6,7 @@ from typing import Callable, Coroutine, List, Optional
 from flux_led.pattern import ADDRESSABLE_EFFECT_NAME_ID, PresetPattern
 
 from .aioprotocol import AIOLEDENETProtocol
+from .base_device import LEDENETDevice
 from .const import (
     STATE_BLUE,
     STATE_COOL_WHITE,
@@ -13,7 +14,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .device import LEDENETDevice
 from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .utils import color_temp_to_white_levels
 
