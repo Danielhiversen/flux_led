@@ -313,10 +313,12 @@ class LEDENETDevice:
             return MODE_CUSTOM
         elif pattern_code == 0x62:
             return MODE_MUSIC
-        elif self.addressable or PresetPattern.valid(pattern_code):
+        elif PresetPattern.valid(pattern_code):
             return MODE_PRESET
         elif BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
+        elif self.addressable:
+            return MODE_PRESET
         return None
 
     def set_unavailable(self):

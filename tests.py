@@ -420,13 +420,42 @@ class TestLight(unittest.TestCase):
                 return bytearray(
                     b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
                 )
+            if calls == 4:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\x25\x23\x38\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xb5"
+                )
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
         self.assertEqual(light.model_num, 0x25)
         self.assertEqual(light.model, "WiFi RGBCW Controller (0x25)")
-
+        self.assertEqual(
+            light.effect_list,
+            [
+                "blue_fade",
+                "blue_strobe",
+                "colorjump",
+                "colorloop",
+                "colorstrobe",
+                "cyan_fade",
+                "cyan_strobe",
+                "gb_cross_fade",
+                "green_fade",
+                "green_strobe",
+                "purple_fade",
+                "purple_strobe",
+                "rb_cross_fade",
+                "red_fade",
+                "red_strobe",
+                "rg_cross_fade",
+                "white_fade",
+                "white_strobe",
+                "yellow_fade",
+                "yellow_strobe",
+            ],
+        )
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
@@ -469,6 +498,18 @@ class TestLight(unittest.TestCase):
         self.assertEqual(
             light.__str__(),
             "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,4,37,15,222,]",
+        )
+
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 4)
+        self.assertEqual(mock_send.call_count, 4)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+        self.assertEqual(light.mode, "preset")
+
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Pattern: Seven Color Jumping (Speed 50%) raw state: 129,37,35,56,5,16,182,0,152,25,4,37,15,181,]",
         )
 
     @patch("flux_led.WifiLedBulb._send_msg")

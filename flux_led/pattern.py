@@ -356,6 +356,8 @@ ADDRESSABLE_EFFECT_ID_NAME = {
 
 
 class PresetPattern:
+
+    _instance = None
     seven_color_cross_fade = 0x25
     red_gradual_change = 0x26
     green_gradual_change = 0x27
