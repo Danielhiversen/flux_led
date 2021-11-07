@@ -55,6 +55,7 @@ from .pattern import (
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
     EFFECT_LIST,
+    ADDRESSABLE_EFFECT_ID_NAME,
     PresetPattern,
 )
 from .protocol import (
@@ -246,6 +247,8 @@ class LEDENETDevice:
     @property
     def effect_list(self):
         """Return the list of available effects."""
+        if self.addressable:
+            return ADDRESSABLE_EFFECT_ID_NAME.values()
         return EFFECT_LIST
 
     @property
@@ -254,7 +257,12 @@ class LEDENETDevice:
         current_mode = self.preset_pattern_num
         if current_mode == EFFECT_CUSTOM_CODE:
             return EFFECT_CUSTOM
-        return EFFECT_ID_NAME.get(current_mode)
+        if not self.addressable:
+            return EFFECT_ID_NAME.get(current_mode)
+        mode = self.raw_state.mode
+        pattern_code = self.raw_state.preset_patern
+        effect_id = ((pattern_code & 0xFF) << 8) | (mode & 0xFF)
+        return ADDRESSABLE_EFFECT_ID_NAME.get(effect_id)
 
     @property
     def cool_white(self):
@@ -306,7 +314,7 @@ class LEDENETDevice:
             return MODE_CUSTOM
         elif pattern_code == 0x62:
             return MODE_MUSIC
-        elif PresetPattern.valid(pattern_code):
+        elif self.addressable or PresetPattern.valid(pattern_code):
             return MODE_PRESET
         elif BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
