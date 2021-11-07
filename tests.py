@@ -973,7 +973,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.addressable, True)
         self.assertEqual(light.model_num, 0xA1)
         self.assertEqual(light.model, "RGB Symphony [Addressable] (0xA1)")
-        assert len(light.effect_list) == 300
+        assert len(light.effect_list) == 100
         assert light.color_modes == {COLOR_MODE_RGB}
 
         self.assertEqual(mock_read.call_count, 2)
@@ -1004,11 +1004,11 @@ class TestLight(unittest.TestCase):
             ),
         )
 
-        light.set_effect("7 colors run in olivary + 7 colors change quickly", 50)
+        light.set_effect("RBM 1", 50)
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(
-            mock_send.call_args, mock.call(bytearray(b"a\x88\x01\x10\x0f\t"))
+            mock_send.call_args, mock.call(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\x00\x86'))
         )
         light._transition_complete_time = 0
         light.update_state()
@@ -1016,5 +1016,5 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Pattern: Seven Color Cross Fade (Speed 50%) raw state: 129,161,35,37,1,16,100,0,0,0,4,0,240,211,]",
         )
-        assert light.effect == "7 colors run in olivary + 7 colors change quickly"
+        assert light.effect == "RBM 1"
         assert light.getSpeed() == 50

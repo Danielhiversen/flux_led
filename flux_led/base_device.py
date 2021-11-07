@@ -255,9 +255,9 @@ class LEDENETDevice:
             return EFFECT_CUSTOM
         if not self.addressable:
             return EFFECT_ID_NAME.get(pattern_code)
-        mode = self.raw_state.mode
-        effect_id = ((mode & 0xFF) << 8) | (pattern_code & 0xFF)
-        return ADDRESSABLE_EFFECT_ID_NAME.get(effect_id)
+        if pattern_code == 0x25:
+            return ADDRESSABLE_EFFECT_ID_NAME.get(self.raw_state.mode)
+        return None
 
     @property
     def cool_white(self):
