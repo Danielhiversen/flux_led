@@ -50,7 +50,13 @@ from .models_db import (
     UNKNOWN_MODEL,
     USE_9BYTE_PROTOCOL_MODELS,
 )
-from .pattern import PresetPattern
+from .pattern import (
+    EFFECT_CUSTOM,
+    EFFECT_CUSTOM_CODE,
+    EFFECT_ID_NAME,
+    EFFECT_LIST,
+    PresetPattern,
+)
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_9BYTE,
@@ -236,6 +242,19 @@ class LEDENETDevice:
     @property
     def warm_white(self):
         return self.raw_state.warm_white if self._rgbwwprotocol else 0
+
+    @property
+    def effect_list(self):
+        """Return the list of available effects."""
+        return EFFECT_LIST
+
+    @property
+    def effect(self):
+        """Return the current effect."""
+        current_mode = self.preset_pattern_num
+        if current_mode == EFFECT_CUSTOM_CODE:
+            return EFFECT_CUSTOM
+        return EFFECT_ID_NAME.get(current_mode)
 
     @property
     def cool_white(self):
@@ -944,6 +963,10 @@ class WifiLedBulb(LEDENETDevice):
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
+
+    async def set_effect(self, effect):
+        """Set an effect."""
+        return self.setPresetPattern(PresetPattern.str_to_val(effect))
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
