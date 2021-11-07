@@ -708,9 +708,13 @@ class LEDENETDevice:
 
     def _generate_preset_pattern(self, pattern, speed):
         """Generate the preset pattern protocol bytes."""
-        PresetPattern.valtostr(pattern)
-        if not PresetPattern.valid(pattern):
-            raise ValueError("Pattern must be between 0x25 and 0x38")
+        if self.addressable:
+            if pattern not in ADDRESSABLE_EFFECT_ID_NAME:
+                raise ValueError("Pattern must be between 1 and 300")
+        else:
+            PresetPattern.valtostr(pattern)
+            if not PresetPattern.valid(pattern):
+                raise ValueError("Pattern must be between 0x25 and 0x38")
         return self._protocol.construct_preset_pattern(pattern, speed)
 
     def _generate_custom_patterm(self, rgb_list, speed, transition_type):
@@ -973,6 +977,7 @@ class WifiLedBulb(LEDENETDevice):
 
     def set_effect(self, effect):
         """Set an effect."""
+
         return self.setPresetPattern(PresetPattern.str_to_val(effect))
 
     def getTimers(self):
