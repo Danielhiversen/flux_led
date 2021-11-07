@@ -49,6 +49,8 @@ from .models_db import (
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
     ADDRESSABLE_EFFECT_NAME_ID,
+    ASSESSABLE_MULTI_COLOR_ID_NAME,
+    ASSESSABLE_MULTI_COLOR_NAME_ID,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
@@ -257,6 +259,8 @@ class LEDENETDevice:
             return EFFECT_ID_NAME.get(pattern_code)
         if pattern_code == 0x25:
             return ADDRESSABLE_EFFECT_ID_NAME.get(self.raw_state.mode)
+        if pattern_code == 0x24:
+            return ASSESSABLE_MULTI_COLOR_ID_NAME.get(self.raw_state.mode)
         return None
 
     @property
