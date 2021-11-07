@@ -1,29 +1,27 @@
-from typing import Final
+EFFECT_RANDOM = "random"
+EFFECT_COLORLOOP = "colorloop"
+EFFECT_RED_FADE = "red_fade"
+EFFECT_GREEN_FADE = "green_fade"
+EFFECT_BLUE_FADE = "blue_fade"
+EFFECT_YELLOW_FADE = "yellow_fade"
+EFFECT_CYAN_FADE = "cyan_fade"
+EFFECT_PURPLE_FADE = "purple_fade"
+EFFECT_WHITE_FADE = "white_fade"
+EFFECT_RED_GREEN_CROSS_FADE = "rg_cross_fade"
+EFFECT_RED_BLUE_CROSS_FADE = "rb_cross_fade"
+EFFECT_GREEN_BLUE_CROSS_FADE = "gb_cross_fade"
+EFFECT_COLORSTROBE = "colorstrobe"
+EFFECT_RED_STROBE = "red_strobe"
+EFFECT_GREEN_STROBE = "green_strobe"
+EFFECT_BLUE_STROBE = "blue_strobe"
+EFFECT_YELLOW_STROBE = "yellow_strobe"
+EFFECT_CYAN_STROBE = "cyan_strobe"
+EFFECT_PURPLE_STROBE = "purple_strobe"
+EFFECT_WHITE_STROBE = "white_strobe"
+EFFECT_COLORJUMP = "colorjump"
+EFFECT_CUSTOM = "custom"
 
-EFFECT_RANDOM: Final = "random"
-EFFECT_COLORLOOP: Final = "colorloop"
-EFFECT_RED_FADE: Final = "red_fade"
-EFFECT_GREEN_FADE: Final = "green_fade"
-EFFECT_BLUE_FADE: Final = "blue_fade"
-EFFECT_YELLOW_FADE: Final = "yellow_fade"
-EFFECT_CYAN_FADE: Final = "cyan_fade"
-EFFECT_PURPLE_FADE: Final = "purple_fade"
-EFFECT_WHITE_FADE: Final = "white_fade"
-EFFECT_RED_GREEN_CROSS_FADE: Final = "rg_cross_fade"
-EFFECT_RED_BLUE_CROSS_FADE: Final = "rb_cross_fade"
-EFFECT_GREEN_BLUE_CROSS_FADE: Final = "gb_cross_fade"
-EFFECT_COLORSTROBE: Final = "colorstrobe"
-EFFECT_RED_STROBE: Final = "red_strobe"
-EFFECT_GREEN_STROBE: Final = "green_strobe"
-EFFECT_BLUE_STROBE: Final = "blue_strobe"
-EFFECT_YELLOW_STROBE: Final = "yellow_strobe"
-EFFECT_CYAN_STROBE: Final = "cyan_strobe"
-EFFECT_PURPLE_STROBE: Final = "purple_strobe"
-EFFECT_WHITE_STROBE: Final = "white_strobe"
-EFFECT_COLORJUMP: Final = "colorjump"
-EFFECT_CUSTOM: Final = "custom"
-
-EFFECT_MAP: Final = {
+EFFECT_MAP = {
     EFFECT_COLORLOOP: 0x25,
     EFFECT_RED_FADE: 0x26,
     EFFECT_GREEN_FADE: 0x27,
@@ -46,10 +44,10 @@ EFFECT_MAP: Final = {
     EFFECT_COLORJUMP: 0x38,
 }
 
-EFFECT_ID_NAME: Final = {v: k for k, v in EFFECT_MAP.items()}
-EFFECT_CUSTOM_CODE: Final = 0x60
+EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP.items()}
+EFFECT_CUSTOM_CODE = 0x60
 
-EFFECT_LIST: Final = sorted(EFFECT_MAP)
+EFFECT_LIST = sorted(EFFECT_MAP)
 
 ADDRESSABLE_EFFECT_ID_NAME = {
     1: "Circulate all modes",
