@@ -744,12 +744,18 @@ class TestLight(unittest.TestCase):
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"$$\x47\x00\x00\x00\x00\x00\x02\x00\x00\xf0")
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(b"\x81\xde$$\x47\x00\x00\x00\x00\x00\x02\xFF\x00\xef")
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_CCT}
         self.assertEqual(light.model_num, 0xDE)
         self.assertEqual(light.model, "Unknown Model (0xDE)")
+        assert light.color_mode == COLOR_MODE_RGB
+        light.update_state()
+        assert light.color_mode == COLOR_MODE_CCT
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
