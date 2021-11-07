@@ -254,14 +254,13 @@ class LEDENETDevice:
     @property
     def effect(self):
         """Return the current effect."""
-        current_mode = self.preset_pattern_num
-        if current_mode == EFFECT_CUSTOM_CODE:
+        pattern_code = self.preset_pattern_num
+        if pattern_code == EFFECT_CUSTOM_CODE:
             return EFFECT_CUSTOM
         if not self.addressable:
-            return EFFECT_ID_NAME.get(current_mode)
+            return EFFECT_ID_NAME.get(pattern_code)
         mode = self.raw_state.mode
-        pattern_code = self.raw_state.preset_patern
-        effect_id = ((pattern_code & 0xFF) << 8) | (mode & 0xFF)
+        effect_id = ((mode & 0xFF) << 8) | (pattern_code & 0xFF)
         return ADDRESSABLE_EFFECT_ID_NAME.get(effect_id)
 
     @property
@@ -972,7 +971,7 @@ class WifiLedBulb(LEDENETDevice):
             self._connect_if_disconnected()
             self._send_msg(msg)
 
-    async def set_effect(self, effect):
+    def set_effect(self, effect):
         """Set an effect."""
         return self.setPresetPattern(PresetPattern.str_to_val(effect))
 

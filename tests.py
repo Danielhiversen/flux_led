@@ -427,6 +427,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0x25)
         self.assertEqual(light.model, "WiFi RGBCW Controller (0x25)")
 
+
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
