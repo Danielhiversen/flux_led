@@ -324,10 +324,6 @@ class LEDENETDevice:
         self.available = True
 
     def process_state_response(self, rx):
-        if rx is None or len(rx) < self._protocol.state_response_length:
-            self.set_unavailable()
-            return False
-
         if not self._protocol.is_valid_state_response(rx):
             _LOGGER.warning(
                 "%s: Recieved invalid response: %s",
