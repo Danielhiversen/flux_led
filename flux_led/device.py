@@ -1,5 +1,4 @@
 import datetime
-from enum import Enum
 import logging
 import select
 import socket
