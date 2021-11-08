@@ -4,6 +4,7 @@ import logging
 from typing import Callable, Coroutine, List, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
+from .base_device import LEDENETDevice
 from .const import (
     STATE_BLUE,
     STATE_COOL_WHITE,
@@ -11,7 +12,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .device import LEDENETDevice
 from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .utils import color_temp_to_white_levels
 
@@ -161,6 +161,12 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Set a custom pattern on the device."""
         msg = self._generate_custom_patterm(rgb_list, speed, transition_type)
         await self._async_send_msg(msg)
+
+    async def async_set_effect(self, effect, speed):
+        """Set an effect."""
+        return await self.async_set_preset_pattern(
+            self._effect_to_pattern(effect), speed
+        )
 
     async def _async_connect(self):
         """Create connection."""

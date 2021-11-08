@@ -449,6 +449,26 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
             self._counter = 0
         return self._counter
 
+    def construct_preset_pattern(self, pattern, speed):
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        counter_byte = self._increment_counter()
+        return self.construct_message(
+            bytearray(
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    counter_byte,
+                    0x00,
+                    0x05,
+                    0x42,
+                    pattern,
+                    delay,
+                    0x64,
+                    0x00,
+                ]
+            )
+        )
+
     def construct_levels_change(
         self, persist, red, green, blue, warm_white, cool_white, write_mode
     ):

@@ -1,5 +1,6 @@
 """Init file for Flux LED"""
-from .device import DeviceType, WifiLedBulb
+from .base_device import DeviceType
+from .device import WifiLedBulb
 from .pattern import PresetPattern
 from .scanner import BulbScanner
 from .timer import LedTimer
