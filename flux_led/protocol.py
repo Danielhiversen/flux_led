@@ -42,6 +42,33 @@ TRANSITION_BYTES = {
 
 LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
+LEDENET_POWER_RESPONSE_LEN = 4
+LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
+
+MSG_ORIGINAL_POWER_STATE = "original_power_state"
+MSG_ORIGINAL_STATE = "original_state"
+
+MSG_POWER_STATE = "power_state"
+MSG_STATE = "state"
+
+MSG_ADDRESSABLE_STATE = "addressable_state"
+
+MSG_FIRST_BYTE = {
+    0xF0: MSG_POWER_STATE,
+    0x00: MSG_POWER_STATE,
+    0x0F: MSG_POWER_STATE,
+    0x78: MSG_ORIGINAL_POWER_STATE,
+    0x66: MSG_ORIGINAL_STATE,
+    0x81: MSG_STATE,
+    0xB0: MSG_ADDRESSABLE_STATE,
+}
+MSG_LENGTHS = {
+    MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
+    MSG_ORIGINAL_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
+    MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
+    MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
+    MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
+}
 
 LEDENET_BASE_STATE = [
     STATE_HEAD,
@@ -116,7 +143,15 @@ LEDENETRawState = namedtuple(
 class ProtocolBase:
     """The base protocol."""
 
-    power_state_response_length = 4
+    power_state_response_length = MSG_LENGTHS[MSG_POWER_STATE]
+
+    def expected_response_length(self, data):
+        """Return the number of bytes expected in the response.
+
+        If the response is unknown, we assume the response is
+        a complete message since we have no way of knowing otherwise.
+        """
+        return MSG_LENGTHS.get(MSG_FIRST_BYTE.get(data[0]), len(data))
 
     @abstractmethod
     def construct_state_query(self):
@@ -129,10 +164,6 @@ class ProtocolBase:
     @abstractmethod
     def is_start_of_state_response(self, data):
         """Check if a message is the start of a state response."""
-
-    def is_longer_than_state_response(self, data):
-        """Check if a message is longer than a valid state response."""
-        return len(data) > self.state_response_length
 
     def is_checksum_correct(self, msg):
         """Check a checksum of a message."""
@@ -151,10 +182,6 @@ class ProtocolBase:
     @abstractmethod
     def is_start_of_power_state_response(self, data):
         """Check if a message is the start of a power response."""
-
-    def is_longer_than_power_state_response(self, data):
-        """Check if a message is longer than a valid power response."""
-        return len(data) > self.state_response_length
 
     @property
     def on_byte(self):
@@ -250,25 +277,23 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 
     def is_valid_power_state_response(self, msg):
         """Check if a power state response is valid."""
-        # We do not have dumps of the original ledenet
-        # protocol (these devices are no longer made).
-        # If we get them in the future, we can
-        # implement push updates for these devices by
-        # matching how is_valid_power_state_response works
-        # for the newer protocol
-        return False
+        return len(msg) == self.power_state_response_length and msg[0] == 0x78
 
     def is_valid_state_response(self, raw_state):
         """Check if a state response is valid."""
-        return len(raw_state) == self.state_response_length and raw_state[1] == 0x01
+        return (
+            len(raw_state) == self.state_response_length
+            and raw_state[0] == 0x66
+            and raw_state[1] == 0x01
+        )
 
     def is_start_of_state_response(self, data):
         """Check if a message is the start of a state response."""
-        return False
+        return data[0] == 0x66
 
     def is_start_of_power_state_response(self, data):
         """Check if a message is the start of a state response."""
-        return False
+        return data[0] == 0x78
 
     def construct_state_query(self):
         """The bytes to send for a query request."""
@@ -330,7 +355,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
     def is_start_of_power_state_response(self, data):
         """Check if a message is the start of a state response."""
-        return len(data) >= 1 and data[0] in (0xF0, 0x00, 0x0F)
+        return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
 
     def is_start_of_state_response(self, data):
         """Check if a message is the start of a state response."""
@@ -465,7 +490,7 @@ class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
 class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
 
     ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
-    addressable_response_length = 25
+    addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
 
     def __init__(self):
         self._counter = 0
@@ -482,10 +507,6 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
         if not self.is_start_of_addressable_response(data):
             return False
         return self.is_checksum_correct(data)
-
-    def is_longer_than_addressable_response(self, data):
-        """Check if a message is longer than a valid addressable response."""
-        return len(data) > self.addressable_response_length
 
     @property
     def name(self):

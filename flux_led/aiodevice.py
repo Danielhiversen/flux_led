@@ -189,43 +189,24 @@ class AIOWifiLedBulb(LEDENETDevice):
         """New data on the socket."""
         start_empty_buffer = not self._buffer
         self._buffer += data
-        buffer = self._buffer
         self._updates_without_response = 0
-        msg_length = len(buffer)
-        protocol = self._protocol
-        # Some of the older bulbs respond to a state request in
-        # multiple packets so we have to reassemble.
-        if protocol.is_start_of_state_response(buffer):
-            if not protocol.is_valid_state_response(
-                buffer
-            ) and not protocol.is_longer_than_state_response(buffer):
+        msg_length = len(self._buffer)
+        while msg_length:
+            expected_length = self._protocol.expected_response_length(self._buffer)
+            if msg_length < expected_length:
+                # need more bytes
                 return
-            msg_length = protocol.state_response_length
-        if protocol.is_start_of_power_state_response(buffer):
-            if not protocol.is_valid_power_state_response(
-                buffer
-            ) and not protocol.is_longer_than_power_state_response(buffer):
-                return
-            msg_length = protocol.state_response_length
-        elif self.addressable:
-            # The addressable bulbs can send a state response inside an addressable response
-            if protocol.is_start_of_addressable_response(buffer):
-                if not protocol.is_valid_addressable_response(
-                    buffer
-                ) and not protocol.is_longer_than_addressable_response(buffer):
-                    return
-                msg_length = protocol.addressable_response_length
-
-        msg = buffer[:msg_length]
-        self._buffer = buffer[msg_length:]
-        if not start_empty_buffer:
-            _LOGGER.debug(
-                "%s <= Reassembled (%s) (%d)",
-                self._aio_protocol.peername,
-                " ".join(f"0x{x:02X}" for x in msg),
-                len(msg),
-            )
-        self._async_process_message(msg)
+            msg = self._buffer[:msg_length]
+            self._buffer = self._buffer[msg_length:]
+            msg_length = len(self._buffer)
+            if not start_empty_buffer:
+                _LOGGER.debug(
+                    "%s <= Reassembled (%s) (%d)",
+                    self._aio_protocol.peername,
+                    " ".join(f"0x{x:02X}" for x in msg),
+                    len(msg),
+                )
+            self._async_process_message(msg)
 
     def _async_process_message(self, msg):
         """Process a full message (maybe reassembled)."""

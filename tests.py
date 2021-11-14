@@ -554,7 +554,7 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"")
             if calls == 2:
                 self.assertEqual(expected, 2)
-                return bytearray(b"\f\x01")
+                return bytearray(b"f\x01")
             if calls == 3:
                 self.assertEqual(expected, 9)
                 return bytearray(b"#A!\x08\xff\x80*\x01\x99")
