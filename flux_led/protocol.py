@@ -168,7 +168,8 @@ class ProtocolBase:
 
     def construct_preset_pattern(self, pattern, speed):
         """The bytes to send for a preset pattern."""
-        return self.construct_message(bytearray([0x61, pattern, speed, 0x0F]))
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_custom_effect(self, rgb_list, speed, transition_type):
         """The bytes to send for a custom effect."""

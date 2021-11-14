@@ -454,8 +454,6 @@ class LEDENETDevice:
         elif power_state == self._protocol.off_byte:
             power_str = "OFF "
 
-        delay = rx.speed
-        speed = utils.delayToSpeed(delay)
         if mode in STATIC_MODES:
             if color_mode in COLOR_MODES_RGB:
                 red = rx.red
@@ -478,9 +476,9 @@ class LEDENETDevice:
                 mode_str = "Addressable"
         elif mode == MODE_PRESET:
             pat = self.effect
-            mode_str = f"Pattern: {pat} (Speed {speed}%)"
+            mode_str = f"Pattern: {pat} (Speed {self.speed}%)"
         elif mode == MODE_CUSTOM:
-            mode_str = f"Custom pattern (Speed {speed}%)"
+            mode_str = f"Custom pattern (Speed {self.speed}%)"
         elif BuiltInTimer.valid(pattern):
             mode_str = BuiltInTimer.valtostr(pattern)
         elif mode == MODE_MUSIC:
@@ -583,12 +581,12 @@ class LEDENETDevice:
 
     @property
     def speed(self):
-        return self.raw_state.speed
+        if self.addressable or self.original_addressable:
+            return self.raw_state.speed
+        return utils.delayToSpeed(self.raw_state.speed)
 
     def getSpeed(self):
-        delay = self.raw_state.speed
-        speed = utils.delayToSpeed(delay)
-        return speed
+        return self.speed
 
     def _generate_levels_change(
         self,
