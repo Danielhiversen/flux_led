@@ -6,7 +6,6 @@ import time
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     CHANNEL_STATES,
-    COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -469,8 +468,6 @@ class LEDENETDevice:
                 mode_str = "CCT: {}K Brightness: {}%".format(
                     cct_value[0], cct_value[1] / 255
                 )
-            elif color_mode == COLOR_MODE_ADDRESSABLE:
-                mode_str = "Addressable"
         elif mode == MODE_PRESET:
             pat = self.effect
             mode_str = f"Pattern: {pat} (Speed {self.speed}%)"
