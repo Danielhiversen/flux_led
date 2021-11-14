@@ -445,13 +445,10 @@ class LEDENETDevice:
             return "No state data"
         mode = self.mode
         color_mode = self.color_mode
-        pattern = rx.preset_pattern
-        ww_level = rx.warm_white
-        power_state = rx.power_state
         power_str = "Unknown power state"
-        if power_state == self._protocol.on_byte:
+        if rx.power_state == self._protocol.on_byte:
             power_str = "ON "
-        elif power_state == self._protocol.off_byte:
+        elif rx.power_state == self._protocol.off_byte:
             power_str = "OFF "
 
         if mode in STATIC_MODES:
@@ -462,11 +459,11 @@ class LEDENETDevice:
                 mode_str = f"Color: {(red, green, blue)}"
                 # Should add ability to get CCT from rgbwcapable*
                 if self.rgbwcapable:
-                    mode_str += f" White: {ww_level}"
+                    mode_str += f" White: {rx.warm_white}"
                 else:
                     mode_str += f" Brightness: {self.brightness}"
             elif color_mode == COLOR_MODE_DIM:
-                mode_str = f"Warm White: {utils.byteToPercent(ww_level)}%"
+                mode_str = f"Warm White: {utils.byteToPercent(rx.warm_white)}%"
             elif color_mode == COLOR_MODE_CCT:
                 cct_value = self.getWhiteTemperature()
                 mode_str = "CCT: {}K Brightness: {}%".format(
@@ -479,14 +476,14 @@ class LEDENETDevice:
             mode_str = f"Pattern: {pat} (Speed {self.speed}%)"
         elif mode == MODE_CUSTOM:
             mode_str = f"Custom pattern (Speed {self.speed}%)"
-        elif BuiltInTimer.valid(pattern):
-            mode_str = BuiltInTimer.valtostr(pattern)
+        elif BuiltInTimer.valid(rx.preset_pattern):
+            mode_str = BuiltInTimer.valtostr(rx.preset_pattern)
         elif mode == MODE_MUSIC:
             mode_str = "Music"
         elif mode == MODE_SWITCH:
             mode_str = "Switch"
         else:
-            mode_str = f"Unknown mode 0x{pattern:x}"
+            mode_str = f"Unknown mode 0x{rx.preset_pattern:x}"
         mode_str += " raw state: "
         mode_str += utils.raw_state_to_dec(rx)
         return f"{power_str} [{mode_str}]"
