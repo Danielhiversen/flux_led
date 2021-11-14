@@ -150,6 +150,9 @@ ADDRESSABLE_EFFECT_ID_NAME = {
     98: "RBM 98",
     99: "RBM 99",
     100: "RBM 100",
+    101: "RBM 101",  # Not in the Magic Home App (only set by remote)
+    102: "RBM 102",  # Not in the Magic Home App (only set by remote)
+    255: "Circulate all modes",  # Cycles all
 }
 ADDRESSABLE_EFFECT_NAME_ID = {v: k for k, v in ADDRESSABLE_EFFECT_ID_NAME.items()}
 
