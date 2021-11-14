@@ -1,5 +1,6 @@
 import asyncio
 from unittest.mock import MagicMock, patch
+import logging
 
 import pytest
 import contextlib
@@ -72,7 +73,7 @@ async def test_reassemble(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
-async def test_turn_on_off(mock_aio_protocol):
+async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can turn on and off."""
     light = AIOWifiLedBulb("192.168.1.166")
 
@@ -105,6 +106,17 @@ async def test_turn_on_off(mock_aio_protocol):
     assert light.is_on is True
     await task
 
+    await asyncio.sleep(0)
+    caplog.clear()
+    caplog.set_level(logging.DEBUG)
+    # Handle the failure case
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
+        await asyncio.create_task(light.async_turn_off())
+        assert light.is_on is True
+        assert "Failed to turn off (1/3)" in caplog.text
+        assert "Failed to turn off (2/3)" in caplog.text
+        assert "Failed to turn off (3/3)" in caplog.text
+
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
         task = asyncio.create_task(light.async_turn_off())
         # Do NOT wait for the future to get added, we know the retry logic works
@@ -114,6 +126,17 @@ async def test_turn_on_off(mock_aio_protocol):
         await asyncio.sleep(0)
         assert light.is_on is False
         await task
+
+    await asyncio.sleep(0)
+    caplog.clear()
+    caplog.set_level(logging.DEBUG)
+    # Handle the failure case
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
+        await asyncio.create_task(light.async_turn_on())
+        assert light.is_on is False
+        assert "Failed to turn on (1/3)" in caplog.text
+        assert "Failed to turn on (2/3)" in caplog.text
+        assert "Failed to turn on (3/3)" in caplog.text
 
 
 @pytest.mark.asyncio

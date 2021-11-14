@@ -72,18 +72,19 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_turn_on(self) -> None:
         """Turn on the device."""
-        await self._async_turn_on_with_retry()
-        self._set_power_state_ignore_next_push(self._protocol.on_byte)
+        if await self._async_turn_on_with_retry():
+            self._set_power_state_ignore_next_push(self._protocol.on_byte)
 
-    async def _async_turn_on_with_retry(self) -> None:
+    async def _async_turn_on_with_retry(self) -> bool:
         calls = (self._async_turn_on, self._async_turn_off_on, self._async_turn_on)
         for idx, call in enumerate(calls):
             if (
                 await self._async_execute_and_wait_for(self._on_futures, call)
                 or self.is_on
             ):
-                return
+                return True
             _LOGGER.debug("Failed to turn on (%s/%s)", 1 + idx, len(calls))
+        return False
 
     async def _async_turn_off(self) -> None:
         await self._async_send_msg(self._protocol.construct_state_change(False))
@@ -94,18 +95,19 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_turn_off(self) -> None:
         """Turn off the device."""
-        await self._async_turn_off_with_retry()
-        self._set_power_state_ignore_next_push(self._protocol.off_byte)
+        if await self._async_turn_off_with_retry():
+            self._set_power_state_ignore_next_push(self._protocol.off_byte)
 
-    async def _async_turn_off_with_retry(self) -> None:
+    async def _async_turn_off_with_retry(self) -> bool:
         calls = (self._async_turn_off, self._async_turn_on_off, self._async_turn_off)
         for idx, call in enumerate(calls):
             if (
                 await self._async_execute_and_wait_for(self._off_futures, call)
                 or not self.is_on
             ):
-                return
+                return True
             _LOGGER.debug("Failed to turn off (%s/%s)", 1 + idx, len(calls))
+        return False
 
     async def async_set_white_temp(self, temperature, brightness, persist=True) -> None:
         """Set the white tempature."""
