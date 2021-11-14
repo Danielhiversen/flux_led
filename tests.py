@@ -3,6 +3,7 @@ import unittest.mock as mock
 from unittest.mock import patch
 
 import pytest
+
 import flux_led
 from flux_led.const import (
     COLOR_MODE_CCT,
@@ -1009,7 +1010,10 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(
-            mock_send.call_args, mock.call(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\x00\x86'))
+            mock_send.call_args,
+            mock.call(
+                bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\x00\x86")
+            ),
         )
         light._transition_complete_time = 0
         light.update_state()
@@ -1020,11 +1024,12 @@ class TestLight(unittest.TestCase):
         assert light.effect == "RBM 1"
         assert light.getSpeed() == 50
 
-
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
-    def test_original_addressable_strip_effects(self, mock_connect, mock_read, mock_send):
+    def test_original_addressable_strip_effects(
+        self, mock_connect, mock_read, mock_send
+    ):
         calls = 0
 
         def read_data(expected):
@@ -1072,18 +1077,16 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(
-                bytearray(
-                    b'1\x00\xff\x00\x00\x00\xf0\x0f/'
-                )
-            ),
+            mock.call(bytearray(b"1\x00\xff\x00\x00\x00\xf0\x0f/")),
         )
 
-        light.set_effect("Overlay circularly, 7 colors with black background from start to end", 50)
+        light.set_effect(
+            "Overlay circularly, 7 colors with black background from start to end", 50
+        )
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(
-            mock_send.call_args, mock.call(bytearray(b'a\x00\xa1\x10\x0f!'))
+            mock_send.call_args, mock.call(bytearray(b"a\x00\xa1\x10\x0f!"))
         )
         light._transition_complete_time = 0
         light.update_state()
@@ -1091,5 +1094,8 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Pattern: Overlay circularly, 7 colors with black background from start to end (Speed 100%) raw state: 129,161,35,0,161,1,100,0,0,0,4,0,240,63,]",
         )
-        assert light.effect == "Overlay circularly, 7 colors with black background from start to end"
+        assert (
+            light.effect
+            == "Overlay circularly, 7 colors with black background from start to end"
+        )
         assert light.getSpeed() == 100
