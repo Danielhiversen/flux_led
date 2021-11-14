@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
+import contextlib
 
 from flux_led import aiodevice
 from flux_led.aio import AIOWifiLedBulb
@@ -25,7 +26,8 @@ async def mock_aio_protocol():
         protocol: AIOLEDENETProtocol = func()
         transport = MagicMock()
         protocol.connection_made(transport)
-        future.set_result(True)
+        with contextlib.suppress(asyncio.InvalidStateError):
+            future.set_result(True)
         return transport, protocol
 
     with patch.object(loop, "create_connection", _mock_create_connection):
@@ -131,3 +133,33 @@ async def test_shutdown(mock_aio_protocol):
 
     await light.async_stop()
     await asyncio.sleep(0)  # make sure nothing throws
+
+
+@pytest.mark.asyncio
+async def test_handling_connection_lost(mock_aio_protocol):
+    """Test we can reconnect."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+
+    light._aio_protocol.connection_lost(None)
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    # Test we reconnect and can turn off
+    task = asyncio.create_task(light.async_turn_off())
+    # Wait for the future to get added
+    await asyncio.sleep(0.1)  # wait for reconnect
+    light._aio_protocol.data_received(
+        b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
+    )
+    await asyncio.sleep(0)
+    assert light.is_on is False
+    await task
