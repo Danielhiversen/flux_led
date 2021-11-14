@@ -9,6 +9,8 @@ class LevelWriteMode(Enum):
     WHITES = 0x0F
 
 
+PRESET_MUSIC_MODE = 0x62
+
 # Color modes
 COLOR_MODE_DIM = "DIM"
 COLOR_MODE_CCT = "CCT"
