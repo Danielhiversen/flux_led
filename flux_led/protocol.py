@@ -447,10 +447,27 @@ class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
 class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
 
     ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+    addressable_response_length = 25
 
     def __init__(self):
         self._counter = 0
         super().__init__()
+
+    def is_start_of_addressable_response(self, data):
+        """Check if a message is the start of an addressable state response."""
+        return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
+
+    def is_valid_addressable_response(self, data):
+        """Check if a message is a valid addressable state response."""
+        if len(data) != self.addressable_response_length:
+            return False
+        if not self.is_start_of_addressable_response(data):
+            return False
+        return self.is_checksum_correct(data)
+
+    def is_longer_than_addressable_response(self, data):
+        """Check if a message is longer than a valid addressable response."""
+        return len(data) > self.addressable_response_length
 
     @property
     def name(self):
