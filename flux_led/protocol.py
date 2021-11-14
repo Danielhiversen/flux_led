@@ -32,6 +32,7 @@ PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
 PROTOCOL_LEDENET_ADDRESSABLE = "LEDENET_ADDRESSABLE"
+PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE = "LEDENET_ORIGINAL_ADDRESSABLE"
 
 TRANSITION_BYTES = {
     TRANSITION_JUMP: 0x3B,
@@ -429,6 +430,20 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         )
 
 
+class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE
+
+    def construct_preset_pattern(self, pattern, speed):
+        """The bytes to send for a preset pattern."""
+        effect = pattern + 99
+        return self.construct_message(
+            bytearray([0x61, effect >> 8, effect & 0xFF, speed, 0x0F])
+        )
+
+
 class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
 
     ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
@@ -451,7 +466,6 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
 
     def construct_preset_pattern(self, pattern, speed):
         """The bytes to send for a preset pattern."""
-        delay = utils.speedToDelay(speed)
         counter_byte = self._increment_counter()
         return self.construct_message(
             bytearray(
@@ -462,7 +476,7 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
                     0x05,
                     0x42,
                     pattern,
-                    delay,
+                    speed,
                     0x64,
                     0x00,
                 ]

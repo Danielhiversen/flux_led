@@ -42,6 +42,7 @@ from .models_db import (
     CHANNEL_REMAP,
     MODEL_DESCRIPTIONS,
     MODEL_MAP,
+    ORIGINAL_ADDRESSABLE_MODELS,
     RGBW_PROTOCOL_MODELS,
     UNKNOWN_MODEL,
     USE_9BYTE_PROTOCOL_MODELS,
@@ -54,6 +55,8 @@ from .pattern import (
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
     EFFECT_LIST,
+    ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME,
+    ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID,
     PresetPattern,
 )
 from .protocol import (
@@ -61,10 +64,12 @@ from .protocol import (
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
+    PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
     ProtocolLEDENET8Byte,
     ProtocolLEDENET9Byte,
     ProtocolLEDENETAddressable,
     ProtocolLEDENETOriginal,
+    ProtocolLEDENETOriginalAddressable,
 )
 from .timer import BuiltInTimer
 from .utils import utils, white_levels_to_color_temp
@@ -129,6 +134,15 @@ class LEDENETDevice:
     def _is_addressable(self, model_num):
         """Devices that have addressable leds."""
         return model_num in ADDRESSABLE_MODELS
+
+    @property
+    def original_addressable(self):
+        """Devices that have addressable leds using the original addressable protocol."""
+        return self._is_original_addressable(self.model_num)
+
+    def _is_original_addressable(self, model_num):
+        """Devices that have addressable leds using the original addressable protocol."""
+        return model_num in ORIGINAL_ADDRESSABLE_MODELS
 
     @property
     def rgbwcapable(self):
@@ -244,6 +258,8 @@ class LEDENETDevice:
     @property
     def effect_list(self):
         """Return the list of available effects."""
+        if self.original_addressable:
+            return ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
         if self.addressable:
             return ADDRESSABLE_EFFECT_ID_NAME.values()
         return EFFECT_LIST
@@ -254,13 +270,16 @@ class LEDENETDevice:
         pattern_code = self.preset_pattern_num
         if pattern_code == EFFECT_CUSTOM_CODE:
             return EFFECT_CUSTOM
-        if not self.addressable:
-            return EFFECT_ID_NAME.get(pattern_code)
-        if pattern_code == 0x25:
-            return ADDRESSABLE_EFFECT_ID_NAME.get(self.raw_state.mode)
-        if pattern_code == 0x24:
-            return ASSESSABLE_MULTI_COLOR_ID_NAME.get(self.raw_state.mode)
-        return None
+        mode = self.raw_state.mode
+        if self.original_addressable:
+            effect_id = (pattern_code << 8) + mode - 99
+            return ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.get(effect_id)
+        if self.addressable:
+            if pattern_code == 0x25:
+                return ADDRESSABLE_EFFECT_ID_NAME.get(mode)
+            if pattern_code == 0x24:
+                return ASSESSABLE_MULTI_COLOR_ID_NAME.get(mode)
+        return EFFECT_ID_NAME.get(pattern_code)
 
     @property
     def cool_white(self):
@@ -316,7 +335,7 @@ class LEDENETDevice:
             return MODE_PRESET
         elif BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
-        elif self.addressable:
+        elif self.addressable or self.original_addressable:
             return MODE_PRESET
         return None
 
@@ -458,7 +477,7 @@ class LEDENETDevice:
             elif color_mode == COLOR_MODE_ADDRESSABLE:
                 mode_str = "Addressable"
         elif mode == MODE_PRESET:
-            pat = PresetPattern.valtostr(pattern)
+            pat = self.effect
             mode_str = f"Pattern: {pat} (Speed {speed}%)"
         elif mode == MODE_CUSTOM:
             mode_str = f"Custom pattern (Speed {speed}%)"
@@ -658,7 +677,7 @@ class LEDENETDevice:
         the transition completes.
         """
         latency = STATE_CHANGE_LATENCY
-        if self.addressable:
+        if self.addressable or self.original_addressable:
             latency = ADDRESSABLE_STATE_CHANGE_LATENCY
         transition_time = latency + utils.speedToDelay(self.raw_state.speed) / 100
         self._transition_complete_time = time.monotonic() + transition_time
@@ -691,12 +710,16 @@ class LEDENETDevice:
             self._protocol = ProtocolLEDENET9Byte()
         elif protocol == PROTOCOL_LEDENET_ADDRESSABLE:
             self._protocol = ProtocolLEDENETAddressable()
+        elif protocol == PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE:
+            self._protocol = ProtocolLEDENETOriginalAddressable()
         else:
             raise ValueError(f"Invalid protocol: {protocol}")
 
     def _set_protocol_from_msg(self, full_msg, fallback_protocol):
         if self._is_addressable(full_msg[1]):
             self._protocol = ProtocolLEDENETAddressable()
+        elif self._is_original_addressable(full_msg[1]):
+            self._protocol = ProtocolLEDENETOriginalAddressable()
         # Devices that use an 9-byte protocol
         elif self._uses_9byte_protocol(full_msg[1]):
             self._protocol = ProtocolLEDENET9Byte()
@@ -705,9 +728,12 @@ class LEDENETDevice:
 
     def _generate_preset_pattern(self, pattern, speed):
         """Generate the preset pattern protocol bytes."""
-        if self.addressable:
-            if pattern not in ADDRESSABLE_EFFECT_ID_NAME:
+        if self.original_addressable:
+            if pattern not in ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME:
                 raise ValueError("Pattern must be between 1 and 300")
+        elif self.addressable:
+            if pattern not in ADDRESSABLE_EFFECT_ID_NAME:
+                raise ValueError("Pattern must be between 1 and 100")
         else:
             PresetPattern.valtostr(pattern)
             if not PresetPattern.valid(pattern):
@@ -732,4 +758,6 @@ class LEDENETDevice:
         """Convert an effect to a pattern code."""
         if self.addressable:
             return ADDRESSABLE_EFFECT_NAME_ID[effect]
+        if self.original_addressable:
+            return ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID[effect]
         return PresetPattern.str_to_val(effect)
