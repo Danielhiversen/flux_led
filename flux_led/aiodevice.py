@@ -201,6 +201,12 @@ class AIOWifiLedBulb(LEDENETDevice):
             ) and not protocol.is_longer_than_state_response(buffer):
                 return
             msg_length = protocol.state_response_length
+        if protocol.is_start_of_power_state_response(buffer):
+            if not protocol.is_valid_power_state_response(
+                buffer
+            ) and not protocol.is_longer_than_power_state_response(buffer):
+                return
+            msg_length = protocol.state_response_length
         elif self.addressable:
             # The addressable bulbs can send a state response inside an addressable response
             if protocol.is_start_of_addressable_response(buffer):
