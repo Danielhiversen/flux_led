@@ -6,7 +6,6 @@ import time
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     CHANNEL_STATES,
-    COLOR_MODE_ADDRESSABLE,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -445,17 +444,12 @@ class LEDENETDevice:
             return "No state data"
         mode = self.mode
         color_mode = self.color_mode
-        pattern = rx.preset_pattern
-        ww_level = rx.warm_white
-        power_state = rx.power_state
         power_str = "Unknown power state"
-        if power_state == self._protocol.on_byte:
+        if rx.power_state == self._protocol.on_byte:
             power_str = "ON "
-        elif power_state == self._protocol.off_byte:
+        elif rx.power_state == self._protocol.off_byte:
             power_str = "OFF "
 
-        delay = rx.speed
-        speed = utils.delayToSpeed(delay)
         if mode in STATIC_MODES:
             if color_mode in COLOR_MODES_RGB:
                 red = rx.red
@@ -464,31 +458,29 @@ class LEDENETDevice:
                 mode_str = f"Color: {(red, green, blue)}"
                 # Should add ability to get CCT from rgbwcapable*
                 if self.rgbwcapable:
-                    mode_str += f" White: {ww_level}"
+                    mode_str += f" White: {rx.warm_white}"
                 else:
                     mode_str += f" Brightness: {self.brightness}"
             elif color_mode == COLOR_MODE_DIM:
-                mode_str = f"Warm White: {utils.byteToPercent(ww_level)}%"
+                mode_str = f"Warm White: {utils.byteToPercent(rx.warm_white)}%"
             elif color_mode == COLOR_MODE_CCT:
                 cct_value = self.getWhiteTemperature()
                 mode_str = "CCT: {}K Brightness: {}%".format(
                     cct_value[0], cct_value[1] / 255
                 )
-            elif color_mode == COLOR_MODE_ADDRESSABLE:
-                mode_str = "Addressable"
         elif mode == MODE_PRESET:
             pat = self.effect
-            mode_str = f"Pattern: {pat} (Speed {speed}%)"
+            mode_str = f"Pattern: {pat} (Speed {self.speed}%)"
         elif mode == MODE_CUSTOM:
-            mode_str = f"Custom pattern (Speed {speed}%)"
-        elif BuiltInTimer.valid(pattern):
-            mode_str = BuiltInTimer.valtostr(pattern)
+            mode_str = f"Custom pattern (Speed {self.speed}%)"
+        elif BuiltInTimer.valid(rx.preset_pattern):
+            mode_str = BuiltInTimer.valtostr(rx.preset_pattern)
         elif mode == MODE_MUSIC:
             mode_str = "Music"
         elif mode == MODE_SWITCH:
             mode_str = "Switch"
         else:
-            mode_str = f"Unknown mode 0x{pattern:x}"
+            mode_str = f"Unknown mode 0x{rx.preset_pattern:x}"
         mode_str += " raw state: "
         mode_str += utils.raw_state_to_dec(rx)
         return f"{power_str} [{mode_str}]"
@@ -581,10 +573,14 @@ class LEDENETDevice:
             return (255, 255)
         return (self.raw_state.warm_white, self.raw_state.cool_white)
 
+    @property
+    def speed(self):
+        if self.addressable or self.original_addressable:
+            return self.raw_state.speed
+        return utils.delayToSpeed(self.raw_state.speed)
+
     def getSpeed(self):
-        delay = self.raw_state.speed
-        speed = utils.delayToSpeed(delay)
-        return speed
+        return self.speed
 
     def _generate_levels_change(
         self,

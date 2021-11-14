@@ -1019,10 +1019,10 @@ class TestLight(unittest.TestCase):
         light.update_state()
         self.assertEqual(
             light.__str__(),
-            "ON  [Pattern: RBM 1 (Speed 50%) raw state: 129,162,35,37,1,16,100,0,0,0,4,0,240,212,]",
+            "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,162,35,37,1,16,100,0,0,0,4,0,240,212,]",
         )
         assert light.effect == "RBM 1"
-        assert light.getSpeed() == 50
+        assert light.getSpeed() == 16
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1090,10 +1090,10 @@ class TestLight(unittest.TestCase):
         light.update_state()
         self.assertEqual(
             light.__str__(),
-            "ON  [Pattern: Overlay circularly, 7 colors with black background from start to end (Speed 100%) raw state: 129,161,35,0,161,1,100,0,0,0,4,0,240,63,]",
+            "ON  [Pattern: Overlay circularly, 7 colors with black background from start to end (Speed 1%) raw state: 129,161,35,0,161,1,100,0,0,0,4,0,240,63,]",
         )
         assert (
             light.effect
             == "Overlay circularly, 7 colors with black background from start to end"
         )
-        assert light.getSpeed() == 100
+        assert light.getSpeed() == 1
