@@ -3,16 +3,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from flux_led import aiodevice
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
-from flux_led.const import (
-    COLOR_MODE_CCT,
-    COLOR_MODE_RGBWW,
-)
-from flux_led.protocol import (
-    PROTOCOL_LEDENET_9BYTE,
-)
-from flux_led import aiodevice
+from flux_led.const import COLOR_MODE_CCT, COLOR_MODE_RGBWW
+from flux_led.protocol import PROTOCOL_LEDENET_9BYTE
 
 
 @pytest.fixture
@@ -117,3 +112,22 @@ async def test_turn_on_off(mock_aio_protocol):
         await asyncio.sleep(0)
         assert light.is_on is False
         await task
+
+
+@pytest.mark.asyncio
+async def test_shutdown(mock_aio_protocol):
+    """Test we can shutdown."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
