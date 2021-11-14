@@ -24,6 +24,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_SWITCH,
     MODE_WW,
     MODEL_NUMS_SWITCHS,
+    PRESET_MUSIC_MODE,
     STATE_BLUE,
     STATE_CHANGE_LATENCY,
     STATE_COOL_WHITE,
@@ -267,6 +268,8 @@ class LEDENETDevice:
     def effect(self):
         """Return the current effect."""
         pattern_code = self.preset_pattern_num
+        if pattern_code == PRESET_MUSIC_MODE:
+            return MODE_MUSIC
         if pattern_code == EFFECT_CUSTOM_CODE:
             return EFFECT_CUSTOM
         mode = self.raw_state.mode
@@ -328,7 +331,7 @@ class LEDENETDevice:
             return MODE_COLOR
         elif pattern_code == EFFECT_CUSTOM_CODE:
             return MODE_CUSTOM
-        elif pattern_code == 0x62:
+        elif pattern_code == PRESET_MUSIC_MODE:
             return MODE_MUSIC
         elif PresetPattern.valid(pattern_code):
             return MODE_PRESET
