@@ -581,6 +581,10 @@ class LEDENETDevice:
             return (255, 255)
         return (self.raw_state.warm_white, self.raw_state.cool_white)
 
+    @property
+    def speed(self):
+        return self.raw_state.speed
+
     def getSpeed(self):
         delay = self.raw_state.speed
         speed = utils.delayToSpeed(delay)
