@@ -1,12 +1,8 @@
 import asyncio
-from typing import Optional, cast
-import unittest
-import unittest.mock as mock
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-import flux_led
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.const import (
