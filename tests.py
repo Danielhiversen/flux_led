@@ -1012,7 +1012,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(
             mock_send.call_args,
             mock.call(
-                bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\x00\x86")
+                bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\x00\xa8")
             ),
         )
         light._transition_complete_time = 0
@@ -1085,9 +1085,7 @@ class TestLight(unittest.TestCase):
         )
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 3)
-        self.assertEqual(
-            mock_send.call_args, mock.call(bytearray(b"a\x00\xa1\x10\x0f!"))
-        )
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a\x00\xa12\x0fC")))
         light._transition_complete_time = 0
         light.update_state()
         self.assertEqual(
