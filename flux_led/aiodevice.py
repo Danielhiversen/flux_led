@@ -189,22 +189,35 @@ class AIOWifiLedBulb(LEDENETDevice):
         """New data on the socket."""
         start_empty_buffer = not self._buffer
         self._buffer += data
+        buffer = self._buffer
         self._updates_without_response = 0
+        msg_length = len(buffer)
+        protocol = self._protocol
         # Some of the older bulbs respond to a state request in
-        # multiple packets so we have to reassemble.  Currently
-        # we only know how to reassemble state responses
-        if (
-            # if the buffer has the start of a state response
-            self._protocol.is_start_of_state_response(self._buffer)
-            # If the buffer does not have a full state response
-            and not self._protocol.is_valid_state_response(self._buffer)
-            # .. and the buffer is not longer than the a valid state response
-            and not self._protocol.is_longer_than_state_response(self._buffer)
-        ):
-            # We wait for more data. Otherwise we process the message
-            return
-        msg = self._buffer
-        self._buffer = b""
+        # multiple packets so we have to reassemble.
+        if protocol.is_start_of_state_response(buffer):
+            if not protocol.is_valid_state_response(
+                buffer
+            ) and not protocol.is_longer_than_state_response(buffer):
+                return
+            msg_length = protocol.state_response_length
+        if protocol.is_start_of_power_state_response(buffer):
+            if not protocol.is_valid_power_state_response(
+                buffer
+            ) and not protocol.is_longer_than_power_state_response(buffer):
+                return
+            msg_length = protocol.state_response_length
+        elif self.addressable:
+            # The addressable bulbs can send a state response inside an addressable response
+            if protocol.is_start_of_addressable_response(buffer):
+                if not protocol.is_valid_addressable_response(
+                    buffer
+                ) and not protocol.is_longer_than_addressable_response(buffer):
+                    return
+                msg_length = protocol.addressable_response_length
+
+        msg = buffer[:msg_length]
+        self._buffer = buffer[msg_length:]
         if not start_empty_buffer:
             _LOGGER.debug(
                 "%s <= Reassembled (%s) (%d)",
@@ -223,6 +236,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         assert self._updated_callback is not None
         prev_state = self.raw_state
+        if self.addressable and self._protocol.is_valid_addressable_response(msg):
+            self.process_addressable_response(msg)
         if self._protocol.is_valid_state_response(msg):
             self.process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
@@ -236,6 +251,15 @@ class AIOWifiLedBulb(LEDENETDevice):
                     future.set_result(True)
             futures.clear()
             self._updated_callback()
+
+    def process_addressable_response(self, msg):
+        _LOGGER.debug(
+            "%s <= Extracted response (%s) (%d)",
+            self._aio_protocol.peername,
+            " ".join(f"0x{x:02X}" for x in msg[10:-1]),
+            len(msg[10:-1]),
+        )
+        return self.process_state_response(msg[10:-1])
 
     async def _async_send_msg(self, msg):
         """Write a message on the socket."""
