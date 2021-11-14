@@ -194,8 +194,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         msg_length = len(buffer)
         protocol = self._protocol
         # Some of the older bulbs respond to a state request in
-        # multiple packets so we have to reassemble.  Currently
-        # we only know how to reassemble state responses
+        # multiple packets so we have to reassemble.
         if protocol.is_start_of_state_response(buffer):
             if not protocol.is_valid_state_response(
                 buffer
