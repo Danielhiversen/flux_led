@@ -12,6 +12,7 @@ from flux_led.const import (
 from flux_led.protocol import (
     PROTOCOL_LEDENET_9BYTE,
 )
+from flux_led import aiodevice
 
 
 @pytest.fixture
@@ -107,11 +108,12 @@ async def test_turn_on_off(mock_aio_protocol):
     assert light.is_on is True
     await task
 
-    task = asyncio.create_task(light.async_turn_off())
-    # Do NOT wait for the future to get added, we know the retry logic works
-    light._aio_protocol.data_received(
-        b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
-    )
-    await asyncio.sleep(0)
-    assert light.is_on is False
-    await task
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
+        task = asyncio.create_task(light.async_turn_off())
+        # Do NOT wait for the future to get added, we know the retry logic works
+        light._aio_protocol.data_received(
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
+        )
+        await asyncio.sleep(0)
+        assert light.is_on is False
+        await task
