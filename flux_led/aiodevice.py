@@ -190,14 +190,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         start_empty_buffer = not self._buffer
         self._buffer += data
         self._updates_without_response = 0
-        msg_length = len(self._buffer)
+        msg_length = len(self._buffer)        
         while msg_length:
             expected_length = self._protocol.expected_response_length(self._buffer)
             if msg_length < expected_length:
                 # need more bytes
                 return
-            msg = self._buffer[:msg_length]
-            self._buffer = self._buffer[msg_length:]
+            msg = self._buffer[:expected_length]
+            self._buffer = self._buffer[expected_length:]
             msg_length = len(self._buffer)
             if not start_empty_buffer:
                 _LOGGER.debug(

@@ -1,3 +1,4 @@
 pylint==2.11.1
+pytest-asyncio==0.16.0
 pytest-cov==3.0.0
 flake8==4.0.1
