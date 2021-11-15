@@ -140,6 +140,41 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.asyncio
+async def test_turn_on_off_via_power_state_message(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can turn on and off via power state message."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+
+    task = asyncio.create_task(light.async_turn_off())
+    # Wait for the future to get added
+    await asyncio.sleep(0)
+    light._ignore_next_power_state_update = False
+    light._aio_protocol.data_received(b"\x0F\x71\x24\xA4")
+    await asyncio.sleep(0)
+    assert light.is_on is False
+    await task
+
+    task = asyncio.create_task(light.async_turn_on())
+    await asyncio.sleep(0)
+    light._ignore_next_power_state_update = False
+    light._aio_protocol.data_received(b"\x0F\x71\x23\xA3")
+    await asyncio.sleep(0)
+    assert light.is_on is True
+    await task
+
+
+@pytest.mark.asyncio
 async def test_shutdown(mock_aio_protocol):
     """Test we can shutdown."""
     light = AIOWifiLedBulb("192.168.1.166")
