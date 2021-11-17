@@ -48,19 +48,30 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._aio_protocol:
             self._aio_protocol.close()
 
+    async def _async_send_state_query(self):
+        await self._async_send_msg(self._protocol.construct_state_query())
+
     async def _async_execute_and_wait_for(
         self, futures: List[asyncio.Future], coro: Coroutine
     ) -> None:
         future = asyncio.Future()
         futures.append(future)
         await coro()
+        _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT / 2)
             return True
-        await self._async_send_msg(self._protocol.construct_state_query())
+        _LOGGER.debug(
+            "%s: Did not get expected power state response, sending state query",
+            self.ipaddr,
+        )
+        await self._async_send_state_query()
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(future, POWER_STATE_TIMEOUT / 2)
             return True
+        _LOGGER.debug(
+            "%s: State query did not return expected power state", self.ipaddr
+        )
         return False
 
     async def _async_turn_on(self) -> None:
@@ -70,12 +81,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_turn_off()
         await self._async_turn_on()
 
-    async def async_turn_on(self) -> None:
+    async def async_turn_on(self) -> bool:
         """Turn on the device."""
-        if await self._async_turn_on_with_retry():
-            self._set_power_state_ignore_next_push(self._protocol.on_byte)
-
-    async def _async_turn_on_with_retry(self) -> bool:
         calls = (self._async_turn_on, self._async_turn_off_on, self._async_turn_on)
         for idx, call in enumerate(calls):
             if (
@@ -83,7 +90,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 or self.is_on
             ):
                 return True
-            _LOGGER.debug("Failed to turn on (%s/%s)", 1 + idx, len(calls))
+            _LOGGER.debug(
+                "%s: Failed to turn on (%s/%s)", self.ipaddr, 1 + idx, len(calls)
+            )
         return False
 
     async def _async_turn_off(self) -> None:
@@ -93,12 +102,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_turn_on()
         await self._async_turn_off()
 
-    async def async_turn_off(self) -> None:
+    async def async_turn_off(self) -> bool:
         """Turn off the device."""
-        if await self._async_turn_off_with_retry():
-            self._set_power_state_ignore_next_push(self._protocol.off_byte)
-
-    async def _async_turn_off_with_retry(self) -> bool:
         calls = (self._async_turn_off, self._async_turn_on_off, self._async_turn_off)
         for idx, call in enumerate(calls):
             if (
@@ -106,7 +111,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 or not self.is_on
             ):
                 return True
-            _LOGGER.debug("Failed to turn off (%s/%s)", 1 + idx, len(calls))
+            _LOGGER.debug(
+                "%s: Failed to turn off (%s/%s)", self.ipaddr, 1 + idx, len(calls)
+            )
         return False
 
     async def async_set_white_temp(self, temperature, brightness, persist=True) -> None:
@@ -124,7 +131,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 self._aio_protocol.close()
             self._updates_without_response = 0
             raise RuntimeError("Bulb stopped responding")
-        await self._async_send_msg(self._protocol.construct_state_query())
+        await self._async_send_state_query()
         self._updates_without_response += 1
 
     async def async_set_levels(
