@@ -92,8 +92,6 @@ class LEDENETDevice:
         self.timeout = timeout
         self.raw_state = None
         self.available = None
-        self._ignore_next_power_state_update = False
-
         self._protocol = None
         self._mode = None
         self._transition_complete_time = 0
@@ -396,12 +394,6 @@ class LEDENETDevice:
 
     def process_power_state_response(self, msg):
         """Process a power state change message."""
-        if self._ignore_next_power_state_update:
-            # These devices frequently push an incorrect power
-            # state right after changing state.
-            self._ignore_next_power_state_update = False
-            return
-
         if not self._protocol.is_valid_power_state_response(msg):
             _LOGGER.warning(
                 "%s: Recieved invalid power state response: %s",
@@ -487,11 +479,6 @@ class LEDENETDevice:
         mode_str += " raw state: "
         mode_str += utils.raw_state_to_dec(rx)
         return f"{power_str} [{mode_str}]"
-
-    def _set_power_state_ignore_next_push(self, new_power_state):
-        """Set the power state in the raw state, and ignore next push update."""
-        self._set_power_state(new_power_state)
-        self._ignore_next_power_state_update = True
 
     def _set_power_state(self, new_power_state):
         """Set the power state in the raw state."""
