@@ -412,6 +412,35 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return LEDENETRawState(*raw_state)
 
 
+    def construct_music_mode(self, sensitivity):
+        """The bytes to send for a level change request.
+
+        Known messages
+        73 01 4d 0f d0
+              ^^
+              Likely sensitivity from 0-100 (0x64)
+        73 01 64 0f e7
+        73 01 4a 0f cd
+        73 01 4b 0f ce
+        73 01 00 0f 83
+        73 01 1b 0f 9e
+        73 01 05 0f 88
+        73 01 02 0f 85
+        73 01 06 0f 89
+        73 01 05 0f 88
+        73 01 10 0f 93
+        73 01 4d 0f d0
+        73 01 64 0f e7
+        73 00 64 0f e6
+
+        Mic 
+        37 00 00 37  Fade In
+        37 01 00 38  Gradual
+        37 02 00 39  Jump
+        37 03 00 3a  Strobe
+        """
+
+
 class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
