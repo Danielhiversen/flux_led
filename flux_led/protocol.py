@@ -430,10 +430,16 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         73 01 10 0f 93
         73 01 4d 0f d0
         73 01 64 0f e7
-        73 00 64 0f e6
+
+        Pause music mode
+        73 00 59 0f db
+           ^^
+           On/off byte
 
         Mic
         37 00 00 37  Fade In
+           ^^
+           Mic effect
         37 01 00 38  Gradual
         37 02 00 39  Jump
         37 03 00 3a  Strobe
