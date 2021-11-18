@@ -411,7 +411,6 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-
     def construct_music_mode(self, sensitivity):
         """The bytes to send for a level change request.
 
@@ -433,7 +432,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         73 01 64 0f e7
         73 00 64 0f e6
 
-        Mic 
+        Mic
         37 00 00 37  Fade In
         37 01 00 38  Gradual
         37 02 00 39  Jump
