@@ -353,7 +353,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The bytes to send for a state change request.
 
         Alternate messages
-  
+
         Off 3b 24 00 00 00 00 00 00 00 32 00 00 91
         On  3b 23 00 00 00 00 00 00 00 32 00 00 90
         """
