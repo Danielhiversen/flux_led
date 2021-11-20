@@ -11,6 +11,8 @@ from .const import (
     COLOR_MODES_ADDRESSABLE,
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
+    STATE_COOL_WHITE,
+    STATE_GREEN,
     STATE_RED,
     STATE_WARM_WHITE,
 )
@@ -155,7 +157,12 @@ MODELS = [
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={},
+        channel_map={
+            STATE_WARM_WHITE: STATE_RED,
+            STATE_RED: STATE_WARM_WHITE,
+            STATE_COOL_WHITE: STATE_GREEN,
+            STATE_GREEN: STATE_COOL_WHITE,
+        },
     ),
     LEDENETModel(
         model_num=0x0B,
@@ -205,7 +212,12 @@ MODELS = [
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={},
+        channel_map={
+            STATE_WARM_WHITE: STATE_RED,
+            STATE_RED: STATE_WARM_WHITE,
+            STATE_COOL_WHITE: STATE_GREEN,
+            STATE_GREEN: STATE_COOL_WHITE,
+        },
     ),
     LEDENETModel(
         model_num=0x17,
@@ -255,7 +267,12 @@ MODELS = [
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={},
+        channel_map={
+            STATE_WARM_WHITE: STATE_RED,
+            STATE_RED: STATE_WARM_WHITE,
+            STATE_COOL_WHITE: STATE_GREEN,
+            STATE_GREEN: STATE_COOL_WHITE,
+        },
     ),
     LEDENETModel(
         model_num=0x21,
@@ -335,7 +352,12 @@ MODELS = [
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={},
+        channel_map={
+            STATE_WARM_WHITE: STATE_RED,
+            STATE_RED: STATE_WARM_WHITE,
+            STATE_COOL_WHITE: STATE_GREEN,
+            STATE_GREEN: STATE_COOL_WHITE,
+        },
     ),
     LEDENETModel(
         model_num=0x54,
@@ -355,7 +377,12 @@ MODELS = [
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={},
+        channel_map={
+            STATE_WARM_WHITE: STATE_RED,
+            STATE_RED: STATE_WARM_WHITE,
+            STATE_COOL_WHITE: STATE_GREEN,
+            STATE_GREEN: STATE_COOL_WHITE,
+        },
     ),
     LEDENETModel(
         model_num=0x81,
