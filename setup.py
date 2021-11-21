@@ -31,7 +31,7 @@ dev_requirements = [
     "wheel>=0.34.2",
 ]
 
-requirements = ["webcolors", 'typing_extensions.zoneinfo;python_version<"3.8"']
+requirements = ["webcolors", 'typing_extensions;python_version<"3.8"']
 
 
 extra_requirements = {
