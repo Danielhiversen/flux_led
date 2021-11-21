@@ -1,18 +1,104 @@
 import contextlib
+from datetime import date
 import logging
 import select
 import socket
+import sys
 import time
 
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
+
+from .models_db import get_model_description
+
+from .const import (
+    ATTR_IPADDR,
+    ATTR_ID,
+    ATTR_MODEL,
+    ATTR_MODEL_NUM,
+    ATTR_VERSION_NUM,
+    ATTR_FIRMWARE_DATE,
+    ATTR_MODEL_INFO,
+    ATTR_MODEL_DESCRIPTION,
+)
+
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def _process_discovery_message(data, decoded_data):
+    """Process response from b'HF-A11ASSISTHREAD'
+
+    b'192.168.214.252,B4E842E10588,AK001-ZJ2145'
+    """
+    data_split = decoded_data.split(",")
+    if len(data_split) < 3:
+        return
+    ipaddr = data_split[0]
+    data.update(
+        {
+            ATTR_IPADDR: ipaddr,
+            ATTR_ID: data_split[1],
+            ATTR_MODEL: data_split[2],
+        }
+    )
+
+
+def _process_version_message(data, decoded_data):
+    """Process response from b'AT+LVER\r'
+
+    b'+ok=07_06_20210106_ZG-BL\r'
+    """
+    version_data = decoded_data[4:].replace("\r", "")
+    data_split = version_data.split("_")
+    if len(data_split) < 2:
+        return
+    try:
+        data[ATTR_MODEL_NUM] = int(data_split[0], 16)
+        data[ATTR_VERSION_NUM] = int(data_split[1], 16)
+    except ValueError:
+        return
+    data[ATTR_MODEL_DESCRIPTION] = get_model_description(data[ATTR_MODEL_NUM])
+    if len(data_split) < 3:
+        return
+    firmware_date = data_split[2]
+    try:
+        data[ATTR_FIRMWARE_DATE] = date(
+            int(firmware_date[:4]),
+            int(firmware_date[4:6]),
+            int(firmware_date[6:8]),
+        )
+    except (TypeError, ValueError):
+        return
+    if len(data_split) < 4:
+        return
+    data[ATTR_MODEL_INFO] = data_split[3]
+
+
+class FluxLEDDiscovery(TypedDict):
+    """A flux led device."""
+
+    ipaddr: str
+    id: str  # aka mac
+    model: str
+    model_num: int
+    version_num: int
+    firmware_date: date
+    model_info: str
+    model_description: str
 
 
 class BulbScanner:
 
     DISCOVERY_PORT = 48899
-    BROADCAST_FREQUENCY = 3
+    BROADCAST_FREQUENCY = (
+        5  # At least 5 for A1 models (Magic Home Branded RGB Symphony [Addressable])
+    )
     RESPONSE_SIZE = 64
     DISCOVER_MESSAGE = b"HF-A11ASSISTHREAD"
+    VERSION_MESSAGE = b"AT+LVER\r"
     BROADCAST_ADDRESS = "<broadcast>"
 
     def __init__(self):
@@ -42,27 +128,34 @@ class BulbScanner:
             address = self.BROADCAST_ADDRESS
         return (address, self.DISCOVERY_PORT)
 
-    def _process_response(self, data, from_address, address, response_list):
+    def _process_response(self, data, from_address, address, response_list) -> bool:
         """Process a response.
 
         Returns True if processing should stop
         """
         if data is None:
-            return
-        if data == self.DISCOVER_MESSAGE:
-            return
-        data_split = data.decode("ascii").split(",")
-        if len(data_split) < 3:
-            return
-        ipaddr = data_split[0]
-        if ipaddr in response_list:
-            return
-        response_list[ipaddr] = {
-            "ipaddr": ipaddr,
-            "id": data_split[1],
-            "model": data_split[2],
-        }
-        return ipaddr in (from_address, address)
+            return False
+        if data in (self.DISCOVER_MESSAGE, self.VERSION_MESSAGE):
+            return False
+        decoded_data = data.decode("ascii")
+        self._process_data(from_address, decoded_data, response_list)
+        if address is None:
+            return False
+        return response_list.get(address, {}).get(ATTR_MODEL_NUM) is not None
+
+    def _process_data(self, from_address, decoded_data, response_list):
+        """Process data."""
+        from_ipaddr = from_address[0]
+        data = response_list.setdefault(from_ipaddr, FluxLEDDiscovery({}))
+        if decoded_data.startswith("+ok="):
+            _process_version_message(data, decoded_data)
+        elif "," in decoded_data:
+            _process_discovery_message(data, decoded_data)
+
+    def _found_bulbs(self, response_list):
+        """Return only complete bulb discoveries."""
+
+        return [info for info in response_list.values() if info.get(ATTR_IPADDR)]
 
     def scan(self, timeout=10, address=None):
         """Scan for bulbs.
@@ -82,6 +175,7 @@ class BulbScanner:
                 break
             # send out a broadcast query
             sock.sendto(self.DISCOVER_MESSAGE, destination)
+            sock.sendto(self.VERSION_MESSAGE, destination)
             _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
             # inner loop waiting for responses
             while True:
@@ -98,6 +192,7 @@ class BulbScanner:
                             "discover: %s => %s", destination, self.DISCOVER_MESSAGE
                         )
                         sock.sendto(self.DISCOVER_MESSAGE, destination)
+                        sock.sendto(self.VERSION_MESSAGE, destination)
                     continue
 
                 try:
@@ -110,5 +205,5 @@ class BulbScanner:
                     found_all = True
                     break
 
-        self.found_bulbs = response_list.values()
+        self.found_bulbs = self._found_bulbs(response_list)
         return self.found_bulbs

@@ -122,7 +122,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x06,
         models=["AK001-ZJ2147"],
-        description="Magic Home Branded RGBW Controller",
+        description="RGBW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode=GENERIC_RGBW_MAP,
@@ -132,7 +132,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x07,
         models=[],
-        description="Magic Home Branded RGBCW Controller",
+        description="RGBCW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_9BYTE,
         mode_to_color_mode=GENERIC_RGBWW_MAP,
@@ -142,7 +142,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x08,
         models=[],
-        description="Magic Home Branded RGB Controller with MIC",
+        description="RGB Controller with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode=GENERIC_RGB_MAP,
@@ -297,7 +297,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x33,
         models=["AK001-ZJ2145", "AK001-ZJ2146"],
-        description="Magic Home Branded RGB Controller",
+        description="RGB Controller",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode=GENERIC_RGB_MAP,
@@ -317,7 +317,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x41,
         models=[],
-        description="Magic Home Branded Single Channel Controller",
+        description="Single Channel Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},  # Only mode should be 0x41
@@ -372,7 +372,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x62,
         models=[],
-        description="Magic Home Controller CCT",
+        description="CCT Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
@@ -447,7 +447,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA1,
         models=[],
-        description="RGB Symphony [Addressable]",  # https://github.com/Danielhiversen/flux_led/pull/59/files#diff-09e60df19b61f5ceb8d2aef0ade582c2b84979cab660baa27c1ec65725144d76R776
+        description="RGB Symphony Original",  # https://github.com/Danielhiversen/flux_led/pull/59/files#diff-09e60df19b61f5ceb8d2aef0ade582c2b84979cab660baa27c1ec65725144d76R776
         always_writes_white_and_colors=False,
         protocol=PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
         mode_to_color_mode={},
@@ -457,7 +457,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA2,
         models=["AK001-ZJ2104"],
-        description="RGB Symphony [Addressable]",
+        description="RGB Symphony 2",
         always_writes_white_and_colors=False,
         protocol=PROTOCOL_LEDENET_ADDRESSABLE,
         mode_to_color_mode={},
@@ -467,7 +467,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA3,
         models=["K001-ZJ2148"],
-        description="Magic Home Branded RGB Symphony [Addressable]",
+        description="RGB Symphony 3",
         always_writes_white_and_colors=False,
         protocol=PROTOCOL_LEDENET_ADDRESSABLE,
         mode_to_color_mode={},
@@ -525,3 +525,8 @@ RGBW_PROTOCOL_MODELS = {
 USE_9BYTE_PROTOCOL_MODELS = {
     model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_9BYTE
 }
+
+
+def get_model_description(model_num):
+    """Return the description for a model."""
+    return MODEL_DESCRIPTIONS.get(model_num, f"Unknown Model {hex(model_num)}")

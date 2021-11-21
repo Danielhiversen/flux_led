@@ -39,6 +39,7 @@ class AIOBulbScanner(BulbScanner):
         """Send the scans."""
         _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
         transport.sendto(self.DISCOVER_MESSAGE, destination)
+        transport.sendto(self.VERSION_MESSAGE, destination)
         quit_time = time.monotonic() + timeout
         remain_time = timeout
         while True:
@@ -55,6 +56,7 @@ class AIOBulbScanner(BulbScanner):
                 # No response, send broadcast again in cast it got lost
                 _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
                 transport.sendto(self.DISCOVER_MESSAGE, destination)
+                transport.sendto(self.VERSION_MESSAGE, destination)
             else:
                 return  # found_all
             remain_time = quit_time - time.monotonic()
@@ -85,5 +87,5 @@ class AIOBulbScanner(BulbScanner):
         finally:
             transport.close()
 
-        self.found_bulbs = response_list.values()
+        self.found_bulbs = self._found_bulbs(response_list)
         return list(self.found_bulbs)
