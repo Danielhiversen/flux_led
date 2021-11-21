@@ -874,7 +874,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.model_num, 0x41)
         self.assertEqual(
-            light.model, "Magic Home Branded Single Channel Controller (0x41)"
+            light.model, "Single Channel Controller (0x41)"
         )
         assert light.color_modes == {COLOR_MODE_DIM}
 
@@ -974,7 +974,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.addressable, True)
         self.assertEqual(light.model_num, 0xA2)
-        self.assertEqual(light.model, "RGB Symphony [Addressable] (0xA2)")
+        self.assertEqual(light.model, "RGB Symphony 2 (0xA2)")
         assert len(light.effect_list) == 103
         assert light.color_modes == {COLOR_MODE_RGB}
 
@@ -1052,7 +1052,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.original_addressable, True)
         self.assertEqual(light.model_num, 0xA1)
-        self.assertEqual(light.model, "RGB Symphony [Addressable] (0xA1)")
+        self.assertEqual(light.model, "RGB Symphony Original (0xA1)")
         assert len(light.effect_list) == 300
         assert light.color_modes == {COLOR_MODE_RGB}
 
