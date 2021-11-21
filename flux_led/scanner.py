@@ -16,6 +16,55 @@ from .models_db import get_model_description
 _LOGGER = logging.getLogger(__name__)
 
 
+def _process_discovery_message(data, decoded_data):
+    """Process response from b'HF-A11ASSISTHREAD'
+
+    b'192.168.214.252,B4E842E10588,AK001-ZJ2145'
+    """
+    data_split = decoded_data.split(",")
+    if len(data_split) < 3:
+        return
+    ipaddr = data_split[0]
+    data.update(
+        {
+            "ipaddr": ipaddr,
+            "id": data_split[1],
+            "model": data_split[2],
+        }
+    )
+
+
+def _process_version_message(data, decoded_data):
+    """Process response from b'AT+LVER\r'
+
+    b'+ok=07_06_20210106_ZG-BL\r'
+    """
+    version_data = decoded_data[4:].replace("\r", "")
+    data_split = version_data.split("_")
+    if len(data_split) < 2:
+        return
+    try:
+        data["model_num"] = int(data_split[0], 16)
+        data["version_num"] = int(data_split[1], 16)
+    except ValueError:
+        return
+    data["model_description"] = get_model_description(data["model_num"])
+    if len(data_split) < 3:
+        return
+    firmware_date = data_split[2]
+    try:
+        data["firmware_date"] = date(
+            int(firmware_date[:4]),
+            int(firmware_date[4:6]),
+            int(firmware_date[6:8]),
+        )
+    except (TypeError, ValueError):
+        return
+    if len(data_split) < 4:
+        return
+    data["model_info"] = data_split[3]
+
+
 class FluxLEDDiscovery(TypedDict):
     """A flux led device."""
 
@@ -85,42 +134,9 @@ class BulbScanner:
         from_ipaddr = from_address[0]
         data = response_list.setdefault(from_ipaddr, FluxLEDDiscovery({}))
         if decoded_data.startswith("+ok="):
-            version_data = decoded_data[4:].replace("\r", "")
-            data_split = version_data.split("_")
-            if len(data_split) < 2:
-                return
-            try:
-                data["model_num"] = int(data_split[0], 16)
-                data["version_num"] = int(data_split[1], 16)
-            except ValueError:
-                return
-            data["model_description"] = get_model_description(data["model_num"])
-            if len(data_split) < 3:
-                return
-            firmware_date = data_split[2]
-            try:
-                data["firmware_date"] = date(
-                    int(firmware_date[:4]),
-                    int(firmware_date[4:6]),
-                    int(firmware_date[6:8]),
-                )
-            except (TypeError, ValueError):
-                return
-            if len(data_split) < 4:
-                return
-            data["model_info"] = data_split[3]
+            _process_version_message(data, decoded_data)
         elif "," in decoded_data:
-            data_split = decoded_data.split(",")
-            if len(data_split) < 3:
-                return
-            ipaddr = data_split[0]
-            data.update(
-                {
-                    "ipaddr": ipaddr,
-                    "id": data_split[1],
-                    "model": data_split[2],
-                }
-            )
+            _process_discovery_message(data, decoded_data)
 
     def _found_bulbs(self, response_list):
         """Return only complete bulb discoveries."""
