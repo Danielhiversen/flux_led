@@ -525,3 +525,8 @@ RGBW_PROTOCOL_MODELS = {
 USE_9BYTE_PROTOCOL_MODELS = {
     model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_9BYTE
 }
+
+
+def get_model_description(model_num):
+    """Return the description for a model."""
+    return MODEL_DESCRIPTIONS.get(model_num, f"Unknown Model {hex(model_num)}")
