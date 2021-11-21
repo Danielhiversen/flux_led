@@ -81,7 +81,9 @@ class FluxLEDDiscovery(TypedDict):
 class BulbScanner:
 
     DISCOVERY_PORT = 48899
-    BROADCAST_FREQUENCY = 4
+    BROADCAST_FREQUENCY = (
+        5  # At least 5 for A1 models (Magic Home Branded RGB Symphony [Addressable])
+    )
     RESPONSE_SIZE = 64
     DISCOVER_MESSAGE = b"HF-A11ASSISTHREAD"
     VERSION_MESSAGE = b"AT+LVER\r"
