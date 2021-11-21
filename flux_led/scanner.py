@@ -13,6 +13,18 @@ else:
 
 from .models_db import get_model_description
 
+from .const import (
+    ATTR_IPADDR,
+    ATTR_ID,
+    ATTR_MODEL,
+    ATTR_MODEL_NUM,
+    ATTR_VERSION_NUM,
+    ATTR_FIRMWARE_DATE,
+    ATTR_MODEL_INFO,
+    ATTR_MODEL_DESCRIPTION,
+)
+
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -27,9 +39,9 @@ def _process_discovery_message(data, decoded_data):
     ipaddr = data_split[0]
     data.update(
         {
-            "ipaddr": ipaddr,
-            "id": data_split[1],
-            "model": data_split[2],
+            ATTR_IPADDR: ipaddr,
+            ATTR_ID: data_split[1],
+            ATTR_MODEL: data_split[2],
         }
     )
 
@@ -44,16 +56,16 @@ def _process_version_message(data, decoded_data):
     if len(data_split) < 2:
         return
     try:
-        data["model_num"] = int(data_split[0], 16)
-        data["version_num"] = int(data_split[1], 16)
+        data[ATTR_MODEL_NUM] = int(data_split[0], 16)
+        data[ATTR_VERSION_NUM] = int(data_split[1], 16)
     except ValueError:
         return
-    data["model_description"] = get_model_description(data["model_num"])
+    data[ATTR_MODEL_DESCRIPTION] = get_model_description(data[ATTR_MODEL_NUM])
     if len(data_split) < 3:
         return
     firmware_date = data_split[2]
     try:
-        data["firmware_date"] = date(
+        data[ATTR_FIRMWARE_DATE] = date(
             int(firmware_date[:4]),
             int(firmware_date[4:6]),
             int(firmware_date[6:8]),
@@ -62,7 +74,7 @@ def _process_version_message(data, decoded_data):
         return
     if len(data_split) < 4:
         return
-    data["model_info"] = data_split[3]
+    data[ATTR_MODEL_INFO] = data_split[3]
 
 
 class FluxLEDDiscovery(TypedDict):
@@ -129,7 +141,7 @@ class BulbScanner:
         self._process_data(from_address, decoded_data, response_list)
         if address is None:
             return False
-        return response_list.get(address, {}).get("model_num") is not None
+        return response_list.get(address, {}).get(ATTR_MODEL_NUM) is not None
 
     def _process_data(self, from_address, decoded_data, response_list):
         """Process data."""
@@ -143,7 +155,7 @@ class BulbScanner:
     def _found_bulbs(self, response_list):
         """Return only complete bulb discoveries."""
 
-        return [info for info in response_list.values() if info.get("ipaddr")]
+        return [info for info in response_list.values() if info.get(ATTR_IPADDR)]
 
     def scan(self, timeout=10, address=None):
         """Scan for bulbs.

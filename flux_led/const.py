@@ -11,6 +11,15 @@ class LevelWriteMode(Enum):
 
 PRESET_MUSIC_MODE = 0x62
 
+ATTR_IPADDR = "ipaddr"
+ATTR_ID = "id"
+ATTR_MODEL = "model"
+ATTR_MODEL_NUM = "model_num"
+ATTR_VERSION_NUM = "version_num"
+ATTR_FIRMWARE_DATE = "firmware_date"
+ATTR_MODEL_INFO = "model_info"
+ATTR_MODEL_DESCRIPTION = "model_description"
+
 # Color modes
 COLOR_MODE_DIM = "DIM"
 COLOR_MODE_CCT = "CCT"
