@@ -502,13 +502,13 @@ class LEDENETDevice:
                 if self.rgbwcapable:
                     mode_str += f" White: {rx.warm_white}"
                 else:
-                    mode_str += f" Brightness: {self.brightness}"
+                    mode_str += f" Brightness: {round(self.brightness * 100 / 255)}%"
             elif color_mode == COLOR_MODE_DIM:
                 mode_str = f"Warm White: {utils.byteToPercent(rx.warm_white)}%"
             elif color_mode == COLOR_MODE_CCT:
                 cct_value = self.getWhiteTemperature()
                 mode_str = "CCT: {}K Brightness: {}%".format(
-                    cct_value[0], cct_value[1] / 255
+                    cct_value[0], round(cct_value[1] * 100 / 255)
                 )
         elif mode == MODE_PRESET:
             pat = self.effect
