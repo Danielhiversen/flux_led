@@ -5,25 +5,24 @@ import select
 import socket
 import sys
 import time
+from typing import cast
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
 else:
     from typing_extensions import TypedDict
 
-from .models_db import get_model_description
-
 from .const import (
-    ATTR_IPADDR,
+    ATTR_FIRMWARE_DATE,
     ATTR_ID,
+    ATTR_IPADDR,
     ATTR_MODEL,
+    ATTR_MODEL_DESCRIPTION,
+    ATTR_MODEL_INFO,
     ATTR_MODEL_NUM,
     ATTR_VERSION_NUM,
-    ATTR_FIRMWARE_DATE,
-    ATTR_MODEL_INFO,
-    ATTR_MODEL_DESCRIPTION,
 )
-
+from .models_db import get_model_description
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -146,7 +145,7 @@ class BulbScanner:
     def _process_data(self, from_address, decoded_data, response_list):
         """Process data."""
         from_ipaddr = from_address[0]
-        data = response_list.setdefault(from_ipaddr, FluxLEDDiscovery({}))
+        data = response_list.setdefault(from_ipaddr, {})
         if decoded_data.startswith("+ok="):
             _process_version_message(data, decoded_data)
         elif "," in decoded_data:
@@ -155,7 +154,11 @@ class BulbScanner:
     def _found_bulbs(self, response_list):
         """Return only complete bulb discoveries."""
 
-        return [info for info in response_list.values() if info.get(ATTR_IPADDR)]
+        return [
+            cast(FluxLEDDiscovery, info)
+            for info in response_list.values()
+            if info.get(ATTR_IPADDR)
+        ]
 
     def scan(self, timeout=10, address=None):
         """Scan for bulbs.

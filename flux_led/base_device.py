@@ -2,6 +2,7 @@ import colorsys
 from enum import Enum
 import logging
 import time
+from typing import List, Optional, Set, Tuple, Union, ValuesView
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -65,6 +66,8 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
+    LEDENETOriginalRawState,
+    LEDENETRawState,
     ProtocolLEDENET8Byte,
     ProtocolLEDENET9Byte,
     ProtocolLEDENETAddressable,
@@ -85,117 +88,137 @@ class DeviceType(Enum):
 class LEDENETDevice:
     """An LEDENET Device."""
 
-    def __init__(self, ipaddr, port=5577, timeout=5):
+    def __init__(self, ipaddr: str, port: int = 5577, timeout: float = 5) -> None:
         """Init the LEDENEt Device."""
-        self.ipaddr = ipaddr
-        self.port = port
-        self.timeout = timeout
-        self.raw_state = None
-        self.available = None
-        self._protocol = None
-        self._mode = None
-        self._transition_complete_time = 0
+        self.ipaddr: str = ipaddr
+        self.port: int = port
+        self.timeout: float = timeout
+        self.raw_state: Optional[Union[LEDENETOriginalRawState, LEDENETRawState]] = None
+        self.available: Optional[bool] = None
+        self._protocol: Optional[
+            Union[
+                ProtocolLEDENET8Byte,
+                ProtocolLEDENET9Byte,
+                ProtocolLEDENETAddressable,
+                ProtocolLEDENETOriginal,
+                ProtocolLEDENETOriginalAddressable,
+            ]
+        ] = None
+        self._mode: Optional[str] = None
+        self._transition_complete_time: float = 0
 
     @property
-    def model_num(self):
+    def model_num(self) -> int:
         """Return the model number."""
+        assert self.raw_state is not None
         return self.raw_state.model_num if self.raw_state else None
 
     @property
-    def model(self):
+    def model(self) -> str:
         """Return the human readable model description."""
         model_num = self.model_num
         description = MODEL_DESCRIPTIONS.get(model_num) or UNKNOWN_MODEL
         return f"{description} (0x{model_num:02X})"
 
     @property
-    def version_num(self):
+    def version_num(self) -> int:
         """Return the version number."""
+        assert self.raw_state is not None
         raw_state = self.raw_state
-        return raw_state.version_number if hasattr(raw_state, "version_number") else 1
+        if hasattr(raw_state, "version_number"):
+            assert isinstance(raw_state, LEDENETRawState)
+            return raw_state.version_number
+        return 1
 
     @property
-    def preset_pattern_num(self):
+    def preset_pattern_num(self) -> int:
         """Return the preset pattern number."""
+        assert self.raw_state is not None
         return self.raw_state.preset_pattern
 
     @property
-    def rgbwprotocol(self):
+    def rgbwprotocol(self) -> bool:
         """Devices that don't require a separate rgb/w bit."""
         return self.model_num in RGBW_PROTOCOL_MODELS
 
     @property
-    def addressable(self):
+    def addressable(self) -> bool:
         """Devices that have addressable leds."""
         return self._is_addressable(self.model_num)
 
-    def _is_addressable(self, model_num):
+    def _is_addressable(self, model_num: int) -> bool:
         """Devices that have addressable leds."""
         return model_num in ADDRESSABLE_MODELS
 
     @property
-    def original_addressable(self):
+    def original_addressable(self) -> bool:
         """Devices that have addressable leds using the original addressable protocol."""
         return self._is_original_addressable(self.model_num)
 
-    def _is_original_addressable(self, model_num):
+    def _is_original_addressable(self, model_num) -> bool:
         """Devices that have addressable leds using the original addressable protocol."""
         return model_num in ORIGINAL_ADDRESSABLE_MODELS
 
     @property
-    def rgbwcapable(self):
+    def rgbwcapable(self) -> bool:
         """Devices that actually support rgbw."""
         color_modes = self.color_modes
         return COLOR_MODE_RGBW in color_modes or COLOR_MODE_RGBWW in color_modes
 
     @property
-    def device_type(self):
+    def device_type(self) -> DeviceType:
         """Return the device type."""
         is_switch = self.model_num in MODEL_NUMS_SWITCHS
         return DeviceType.Switch if is_switch else DeviceType.Bulb
 
     @property
-    def color_temp(self):
+    def color_temp(self) -> int:
         """Return the current color temp in kelvin."""
         return (self.getWhiteTemperature())[0]
 
     @property
-    def min_temp(self):
+    def min_temp(self) -> int:
         """Returns the minimum color temp in kelvin."""
         return MIN_TEMP
 
     @property
-    def max_temp(self):
+    def max_temp(self) -> int:
         """Returns the maximum color temp in kelvin."""
         return MAX_TEMP
 
     @property
-    def _rgbwwprotocol(self):
+    def _rgbwwprotocol(self) -> bool:
         """Device that uses the 9-byte protocol."""
         return self._uses_9byte_protocol(self.model_num)
 
-    def _uses_9byte_protocol(self, model_num):
+    def _uses_9byte_protocol(self, model_num: int) -> bool:
         """Devices that use a 9-byte protocol."""
         return model_num in USE_9BYTE_PROTOCOL_MODELS
 
     @property
-    def white_active(self):
+    def white_active(self) -> bool:
         """Any white channel is active."""
-        return bool(self.raw_state.warm_white or self.raw_state.cool_white)
+        assert self.raw_state is not None
+        raw_state = self.raw_state
+        if hasattr(raw_state, "cool_white"):
+            assert isinstance(raw_state, LEDENETRawState)
+            return bool(raw_state.warm_white or raw_state.cool_white)
+        return bool(raw_state.warm_white)
 
     @property
-    def color_active(self):
+    def color_active(self) -> bool:
         """Any color channel is active."""
+        assert self.raw_state is not None
         raw_state = self.raw_state
         return bool(raw_state.red or raw_state.green or raw_state.blue)
 
     @property
-    def multi_color_mode(self):
+    def multi_color_mode(self) -> bool:
         """The device supports multiple color modes."""
         return len(self.color_modes) > 1
 
     @property
-    def color_modes(self):
+    def color_modes(self) -> Set[str]:
         """The available color modes."""
         color_modes = self._internal_color_modes
         # We support CCT mode if the device supports RGBWW
@@ -207,9 +230,10 @@ class LEDENETDevice:
         return color_modes
 
     @property
-    def _internal_color_modes(self):
+    def _internal_color_modes(self) -> Set[str]:
         """The internal available color modes."""
         model_db_entry = MODEL_MAP.get(self.model_num)
+        assert self.raw_state is not None
         if not model_db_entry:
             # Default mode is RGB
             return BASE_MODE_MAP.get(self.raw_state.mode & 0x0F, {DEFAULT_MODE})
@@ -218,7 +242,7 @@ class LEDENETDevice:
         )
 
     @property
-    def color_mode(self):
+    def color_mode(self) -> Optional[str]:
         """The current color mode."""
         color_modes = self._internal_color_modes
         if COLOR_MODE_RGBWW in color_modes:
@@ -235,26 +259,29 @@ class LEDENETDevice:
         return None  # Usually a switch or non-light device
 
     @property
-    def protocol(self):
+    def protocol(self) -> Optional[str]:
         """Returns the name of the protocol in use."""
-        if not self._protocol:
+        if self._protocol is None:
             return None
         return self._protocol.name
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
+        assert self.raw_state is not None
+        assert self._protocol is not None
         return self.raw_state.power_state == self._protocol.on_byte
 
     @property
-    def mode(self):
+    def mode(self) -> Optional[str]:
         return self._mode
 
     @property
-    def warm_white(self):
+    def warm_white(self) -> int:
+        assert self.raw_state is not None
         return self.raw_state.warm_white if self._rgbwwprotocol else 0
 
     @property
-    def effect_list(self):
+    def effect_list(self) -> Union[ValuesView[str], List[str]]:
         """Return the list of available effects."""
         if self.original_addressable:
             return ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
@@ -263,8 +290,9 @@ class LEDENETDevice:
         return EFFECT_LIST
 
     @property
-    def effect(self):
+    def effect(self) -> Optional[str]:
         """Return the current effect."""
+        assert self.raw_state is not None
         pattern_code = self.preset_pattern_num
         if pattern_code == PRESET_MUSIC_MODE:
             return MODE_MUSIC
@@ -282,16 +310,20 @@ class LEDENETDevice:
         return EFFECT_ID_NAME.get(pattern_code)
 
     @property
-    def cool_white(self):
-        return self.raw_state.cool_white if self._rgbwwprotocol else 0
+    def cool_white(self) -> int:
+        assert self.raw_state is not None
+        if self._rgbwwprotocol:
+            assert isinstance(self.raw_state, LEDENETRawState)
+            return self.raw_state.cool_white
+        return 0
 
     # Old name is deprecated
     @property
-    def cold_white(self):
+    def cold_white(self) -> int:
         return self.cool_white
 
     @property
-    def brightness(self):
+    def brightness(self) -> int:
         """Return current brightness 0-255.
 
         For warm white return current led level. For RGB
@@ -301,6 +333,7 @@ class LEDENETDevice:
         """
         color_mode = self.color_mode
         raw_state = self.raw_state
+        assert raw_state is not None
 
         if color_mode == COLOR_MODE_DIM:
             return int(raw_state.warm_white)
@@ -314,12 +347,14 @@ class LEDENETDevice:
         if color_mode == COLOR_MODE_RGBW:
             return round((v_255 + raw_state.warm_white) / 2)
         if color_mode == COLOR_MODE_RGBWW:
+            assert isinstance(raw_state, LEDENETRawState)
             return round((v_255 + raw_state.warm_white + raw_state.cool_white) / 3)
 
         # Default color mode (RGB)
         return int(v_255)
 
-    def _determineMode(self):
+    def _determineMode(self) -> Optional[str]:
+        assert self.raw_state is not None
         pattern_code = self.raw_state.preset_pattern
         if self.device_type == DeviceType.Switch:
             return MODE_SWITCH
@@ -339,13 +374,15 @@ class LEDENETDevice:
             return MODE_PRESET
         return None
 
-    def set_unavailable(self):
+    def set_unavailable(self) -> None:
         self.available = False
 
-    def set_available(self):
+    def set_available(self) -> None:
         self.available = True
 
-    def process_state_response(self, rx):
+    def process_state_response(self, rx: Tuple[int, ...]) -> bool:
+        assert self._protocol is not None
+
         if not self._protocol.is_valid_state_response(rx):
             _LOGGER.warning(
                 "%s: Recieved invalid response: %s",
@@ -354,7 +391,9 @@ class LEDENETDevice:
             )
             return False
 
-        raw_state = self._protocol.named_raw_state(rx)
+        raw_state: Union[
+            LEDENETOriginalRawState, LEDENETRawState
+        ] = self._protocol.named_raw_state(rx)
         _LOGGER.debug("%s: State: %s", self.ipaddr, raw_state)
 
         if raw_state != self.raw_state:
@@ -392,8 +431,9 @@ class LEDENETDevice:
         self._mode = mode
         return True
 
-    def process_power_state_response(self, msg):
+    def process_power_state_response(self, msg: Tuple[int, ...]) -> bool:
         """Process a power state change message."""
+        assert self._protocol is not None
         if not self._protocol.is_valid_power_state_response(msg):
             _LOGGER.warning(
                 "%s: Recieved invalid power state response: %s",
@@ -405,7 +445,11 @@ class LEDENETDevice:
         self._set_power_state(msg[2])
         return True
 
-    def _set_raw_state(self, raw_state, updated=None):
+    def _set_raw_state(
+        self,
+        raw_state: Union[LEDENETOriginalRawState, LEDENETRawState],
+        updated: Optional[Set[str]] = None,
+    ) -> None:
         """Set the raw state remapping channels as needed."""
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
         if not channel_map:  # Remap channels
@@ -433,7 +477,10 @@ class LEDENETDevice:
             utils.raw_state_to_dec(self.raw_state),
         )
 
-    def __str__(self):  # noqa: C901
+    def __str__(self) -> str:  # noqa: C901
+        assert self.raw_state is not None
+        assert self._protocol is not None
+
         rx = self.raw_state
         if not rx:
             return "No state data"
@@ -480,104 +527,117 @@ class LEDENETDevice:
         mode_str += utils.raw_state_to_dec(rx)
         return f"{power_str} [{mode_str}]"
 
-    def _set_power_state(self, new_power_state):
+    def _set_power_state(self, new_power_state: int) -> None:
         """Set the power state in the raw state."""
         self._replace_raw_state({"power_state": new_power_state})
         self._set_transition_complete_time()
 
-    def _replace_raw_state(self, new_states):
+    def _replace_raw_state(self, new_states: dict[str, int]) -> None:
+        assert self.raw_state is not None
         _LOGGER.debug("%s: _replace_raw_state: %s", self.ipaddr, new_states)
         self._set_raw_state(
             self.raw_state._replace(**new_states), set(new_states.keys())
         )
 
-    def isOn(self):
+    def isOn(self) -> bool:
         return self.is_on
 
-    def getWarmWhite255(self):
+    def getWarmWhite255(self) -> int:
         if self.color_mode not in {COLOR_MODE_CCT, COLOR_MODE_DIM}:
             return 255
         return self.brightness
 
-    def getWhiteTemperature(self):
+    def getWhiteTemperature(self) -> Tuple[int, int]:
+        """Returns the color temp and brightness"""
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
+        assert self.raw_state is not None
+        assert isinstance(self.raw_state, LEDENETRawState)
         raw_state = self.raw_state
         temp, brightness = white_levels_to_color_temp(
             raw_state.warm_white, raw_state.cool_white
         )
         return temp, brightness
 
-    def getRgbw(self):
+    def getRgbw(self) -> Tuple[int, int, int, int]:
         """Returns red,green,blue,white (usually warm)."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255)
         return self.rgbw
 
     @property
-    def rgbw(self):
+    def rgbw(self) -> Tuple[int, int, int, int]:
         """Returns red,green,blue,white (usually warm)."""
+        assert self.raw_state is not None
+        raw_state = self.raw_state
         return (
-            self.raw_state.red,
-            self.raw_state.green,
-            self.raw_state.blue,
-            self.raw_state.warm_white,
+            raw_state.red,
+            raw_state.green,
+            raw_state.blue,
+            raw_state.warm_white,
         )
 
-    def getRgbww(self):
+    def getRgbww(self) -> Tuple[int, int, int, int, int]:
         """Returns red,green,blue,warm,cool."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
         return self.rgbww
 
     @property
-    def rgbww(self):
+    def rgbww(self) -> Tuple[int, int, int, int, int]:
         """Returns red,green,blue,warm,cool."""
+        assert isinstance(self.raw_state, LEDENETRawState)
+        raw_state = self.raw_state
         return (
-            self.raw_state.red,
-            self.raw_state.green,
-            self.raw_state.blue,
-            self.raw_state.warm_white,
-            self.raw_state.cool_white,
+            raw_state.red,
+            raw_state.green,
+            raw_state.blue,
+            raw_state.warm_white,
+            raw_state.cool_white,
         )
 
-    def getRgbcw(self):
+    def getRgbcw(self) -> Tuple[int, int, int, int, int]:
         """Returns red,green,blue,cool,warm."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
         return self.rgbcw
 
     @property
-    def rgbcw(self):
+    def rgbcw(self) -> Tuple[int, int, int, int, int]:
         """Returns red,green,blue,cool,warm."""
+        assert isinstance(self.raw_state, LEDENETRawState)
+        raw_state = self.raw_state
         return (
-            self.raw_state.red,
-            self.raw_state.green,
-            self.raw_state.blue,
-            self.raw_state.cool_white,
-            self.raw_state.warm_white,
+            raw_state.red,
+            raw_state.green,
+            raw_state.blue,
+            raw_state.cool_white,
+            raw_state.warm_white,
         )
 
-    def getCCT(self):
+    def getCCT(self) -> Tuple[int, int]:
         if self.color_mode != COLOR_MODE_CCT:
             return (255, 255)
-        return (self.raw_state.warm_white, self.raw_state.cool_white)
+        assert isinstance(self.raw_state, LEDENETRawState)
+        raw_state = self.raw_state
+        return (raw_state.warm_white, raw_state.cool_white)
 
     @property
-    def speed(self):
+    def speed(self) -> int:
+        assert self.raw_state is not None
         if self.addressable or self.original_addressable:
             return self.raw_state.speed
         return utils.delayToSpeed(self.raw_state.speed)
 
-    def getSpeed(self):
+    def getSpeed(self) -> int:
         return self.speed
 
     def _generate_levels_change(
         self,
-        channels,
-        persist=True,
-        brightness=None,
-    ):
+        channels: dict[str, int],
+        persist: bool = True,
+        brightness: Optional[int] = None,
+    ) -> Tuple[bytes, dict[str, int]]:
         """Generate the levels change request."""
         channel_map = CHANNEL_REMAP.get(self.model_num)
         if channel_map:
@@ -642,6 +702,7 @@ class LEDENETDevice:
             f"0x{write_mode.value:02X}",
         )
 
+        assert self._protocol is not None
         msg = self._protocol.construct_levels_change(
             persist, r_value, g_value, b_value, w_value, w2_value, write_mode
         )
@@ -653,7 +714,7 @@ class LEDENETDevice:
             updates.update({"warm_white": w_value, "cool_white": w2_value})
         return msg, updates
 
-    def _set_transition_complete_time(self):
+    def _set_transition_complete_time(self) -> None:
         """Set the time we expect the transition will be completed.
 
         Devices fade to a specific state so we want to avoid
@@ -662,6 +723,7 @@ class LEDENETDevice:
         and the brightness values will be wrong until
         the transition completes.
         """
+        assert self.raw_state is not None
         latency = STATE_CHANGE_LATENCY
         if self.addressable or self.original_addressable:
             latency = ADDRESSABLE_STATE_CHANGE_LATENCY
@@ -674,20 +736,25 @@ class LEDENETDevice:
             self._transition_complete_time,
         )
 
-    def getRgb(self):
+    def getRgb(self) -> Tuple[int, int, int]:
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255)
         return self.rgb
 
     @property
-    def rgb(self):
-        return (self.raw_state.red, self.raw_state.green, self.raw_state.blue)
+    def rgb(self) -> Tuple[int, int, int]:
+        assert self.raw_state is not None
+        raw_state = self.raw_state
+        return (raw_state.red, raw_state.green, raw_state.blue)
 
-    def _calculateBrightness(self, rgb, level):
+    def _calculateBrightness(
+        self, rgb: Tuple[int, int, int], level: int
+    ) -> Tuple[int, int, int]:
         hsv = colorsys.rgb_to_hsv(*rgb)
-        return colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
+        h, s, v = colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
+        return int(h), int(s), int(v)
 
-    def setProtocol(self, protocol):
+    def setProtocol(self, protocol: str) -> None:
         if protocol == PROTOCOL_LEDENET_ORIGINAL:
             self._protocol = ProtocolLEDENETOriginal()
         elif protocol == PROTOCOL_LEDENET_8BYTE:
@@ -701,7 +768,17 @@ class LEDENETDevice:
         else:
             raise ValueError(f"Invalid protocol: {protocol}")
 
-    def _set_protocol_from_msg(self, full_msg, fallback_protocol):
+    def _set_protocol_from_msg(
+        self,
+        full_msg: bytearray,
+        fallback_protocol: Union[
+            ProtocolLEDENET8Byte,
+            ProtocolLEDENET9Byte,
+            ProtocolLEDENETAddressable,
+            ProtocolLEDENETOriginal,
+            ProtocolLEDENETOriginalAddressable,
+        ],
+    ) -> None:
         if self._is_addressable(full_msg[1]):
             self._protocol = ProtocolLEDENETAddressable()
         elif self._is_original_addressable(full_msg[1]):
@@ -712,7 +789,7 @@ class LEDENETDevice:
         else:
             self._protocol = fallback_protocol
 
-    def _generate_preset_pattern(self, pattern, speed):
+    def _generate_preset_pattern(self, pattern: str, speed: int) -> bytearray:
         """Generate the preset pattern protocol bytes."""
         if self.original_addressable:
             if pattern not in ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME:
@@ -724,9 +801,12 @@ class LEDENETDevice:
             PresetPattern.valtostr(pattern)
             if not PresetPattern.valid(pattern):
                 raise ValueError("Pattern must be between 0x25 and 0x38")
+        assert self._protocol is not None
         return self._protocol.construct_preset_pattern(pattern, speed)
 
-    def _generate_custom_patterm(self, rgb_list, speed, transition_type):
+    def _generate_custom_patterm(
+        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
+    ) -> bytearray:
         """Generate the custom pattern protocol bytes."""
         # truncate if more than 16
         if len(rgb_list) > 16:
@@ -738,9 +818,10 @@ class LEDENETDevice:
         if len(rgb_list) == 0:
             raise ValueError("setCustomPattern requires at least one color tuples")
 
+        assert self._protocol is not None
         return self._protocol.construct_custom_effect(rgb_list, speed, transition_type)
 
-    def _effect_to_pattern(self, effect):
+    def _effect_to_pattern(self, effect: str) -> int:
         """Convert an effect to a pattern code."""
         if self.addressable:
             return ADDRESSABLE_EFFECT_NAME_ID[effect]

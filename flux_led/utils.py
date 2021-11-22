@@ -2,16 +2,16 @@ import ast
 import colorsys
 import contextlib
 import datetime
-from typing import Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, cast
 
-import webcolors
+import webcolors  # type: ignore
 
 from .const import MAX_TEMP, MIN_TEMP
 
 
 class utils:
     @staticmethod
-    def color_object_to_tuple(color):
+    def color_object_to_tuple(color) -> Optional[Tuple[int, ...]]:
 
         # see if it's already a color tuple
         if type(color) is tuple and len(color) in [3, 4, 5]:
@@ -24,11 +24,14 @@ class utils:
 
         # try to convert from an english name
         with contextlib.suppress(Exception):
-            return webcolors.name_to_rgb(color)
+            return cast(Tuple[int, int, int], webcolors.name_to_rgb(color))
 
         # try to convert an web hex code
         with contextlib.suppress(Exception):
-            return webcolors.hex_to_rgb(webcolors.normalize_hex(color))
+            return cast(
+                Tuple[int, int, int],
+                webcolors.hex_to_rgb(webcolors.normalize_hex(color)),
+            )
 
         # try to convert a string RGB tuple
         with contextlib.suppress(Exception):
@@ -40,7 +43,7 @@ class utils:
         return None
 
     @staticmethod
-    def color_tuple_to_string(rgb):
+    def color_tuple_to_string(rgb) -> str:
         # try to convert to an english name
         try:
             return webcolors.rgb_to_name(rgb)
@@ -50,7 +53,7 @@ class utils:
         return str(rgb)
 
     @staticmethod
-    def get_color_names_list():
+    def get_color_names_list() -> List[str]:
         names = set()
         for key in list(webcolors.CSS2_HEX_TO_NAMES.keys()):
             names.add(webcolors.CSS2_HEX_TO_NAMES[key])
@@ -63,16 +66,16 @@ class utils:
         return sorted(names)
 
     @staticmethod
-    def date_has_passed(dt):
+    def date_has_passed(dt) -> bool:
         delta = dt - datetime.datetime.now()
         return delta.total_seconds() < 0
 
     @staticmethod
-    def dump_bytes(bytes):
+    def dump_bytes(bytes) -> None:
         print("".join(f"{x:02x} " for x in bytearray(bytes)))
 
     @staticmethod
-    def raw_state_to_dec(rx):
+    def raw_state_to_dec(rx: Iterable[int]) -> str:
         raw_state_str = ""
         for _r in rx:
             raw_state_str += str(_r) + ","
@@ -81,7 +84,7 @@ class utils:
     max_delay = 0x1F
 
     @staticmethod
-    def delayToSpeed(delay):
+    def delayToSpeed(delay: int) -> int:
         # speed is 0-100, delay is 1-31
         # 1st translate delay to 0-30
         delay = delay - 1
@@ -94,7 +97,7 @@ class utils:
         return speed
 
     @staticmethod
-    def speedToDelay(speed):
+    def speedToDelay(speed: int) -> int:
         # speed is 0-100, delay is 1-31
         if speed > 100:
             speed = 100
@@ -107,7 +110,7 @@ class utils:
         return delay
 
     @staticmethod
-    def byteToPercent(byte):
+    def byteToPercent(byte: int) -> int:
         if byte > 255:
             byte = 255
         if byte < 0:
@@ -115,7 +118,7 @@ class utils:
         return int((byte * 100) / 255)
 
     @staticmethod
-    def percentToByte(percent):
+    def percentToByte(percent: int) -> int:
         if percent > 100:
             percent = 100
         if percent < 0:
@@ -138,8 +141,12 @@ def rgbcw_to_rgbwc(
 
 
 def _adjust_brightness(
-    current_brightness, new_brightness, color_brightness, cw_brightness, ww_brightness
-):
+    current_brightness: int,
+    new_brightness: int,
+    color_brightness: int,
+    cw_brightness: int,
+    ww_brightness: int,
+) -> Tuple[int, int, int]:
     if new_brightness < current_brightness:
         change_brightness_pct = (
             current_brightness - new_brightness
@@ -254,7 +261,7 @@ def rgbcw_brightness(
     )
 
 
-def color_temp_to_white_levels(temperature, brightness):
+def color_temp_to_white_levels(temperature: int, brightness: float) -> Tuple[int, int]:
     # Assume output temperature of between 2700 and 6500 Kelvin, and scale
     # the warm and cold LEDs linearly to provide that
     if not (MIN_TEMP <= temperature <= MAX_TEMP):
@@ -271,7 +278,7 @@ def color_temp_to_white_levels(temperature, brightness):
     return round(255 * cold), round(255 * warm)
 
 
-def white_levels_to_color_temp(warm_white, cool_white):
+def white_levels_to_color_temp(warm_white: int, cool_white: int) -> Tuple[int, int]:
     if not (0 <= warm_white <= 255):
         raise ValueError(
             f"Warm White of {warm_white} is not valid and must be between 0 and 255"
@@ -284,7 +291,7 @@ def white_levels_to_color_temp(warm_white, cool_white):
     cold = cool_white / 255
     brightness = warm + cold
     if brightness == 0:
-        temperature = MIN_TEMP
+        temperature: float = MIN_TEMP
     else:
         temperature = ((cold / brightness) * (MAX_TEMP - MIN_TEMP)) + MIN_TEMP
     return round(temperature), min(255, round(brightness * 255))
