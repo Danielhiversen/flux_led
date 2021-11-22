@@ -57,7 +57,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (103, 255, 104) Brightness: 255 raw state: 129,69,35,97,33,16,103,255,104,0,4,0,240,61,]",
+            "ON  [Color: (103, 255, 104) Brightness: 100% raw state: 129,69,35,97,33,16,103,255,104,0,4,0,240,61,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.model_num, 0x45)
@@ -115,7 +115,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 129,69,35,97,33,16,1,25,80,0,4,0,240,217,]",
+            "ON  [Color: (1, 25, 80) Brightness: 31% raw state: 129,69,35,97,33,16,1,25,80,0,4,0,240,217,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -220,7 +220,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (182, 0, 152) Brightness: 182 raw state: 129,69,35,97,33,16,182,0,152,0,4,0,240,189,]",
+            "ON  [Color: (182, 0, 152) Brightness: 71% raw state: 129,69,35,97,33,16,182,0,152,0,4,0,240,189,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -345,7 +345,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(
             light.__str__(),
-            "OFF  [Color: (255, 91, 212) Brightness: 255 raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,158,]",
+            "OFF  [Color: (255, 91, 212) Brightness: 100% raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,158,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, False)
@@ -361,7 +361,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"q#\x0f\xa3")))
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (255, 91, 212) Brightness: 255 raw state: 129,69,35,97,33,16,255,91,212,0,4,0,240,158,]",
+            "ON  [Color: (255, 91, 212) Brightness: 100% raw state: 129,69,35,97,33,16,255,91,212,0,4,0,240,158,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -378,7 +378,7 @@ class TestLight(unittest.TestCase):
         )
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (3, 77, 247) Brightness: 247 raw state: 129,69,35,97,33,16,3,77,247,0,4,0,240,158,]",
+            "ON  [Color: (3, 77, 247) Brightness: 97% raw state: 129,69,35,97,33,16,3,77,247,0,4,0,240,158,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -394,7 +394,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (3, 77, 247) Brightness: 247 raw state: 129,69,35,97,33,16,3,77,247,0,4,0,240,182,]",
+            "ON  [Color: (3, 77, 247) Brightness: 97% raw state: 129,69,35,97,33,16,3,77,247,0,4,0,240,182,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -597,7 +597,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 102,1,35,65,33,8,1,25,80,1,153,]",
+            "ON  [Color: (1, 25, 80) Brightness: 31% raw state: 102,1,35,65,33,8,1,25,80,1,153,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL)
         self.assertEqual(light.is_on, True)
@@ -619,7 +619,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "OFF  [Color: (1, 25, 80) Brightness: 80 raw state: 102,1,36,65,33,8,1,25,80,1,153,]",
+            "OFF  [Color: (1, 25, 80) Brightness: 31% raw state: 102,1,36,65,33,8,1,25,80,1,153,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL)
         self.assertEqual(light.is_on, False)
@@ -641,7 +641,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 102,1,35,65,33,8,1,25,80,1,153,]",
+            "ON  [Color: (1, 25, 80) Brightness: 31% raw state: 102,1,35,65,33,8,1,25,80,1,153,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL)
         self.assertEqual(light.is_on, True)
@@ -705,7 +705,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (1, 25, 80) Brightness: 80 raw state: 129,69,35,97,33,16,1,25,80,0,4,0,240,217,]",
+            "ON  [Color: (1, 25, 80) Brightness: 31% raw state: 129,69,35,97,33,16,1,25,80,0,4,0,240,217,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
         self.assertEqual(light.is_on, True)
@@ -784,7 +784,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getWhiteTemperature(), (6500, 255))
         self.assertEqual(
             light.__str__(),
-            "ON  [CCT: 6500K Brightness: 1.0% raw state: 129,222,35,65,71,0,0,0,0,0,2,255,0,11,]",
+            "ON  [CCT: 6500K Brightness: 100% raw state: 129,222,35,65,71,0,0,0,0,0,2,255,0,11,]",
         )
 
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -873,9 +873,7 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.model_num, 0x41)
-        self.assertEqual(
-            light.model, "Single Channel Controller (0x41)"
-        )
+        self.assertEqual(light.model, "Single Channel Controller (0x41)")
         assert light.color_modes == {COLOR_MODE_DIM}
 
         self.assertEqual(mock_read.call_count, 2)
@@ -984,7 +982,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (255, 0, 0) Brightness: 255 raw state: 129,162,35,97,65,16,255,0,0,0,4,0,240,235,]",
+            "ON  [Color: (255, 0, 0) Brightness: 100% raw state: 129,162,35,97,65,16,255,0,0,0,4,0,240,235,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_ADDRESSABLE)
         self.assertEqual(light.is_on, True)
@@ -1062,7 +1060,7 @@ class TestLight(unittest.TestCase):
 
         self.assertEqual(
             light.__str__(),
-            "ON  [Color: (255, 0, 0) Brightness: 255 raw state: 129,161,35,97,65,16,255,0,0,0,4,0,240,234,]",
+            "ON  [Color: (255, 0, 0) Brightness: 100% raw state: 129,161,35,97,65,16,255,0,0,0,4,0,240,234,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE)
         self.assertEqual(light.is_on, True)
