@@ -52,7 +52,7 @@ async def test_reassemble(mock_aio_protocol):
     assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
     assert light.protocol == PROTOCOL_LEDENET_9BYTE
     assert light.model_num == 0x25
-    assert light.model == "WiFi RGBCW Controller (0x25)"
+    assert light.model == "RGB/WW/CW Controller (0x25)"
     assert light.is_on is True
     assert len(light.effect_list) == 20
 

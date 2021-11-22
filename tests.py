@@ -435,7 +435,7 @@ class TestLight(unittest.TestCase):
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.model_num, 0x25)
-        self.assertEqual(light.model, "WiFi RGBCW Controller (0x25)")
+        self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
         self.assertEqual(
             light.effect_list,
             [
