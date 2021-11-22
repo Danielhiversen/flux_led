@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import logging
-from typing import Any, Callable, Coroutine, List, Optional
+from typing import Callable, List, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import LEDENETDevice

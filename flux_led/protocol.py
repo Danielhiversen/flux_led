@@ -5,25 +5,7 @@ from collections import namedtuple
 import logging
 from typing import List, Tuple
 
-from .const import (
-    STATE_BLUE,
-    STATE_CHECK_SUM,
-    STATE_COLOR_MODE,
-    STATE_COOL_WHITE,
-    STATE_GREEN,
-    STATE_HEAD,
-    STATE_MODE,
-    STATE_MODEL_NUM,
-    STATE_POWER_STATE,
-    STATE_PRESET_PATTERN,
-    STATE_RED,
-    STATE_SPEED,
-    STATE_VERSION_NUMBER,
-    STATE_WARM_WHITE,
-    TRANSITION_GRADUAL,
-    TRANSITION_JUMP,
-    TRANSITION_STROBE,
-)
+from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
 from .utils import utils
 
 _LOGGER = logging.getLogger(__name__)
