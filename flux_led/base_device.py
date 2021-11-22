@@ -2,7 +2,7 @@ import colorsys
 from enum import Enum
 import logging
 import time
-from typing import List, Optional, Set, Tuple, Union, ValuesView
+from typing import Dict, List, Optional, Set, Tuple, Union, ValuesView
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -532,7 +532,7 @@ class LEDENETDevice:
         self._replace_raw_state({"power_state": new_power_state})
         self._set_transition_complete_time()
 
-    def _replace_raw_state(self, new_states: dict[str, int]) -> None:
+    def _replace_raw_state(self, new_states: Dict[str, int]) -> None:
         assert self.raw_state is not None
         _LOGGER.debug("%s: _replace_raw_state: %s", self.ipaddr, new_states)
         self._set_raw_state(
@@ -634,10 +634,10 @@ class LEDENETDevice:
 
     def _generate_levels_change(
         self,
-        channels: dict[str, int],
+        channels: Dict[str, int],
         persist: bool = True,
         brightness: Optional[int] = None,
-    ) -> Tuple[bytes, dict[str, int]]:
+    ) -> Tuple[bytes, Dict[str, int]]:
         """Generate the levels change request."""
         channel_map = CHANNEL_REMAP.get(self.model_num)
         if channel_map:
