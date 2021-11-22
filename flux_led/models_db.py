@@ -287,7 +287,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x25,
         models=["AK001-ZJ200"],
-        description="WiFi RGBCW Controller",
+        description="RGB/WW/CW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_9BYTE,
         mode_to_color_mode=BASE_MODE_MAP,
