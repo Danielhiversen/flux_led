@@ -3,26 +3,9 @@
 from abc import abstractmethod
 from collections import namedtuple
 import logging
+from typing import List, Tuple
 
-from .const import (
-    STATE_BLUE,
-    STATE_CHECK_SUM,
-    STATE_COLOR_MODE,
-    STATE_COOL_WHITE,
-    STATE_GREEN,
-    STATE_HEAD,
-    STATE_MODE,
-    STATE_MODEL_NUM,
-    STATE_POWER_STATE,
-    STATE_PRESET_PATTERN,
-    STATE_RED,
-    STATE_SPEED,
-    STATE_VERSION_NUMBER,
-    STATE_WARM_WHITE,
-    TRANSITION_GRADUAL,
-    TRANSITION_JUMP,
-    TRANSITION_STROBE,
-)
+from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
 from .utils import utils
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,25 +53,21 @@ MSG_LENGTHS = {
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
 }
 
-LEDENET_BASE_STATE = [
-    STATE_HEAD,
-    STATE_MODEL_NUM,
-    STATE_POWER_STATE,
-    STATE_PRESET_PATTERN,
-    STATE_MODE,
-    STATE_SPEED,
-    STATE_RED,
-    STATE_GREEN,
-    STATE_BLUE,
-    STATE_WARM_WHITE,
-]
-
 
 LEDENETOriginalRawState = namedtuple(
     "LEDENETOriginalRawState",
     [
-        *LEDENET_BASE_STATE,
-        STATE_CHECK_SUM,
+        "head",
+        "model_num",
+        "power_state",
+        "preset_pattern",
+        "mode",
+        "speed",
+        "red",
+        "green",
+        "blue",
+        "warm_white",
+        "check_sum",
     ],
 )
 # typical response:
@@ -112,11 +91,20 @@ LEDENETOriginalRawState = namedtuple(
 LEDENETRawState = namedtuple(
     "LEDENETRawState",
     [
-        *LEDENET_BASE_STATE,
-        STATE_VERSION_NUMBER,
-        STATE_COOL_WHITE,
-        STATE_COLOR_MODE,
-        STATE_CHECK_SUM,
+        "head",
+        "model_num",
+        "power_state",
+        "preset_pattern",
+        "mode",
+        "speed",
+        "red",
+        "green",
+        "blue",
+        "warm_white",
+        "version_number",
+        "cool_white",
+        "color_mode",
+        "check_sum",
     ],
 )
 # response from a 5-channel LEDENET controller:
@@ -208,7 +196,9 @@ class ProtocolBase:
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
-    def construct_custom_effect(self, rgb_list, speed, transition_type):
+    def construct_custom_effect(
+        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
+    ) -> bytearray:
         """The bytes to send for a custom effect."""
         msg = bytearray()
         first_color = True
@@ -237,16 +227,6 @@ class ProtocolBase:
     @abstractmethod
     def name(self):
         """The name of the protocol."""
-
-    @property
-    @abstractmethod
-    def state_response_names(self):
-        """The names of the values in the state response."""
-
-    @property
-    @abstractmethod
-    def set_command_names(self):
-        """The names of the values in the set command."""
 
     @property
     @abstractmethod

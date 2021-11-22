@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import logging
-from typing import Callable, Coroutine, List, Optional
+from typing import Callable, List, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import LEDENETDevice
@@ -52,9 +52,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_execute_and_wait_for(
-        self, futures: List[asyncio.Future], coro: Coroutine
-    ) -> None:
-        future = asyncio.Future()
+        self, futures: List[asyncio.Future], coro: Callable
+    ) -> bool:
+        future: asyncio.Future = asyncio.Future()
         futures.append(future)
         await coro()
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
@@ -75,6 +75,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         return False
 
     async def _async_turn_on(self) -> None:
+        assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_state_change(True))
 
     async def _async_turn_off_on(self) -> None:
@@ -96,6 +97,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         return False
 
     async def _async_turn_off(self) -> None:
+        assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_state_change(False))
 
     async def _async_turn_on_off(self) -> None:
