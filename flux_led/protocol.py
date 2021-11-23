@@ -450,6 +450,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         37 02 00 39  Jump
         37 03 00 3a  Strobe
         """
+        return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
 
 class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
@@ -579,6 +580,32 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
         b0 b1 b2 b3 00 01 01 69 00 0d 73 01 26 01 ff 00 00 ff 00 00 00 64 fd 38 - Music mode (various sensitivity)
         b0 b1 b2 b3 00 01 01 68 00 0d 73 01 26 01 ff 00 00 ff 00 00 64 64 61 ff - Music mode (various sensitivity)
         """
+        counter_byte = self._increment_counter()
+        red = 0xFF
+        green = 0x00
+        blue = 0x00
+
+        return self.construct_message(
+            bytearray(
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    counter_byte,
+                    0x00,
+                    0x0D,
+                    0x73,
+                    0x01,
+                    red,
+                    green,
+                    blue,
+                    red,
+                    green,
+                    blue,
+                    sensitivity,
+                    0x64,
+                    0x64,
+                ]
+            )
+        )
 
     def construct_levels_change(
         self, persist, red, green, blue, warm_white, cool_white, write_mode
