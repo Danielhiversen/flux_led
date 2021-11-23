@@ -435,6 +435,7 @@ class TestLight(unittest.TestCase):
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.model_num, 0x25)
+        self.assertEqual(light.microphone, False)
         self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
         self.assertEqual(
             light.effect_list,
@@ -972,6 +973,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.addressable, True)
         self.assertEqual(light.model_num, 0xA2)
+        self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony 2 (0xA2)")
         assert len(light.effect_list) == 103
         assert light.color_modes == {COLOR_MODE_RGB}

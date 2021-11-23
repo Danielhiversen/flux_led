@@ -41,6 +41,7 @@ from .models_db import (
     ADDRESSABLE_MODELS,
     BASE_MODE_MAP,
     CHANNEL_REMAP,
+    MICROPHONE_MODELS,
     MODEL_DESCRIPTIONS,
     MODEL_MAP,
     ORIGINAL_ADDRESSABLE_MODELS,
@@ -149,6 +150,11 @@ class LEDENETDevice:
     def _is_addressable(self, model_num: int) -> bool:
         """Devices that have addressable leds."""
         return model_num in ADDRESSABLE_MODELS
+
+    @property
+    def microphone(self) -> bool:
+        """Devices that have a microphone built in."""
+        return self.model_num in MICROPHONE_MODELS
 
     @property
     def original_addressable(self) -> bool:
