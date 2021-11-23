@@ -518,12 +518,12 @@ class TestLight(unittest.TestCase):
         )
 
         # Home Assistant legacy names
-        light.set_effect("colorjump", 50)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+        light.set_effect("colorjump", 50, 100)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b'V8\x10d\x02')))
 
         # Library names
-        light.set_effect("seven_color_jumping", 50)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+        light.set_effect("seven_color_jumping", 50, 60)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b'V8\x10<\xda')))
 
         with pytest.raises(ValueError):
             light.set_effect("unknown", 50)
@@ -535,6 +535,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
+        self.assertEqual(light.brightness, 153)
+
         self.assertEqual(light.preset_pattern_num, 0x38)
         self.assertEqual(
             light.__str__(),

@@ -191,10 +191,9 @@ class ProtocolBase:
     ):
         """The bytes to send for a level change request."""
 
-    def construct_preset_pattern(self, pattern, speed):
+    @abstractmethod
+    def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
-        delay = utils.speedToDelay(speed)
-        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_custom_effect(
         self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
@@ -299,6 +298,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         #  |  red
         #  head
         return self.construct_message(bytearray([0x56, red, green, blue, 0xAA]))
+
+    def construct_preset_pattern(self, pattern, speed, brightness):
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_message(self, raw_bytes):
         """Original protocol uses no checksum."""
@@ -417,6 +421,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
+    def construct_preset_pattern(self, pattern, speed, brightness):
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
+
     def construct_music_mode(self, sensitivity):
         """The bytes to send for a level change request.
 
@@ -500,7 +509,7 @@ class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE
 
-    def construct_preset_pattern(self, pattern, speed):
+    def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         effect = pattern + 99
         return self.construct_message(
@@ -541,7 +550,7 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
             self._counter = 0
         return self._counter
 
-    def construct_preset_pattern(self, pattern, speed):
+    def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         counter_byte = self._increment_counter()
         return self.construct_message(
@@ -554,7 +563,7 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
                     0x42,
                     pattern,
                     speed,
-                    0x64,
+                    brightness,
                     0x00,
                 ]
             )
