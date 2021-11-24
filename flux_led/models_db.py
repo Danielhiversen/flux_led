@@ -20,6 +20,7 @@ from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
@@ -188,7 +189,7 @@ MODELS = [
         models=["AK001-ZJ2104"],
         description="Floor Lamp",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_9BYTE,
+        protocol=PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
@@ -330,7 +331,7 @@ MODELS = [
         models=["AK001-ZJ2145", "AK001-ZJ2101", "AK001-ZJ2104"],
         description="Smart Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_9BYTE,
+        protocol=PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},

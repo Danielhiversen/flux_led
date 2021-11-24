@@ -66,6 +66,7 @@ from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
@@ -74,6 +75,7 @@ from .protocol import (
     ProtocolLEDENET8Byte,
     ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
+    ProtocolLEDENET9ByteDimmableEffects,
     ProtocolLEDENETAddressable,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalAddressable,
@@ -87,6 +89,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENET8Byte,
     ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
+    ProtocolLEDENET9ByteDimmableEffects,
     ProtocolLEDENETAddressable,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalAddressable,
@@ -782,6 +785,8 @@ class LEDENETDevice:
             self._protocol = ProtocolLEDENET8ByteDimmableEffects()
         elif protocol == PROTOCOL_LEDENET_9BYTE:
             self._protocol = ProtocolLEDENET9Byte()
+        elif protocol == PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS:
+            self._protocol = ProtocolLEDENET9ByteDimmableEffects()
         elif protocol == PROTOCOL_LEDENET_ADDRESSABLE:
             self._protocol = ProtocolLEDENETAddressable()
         elif protocol == PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE:

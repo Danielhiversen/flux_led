@@ -13,6 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
+PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS = "LEDENET_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
 PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_ADDRESSABLE = "LEDENET_ADDRESSABLE"
@@ -476,7 +477,7 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
 
 
-class ProtocolLEDENET9Byte(ProtocolLEDENET8ByteDimmableEffects):
+class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
@@ -515,6 +516,25 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8ByteDimmableEffects):
                 ]
             )
         )
+
+
+class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
+    """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
+
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return True
+
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
+
+    def construct_preset_pattern(self, pattern, speed, brightness):
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
 
 
 class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
