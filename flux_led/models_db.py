@@ -18,6 +18,7 @@ from .const import (
 )
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
@@ -127,7 +128,7 @@ MODELS = [
         models=["AK001-ZJ2147"],
         description="RGBW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode=GENERIC_RGBW_MAP,
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
@@ -149,7 +150,7 @@ MODELS = [
         models=[],
         description="RGB Controller with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
@@ -198,7 +199,7 @@ MODELS = [
         models=[],
         description="Christmas Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
         channel_map={},
@@ -209,7 +210,7 @@ MODELS = [
         models=[],
         description="Christmas Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=False,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
         channel_map={},
@@ -247,7 +248,7 @@ MODELS = [
         models=[],
         description="Plant Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={},  # no color modes -- UNVERIFIED
         channel_map={},
@@ -258,7 +259,7 @@ MODELS = [
         models=[],
         description="Spray Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},
         channel_map={},
@@ -318,7 +319,7 @@ MODELS = [
         models=["AK001-ZJ2145", "AK001-ZJ2146"],
         description="RGB Controller",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
