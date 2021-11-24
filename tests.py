@@ -461,6 +461,7 @@ class TestLight(unittest.TestCase):
                 "white_strobe",
                 "yellow_fade",
                 "yellow_strobe",
+                "random"
             ],
         )
 
@@ -602,6 +603,7 @@ class TestLight(unittest.TestCase):
                 "white_strobe",
                 "yellow_fade",
                 "yellow_strobe",
+                "random"
             ],
         )
 
@@ -1131,7 +1133,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0xA2)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony 2 (0xA2)")
-        assert len(light.effect_list) == 103
+        assert len(light.effect_list) == 104
         assert light.color_modes == {COLOR_MODE_RGB}
 
         self.assertEqual(mock_read.call_count, 2)
@@ -1211,7 +1213,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.model_num, 0xA1)
         self.assertEqual(light.model, "RGB Symphony Original (0xA1)")
-        assert len(light.effect_list) == 300
+        assert len(light.effect_list) == 301
         assert light.color_modes == {COLOR_MODE_RGB}
 
         self.assertEqual(mock_read.call_count, 2)

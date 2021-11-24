@@ -54,7 +54,7 @@ async def test_reassemble(mock_aio_protocol):
     assert light.model_num == 0x25
     assert light.model == "RGB/WW/CW Controller (0x25)"
     assert light.is_on is True
-    assert len(light.effect_list) == 20
+    assert len(light.effect_list) == 21
 
     light._aio_protocol.data_received(
         b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"

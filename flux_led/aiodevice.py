@@ -1,11 +1,12 @@
 import asyncio
 import contextlib
 import logging
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import LEDENETDevice
 from .const import (
+    EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
     STATE_GREEN,
@@ -147,17 +148,24 @@ class AIOWifiLedBulb(LEDENETDevice):
         brightness=None,
     ):
         """Set any of the levels."""
-        msg, updates = self._generate_levels_change(
-            {
-                STATE_RED: r,
-                STATE_GREEN: g,
-                STATE_BLUE: b,
-                STATE_WARM_WHITE: w,
-                STATE_COOL_WHITE: w2,
-            },
-            persist,
-            brightness,
+        await self._async_process_levels_change(
+            *self._generate_levels_change(
+                {
+                    STATE_RED: r,
+                    STATE_GREEN: g,
+                    STATE_BLUE: b,
+                    STATE_WARM_WHITE: w,
+                    STATE_COOL_WHITE: w2,
+                },
+                persist,
+                brightness,
+            )
         )
+
+    async def _async_process_levels_change(
+        self, msg: bytes, updates: Dict[str, int]
+    ) -> None:
+        """Process and send a levels change."""
         self._set_transition_complete_time()
         await self._async_send_msg(msg)
         if updates:
@@ -179,9 +187,16 @@ class AIOWifiLedBulb(LEDENETDevice):
         self, effect: str, speed: int, brightness: int = 100
     ) -> None:
         """Set an effect."""
-        return await self.async_set_preset_pattern(
+        if effect == EFFECT_RANDOM:
+            await self.async_set_random()
+            return
+        await self.async_set_preset_pattern(
             self._effect_to_pattern(effect), speed, brightness
         )
+
+    async def async_set_random(self) -> None:
+        """Set levels randomly."""
+        await self._async_process_levels_change(*self._generate_random_levels_change())
 
     async def _async_connect(self):
         """Create connection."""

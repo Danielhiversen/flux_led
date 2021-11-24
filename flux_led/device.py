@@ -7,6 +7,7 @@ import time
 
 from .base_device import LEDENETDevice
 from .const import (
+    EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
     STATE_GREEN,
@@ -122,7 +123,6 @@ class WifiLedBulb(LEDENETDevice):
     ):
         return self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
 
-    @_socket_retry(attempts=2)
     def set_levels(
         self,
         r=None,
@@ -132,18 +132,25 @@ class WifiLedBulb(LEDENETDevice):
         w2=None,
         persist=True,
         brightness=None,
+        retry=None,
     ):
-        msg, updates = self._generate_levels_change(
-            {
-                STATE_RED: r,
-                STATE_GREEN: g,
-                STATE_BLUE: b,
-                STATE_WARM_WHITE: w,
-                STATE_COOL_WHITE: w2,
-            },
-            persist,
-            brightness,
+        self._process_levels_change(
+            *self._generate_levels_change(
+                {
+                    STATE_RED: r,
+                    STATE_GREEN: g,
+                    STATE_BLUE: b,
+                    STATE_WARM_WHITE: w,
+                    STATE_COOL_WHITE: w2,
+                },
+                persist,
+                brightness,
+            ),
+            retry=retry,
         )
+
+    @_socket_retry(attempts=2)
+    def _process_levels_change(self, msg, updates):
         # send the message
         with self._lock:
             self._connect_if_disconnected()
@@ -259,14 +266,25 @@ class WifiLedBulb(LEDENETDevice):
         raise Exception("Cannot determine protocol")
 
     def setPresetPattern(self, pattern, speed, brightness=100):
-        msg = self._generate_preset_pattern(pattern, speed, brightness)
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(msg)
+        self._send_with_retry(self._generate_preset_pattern(pattern, speed, brightness))
 
     def set_effect(self, effect, speed, brightness=100):
         """Set an effect."""
-        return self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness)
+        if effect == EFFECT_RANDOM:
+            self.set_random()
+            return
+        self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness)
+
+    def set_random(self, retry=None) -> None:
+        """Set levels randomly."""
+        self._process_levels_change(*self._generate_random_levels_change(), retry=retry)
+
+    @_socket_retry(attempts=2)
+    def _send_with_retry(self, msg: bytes) -> None:
+        """Send a message under the lock."""
+        with self._lock:
+            self._connect_if_disconnected()
+            self._send_msg(msg)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
@@ -341,13 +359,11 @@ class WifiLedBulb(LEDENETDevice):
             return
         self.set_unavailable()
 
-    @_socket_retry(attempts=2)
-    def setCustomPattern(self, rgb_list, speed, transition_type):
+    def setCustomPattern(self, rgb_list, speed, transition_type, retry=None):
         """Set a custom pattern on the device."""
-        msg = self._generate_custom_patterm(rgb_list, speed, transition_type)
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(msg)
+        self._send_with_retry(
+            self._generate_custom_patterm(rgb_list, speed, transition_type), retry=retry
+        )
 
     def refreshState(self):
         return self.update_state()
