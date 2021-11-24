@@ -284,7 +284,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                     # cannot process, recycle the connection
                     self._aio_protocol.close()
                     continue
-                self._set_protocol_from_msg(full_msg, protocol)
+                self._set_protocol_from_msg(full_msg, protocol.name)
                 self.process_state_response(full_msg)
                 return
         raise RuntimeError("Cannot determine protocol")
