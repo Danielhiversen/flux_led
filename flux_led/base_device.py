@@ -44,6 +44,7 @@ from .models_db import (
     MICROPHONE_MODELS,
     MODEL_DESCRIPTIONS,
     MODEL_MAP,
+    MODEL_NUM_PROTOCOL,
     ORIGINAL_ADDRESSABLE_MODELS,
     RGBW_PROTOCOL_MODELS,
     UNKNOWN_MODEL,
@@ -82,6 +83,15 @@ from .utils import utils, white_levels_to_color_temp
 
 _LOGGER = logging.getLogger(__name__)
 
+PROTOCOL_TYPES = Union[
+    ProtocolLEDENET8Byte,
+    ProtocolLEDENET8ByteDimmableEffects,
+    ProtocolLEDENET9Byte,
+    ProtocolLEDENETAddressable,
+    ProtocolLEDENETOriginal,
+    ProtocolLEDENETOriginalAddressable,
+]
+
 
 class DeviceType(Enum):
     Bulb = 0
@@ -98,19 +108,10 @@ class LEDENETDevice:
         self.timeout: float = timeout
         self.raw_state: Optional[Union[LEDENETOriginalRawState, LEDENETRawState]] = None
         self.available: Optional[bool] = None
-        self._protocol: Optional[
-            Union[
-                ProtocolLEDENET8Byte,
-                ProtocolLEDENET8ByteDimmableEffects,
-                ProtocolLEDENET9Byte,
-                ProtocolLEDENETAddressable,
-                ProtocolLEDENETOriginal,
-                ProtocolLEDENETOriginalAddressable,
-            ]
-        ] = None
+        self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
-        self._last_effect_brightness: int = 0
+        self._last_effect_brightness: int = 100
 
     @property
     def model_num(self) -> int:
@@ -351,10 +352,8 @@ class LEDENETDevice:
         raw_state = self.raw_state
         assert raw_state is not None
 
-        if self._mode == MODE_PRESET:
-            if self.dimmable_effects:
-                return round((self._last_effect_brightness or 100) * 255 / 100)
-            return 255
+        if self.dimmable_effects and self._mode == MODE_PRESET:
+            return round(self._last_effect_brightness * 255 / 100)
         if color_mode == COLOR_MODE_DIM:
             return int(raw_state.warm_white)
         elif color_mode == COLOR_MODE_CCT:
@@ -793,24 +792,10 @@ class LEDENETDevice:
     def _set_protocol_from_msg(
         self,
         full_msg: bytearray,
-        fallback_protocol: Union[
-            ProtocolLEDENET8Byte,
-            ProtocolLEDENET8ByteDimmableEffects,
-            ProtocolLEDENET9Byte,
-            ProtocolLEDENETAddressable,
-            ProtocolLEDENETOriginal,
-            ProtocolLEDENETOriginalAddressable,
-        ],
+        fallback_protocol: PROTOCOL_TYPES,
     ) -> None:
-        if self._is_addressable(full_msg[1]):
-            self._protocol = ProtocolLEDENETAddressable()
-        elif self._is_original_addressable(full_msg[1]):
-            self._protocol = ProtocolLEDENETOriginalAddressable()
-        # Devices that use an 9-byte protocol
-        elif self._uses_9byte_protocol(full_msg[1]):
-            self._protocol = ProtocolLEDENET9Byte()
-        else:
-            self._protocol = fallback_protocol
+        protocol = MODEL_NUM_PROTOCOL.get(full_msg[1], fallback_protocol)
+        self.setProtocol(protocol)
 
     def _generate_preset_pattern(
         self, pattern: int, speed: int, brightness: int

@@ -465,6 +465,11 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
         """Protocol supports dimmable effects."""
         return True
 
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
+
     def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
