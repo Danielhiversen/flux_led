@@ -3,7 +3,7 @@ from enum import Enum
 import logging
 import random
 import time
-from typing import Dict, List, Optional, Set, Tuple, Union, ValuesView
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -305,7 +305,7 @@ class LEDENETDevice:
     @property
     def effect_list(self) -> List[str]:
         """Return the list of available effects."""
-        effects = []
+        effects: Iterable[str] = []
         if self.original_addressable:
             effects = ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif self.addressable:
@@ -675,7 +675,7 @@ class LEDENETDevice:
 
     def _generate_levels_change(
         self,
-        channels: Dict[str, int],
+        channels: Dict[str, Optional[int]],
         persist: bool = True,
         brightness: Optional[int] = None,
     ) -> Tuple[bytes, Dict[str, int]]:

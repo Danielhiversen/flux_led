@@ -105,7 +105,9 @@ class WifiLedBulb(LEDENETDevice):
     def setColdWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w2=level, persist=persist, retry=retry)
 
-    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=DEFAULT_RETRIES):
+    def setWhiteTemperature(
+        self, temperature, brightness, persist=True, retry=DEFAULT_RETRIES
+    ):
         cold, warm = color_temp_to_white_levels(temperature, brightness)
         self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
@@ -268,14 +270,18 @@ class WifiLedBulb(LEDENETDevice):
         raise Exception("Cannot determine protocol")
 
     def setPresetPattern(self, pattern, speed, brightness=100, retry=DEFAULT_RETRIES):
-        self._send_with_retry(self._generate_preset_pattern(pattern, speed, brightness), retry=retry)
+        self._send_with_retry(
+            self._generate_preset_pattern(pattern, speed, brightness), retry=retry
+        )
 
     def set_effect(self, effect, speed, brightness=100, retry=DEFAULT_RETRIES):
         """Set an effect."""
         if effect == EFFECT_RANDOM:
             self.set_random()
             return
-        self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness, retry=retry)
+        self.setPresetPattern(
+            self._effect_to_pattern(effect), speed, brightness, retry=retry
+        )
 
     def set_random(self, retry=DEFAULT_RETRIES) -> None:
         """Set levels randomly."""
