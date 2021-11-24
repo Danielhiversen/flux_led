@@ -63,6 +63,7 @@ from .pattern import (
 )
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
@@ -70,6 +71,7 @@ from .protocol import (
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
+    ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
     ProtocolLEDENETAddressable,
     ProtocolLEDENETOriginal,
@@ -99,6 +101,7 @@ class LEDENETDevice:
         self._protocol: Optional[
             Union[
                 ProtocolLEDENET8Byte,
+                ProtocolLEDENET8ByteDimmableEffects,
                 ProtocolLEDENET9Byte,
                 ProtocolLEDENETAddressable,
                 ProtocolLEDENETOriginal,
@@ -273,6 +276,12 @@ class LEDENETDevice:
         return self._protocol.name
 
     @property
+    def dimmable_effects(self) -> bool:
+        """Return true of the device supports dimmable effects."""
+        assert self._protocol is not None
+        return self._protocol.dimmable_effects
+
+    @property
     def is_on(self) -> bool:
         assert self.raw_state is not None
         assert self._protocol is not None
@@ -343,7 +352,9 @@ class LEDENETDevice:
         assert raw_state is not None
 
         if self._mode == MODE_PRESET:
-            return round((self._last_effect_brightness or 100) * 255 / 100)
+            if self.dimmable_effects:
+                return round((self._last_effect_brightness or 100) * 255 / 100)
+            return 255
         if color_mode == COLOR_MODE_DIM:
             return int(raw_state.warm_white)
         elif color_mode == COLOR_MODE_CCT:
@@ -768,6 +779,8 @@ class LEDENETDevice:
             self._protocol = ProtocolLEDENETOriginal()
         elif protocol == PROTOCOL_LEDENET_8BYTE:
             self._protocol = ProtocolLEDENET8Byte()
+        elif protocol == PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS:
+            self._protocol = ProtocolLEDENET8ByteDimmableEffects()
         elif protocol == PROTOCOL_LEDENET_9BYTE:
             self._protocol = ProtocolLEDENET9Byte()
         elif protocol == PROTOCOL_LEDENET_ADDRESSABLE:
@@ -782,6 +795,7 @@ class LEDENETDevice:
         full_msg: bytearray,
         fallback_protocol: Union[
             ProtocolLEDENET8Byte,
+            ProtocolLEDENET8ByteDimmableEffects,
             ProtocolLEDENET9Byte,
             ProtocolLEDENETAddressable,
             ProtocolLEDENETOriginal,

@@ -14,6 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
+PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_ADDRESSABLE = "LEDENET_ADDRESSABLE"
 PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE = "LEDENET_ORIGINAL_ADDRESSABLE"
 
@@ -181,6 +182,11 @@ class ProtocolBase:
         """The off byte."""
         return 0x24
 
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return False
+
     @abstractmethod
     def construct_state_change(self, turn_on):
         """The bytes to send for a state change request."""
@@ -191,9 +197,10 @@ class ProtocolBase:
     ):
         """The bytes to send for a level change request."""
 
-    @abstractmethod
     def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_custom_effect(
         self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
@@ -298,11 +305,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         #  |  red
         #  head
         return self.construct_message(bytearray([0x56, red, green, blue, 0xAA]))
-
-    def construct_preset_pattern(self, pattern, speed, brightness):
-        """The bytes to send for a preset pattern."""
-        delay = utils.speedToDelay(speed)
-        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_message(self, raw_bytes):
         """Original protocol uses no checksum."""
@@ -421,11 +423,6 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
-        """The bytes to send for a preset pattern."""
-        delay = utils.speedToDelay(speed)
-        return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
-
     def construct_music_mode(self, sensitivity):
         """The bytes to send for a level change request.
 
@@ -462,7 +459,19 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
 
-class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
+class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return True
+
+    def construct_preset_pattern(self, pattern, speed, brightness):
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
+
+
+class ProtocolLEDENET9Byte(ProtocolLEDENET8ByteDimmableEffects):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
@@ -509,6 +518,11 @@ class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE
 
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return False
+
     def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         effect = pattern + 99
@@ -525,6 +539,11 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
     def __init__(self):
         self._counter = 0
         super().__init__()
+
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return True
 
     def is_start_of_addressable_response(self, data):
         """Check if a message is the start of an addressable state response."""
