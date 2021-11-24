@@ -1,8 +1,6 @@
 import asyncio
-from asyncio.tasks import wait_for
 import contextlib
 import logging
-from typing import Coroutine
 from unittest.mock import MagicMock, patch
 
 import pytest
