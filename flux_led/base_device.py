@@ -1,8 +1,9 @@
 import colorsys
 from enum import Enum
 import logging
+import random
 import time
-from typing import Dict, List, Optional, Set, Tuple, Union, ValuesView
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -16,6 +17,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
+    EFFECT_RANDOM,
     MAX_TEMP,
     MIN_TEMP,
     MODE_COLOR,
@@ -301,13 +303,16 @@ class LEDENETDevice:
         return self.raw_state.warm_white if self._rgbwwprotocol else 0
 
     @property
-    def effect_list(self) -> Union[ValuesView[str], List[str]]:
+    def effect_list(self) -> List[str]:
         """Return the list of available effects."""
+        effects: Iterable[str] = []
         if self.original_addressable:
-            return ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
-        if self.addressable:
-            return ADDRESSABLE_EFFECT_ID_NAME.values()
-        return EFFECT_LIST
+            effects = ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
+        elif self.addressable:
+            effects = ADDRESSABLE_EFFECT_ID_NAME.values()
+        elif COLOR_MODES_RGB.intersection(self.color_modes):
+            effects = EFFECT_LIST
+        return [*effects, EFFECT_RANDOM]
 
     @property
     def effect(self) -> Optional[str]:
@@ -654,9 +659,23 @@ class LEDENETDevice:
     def getSpeed(self) -> int:
         return self.speed
 
+    def _generate_random_levels_change(self) -> Tuple[bytes, Dict[str, int]]:
+        """Generate a random levels change."""
+        channels = {STATE_WARM_WHITE}
+        if COLOR_MODES_RGB.intersection(self.color_modes):
+            channels = {STATE_RED, STATE_GREEN, STATE_BLUE}
+        elif COLOR_MODE_CCT in self.color_modes:
+            channels = {STATE_WARM_WHITE, STATE_COOL_WHITE}
+        return self._generate_levels_change(
+            {
+                channel: random.randint(0, 255) if channel in channels else None
+                for channel in CHANNEL_STATES
+            }
+        )
+
     def _generate_levels_change(
         self,
-        channels: Dict[str, int],
+        channels: Dict[str, Optional[int]],
         persist: bool = True,
         brightness: Optional[int] = None,
     ) -> Tuple[bytes, Dict[str, int]]:

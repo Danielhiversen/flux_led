@@ -7,6 +7,7 @@ import time
 
 from .base_device import LEDENETDevice
 from .const import (
+    EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
     STATE_GREEN,
@@ -19,6 +20,8 @@ from .timer import LedTimer
 from .utils import color_temp_to_white_levels, utils
 
 _LOGGER = logging.getLogger(__name__)
+
+DEFAULT_RETRIES = 2
 
 
 class WifiLedBulb(LEDENETDevice):
@@ -33,7 +36,7 @@ class WifiLedBulb(LEDENETDevice):
 
     def setup(self):
         """Setup the connection and fetch initial state."""
-        self.connect(retry=2)
+        self.connect(retry=DEFAULT_RETRIES)
         self.update_state()
 
     def _connect_if_disconnected(self):
@@ -59,13 +62,13 @@ class WifiLedBulb(LEDENETDevice):
         finally:
             self._socket = None
 
-    def turnOn(self, retry=2):
+    def turnOn(self, retry=DEFAULT_RETRIES):
         self._change_state(retry=retry, turn_on=True)
 
-    def turnOff(self, retry=2):
+    def turnOff(self, retry=DEFAULT_RETRIES):
         self._change_state(retry=retry, turn_on=False)
 
-    @_socket_retry(attempts=2)
+    @_socket_retry(attempts=DEFAULT_RETRIES)
     def _change_state(self, turn_on=True):
         _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
         with self._lock:
@@ -90,23 +93,25 @@ class WifiLedBulb(LEDENETDevice):
             # it stalls
             self.close()
 
-    def setWarmWhite(self, level, persist=True, retry=2):
+    def setWarmWhite(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setWarmWhite255(self, level, persist=True, retry=2):
+    def setWarmWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w=level, persist=persist, retry=retry)
 
-    def setColdWhite(self, level, persist=True, retry=2):
+    def setColdWhite(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w2=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setColdWhite255(self, level, persist=True, retry=2):
+    def setColdWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w2=level, persist=persist, retry=retry)
 
-    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
+    def setWhiteTemperature(
+        self, temperature, brightness, persist=True, retry=DEFAULT_RETRIES
+    ):
         cold, warm = color_temp_to_white_levels(temperature, brightness)
         self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
-    def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
+    def setRgb(self, r, g, b, persist=True, brightness=None, retry=DEFAULT_RETRIES):
         self.set_levels(r, g, b, persist=persist, brightness=brightness, retry=retry)
 
     def setRgbw(
@@ -122,7 +127,6 @@ class WifiLedBulb(LEDENETDevice):
     ):
         return self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
 
-    @_socket_retry(attempts=2)
     def set_levels(
         self,
         r=None,
@@ -132,18 +136,25 @@ class WifiLedBulb(LEDENETDevice):
         w2=None,
         persist=True,
         brightness=None,
+        retry=None,
     ):
-        msg, updates = self._generate_levels_change(
-            {
-                STATE_RED: r,
-                STATE_GREEN: g,
-                STATE_BLUE: b,
-                STATE_WARM_WHITE: w,
-                STATE_COOL_WHITE: w2,
-            },
-            persist,
-            brightness,
+        self._process_levels_change(
+            *self._generate_levels_change(
+                {
+                    STATE_RED: r,
+                    STATE_GREEN: g,
+                    STATE_BLUE: b,
+                    STATE_WARM_WHITE: w,
+                    STATE_COOL_WHITE: w2,
+                },
+                persist,
+                brightness,
+            ),
+            retry=retry,
         )
+
+    @_socket_retry(attempts=2)
+    def _process_levels_change(self, msg, updates):
         # send the message
         with self._lock:
             self._connect_if_disconnected()
@@ -258,15 +269,30 @@ class WifiLedBulb(LEDENETDevice):
                 return full_msg
         raise Exception("Cannot determine protocol")
 
-    def setPresetPattern(self, pattern, speed, brightness=100):
-        msg = self._generate_preset_pattern(pattern, speed, brightness)
+    def setPresetPattern(self, pattern, speed, brightness=100, retry=DEFAULT_RETRIES):
+        self._send_with_retry(
+            self._generate_preset_pattern(pattern, speed, brightness), retry=retry
+        )
+
+    def set_effect(self, effect, speed, brightness=100, retry=DEFAULT_RETRIES):
+        """Set an effect."""
+        if effect == EFFECT_RANDOM:
+            self.set_random()
+            return
+        self.setPresetPattern(
+            self._effect_to_pattern(effect), speed, brightness, retry=retry
+        )
+
+    def set_random(self, retry=DEFAULT_RETRIES) -> None:
+        """Set levels randomly."""
+        self._process_levels_change(*self._generate_random_levels_change(), retry=retry)
+
+    @_socket_retry(attempts=2)
+    def _send_with_retry(self, msg: bytes) -> None:
+        """Send a message under the lock."""
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
-
-    def set_effect(self, effect, speed, brightness=100):
-        """Set an effect."""
-        return self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
@@ -341,13 +367,11 @@ class WifiLedBulb(LEDENETDevice):
             return
         self.set_unavailable()
 
-    @_socket_retry(attempts=2)
-    def setCustomPattern(self, rgb_list, speed, transition_type):
+    def setCustomPattern(self, rgb_list, speed, transition_type, retry=None):
         """Set a custom pattern on the device."""
-        msg = self._generate_custom_patterm(rgb_list, speed, transition_type)
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(msg)
+        self._send_with_retry(
+            self._generate_custom_patterm(rgb_list, speed, transition_type), retry=retry
+        )
 
     def refreshState(self):
         return self.update_state()
