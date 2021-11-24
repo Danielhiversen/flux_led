@@ -461,7 +461,7 @@ class TestLight(unittest.TestCase):
                 "white_strobe",
                 "yellow_fade",
                 "yellow_strobe",
-                "random"
+                "random",
             ],
         )
 
@@ -603,7 +603,7 @@ class TestLight(unittest.TestCase):
                 "white_strobe",
                 "yellow_fade",
                 "yellow_strobe",
-                "random"
+                "random",
             ],
         )
 
@@ -1257,3 +1257,5 @@ class TestLight(unittest.TestCase):
             == "Overlay circularly, 7 colors with black background from start to end"
         )
         assert light.getSpeed() == 1
+        light.set_effect("random", 50)
+        self.assertEqual(mock_send.call_count, 5)

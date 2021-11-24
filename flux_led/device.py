@@ -21,6 +21,8 @@ from .utils import color_temp_to_white_levels, utils
 
 _LOGGER = logging.getLogger(__name__)
 
+DEFAULT_RETRIES = 2
+
 
 class WifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
@@ -34,7 +36,7 @@ class WifiLedBulb(LEDENETDevice):
 
     def setup(self):
         """Setup the connection and fetch initial state."""
-        self.connect(retry=2)
+        self.connect(retry=DEFAULT_RETRIES)
         self.update_state()
 
     def _connect_if_disconnected(self):
@@ -60,13 +62,13 @@ class WifiLedBulb(LEDENETDevice):
         finally:
             self._socket = None
 
-    def turnOn(self, retry=2):
+    def turnOn(self, retry=DEFAULT_RETRIES):
         self._change_state(retry=retry, turn_on=True)
 
-    def turnOff(self, retry=2):
+    def turnOff(self, retry=DEFAULT_RETRIES):
         self._change_state(retry=retry, turn_on=False)
 
-    @_socket_retry(attempts=2)
+    @_socket_retry(attempts=DEFAULT_RETRIES)
     def _change_state(self, turn_on=True):
         _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
         with self._lock:
@@ -91,23 +93,23 @@ class WifiLedBulb(LEDENETDevice):
             # it stalls
             self.close()
 
-    def setWarmWhite(self, level, persist=True, retry=2):
+    def setWarmWhite(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setWarmWhite255(self, level, persist=True, retry=2):
+    def setWarmWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w=level, persist=persist, retry=retry)
 
-    def setColdWhite(self, level, persist=True, retry=2):
+    def setColdWhite(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w2=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setColdWhite255(self, level, persist=True, retry=2):
+    def setColdWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
         self.set_levels(w2=level, persist=persist, retry=retry)
 
-    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=2):
+    def setWhiteTemperature(self, temperature, brightness, persist=True, retry=DEFAULT_RETRIES):
         cold, warm = color_temp_to_white_levels(temperature, brightness)
         self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
-    def setRgb(self, r, g, b, persist=True, brightness=None, retry=2):
+    def setRgb(self, r, g, b, persist=True, brightness=None, retry=DEFAULT_RETRIES):
         self.set_levels(r, g, b, persist=persist, brightness=brightness, retry=retry)
 
     def setRgbw(
@@ -265,17 +267,17 @@ class WifiLedBulb(LEDENETDevice):
                 return full_msg
         raise Exception("Cannot determine protocol")
 
-    def setPresetPattern(self, pattern, speed, brightness=100):
-        self._send_with_retry(self._generate_preset_pattern(pattern, speed, brightness))
+    def setPresetPattern(self, pattern, speed, brightness=100, retry=DEFAULT_RETRIES):
+        self._send_with_retry(self._generate_preset_pattern(pattern, speed, brightness), retry=retry)
 
-    def set_effect(self, effect, speed, brightness=100):
+    def set_effect(self, effect, speed, brightness=100, retry=DEFAULT_RETRIES):
         """Set an effect."""
         if effect == EFFECT_RANDOM:
             self.set_random()
             return
-        self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness)
+        self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness, retry=retry)
 
-    def set_random(self, retry=None) -> None:
+    def set_random(self, retry=DEFAULT_RETRIES) -> None:
         """Set levels randomly."""
         self._process_levels_change(*self._generate_random_levels_change(), retry=retry)
 

@@ -1,9 +1,11 @@
 import asyncio
-from unittest.mock import MagicMock, patch
+from asyncio.tasks import wait_for
+import contextlib
 import logging
+from typing import Coroutine
+from unittest.mock import MagicMock, patch
 
 import pytest
-import contextlib
 
 from flux_led import aiodevice
 from flux_led.aio import AIOWifiLedBulb
@@ -19,16 +21,17 @@ async def mock_aio_protocol():
     future = asyncio.Future()
 
     async def _wait_for_connection():
-        await future
+        transport, protocol = await future
         await asyncio.sleep(0)
         await asyncio.sleep(0)
+        return transport, protocol
 
     async def _mock_create_connection(func, ip, port):
         protocol: AIOLEDENETProtocol = func()
         transport = MagicMock()
         protocol.connection_made(transport)
         with contextlib.suppress(asyncio.InvalidStateError):
-            future.set_result(True)
+            future.set_result((transport, protocol))
         return transport, protocol
 
     with patch.object(loop, "create_connection", _mock_create_connection):
@@ -260,3 +263,33 @@ async def test_handling_connection_lost(mock_aio_protocol):
     await asyncio.sleep(0)
     assert light.is_on is False
     await task
+
+
+@pytest.mark.asyncio
+async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set an effect."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
+    )
+    await task
+    assert light.model_num == 0xA2
+
+    transport.reset_mock()
+    await light.async_set_effect("random", 50)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3")
+
+    transport.reset_mock()
+    await light.async_set_effect("RBM 1", 50)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\x00\xa8"
+    )
