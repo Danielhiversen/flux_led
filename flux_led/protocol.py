@@ -14,6 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
+PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_ADDRESSABLE = "LEDENET_ADDRESSABLE"
 PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE = "LEDENET_ORIGINAL_ADDRESSABLE"
 
@@ -181,6 +182,11 @@ class ProtocolBase:
         """The off byte."""
         return 0x24
 
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return False
+
     @abstractmethod
     def construct_state_change(self, turn_on):
         """The bytes to send for a state change request."""
@@ -191,7 +197,7 @@ class ProtocolBase:
     ):
         """The bytes to send for a level change request."""
 
-    def construct_preset_pattern(self, pattern, speed):
+    def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
@@ -350,7 +356,13 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return self.is_checksum_correct(raw_state)
 
     def construct_state_change(self, turn_on):
-        """The bytes to send for a state change request."""
+        """The bytes to send for a state change request.
+
+        Alternate messages
+
+        Off 3b 24 00 00 00 00 00 00 00 32 00 00 91
+        On  3b 23 00 00 00 00 00 00 00 32 00 00 90
+        """
         return self.construct_message(
             bytearray([0x71, self.on_byte if turn_on else self.off_byte, 0x0F])
         )
@@ -411,8 +423,55 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
+    def construct_music_mode(self, sensitivity):
+        """The bytes to send for a level change request.
 
-class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
+        Known messages
+        73 01 4d 0f d0
+              ^^
+              Likely sensitivity from 0-100 (0x64)
+        73 01 64 0f e7
+        73 01 4a 0f cd
+        73 01 4b 0f ce
+        73 01 00 0f 83
+        73 01 1b 0f 9e
+        73 01 05 0f 88
+        73 01 02 0f 85
+        73 01 06 0f 89
+        73 01 05 0f 88
+        73 01 10 0f 93
+        73 01 4d 0f d0
+        73 01 64 0f e7
+
+        Pause music mode
+        73 00 59 0f db
+           ^^
+           On/off byte
+
+        Mic
+        37 00 00 37  Fade In
+           ^^
+           Mic effect
+        37 01 00 38  Gradual
+        37 02 00 39  Jump
+        37 03 00 3a  Strobe
+        """
+        return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
+
+
+class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return True
+
+    def construct_preset_pattern(self, pattern, speed, brightness):
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
+
+
+class ProtocolLEDENET9Byte(ProtocolLEDENET8ByteDimmableEffects):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
@@ -459,7 +518,12 @@ class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE
 
-    def construct_preset_pattern(self, pattern, speed):
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return False
+
+    def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         effect = pattern + 99
         return self.construct_message(
@@ -475,6 +539,11 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
     def __init__(self):
         self._counter = 0
         super().__init__()
+
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return True
 
     def is_start_of_addressable_response(self, data):
         """Check if a message is the start of an addressable state response."""
@@ -500,7 +569,7 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
             self._counter = 0
         return self._counter
 
-    def construct_preset_pattern(self, pattern, speed):
+    def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
         counter_byte = self._increment_counter()
         return self.construct_message(
@@ -513,8 +582,55 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
                     0x42,
                     pattern,
                     speed,
-                    0x64,
+                    brightness,
                     0x00,
+                ]
+            )
+        )
+
+    def construct_music_mode(self, sensitivity):
+        """The bytes to send for a level change request.
+
+        Known messages
+        b0 b1 b2 b3 00 01 01 1f 00 0d 73 01 27 01 ff 00 00 ff 00 00 64 64 62 b8 - Music mode
+        b0 b1 b2 b3 00 01 01 20 00 0d 73 01 27 01 00 ff 44 ff 00 00 64 64 a6 41 - Music mode
+        b0 b1 b2 b3 00 01 01 21 00 0d 73 01 27 01 ff a6 00 ff 00 00 64 64 08 06 - Music mode
+        b0 b1 b2 b3 00 01 01 22 00 0d 73 01 27 01 ff a6 00 ff 00 00 2e 64 d2 9b - Music mode
+
+        b0 b1 b2 b3 00 01 01 2d 00 0d 73 01 27 01 ff a6 00 ff 00 00 4e 64 f2 e6 - Music mode (various sensitivity)
+        b0 b1 b2 b3 00 01 01 2e 00 0d 73 01 27 01 ff a6 00 ff 00 00 5f 64 03 09 - Music mode (various sensitivity)
+        b0 b1 b2 b3 00 01 01 2f 00 0d 73 01 27 01 ff a6 00 ff 00 00 64 64 08 14 - Music mode (various sensitivity)
+        b0 b1 b2 b3 00 01 01 30 00 0d 73 01 27 01 ff a6 00 ff 00 00 37 64 db bb - Music mode (various sensitivity)
+                                                                    ^^
+                                                                    Likely sensitivity from 0-100 (0x64)
+        b0 b1 b2 b3 00 01 01 60 00 0d 73 01 27 01 ff a6 00 ff 00 00 64 64 08 45 - Music mode (various sensitivity)
+        b0 b1 b2 b3 00 01 01 5f 00 0d 73 01 27 01 ff a6 00 ff 00 00 64 64 08 44 - Music mode (various sensitivity)
+        b0 b1 b2 b3 00 01 01 69 00 0d 73 01 26 01 ff 00 00 ff 00 00 00 64 fd 38 - Music mode (various sensitivity)
+        b0 b1 b2 b3 00 01 01 68 00 0d 73 01 26 01 ff 00 00 ff 00 00 64 64 61 ff - Music mode (various sensitivity)
+        """
+        counter_byte = self._increment_counter()
+        red = 0xFF
+        green = 0x00
+        blue = 0x00
+
+        return self.construct_message(
+            bytearray(
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    counter_byte,
+                    0x00,
+                    0x0D,
+                    0x73,
+                    0x01,
+                    red,
+                    green,
+                    blue,
+                    red,
+                    green,
+                    blue,
+                    sensitivity,
+                    0x64,
+                    0x64,
                 ]
             )
         )
@@ -527,6 +643,7 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
         b0 [unknown static?] b1 [unknown static?] b2 [unknown static?] b3 [unknown static?] 00 [unknown static?] 01 [unknown static?] 01 [unknown static?] 6a [incrementing sequence number] 00 [unknown static?] 0d [unknown, sometimes 0c] 41 [unknown static?] 02 [preset number] ff [foreground r] 00 [foreground g] 00 [foreground b] 00 [background red] ff [background green] 00 [background blue] 06 [speed or direction?] 00 [unknown static?] 00 [unknown static?] 00 [unknown static?] 47 [speed or direction?] cd [check sum]
 
         Known messages
+
 
         b0 b1 b2 b3 00 01 01 01 00 0c 10 14 15 0a 0b 0e 12 06 01 00 0f 84 dd - preset 1
         b0 b1 b2 b3 00 01 01 03 00 0d 41 02 00 ff ff 00 00 00 06 00 00 00 47 66 - preset 2

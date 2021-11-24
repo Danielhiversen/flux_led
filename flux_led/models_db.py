@@ -18,6 +18,7 @@ from .const import (
 )
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
@@ -35,6 +36,7 @@ LEDENETModel = namedtuple(
         "mode_to_color_mode",  # A mapping of mode aka byte 2 to color mode that overrides color_modes
         "color_modes",  # The color modes to use if there is no mode_to_color_mode_mapping
         "channel_map",  # Used to remap channels
+        "microphone",  # Device has a built in microphone
     ],
 )
 
@@ -108,6 +110,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x04,
@@ -118,16 +121,18 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x06,
         models=["AK001-ZJ2147"],
         description="RGBW Controller",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode=GENERIC_RGBW_MAP,
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x07,
@@ -138,16 +143,18 @@ MODELS = [
         mode_to_color_mode=GENERIC_RGBWW_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x08,
         models=[],
         description="RGB Controller with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
+        microphone=True,
     ),
     LEDENETModel(
         model_num=0x09,
@@ -163,6 +170,7 @@ MODELS = [
             STATE_COOL_WHITE: STATE_GREEN,
             STATE_GREEN: STATE_COOL_WHITE,
         },
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x0B,
@@ -173,6 +181,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x0E,
@@ -183,26 +192,29 @@ MODELS = [
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x10,
         models=[],
         description="Christmas Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x1A,
         models=[],
         description="Christmas Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=False,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x16,
@@ -218,6 +230,7 @@ MODELS = [
             STATE_COOL_WHITE: STATE_GREEN,
             STATE_GREEN: STATE_COOL_WHITE,
         },
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x17,
@@ -228,26 +241,29 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
         channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x18,
         models=[],
         description="Plant Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={},  # no color modes -- UNVERIFIED
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x1B,
         models=[],
         description="Spray Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB},
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x19,
@@ -258,6 +274,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x1C,
@@ -273,6 +290,7 @@ MODELS = [
             STATE_COOL_WHITE: STATE_GREEN,
             STATE_GREEN: STATE_COOL_WHITE,
         },
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x21,
@@ -283,6 +301,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
         channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x25,
@@ -293,16 +312,18 @@ MODELS = [
         mode_to_color_mode=BASE_MODE_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x33,
         models=["AK001-ZJ2145", "AK001-ZJ2146"],
         description="RGB Controller",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x35,
@@ -313,6 +334,7 @@ MODELS = [
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x41,
@@ -323,6 +345,7 @@ MODELS = [
         mode_to_color_mode={},  # Only mode should be 0x41
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
         channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x44,
@@ -333,6 +356,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_RGB_W,  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x45,
@@ -343,6 +367,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGB, COLOR_MODE_DIM},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x52,
@@ -358,6 +383,7 @@ MODELS = [
             STATE_COOL_WHITE: STATE_GREEN,
             STATE_GREEN: STATE_COOL_WHITE,
         },
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x54,
@@ -368,6 +394,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_RGB_W,  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x62,
@@ -383,6 +410,7 @@ MODELS = [
             STATE_COOL_WHITE: STATE_GREEN,
             STATE_GREEN: STATE_COOL_WHITE,
         },
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x81,
@@ -393,6 +421,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x93,
@@ -403,6 +432,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x94,
@@ -413,6 +443,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x95,
@@ -423,6 +454,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x96,
@@ -433,6 +465,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0x97,  # 0x97
@@ -443,6 +476,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0xA1,
@@ -453,6 +487,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0xA2,
@@ -463,6 +498,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
+        microphone=True,
     ),
     LEDENETModel(
         model_num=0xA3,
@@ -473,6 +509,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
+        microphone=True,
     ),
     LEDENETModel(
         model_num=0xD1,
@@ -483,6 +520,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes -- UNVERIFIED
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0xE1,
@@ -493,6 +531,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes -- UNVERIFIED
         channel_map={},
+        microphone=False,
     ),
     LEDENETModel(
         model_num=0xE2,
@@ -503,6 +542,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes={},  # no color modes -- UNVERIFIED
         channel_map={},
+        microphone=False,
     ),
 ]
 
@@ -525,6 +565,7 @@ RGBW_PROTOCOL_MODELS = {
 USE_9BYTE_PROTOCOL_MODELS = {
     model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_9BYTE
 }
+MICROPHONE_MODELS = {model.model_num for model in MODELS if model.microphone}
 
 
 def get_model_description(model_num):

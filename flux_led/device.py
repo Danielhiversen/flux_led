@@ -258,15 +258,15 @@ class WifiLedBulb(LEDENETDevice):
                 return full_msg
         raise Exception("Cannot determine protocol")
 
-    def setPresetPattern(self, pattern, speed):
-        msg = self._generate_preset_pattern(pattern, speed)
+    def setPresetPattern(self, pattern, speed, brightness=100):
+        msg = self._generate_preset_pattern(pattern, speed, brightness)
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
 
-    def set_effect(self, effect, speed):
+    def set_effect(self, effect, speed, brightness=100):
         """Set an effect."""
-        return self.setPresetPattern(self._effect_to_pattern(effect), speed)
+        return self.setPresetPattern(self._effect_to_pattern(effect), speed, brightness)
 
     def getTimers(self):
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])

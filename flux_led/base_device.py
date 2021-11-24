@@ -41,6 +41,7 @@ from .models_db import (
     ADDRESSABLE_MODELS,
     BASE_MODE_MAP,
     CHANNEL_REMAP,
+    MICROPHONE_MODELS,
     MODEL_DESCRIPTIONS,
     MODEL_MAP,
     ORIGINAL_ADDRESSABLE_MODELS,
@@ -62,6 +63,7 @@ from .pattern import (
 )
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE,
     PROTOCOL_LEDENET_ORIGINAL,
@@ -69,6 +71,7 @@ from .protocol import (
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
+    ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
     ProtocolLEDENETAddressable,
     ProtocolLEDENETOriginal,
@@ -98,6 +101,7 @@ class LEDENETDevice:
         self._protocol: Optional[
             Union[
                 ProtocolLEDENET8Byte,
+                ProtocolLEDENET8ByteDimmableEffects,
                 ProtocolLEDENET9Byte,
                 ProtocolLEDENETAddressable,
                 ProtocolLEDENETOriginal,
@@ -106,6 +110,7 @@ class LEDENETDevice:
         ] = None
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
+        self._last_effect_brightness: int = 0
 
     @property
     def model_num(self) -> int:
@@ -149,6 +154,11 @@ class LEDENETDevice:
     def _is_addressable(self, model_num: int) -> bool:
         """Devices that have addressable leds."""
         return model_num in ADDRESSABLE_MODELS
+
+    @property
+    def microphone(self) -> bool:
+        """Devices that have a microphone built in."""
+        return self.model_num in MICROPHONE_MODELS
 
     @property
     def original_addressable(self) -> bool:
@@ -266,6 +276,12 @@ class LEDENETDevice:
         return self._protocol.name
 
     @property
+    def dimmable_effects(self) -> bool:
+        """Return true of the device supports dimmable effects."""
+        assert self._protocol is not None
+        return self._protocol.dimmable_effects
+
+    @property
     def is_on(self) -> bool:
         assert self.raw_state is not None
         assert self._protocol is not None
@@ -335,6 +351,10 @@ class LEDENETDevice:
         raw_state = self.raw_state
         assert raw_state is not None
 
+        if self._mode == MODE_PRESET:
+            if self.dimmable_effects:
+                return round((self._last_effect_brightness or 100) * 255 / 100)
+            return 255
         if color_mode == COLOR_MODE_DIM:
             return int(raw_state.warm_white)
         elif color_mode == COLOR_MODE_CCT:
@@ -759,6 +779,8 @@ class LEDENETDevice:
             self._protocol = ProtocolLEDENETOriginal()
         elif protocol == PROTOCOL_LEDENET_8BYTE:
             self._protocol = ProtocolLEDENET8Byte()
+        elif protocol == PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS:
+            self._protocol = ProtocolLEDENET8ByteDimmableEffects()
         elif protocol == PROTOCOL_LEDENET_9BYTE:
             self._protocol = ProtocolLEDENET9Byte()
         elif protocol == PROTOCOL_LEDENET_ADDRESSABLE:
@@ -773,6 +795,7 @@ class LEDENETDevice:
         full_msg: bytearray,
         fallback_protocol: Union[
             ProtocolLEDENET8Byte,
+            ProtocolLEDENET8ByteDimmableEffects,
             ProtocolLEDENET9Byte,
             ProtocolLEDENETAddressable,
             ProtocolLEDENETOriginal,
@@ -789,7 +812,9 @@ class LEDENETDevice:
         else:
             self._protocol = fallback_protocol
 
-    def _generate_preset_pattern(self, pattern: str, speed: int) -> bytearray:
+    def _generate_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """Generate the preset pattern protocol bytes."""
         if self.original_addressable:
             if pattern not in ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME:
@@ -801,8 +826,11 @@ class LEDENETDevice:
             PresetPattern.valtostr(pattern)
             if not PresetPattern.valid(pattern):
                 raise ValueError("Pattern must be between 0x25 and 0x38")
+        if not (1 <= brightness <= 100):
+            raise ValueError("Brightness must be between 1 and 100")
+        self._last_effect_brightness = brightness
         assert self._protocol is not None
-        return self._protocol.construct_preset_pattern(pattern, speed)
+        return self._protocol.construct_preset_pattern(pattern, speed, brightness)
 
     def _generate_custom_patterm(
         self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str

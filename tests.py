@@ -435,6 +435,7 @@ class TestLight(unittest.TestCase):
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.model_num, 0x25)
+        self.assertEqual(light.microphone, False)
         self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
         self.assertEqual(
             light.effect_list,
@@ -511,18 +512,19 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.rgbcw, (182, 0, 152, 37, 25))
         self.assertEqual(light.getRgbcw(), (182, 0, 152, 37, 25))
         self.assertEqual(light.rgbwcapable, True)
+        self.assertEqual(light.dimmable_effects, True)
         self.assertEqual(
             light.__str__(),
             "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,4,37,15,222,]",
         )
 
         # Home Assistant legacy names
-        light.set_effect("colorjump", 50)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+        light.set_effect("colorjump", 50, 100)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"88\x10d\xe4")))
 
         # Library names
-        light.set_effect("seven_color_jumping", 50)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+        light.set_effect("seven_color_jumping", 50, 60)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"88\x10<\xbc")))
 
         with pytest.raises(ValueError):
             light.set_effect("unknown", 50)
@@ -534,6 +536,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
+        self.assertEqual(light.brightness, 153)
+
         self.assertEqual(light.preset_pattern_num, 0x38)
         self.assertEqual(
             light.__str__(),
@@ -579,6 +583,7 @@ class TestLight(unittest.TestCase):
         assert light.color_modes == {COLOR_MODE_RGB}
         self.assertEqual(light.model_num, 0x01)
         self.assertEqual(light.model, "Original LEDENET (0x01)")
+        self.assertEqual(light.dimmable_effects, False)
 
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
@@ -826,8 +831,8 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"$$\x45\x00\x00\x00\x00\x00\x02\x00\x00\xee")
 
         mock_read.side_effect = read_data
-        switch = flux_led.WifiLedBulb("192.168.1.164")
-        assert switch.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -945,6 +950,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,255,255,255,4,0,240,239,]",
         )
+        self.assertEqual(light.dimmable_effects, False)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -972,6 +978,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.addressable, True)
         self.assertEqual(light.model_num, 0xA2)
+        self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony 2 (0xA2)")
         assert len(light.effect_list) == 103
         assert light.color_modes == {COLOR_MODE_RGB}
@@ -991,6 +998,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.brightness, 255)
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
+        self.assertEqual(light.dimmable_effects, True)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1049,6 +1057,7 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.original_addressable, True)
+        self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.model_num, 0xA1)
         self.assertEqual(light.model, "RGB Symphony Original (0xA1)")
         assert len(light.effect_list) == 300

@@ -163,9 +163,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         if updates:
             self._replace_raw_state(updates)
 
-    async def async_set_preset_pattern(self, effect, speed):
+    async def async_set_preset_pattern(
+        self, effect: int, speed: int, brightness: int = 100
+    ) -> None:
         """Set a preset pattern on the device."""
-        msg = self._generate_preset_pattern(effect, speed)
+        msg = self._generate_preset_pattern(effect, speed, brightness)
         await self._async_send_msg(msg)
 
     async def async_set_custom_pattern(self, rgb_list, speed, transition_type):
@@ -173,10 +175,12 @@ class AIOWifiLedBulb(LEDENETDevice):
         msg = self._generate_custom_patterm(rgb_list, speed, transition_type)
         await self._async_send_msg(msg)
 
-    async def async_set_effect(self, effect, speed):
+    async def async_set_effect(
+        self, effect: str, speed: int, brightness: int = 100
+    ) -> None:
         """Set an effect."""
         return await self.async_set_preset_pattern(
-            self._effect_to_pattern(effect), speed
+            self._effect_to_pattern(effect), speed, brightness
         )
 
     async def _async_connect(self):
