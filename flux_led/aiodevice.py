@@ -224,7 +224,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         # Handle brightness adjustment in RGBWW Color Mode
         if self.color_mode == COLOR_MODE_RGBWW:
-            await self.async_set_levels(*rgbww_brightness(self.rgbwc, brightness))
+            await self.async_set_levels(*rgbww_brightness(self.rgbww, brightness))
             return
         # Handle Brightness Only Color Mode
         if self.color_mode == COLOR_MODE_DIM:
