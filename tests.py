@@ -1170,7 +1170,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b"Bd2d<")),
+            mock.call(bytearray(b'B\x012d\xd9')),
         )
         light._transition_complete_time = 0
         light.update_state()
