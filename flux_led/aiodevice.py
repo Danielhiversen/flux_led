@@ -205,7 +205,6 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_brightness(self, brightness: int) -> None:
         """Adjust brightness."""
-        # Handle brightness adjustment in effect mode
         effect = self.effect
         if effect:
             effect_brightness = round(brightness / 255 * 100)
@@ -214,19 +213,15 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self.color_mode == COLOR_MODE_CCT:
             await self.async_set_white_temp(self.color_temp, brightness)
             return
-        # Handle brightness adjustment in RGB Color Mode
         if self.color_mode == COLOR_MODE_RGB:
-            await self.async_set_levels(*self.rgb_unscaled, brightness=brightness)
+            await self.async_set_levels(*self.rgb_unscaled, brightness)
             return
-        # Handle brightness adjustment in RGBW Color Mode
         if self.color_mode == COLOR_MODE_RGBW:
             await self.async_set_levels(*rgbw_brightness(self.rgbw, brightness))
             return
-        # Handle brightness adjustment in RGBWW Color Mode
         if self.color_mode == COLOR_MODE_RGBWW:
             await self.async_set_levels(*rgbww_brightness(self.rgbww, brightness))
             return
-        # Handle Brightness Only Color Mode
         if self.color_mode == COLOR_MODE_DIM:
             await self.async_set_levels(w=brightness)
             return
