@@ -314,15 +314,9 @@ async def test_async_set_brightness(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b'1\xff\x00\xd5\xff\xff\x00\x0f\x12'
-    )
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd5\xff\xff\x00\x0f\x12"
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b'1\x80\x00k\x80\x80\x00\x0f+'
-    )
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00k\x80\x80\x00\x0f+"
