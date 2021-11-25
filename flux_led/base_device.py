@@ -40,14 +40,12 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     LevelWriteMode,
 )
 from .models_db import (
-    ADDRESSABLE_MODELS,
     BASE_MODE_MAP,
     CHANNEL_REMAP,
     MICROPHONE_MODELS,
     MODEL_DESCRIPTIONS,
     MODEL_MAP,
     MODEL_NUM_PROTOCOL,
-    ORIGINAL_ADDRESSABLE_MODELS,
     RGBW_PROTOCOL_MODELS,
     UNKNOWN_MODEL,
     USE_9BYTE_PROTOCOL_MODELS,
@@ -168,27 +166,9 @@ class LEDENETDevice:
         return self.model_num in RGBW_PROTOCOL_MODELS
 
     @property
-    def addressable(self) -> bool:
-        """Devices that have addressable leds."""
-        return self._is_addressable(self.model_num)
-
-    def _is_addressable(self, model_num: int) -> bool:
-        """Devices that have addressable leds."""
-        return model_num in ADDRESSABLE_MODELS
-
-    @property
     def microphone(self) -> bool:
         """Devices that have a microphone built in."""
         return self.model_num in MICROPHONE_MODELS
-
-    @property
-    def original_addressable(self) -> bool:
-        """Devices that have addressable leds using the original addressable protocol."""
-        return self._is_original_addressable(self.model_num)
-
-    def _is_original_addressable(self, model_num) -> bool:
-        """Devices that have addressable leds using the original addressable protocol."""
-        return model_num in ORIGINAL_ADDRESSABLE_MODELS
 
     @property
     def rgbwcapable(self) -> bool:

@@ -20,9 +20,10 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
-    PROTOCOL_LEDENET_ADDRESSABLE,
+    PROTOCOL_LEDENET_ADDRESSABLE_A1,
+    PROTOCOL_LEDENET_ADDRESSABLE_A2,
+    PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
-    PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
 )
 from flux_led.utils import rgbw_brightness, rgbww_brightness
 
@@ -1112,7 +1113,7 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
-    def test_addressable_strip_effects(self, mock_connect, mock_read, mock_send):
+    def test_addressable_strip_effects_a2(self, mock_connect, mock_read, mock_send):
         calls = 0
 
         def read_data(expected):
@@ -1133,7 +1134,6 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
-        self.assertEqual(light.addressable, True)
         self.assertEqual(light.model_num, 0xA2)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony 2 (0xA2)")
@@ -1148,7 +1148,78 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Color: (255, 0, 0) Brightness: 100% raw state: 129,162,35,97,65,16,255,0,0,0,4,0,240,235,]",
         )
-        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ADDRESSABLE)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ADDRESSABLE_A2)
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 255)
+        self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
+        self.assertEqual(light.dimmable_effects, True)
+
+        light.setRgbw(0, 255, 0)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"A\x01\x00\xff\x00\x00\x00\x00`\xff\x00\x00\xa0")),
+        )
+
+        light.set_effect("RBM 1", 50)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"Bd2d<")),
+        )
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,162,35,37,1,16,100,0,0,0,4,0,240,212,]",
+        )
+        assert light.effect == "RBM 1"
+        assert light.getSpeed() == 16
+
+    @patch("flux_led.WifiLedBulb._send_msg")
+    @patch("flux_led.WifiLedBulb._read_msg")
+    @patch("flux_led.WifiLedBulb.connect")
+    def test_addressable_strip_effects_a3(self, mock_connect, mock_read, mock_send):
+        calls = 0
+
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b"\x81\xA3")
+            if calls == 2:
+                self.assertEqual(expected, 12)
+                return bytearray(b"#a\x41\x10\xff\x00\x00\x00\x04\x00\xf0\xec")
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+                )
+            raise ValueError("Too many calls")
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.model_num, 0xA3)
+        self.assertEqual(light.microphone, True)
+        self.assertEqual(light.model, "RGB Symphony 3 (0xA3)")
+        assert len(light.effect_list) == 104
+        assert light.color_modes == {COLOR_MODE_RGB}
+
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Color: (255, 0, 0) Brightness: 100% raw state: 129,163,35,97,65,16,255,0,0,0,4,0,240,236,]",
+        )
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ADDRESSABLE_A3)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
@@ -1182,7 +1253,7 @@ class TestLight(unittest.TestCase):
         light.update_state()
         self.assertEqual(
             light.__str__(),
-            "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,162,35,37,1,16,100,0,0,0,4,0,240,212,]",
+            "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,163,35,37,1,16,100,0,0,0,4,0,240,213,]",
         )
         assert light.effect == "RBM 1"
         assert light.getSpeed() == 16
@@ -1213,7 +1284,6 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
-        self.assertEqual(light.original_addressable, True)
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.model_num, 0xA1)
         self.assertEqual(light.model, "RGB Symphony Original (0xA1)")
@@ -1228,7 +1298,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Color: (255, 0, 0) Brightness: 100% raw state: 129,161,35,97,65,16,255,0,0,0,4,0,240,234,]",
         )
-        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ADDRESSABLE_A1)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
