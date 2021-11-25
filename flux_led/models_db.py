@@ -21,9 +21,10 @@ from .protocol import (
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
-    PROTOCOL_LEDENET_ADDRESSABLE,
+    PROTOCOL_LEDENET_ADDRESSABLE_A1,
+    PROTOCOL_LEDENET_ADDRESSABLE_A2,
+    PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
-    PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
 )
 
 LEDENETModel = namedtuple(
@@ -484,7 +485,7 @@ MODELS = [
         models=[],
         description="RGB Symphony Original",  # https://github.com/Danielhiversen/flux_led/pull/59/files#diff-09e60df19b61f5ceb8d2aef0ade582c2b84979cab660baa27c1ec65725144d76R776
         always_writes_white_and_colors=False,
-        protocol=PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
+        protocol=PROTOCOL_LEDENET_ADDRESSABLE_A1,
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
@@ -495,7 +496,7 @@ MODELS = [
         models=["AK001-ZJ2104"],
         description="RGB Symphony 2",
         always_writes_white_and_colors=False,
-        protocol=PROTOCOL_LEDENET_ADDRESSABLE,
+        protocol=PROTOCOL_LEDENET_ADDRESSABLE_A2,
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
@@ -506,7 +507,7 @@ MODELS = [
         models=["K001-ZJ2148"],
         description="RGB Symphony 3",
         always_writes_white_and_colors=False,
-        protocol=PROTOCOL_LEDENET_ADDRESSABLE,
+        protocol=PROTOCOL_LEDENET_ADDRESSABLE_A3,
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
@@ -550,16 +551,6 @@ MODELS = [
 MODEL_MAP = {model.model_num: model for model in MODELS}
 MODEL_DESCRIPTIONS = {model.model_num: model.description for model in MODELS}
 CHANNEL_REMAP = {model.model_num: model.channel_map for model in MODELS}
-ORIGINAL_ADDRESSABLE_MODELS = {
-    model.model_num
-    for model in MODELS
-    if model.protocol == PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE
-}
-ADDRESSABLE_MODELS = {
-    model.model_num
-    for model in MODELS
-    if model.protocol == PROTOCOL_LEDENET_ADDRESSABLE
-}
 RGBW_PROTOCOL_MODELS = {
     model.model_num for model in MODELS if model.always_writes_white_and_colors
 }

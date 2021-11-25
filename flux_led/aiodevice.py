@@ -214,7 +214,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             await self.async_set_white_temp(self.color_temp, brightness)
             return
         if self.color_mode == COLOR_MODE_RGB:
-            await self.async_set_levels(*self.rgb_unscaled, brightness)
+            await self.async_set_levels(*self.rgb_unscaled, brightness=brightness)
             return
         if self.color_mode == COLOR_MODE_RGBW:
             await self.async_set_levels(*rgbw_brightness(self.rgbw, brightness))
@@ -275,7 +275,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         assert self._updated_callback is not None
         prev_state = self.raw_state
-        if self.addressable and self._protocol.is_valid_addressable_response(msg):
+        if self._protocol.is_valid_addressable_response(msg):
             self.process_addressable_response(msg)
         if self._protocol.is_valid_state_response(msg):
             self.process_state_response(msg)

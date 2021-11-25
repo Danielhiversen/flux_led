@@ -16,8 +16,9 @@ PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS = "LEDENET_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
 PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
-PROTOCOL_LEDENET_ADDRESSABLE = "LEDENET_ADDRESSABLE"
-PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE = "LEDENET_ORIGINAL_ADDRESSABLE"
+PROTOCOL_LEDENET_ADDRESSABLE_A1 = "LEDENET_ADDRESSABLE_A1"
+PROTOCOL_LEDENET_ADDRESSABLE_A2 = "LEDENET_ADDRESSABLE_A2"
+PROTOCOL_LEDENET_ADDRESSABLE_A3 = "LEDENET_ADDRESSABLE_A3"
 
 TRANSITION_BYTES = {
     TRANSITION_JUMP: 0x3B,
@@ -134,6 +135,14 @@ class ProtocolBase:
     """The base protocol."""
 
     power_state_response_length = MSG_LENGTHS[MSG_POWER_STATE]
+
+    def is_start_of_addressable_response(self, data):
+        """Check if a message is the start of an addressable state response."""
+        return False
+
+    def is_valid_addressable_response(self, data):
+        """Check if a message is a valid addressable state response."""
+        return False
 
     def expected_response_length(self, data):
         """Return the number of bytes expected in the response.
@@ -537,11 +546,11 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
 
 
-class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
     @property
     def name(self):
         """The name of the protocol."""
-        return PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE
+        return PROTOCOL_LEDENET_ADDRESSABLE_A1
 
     @property
     def dimmable_effects(self):
@@ -556,7 +565,50 @@ class ProtocolLEDENETOriginalAddressable(ProtocolLEDENET9Byte):
         )
 
 
-class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_ADDRESSABLE_A2
+
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return True
+
+    def construct_preset_pattern(self, pattern, speed, brightness):
+        """The bytes to send for a preset pattern."""
+        return self.construct_message(bytearray([0x42, pattern, speed, brightness]))
+
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, write_mode
+    ):
+        """The bytes to send for a level change request.
+
+        white  41 01 ff ff ff 00 00 00 60 ff 00 00 9e
+        """
+        preset_number = 0x01  # aka fixed color
+        return self.construct_message(
+            bytearray(
+                [
+                    0x41,
+                    preset_number,
+                    red,
+                    green,
+                    blue,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x60,
+                    0xFF,
+                    0x00,
+                    0x00,
+                ]
+            )
+        )
+
+
+class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
 
     ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
     addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
@@ -564,6 +616,11 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
     def __init__(self):
         self._counter = 0
         super().__init__()
+
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_ADDRESSABLE_A3
 
     @property
     def dimmable_effects(self):
@@ -581,11 +638,6 @@ class ProtocolLEDENETAddressable(ProtocolLEDENET9Byte):
         if not self.is_start_of_addressable_response(data):
             return False
         return self.is_checksum_correct(data)
-
-    @property
-    def name(self):
-        """The name of the protocol."""
-        return PROTOCOL_LEDENET_ADDRESSABLE
 
     def _increment_counter(self):
         """Increment the counter byte."""

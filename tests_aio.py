@@ -188,7 +188,7 @@ async def test_turn_on_off_via_assessable_state_message(
     task = asyncio.create_task(light.async_setup(_updated_callback))
     await mock_aio_protocol()
     light._aio_protocol.data_received(
-        b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
     )
     await task
 
@@ -274,10 +274,10 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     task = asyncio.create_task(light.async_setup(_updated_callback))
     transport, protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
-        b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
     )
     await task
-    assert light.model_num == 0xA2
+    assert light.model_num == 0xA3
 
     transport.reset_mock()
     await light.async_set_effect("random", 50)
