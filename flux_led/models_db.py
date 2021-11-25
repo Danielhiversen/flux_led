@@ -483,7 +483,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA1,
         models=[],
-        description="RGB Symphony Original",  # https://github.com/Danielhiversen/flux_led/pull/59/files#diff-09e60df19b61f5ceb8d2aef0ade582c2b84979cab660baa27c1ec65725144d76R776
+        description="RGB Symphony v1",
         always_writes_white_and_colors=False,
         protocol=PROTOCOL_LEDENET_ADDRESSABLE_A1,
         mode_to_color_mode={},
@@ -494,7 +494,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA2,
         models=["AK001-ZJ2104"],
-        description="RGB Symphony 2",
+        description="RGB Symphony v2",
         always_writes_white_and_colors=False,
         protocol=PROTOCOL_LEDENET_ADDRESSABLE_A2,
         mode_to_color_mode={},
@@ -505,7 +505,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA3,
         models=["K001-ZJ2148"],
-        description="RGB Symphony 3",
+        description="RGB Symphony v3",
         always_writes_white_and_colors=False,
         protocol=PROTOCOL_LEDENET_ADDRESSABLE_A3,
         mode_to_color_mode={},

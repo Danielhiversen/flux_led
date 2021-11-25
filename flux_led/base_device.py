@@ -109,6 +109,10 @@ NEW_EFFECTS_PROTOCOLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
 }
+SPEED_ADJUST_WILL_TURN_ON = {
+    PROTOCOL_LEDENET_ADDRESSABLE_A1,
+    PROTOCOL_LEDENET_ADDRESSABLE_A2,
+}
 
 
 class DeviceType(Enum):
@@ -140,7 +144,7 @@ class LEDENETDevice:
     @property
     def speed_adjust_off(self) -> int:
         """Return if the speed of an effect can be adjusted while off."""
-        return self.protocol != PROTOCOL_LEDENET_ADDRESSABLE_A1
+        return self.protocol not in SPEED_ADJUST_WILL_TURN_ON
 
     @property
     def model(self) -> str:
