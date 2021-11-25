@@ -203,7 +203,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Set levels randomly."""
         await self._async_process_levels_change(*self._generate_random_levels_change())
 
-    async def async_adjust_brightness(self, brightness: int) -> None:
+    async def async_set_brightness(self, brightness: int) -> None:
         """Adjust brightness."""
         # Handle brightness adjustment in effect mode
         effect = self.effect
