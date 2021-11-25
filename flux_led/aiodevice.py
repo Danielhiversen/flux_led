@@ -6,6 +6,11 @@ from typing import Callable, Dict, List, Optional
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import LEDENETDevice
 from .const import (
+    COLOR_MODE_CCT,
+    COLOR_MODE_DIM,
+    COLOR_MODE_RGB,
+    COLOR_MODE_RGBW,
+    COLOR_MODE_RGBWW,
     EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
@@ -14,7 +19,7 @@ from .const import (
     STATE_WARM_WHITE,
 )
 from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
-from .utils import color_temp_to_white_levels
+from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -197,6 +202,29 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def async_set_random(self) -> None:
         """Set levels randomly."""
         await self._async_process_levels_change(*self._generate_random_levels_change())
+
+    async def async_set_brightness(self, brightness: int) -> None:
+        """Adjust brightness."""
+        effect = self.effect
+        if effect:
+            effect_brightness = round(brightness / 255 * 100)
+            await self.async_set_effect(effect, self.speed, effect_brightness)
+            return
+        if self.color_mode == COLOR_MODE_CCT:
+            await self.async_set_white_temp(self.color_temp, brightness)
+            return
+        if self.color_mode == COLOR_MODE_RGB:
+            await self.async_set_levels(*self.rgb_unscaled, brightness)
+            return
+        if self.color_mode == COLOR_MODE_RGBW:
+            await self.async_set_levels(*rgbw_brightness(self.rgbw, brightness))
+            return
+        if self.color_mode == COLOR_MODE_RGBWW:
+            await self.async_set_levels(*rgbww_brightness(self.rgbww, brightness))
+            return
+        if self.color_mode == COLOR_MODE_DIM:
+            await self.async_set_levels(w=brightness)
+            return
 
     async def _async_connect(self):
         """Create connection."""

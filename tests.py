@@ -68,6 +68,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.warm_white, 0)
         self.assertEqual(light.brightness, 255)
         self.assertEqual(light.getRgb(), (103, 255, 104))
+        self.assertEqual(light.rgb, (103, 255, 104))
+        self.assertEqual(light.rgb_unscaled, (103, 255, 104))
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
 
@@ -107,6 +109,8 @@ class TestLight(unittest.TestCase):
             mock_send.call_args, mock.call(bytearray(b"1\x01\x19P\x00\xf0\x0f\x9a"))
         )
         self.assertEqual(light.getRgb(), (1, 25, 80))
+        self.assertEqual(light.rgb, (1, 25, 80))
+        self.assertEqual(light.rgb_unscaled, (3, 80, 255))
 
         light._transition_complete_time = 0
         light.update_state()
