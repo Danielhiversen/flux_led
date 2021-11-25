@@ -69,18 +69,20 @@ from .protocol import (
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
-    PROTOCOL_LEDENET_ADDRESSABLE,
+    PROTOCOL_LEDENET_ADDRESSABLE_A1,
+    PROTOCOL_LEDENET_ADDRESSABLE_A2,
+    PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
-    PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE,
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
     ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
     ProtocolLEDENET9ByteDimmableEffects,
-    ProtocolLEDENETAddressable,
+    ProtocolLEDENETAddressableA1,
+    ProtocolLEDENETAddressableA2,
+    ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
-    ProtocolLEDENETOriginalAddressable,
 )
 from .timer import BuiltInTimer
 from .utils import utils, white_levels_to_color_temp
@@ -92,10 +94,23 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
     ProtocolLEDENET9ByteDimmableEffects,
-    ProtocolLEDENETAddressable,
+    ProtocolLEDENETAddressableA1,
+    ProtocolLEDENETAddressableA2,
+    ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
-    ProtocolLEDENETOriginalAddressable,
 ]
+
+ADDRESSABLE_PROTOCOLS = {
+    PROTOCOL_LEDENET_ADDRESSABLE_A1,
+    PROTOCOL_LEDENET_ADDRESSABLE_A2,
+    PROTOCOL_LEDENET_ADDRESSABLE_A3,
+}
+
+OLD_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_A1}
+NEW_EFFECTS_PROTOCOLS = {
+    PROTOCOL_LEDENET_ADDRESSABLE_A2,
+    PROTOCOL_LEDENET_ADDRESSABLE_A3,
+}
 
 
 class DeviceType(Enum):
@@ -306,9 +321,10 @@ class LEDENETDevice:
     def effect_list(self) -> List[str]:
         """Return the list of available effects."""
         effects: Iterable[str] = []
-        if self.original_addressable:
+        protocol = self.protocol
+        if protocol in OLD_EFFECTS_PROTOCOLS:
             effects = ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
-        elif self.addressable:
+        elif protocol in NEW_EFFECTS_PROTOCOLS:
             effects = ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
             effects = EFFECT_LIST
@@ -324,10 +340,11 @@ class LEDENETDevice:
         if pattern_code == EFFECT_CUSTOM_CODE:
             return EFFECT_CUSTOM
         mode = self.raw_state.mode
-        if self.original_addressable:
+        protocol = self.protocol
+        if protocol in OLD_EFFECTS_PROTOCOLS:
             effect_id = (pattern_code << 8) + mode - 99
             return ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.get(effect_id)
-        if self.addressable:
+        if protocol in NEW_EFFECTS_PROTOCOLS:
             if pattern_code == 0x25:
                 return ADDRESSABLE_EFFECT_ID_NAME.get(mode)
             if pattern_code == 0x24:
@@ -397,7 +414,7 @@ class LEDENETDevice:
             return MODE_PRESET
         elif BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
-        elif self.addressable or self.original_addressable:
+        elif self.protocol in ADDRESSABLE_PROTOCOLS:
             return MODE_PRESET
         return None
 
@@ -652,7 +669,7 @@ class LEDENETDevice:
     @property
     def speed(self) -> int:
         assert self.raw_state is not None
-        if self.addressable or self.original_addressable:
+        if self.protocol in ADDRESSABLE_PROTOCOLS:
             return self.raw_state.speed
         return utils.delayToSpeed(self.raw_state.speed)
 
@@ -766,7 +783,7 @@ class LEDENETDevice:
         """
         assert self.raw_state is not None
         latency = STATE_CHANGE_LATENCY
-        if self.addressable or self.original_addressable:
+        if self.protocol in ADDRESSABLE_PROTOCOLS:
             latency = ADDRESSABLE_STATE_CHANGE_LATENCY
         transition_time = latency + utils.speedToDelay(self.raw_state.speed) / 100
         self._transition_complete_time = time.monotonic() + transition_time
@@ -814,10 +831,12 @@ class LEDENETDevice:
             self._protocol = ProtocolLEDENET9Byte()
         elif protocol == PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS:
             self._protocol = ProtocolLEDENET9ByteDimmableEffects()
-        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE:
-            self._protocol = ProtocolLEDENETAddressable()
-        elif protocol == PROTOCOL_LEDENET_ORIGINAL_ADDRESSABLE:
-            self._protocol = ProtocolLEDENETOriginalAddressable()
+        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE_A3:
+            self._protocol = ProtocolLEDENETAddressableA3()
+        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE_A2:
+            self._protocol = ProtocolLEDENETAddressableA2()
+        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE_A1:
+            self._protocol = ProtocolLEDENETAddressableA1()
         else:
             raise ValueError(f"Invalid protocol: {protocol}")
 
@@ -833,10 +852,11 @@ class LEDENETDevice:
         self, pattern: int, speed: int, brightness: int
     ) -> bytearray:
         """Generate the preset pattern protocol bytes."""
-        if self.original_addressable:
+        protocol = self.protocol
+        if protocol in OLD_EFFECTS_PROTOCOLS:
             if pattern not in ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME:
                 raise ValueError("Pattern must be between 1 and 300")
-        elif self.addressable:
+        elif protocol in NEW_EFFECTS_PROTOCOLS:
             if pattern not in ADDRESSABLE_EFFECT_ID_NAME:
                 raise ValueError("Pattern must be between 1 and 100")
         else:
@@ -868,8 +888,9 @@ class LEDENETDevice:
 
     def _effect_to_pattern(self, effect: str) -> int:
         """Convert an effect to a pattern code."""
-        if self.addressable:
+        protocol = self.protocol
+        if protocol in NEW_EFFECTS_PROTOCOLS:
             return ADDRESSABLE_EFFECT_NAME_ID[effect]
-        if self.original_addressable:
+        if protocol in OLD_EFFECTS_PROTOCOLS:
             return ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID[effect]
         return PresetPattern.str_to_val(effect)
