@@ -138,6 +138,11 @@ class LEDENETDevice:
         return self.raw_state.model_num if self.raw_state else None
 
     @property
+    def speed_adjust_off(self) -> int:
+        """Return if the speed of an effect can be adjusted while off."""
+        return self.protocol != PROTOCOL_LEDENET_ADDRESSABLE_A1
+
+    @property
     def model(self) -> str:
         """Return the human readable model description."""
         model_num = self.model_num
