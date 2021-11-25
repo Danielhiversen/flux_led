@@ -291,3 +291,38 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
         transport.mock_calls[0][1][0]
         == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\x00\xa8"
     )
+
+
+@pytest.mark.asyncio
+async def test_async_set_brightness(mock_aio_protocol):
+    """Test we can set brightness."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b'1\xff\x00\xd5\xff\xff\x00\x0f\x12'
+    )
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b'1\x80\x00k\x80\x80\x00\x0f+'
+    )
