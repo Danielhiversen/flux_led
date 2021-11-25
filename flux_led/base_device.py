@@ -788,12 +788,20 @@ class LEDENETDevice:
         raw_state = self.raw_state
         return (raw_state.red, raw_state.green, raw_state.blue)
 
+    @property
+    def rgb_unscaled(self) -> Tuple[int, int, int]:
+        """Return the unscaled RGB."""
+        r, g, b = self.rgb
+        hsv = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+        r_p, g_p, b_p = colorsys.hsv_to_rgb(hsv[0], hsv[1], 1)
+        return round(r_p * 255), round(g_p * 255), round(b_p * 255)
+
     def _calculateBrightness(
         self, rgb: Tuple[int, int, int], level: int
     ) -> Tuple[int, int, int]:
         hsv = colorsys.rgb_to_hsv(*rgb)
-        h, s, v = colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
-        return int(h), int(s), int(v)
+        r, g, b = colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
+        return int(r), int(g), int(b)
 
     def setProtocol(self, protocol: str) -> None:
         if protocol == PROTOCOL_LEDENET_ORIGINAL:
