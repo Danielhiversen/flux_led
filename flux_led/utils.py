@@ -88,10 +88,7 @@ class utils:
         # speed is 0-100, delay is 1-31
         # 1st translate delay to 0-30
         delay = delay - 1
-        if delay > utils.max_delay - 1:
-            delay = utils.max_delay - 1
-        if delay < 0:
-            delay = 0
+        delay = max(0, min(utils.max_delay - 1, delay))
         inv_speed = int((delay * 100) / (utils.max_delay - 1))
         speed = 100 - inv_speed
         return speed
@@ -99,10 +96,7 @@ class utils:
     @staticmethod
     def speedToDelay(speed: int) -> int:
         # speed is 0-100, delay is 1-31
-        if speed > 100:
-            speed = 100
-        if speed < 0:
-            speed = 0
+        speed = max(0, min(100, speed))
         inv_speed = 100 - speed
         delay = int((inv_speed * (utils.max_delay - 1)) / 100)
         # translate from 0-30 to 1-31
@@ -111,19 +105,11 @@ class utils:
 
     @staticmethod
     def byteToPercent(byte: int) -> int:
-        if byte > 255:
-            byte = 255
-        if byte < 0:
-            byte = 0
-        return int((byte * 100) / 255)
+        return int((max(0, min(255, byte)) * 100) / 255)
 
     @staticmethod
     def percentToByte(percent: int) -> int:
-        if percent > 100:
-            percent = 100
-        if percent < 0:
-            percent = 0
-        return int((percent * 255) / 100)
+        return int((max(0, min(100, percent)) * 255) / 100)
 
 
 def rgbwc_to_rgbcw(
