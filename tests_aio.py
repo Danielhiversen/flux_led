@@ -575,7 +575,7 @@ async def test_async_scanner_times_out_with_nothing(mock_discovery_aio_protocol)
     """Test scanner."""
     scanner = AIOBulbScanner()
 
-    task = asyncio.ensure_future(scanner.async_scan(timeout=0.0000001))
+    task = asyncio.ensure_future(scanner.async_scan(timeout=0.05))
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task
     assert data == []
@@ -589,7 +589,7 @@ async def test_async_scanner_times_out_with_nothing_specific_address(
     scanner = AIOBulbScanner()
 
     task = asyncio.ensure_future(
-        scanner.async_scan(timeout=0.0000001, address="192.168.213.252")
+        scanner.async_scan(timeout=0.05, address="192.168.213.252")
     )
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task
