@@ -824,9 +824,9 @@ class LEDENETDevice:
 
     def setProtocol(self, protocol: str) -> None:
         cls = PROTOCOL_NAME_TO_CLS.get(protocol)
-        if not cls:
+        if cls is None:
             raise ValueError(f"Invalid protocol: {protocol}")
-        self._protocol = cls()
+        self._protocol = cls()  # type: ignore
 
     def _set_protocol_from_msg(
         self,
