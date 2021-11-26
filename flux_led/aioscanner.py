@@ -13,6 +13,7 @@ MAX_UPDATES_WITHOUT_RESPONSE = 4
 
 class LEDENETDiscovery(asyncio.DatagramProtocol):
     def __init__(self, destination, on_response):
+        """Init the discovery protocol."""
         self.transport = None
         self.destination = destination
         self.on_response = on_response
@@ -26,7 +27,7 @@ class LEDENETDiscovery(asyncio.DatagramProtocol):
         _LOGGER.error("LEDENETDiscovery error: %s", ex)
 
     def connection_lost(self, ex):
-        pass
+        """The connection is lost."""
 
 
 class AIOBulbScanner(BulbScanner):
