@@ -247,7 +247,6 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     def _async_data_recieved(self, data):
         """New data on the socket."""
-        self.set_available()
         start_empty_buffer = not self._buffer
         self._buffer += data
         self._updates_without_response = 0
@@ -276,6 +275,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         if not self._protocol:
             return
+        self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
         if self._protocol.is_valid_addressable_response(msg):
