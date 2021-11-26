@@ -160,6 +160,12 @@ class BulbScanner:
             if info.get(ATTR_IPADDR)
         ]
 
+    def send_discovery_messages(self, sender, destination):
+        _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
+        sender.sendto(self.DISCOVER_MESSAGE, destination)
+        _LOGGER.debug("discover: %s => %s", destination, self.VERSION_MESSAGE)
+        sender.sendto(self.VERSION_MESSAGE, destination)
+
     def scan(self, timeout=10, address=None):
         """Scan for bulbs.
 
@@ -177,9 +183,7 @@ class BulbScanner:
             if time.monotonic() > quit_time:
                 break
             # send out a broadcast query
-            sock.sendto(self.DISCOVER_MESSAGE, destination)
-            sock.sendto(self.VERSION_MESSAGE, destination)
-            _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
+            self.send_discovery_messages(sock, destination)
             # inner loop waiting for responses
             while True:
                 sock.settimeout(1)
@@ -191,11 +195,7 @@ class BulbScanner:
                 if not read_ready:
                     if time.monotonic() < quit_time:
                         # No response, send broadcast again in cast it got lost
-                        _LOGGER.debug(
-                            "discover: %s => %s", destination, self.DISCOVER_MESSAGE
-                        )
-                        sock.sendto(self.DISCOVER_MESSAGE, destination)
-                        sock.sendto(self.VERSION_MESSAGE, destination)
+                        self.send_discovery_messages(sock, destination)
                     continue
 
                 try:
