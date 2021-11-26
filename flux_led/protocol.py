@@ -607,6 +607,67 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
             )
         )
 
+    def construct_music_mode(self, sensitivity):
+        """The bytes to send for a level change request.
+
+        Known messages
+        73 01 27 01 00 00 00 00 ff ff 64 64 62 - lowest brightness music
+        73 01 27 01 ff ff ff 00 ff ff 64 64 5f - highest brightness music
+                    ^R ^G ^B <-- failling color
+        73 01 27 01 ff 00 00 00 ff ff 64 64 61
+                    ^R ^G ^B <-- failling color
+
+
+
+        73 01 27 01 ff ff ff 00 ff ff 00 64 fb - lowest sensitivity
+        73 01 27 01 ff ff ff 00 ff ff 64 64 5f - highest sensitivity
+                                    ^ sensitivity
+
+
+        73 01 27 13 00 ff 19 ff 00 00 64 64 8d
+                    ^R ^G ^B <-- failling color (light screen mode)
+        73 01 27 13 00 ff 19 ff 00 00 64 64 8d
+                            ^R ^G ^B <-- column color (light screen mode)
+
+        73 01 27 14 00 ff 19 ff 00 00 64 64 8e
+                ^ effect
+        73 01 27 15 00 ff 19 ff 00 00 64 64 8f
+                ^ effect
+
+        73 01 27 15 00 ff 19 ff 00 00 64 64 8f
+            ^ mode - light screen mode
+        73 01 26 01 00 00 00 00 ff ff 64 64 61
+            ^ mode - led strip mode
+
+        73 01 26 0e 00 00 00 ff 00 00 64 64 6f
+                            ^R ^G ^B <-- led strip mode color
+
+        73 01 26 0e 00 00 00 ff 00 00 64 06 11
+                                        ^brightness <-- led strip mode color
+
+        """
+        red = 0xFF
+        green = 0x00
+        blue = 0x00
+
+        return self.construct_message(
+            bytearray(
+                [
+                    0x73,
+                    0x01,
+                    red,
+                    green,
+                    blue,
+                    red,
+                    green,
+                    blue,
+                    sensitivity,
+                    0x64,
+                    0x64,
+                ]
+            )
+        )
+
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
 
