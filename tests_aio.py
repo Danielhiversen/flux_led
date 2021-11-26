@@ -380,6 +380,99 @@ async def test_async_set_brightness_cct(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_async_set_brightness_dim(mock_aio_protocol):
+    """Test we can set brightness with a dim only device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x01\x10\xb6\x00\x98\x19\x04\x25\x0f\xda"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\xff\xff\x0f\x0fM"
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x80\x80\x0f\x0fO"
+    assert light.brightness == 128
+
+
+@pytest.mark.asyncio
+async def test_async_set_brightness_rgb(mock_aio_protocol):
+    """Test we can set brightness with a rgb only device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x03\x10\xb6\x00\x98\x19\x04\x25\x0f\xdc"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd4\x00\x00\xf0\x0f\x03"
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00j\x00\x00\xf0\x0f\x1a"
+    assert light.brightness == 128
+
+
+@pytest.mark.asyncio
+async def test_async_set_brightness_rgbw(mock_aio_protocol):
+    """Test we can set brightness with a rgbw only device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x04\x10\xb6\x00\x98\x19\x04\x25\x0f\xdd"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd5\xff\xff\x00\x0f\x12"
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00k\x80\x80\x00\x0f+"
+    assert light.brightness == 128
+
+
+@pytest.mark.asyncio
 async def test_async_scanner(mock_discovery_aio_protocol):
     """Test scanner."""
     scanner = AIOBulbScanner()
