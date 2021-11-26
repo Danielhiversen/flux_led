@@ -273,8 +273,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._data_future and not self._data_future.done():
             self._data_future.set_result(msg)
             return
-        if not self._protocol:
-            return
         self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
