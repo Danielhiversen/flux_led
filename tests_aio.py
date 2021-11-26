@@ -349,6 +349,50 @@ async def test_async_set_brightness(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_async_scanner(mock_discovery_aio_protocol):
+    """Test scanner."""
+    scanner = AIOBulbScanner()
+
+    task = asyncio.ensure_future(
+        scanner.async_scan(timeout=0.1, address="192.168.213.252")
+    )
+    transport, protocol = await mock_discovery_aio_protocol()
+    protocol.datagram_received(
+        b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(
+        b"+ok=08_15_20210204_ZG-BL\r", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(
+        b"192.168.213.65,F4CFA23E1AAF,AK001-ZJ2104", ("192.168.213.65", 48899)
+    )
+    protocol.datagram_received(b"+ok=A2_33_20200428_ZG-LX\r", ("192.168.213.65", 48899))
+    data = await task
+    assert data == [
+        {
+            "firmware_date": datetime.date(2021, 2, 4),
+            "id": "B4E842E10588",
+            "ipaddr": "192.168.213.252",
+            "model": "AK001-ZJ2145",
+            "model_description": "RGB Controller with MIC",
+            "model_info": "ZG-BL",
+            "model_num": 8,
+            "version_num": 21,
+        },
+        {
+            "firmware_date": datetime.date(2020, 4, 28),
+            "id": "F4CFA23E1AAF",
+            "ipaddr": "192.168.213.65",
+            "model": "AK001-ZJ2104",
+            "model_description": "RGB Symphony v2",
+            "model_info": "ZG-LX",
+            "model_num": 162,
+            "version_num": 51,
+        },
+    ]
+
+
+@pytest.mark.asyncio
 async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
     """Test scanner with a specific address."""
     scanner = AIOBulbScanner()
@@ -376,3 +420,29 @@ async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
             "version_num": 21,
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_times_out_with_nothing(mock_discovery_aio_protocol):
+    """Test scanner."""
+    scanner = AIOBulbScanner()
+
+    task = asyncio.ensure_future(scanner.async_scan(timeout=0.0000001))
+    transport, protocol = await mock_discovery_aio_protocol()
+    data = await task
+    assert data == []
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_times_out_with_nothing_specific_address(
+    mock_discovery_aio_protocol,
+):
+    """Test scanner."""
+    scanner = AIOBulbScanner()
+
+    task = asyncio.ensure_future(
+        scanner.async_scan(timeout=0.0000001, address="192.168.213.252")
+    )
+    transport, protocol = await mock_discovery_aio_protocol()
+    data = await task
+    assert data == []
