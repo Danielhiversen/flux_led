@@ -618,32 +618,31 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
                     ^R ^G ^B <-- failling color
 
 
-
         73 01 27 01 ff ff ff 00 ff ff 00 64 fb - lowest sensitivity
         73 01 27 01 ff ff ff 00 ff ff 64 64 5f - highest sensitivity
-                                    ^ sensitivity
+                                      ^ sensitivity
 
 
         73 01 27 13 00 ff 19 ff 00 00 64 64 8d
                     ^R ^G ^B <-- failling color (light screen mode)
         73 01 27 13 00 ff 19 ff 00 00 64 64 8d
-                            ^R ^G ^B <-- column color (light screen mode)
+                             ^R ^G ^B <-- column color (light screen mode)
 
         73 01 27 14 00 ff 19 ff 00 00 64 64 8e
-                ^ effect
+                 ^ effect
         73 01 27 15 00 ff 19 ff 00 00 64 64 8f
-                ^ effect
+                 ^ effect
 
         73 01 27 15 00 ff 19 ff 00 00 64 64 8f
-            ^ mode - light screen mode
+              ^ mode - light screen mode
         73 01 26 01 00 00 00 00 ff ff 64 64 61
-            ^ mode - led strip mode
+              ^ mode - led strip mode
 
         73 01 26 0e 00 00 00 ff 00 00 64 64 6f
-                            ^R ^G ^B <-- led strip mode color
+                             ^R ^G ^B <-- led strip mode color
 
         73 01 26 0e 00 00 00 ff 00 00 64 06 11
-                                        ^brightness <-- led strip mode color
+                                         ^brightness <-- led strip mode color
 
         """
         red = 0xFF
