@@ -715,7 +715,6 @@ class LEDENETDevice:
         w2 = mapped_channels[STATE_COOL_WHITE]
 
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
-            print("RGBW command sent to non-RGBW device")
             raise ValueError("RGBW command sent to non-RGBW device")
 
         if brightness is not None and r is not None and g is not None and b is not None:
