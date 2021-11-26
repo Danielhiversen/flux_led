@@ -357,9 +357,11 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         scanner.async_scan(timeout=0.1, address="192.168.213.252")
     )
     transport, protocol = await mock_discovery_aio_protocol()
+    protocol.datagram_received(b"HF-A11ASSISTHREAD", ("127.0.0.1", 48899))
     protocol.datagram_received(
         b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
     )
+    protocol.datagram_received(b"AT+LVER\r", ("127.0.0.1", 48899))
     protocol.datagram_received(
         b"+ok=08_15_20210204_ZG-BL\r", ("192.168.213.252", 48899)
     )
@@ -409,6 +411,28 @@ async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
     )
     data = await task
     assert data == [
+        {
+            "firmware_date": datetime.date(2021, 2, 4),
+            "id": "B4E842E10588",
+            "ipaddr": "192.168.213.252",
+            "model": "AK001-ZJ2145",
+            "model_description": "RGB Controller with MIC",
+            "model_info": "ZG-BL",
+            "model_num": 8,
+            "version_num": 21,
+        }
+    ]
+    assert scanner.getBulbInfoByID("B4E842E10588") == {
+        "firmware_date": datetime.date(2021, 2, 4),
+        "id": "B4E842E10588",
+        "ipaddr": "192.168.213.252",
+        "model": "AK001-ZJ2145",
+        "model_description": "RGB Controller with MIC",
+        "model_info": "ZG-BL",
+        "model_num": 8,
+        "version_num": 21,
+    }
+    assert scanner.getBulbInfo() == [
         {
             "firmware_date": datetime.date(2021, 2, 4),
             "id": "B4E842E10588",
