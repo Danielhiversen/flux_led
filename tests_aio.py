@@ -407,6 +407,33 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
 
 
 @pytest.mark.asyncio
+async def test_async_set_custom_effect(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set a custom effect."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+    assert light.model_num == 0x25
+
+    transport.reset_mock()
+    await light.async_set_custom_pattern([(255, 0, 255), (255, 0, 0)], 50, "jump")
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"Q\xff\x00\xff\x00\xff\x00\x00\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x10;\xff\x0f\xfb"
+    )
+
+
+@pytest.mark.asyncio
 async def test_async_set_brightness_rgbww(mock_aio_protocol):
     """Test we can set brightness rgbww."""
     light = AIOWifiLedBulb("192.168.1.166")
