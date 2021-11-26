@@ -37,9 +37,7 @@ class AIOBulbScanner(BulbScanner):
 
     async def _async_run_scan(self, transport, destination, timeout, found_all_future):
         """Send the scans."""
-        _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
-        transport.sendto(self.DISCOVER_MESSAGE, destination)
-        transport.sendto(self.VERSION_MESSAGE, destination)
+        self.send_discovery_messages(transport, destination)
         quit_time = time.monotonic() + timeout
         remain_time = timeout
         while True:
@@ -54,9 +52,7 @@ class AIOBulbScanner(BulbScanner):
                 if time.monotonic() >= quit_time:
                     return
                 # No response, send broadcast again in cast it got lost
-                _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
-                transport.sendto(self.DISCOVER_MESSAGE, destination)
-                transport.sendto(self.VERSION_MESSAGE, destination)
+                self.send_discovery_messages(transport, destination)
             else:
                 return  # found_all
             remain_time = quit_time - time.monotonic()
