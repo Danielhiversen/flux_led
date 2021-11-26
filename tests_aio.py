@@ -85,6 +85,29 @@ async def test_no_initial_response(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_invalid_initial_response(mock_aio_protocol):
+    """Test we try switching protocol if we an unexpected response."""
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(b"\x31\x25")
+    with pytest.raises(RuntimeError):
+        await task
+
+    assert transport.mock_calls == [
+        call.get_extra_info("peername"),
+        call.write(bytearray(b"\x81\x8a\x8b\x96")),
+        call.write_eof(),
+        call.close(),
+    ]
+    assert not light.available
+
+
+@pytest.mark.asyncio
 async def test_reassemble(mock_aio_protocol):
     """Test we can reassemble."""
     light = AIOWifiLedBulb("192.168.1.166")
