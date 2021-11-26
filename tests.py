@@ -1179,6 +1179,7 @@ class TestLight(unittest.TestCase):
             "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,162,35,37,1,16,100,0,0,0,4,0,240,212,]",
         )
         assert light.effect == "RBM 1"
+        assert light.brightness == 55
         assert light.getSpeed() == 16
 
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -1256,6 +1257,7 @@ class TestLight(unittest.TestCase):
             "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,163,35,37,1,16,100,0,0,0,4,0,240,213,]",
         )
         assert light.effect == "RBM 1"
+        assert light.brightness == 55
         assert light.getSpeed() == 16
 
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -1332,4 +1334,5 @@ class TestLight(unittest.TestCase):
         )
         assert light.getSpeed() == 1
         light.set_effect("random", 50)
+        assert light.brightness == 55
         self.assertEqual(mock_send.call_count, 5)
