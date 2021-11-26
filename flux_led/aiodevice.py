@@ -137,6 +137,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._updates_without_response == MAX_UPDATES_WITHOUT_RESPONSE:
             if self._aio_protocol:
                 self._aio_protocol.close()
+            self.set_unavailable()
             self._updates_without_response = 0
             raise RuntimeError("Bulb stopped responding")
         await self._async_send_state_query()
@@ -242,9 +243,11 @@ class AIOWifiLedBulb(LEDENETDevice):
     def _async_connection_lost(self, exc):
         """Called when the connection is lost."""
         self._aio_protocol = None
+        self.set_unavailable()
 
     def _async_data_recieved(self, data):
         """New data on the socket."""
+        self.set_available()
         start_empty_buffer = not self._buffer
         self._buffer += data
         self._updates_without_response = 0

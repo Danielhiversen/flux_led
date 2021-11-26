@@ -290,6 +290,30 @@ async def test_handling_connection_lost(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_handling_unavailable_after_no_response(mock_aio_protocol):
+    """Test we handle the bulb not responding."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    with pytest.raises(RuntimeError):
+        await light.async_update()
+    assert light.available is False
+
+
+@pytest.mark.asyncio
 async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can set an effect."""
     light = AIOWifiLedBulb("192.168.1.166")
@@ -304,6 +328,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     )
     await task
     assert light.model_num == 0xA3
+    assert light.dimmable_effects is True
 
     transport.reset_mock()
     await light.async_set_effect("random", 50)
@@ -317,11 +342,28 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
         transport.mock_calls[0][1][0]
         == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\x00\xa8"
     )
+    assert light.effect == "RBM 1"
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x10d\x00\x87"
+    )
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x05B\x01\x102\x00V"
+    )
 
 
 @pytest.mark.asyncio
-async def test_async_set_brightness(mock_aio_protocol):
-    """Test we can set brightness."""
+async def test_async_set_brightness_rgbww(mock_aio_protocol):
+    """Test we can set brightness rgbww."""
     light = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
