@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import time
 
@@ -12,6 +13,7 @@ MAX_UPDATES_WITHOUT_RESPONSE = 4
 
 class LEDENETDiscovery(asyncio.DatagramProtocol):
     def __init__(self, destination, on_response):
+        """Init the discovery protocol."""
         self.transport = None
         self.destination = destination
         self.on_response = on_response
@@ -25,7 +27,7 @@ class LEDENETDiscovery(asyncio.DatagramProtocol):
         _LOGGER.error("LEDENETDiscovery error: %s", ex)
 
     def connection_lost(self, ex):
-        pass
+        """The connection is lost."""
 
 
 class AIOBulbScanner(BulbScanner):
@@ -67,7 +69,8 @@ class AIOBulbScanner(BulbScanner):
         def _on_response(data, addr):
             _LOGGER.debug("discover: %s <= %s", addr, data)
             if self._process_response(data, addr, address, response_list):
-                found_all_future.set_result(True)
+                with contextlib.suppress(asyncio.InvalidStateError):
+                    found_all_future.set_result(True)
 
         transport, _ = await self.loop.create_datagram_endpoint(
             lambda: LEDENETDiscovery(
