@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import time
 
@@ -67,7 +68,8 @@ class AIOBulbScanner(BulbScanner):
         def _on_response(data, addr):
             _LOGGER.debug("discover: %s <= %s", addr, data)
             if self._process_response(data, addr, address, response_list):
-                found_all_future.set_result(True)
+                with contextlib.suppress(asyncio.InvalidStateError):
+                    found_all_future.set_result(True)
 
         transport, _ = await self.loop.create_datagram_endpoint(
             lambda: LEDENETDiscovery(
