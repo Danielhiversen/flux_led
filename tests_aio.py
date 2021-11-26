@@ -425,11 +425,38 @@ async def test_async_set_custom_effect(
     assert light.model_num == 0x25
 
     transport.reset_mock()
-    await light.async_set_custom_pattern([(255, 0, 255), (255, 0, 0)], 50, "jump")
+
+    # no values
+    with pytest.raises(ValueError):
+        await light.async_set_custom_pattern([], 50, "jump")
+
+    await light.async_set_custom_pattern(
+        [
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 0),
+            (255, 0, 255),
+            (255, 0, 0),
+            (255, 0, 0),
+        ],
+        50,
+        "jump",
+    )
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"Q\xff\x00\xff\x00\xff\x00\x00\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x01\x02\x03\x00\x10;\xff\x0f\xfb"
+        == b"Q\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\xff\x00\xff\x00\x00\x00\x10;\xff\x0f\x99"
     )
 
 
