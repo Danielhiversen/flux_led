@@ -507,7 +507,17 @@ class LEDENETDevice:
         raw_state: Union[LEDENETOriginalRawState, LEDENETRawState],
         updated: Optional[Set[str]] = None,
     ) -> None:
-        """Set the raw state remapping channels as needed."""
+        """Set the raw state remapping channels as needed.
+
+        The goal is to normalize the data so the raw state
+        is always in the same format reguardless of the protocol
+
+        Some devices need to have channels remapped
+
+        Other devices uses color_temp/brightness format
+        which needs to be converted back to 0-255 values for
+        warm_white and cool_white
+        """
         model_num = raw_state.model_num
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
         # Only remap updated states as we do not want to switch any
