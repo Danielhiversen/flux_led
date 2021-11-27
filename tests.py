@@ -425,7 +425,7 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
-    def test_rgbww(self, mock_connect, mock_read, mock_send):
+    def test_rgbww_controller_version_4(self, mock_connect, mock_read, mock_send):
 
         calls = 0
 
@@ -454,6 +454,7 @@ class TestLight(unittest.TestCase):
         assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.model_num, 0x25)
+        self.assertEqual(light.version_num, 4)
         self.assertEqual(light.microphone, False)
         self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
         self.assertEqual(
@@ -567,7 +568,150 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
-    def test_rgbcw_bulb(self, mock_connect, mock_read, mock_send):
+    def test_rgbww_controller_version_9(self, mock_connect, mock_read, mock_send):
+
+        calls = 0
+
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b"\x81\x25")
+            if calls == 2:
+                self.assertEqual(expected, 12)
+                return bytearray(b"\x23\x61\x05\x10\xb6\x00\x98\x00\x09\x00\xf0\x86")
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x09\x25\x0f\xe3"
+                )
+            if calls == 4:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\x25\x23\x38\x05\x10\xb6\x00\x98\x19\x09\x25\x0f\xba"
+                )
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.model_num, 0x25)
+        self.assertEqual(light.version_num, 9)
+        self.assertEqual(light.microphone, False)
+        self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
+        self.assertEqual(
+            light.effect_list,
+            [
+                "blue_fade",
+                "blue_strobe",
+                "colorjump",
+                "colorloop",
+                "colorstrobe",
+                "cyan_fade",
+                "cyan_strobe",
+                "gb_cross_fade",
+                "green_fade",
+                "green_strobe",
+                "purple_fade",
+                "purple_strobe",
+                "rb_cross_fade",
+                "red_fade",
+                "red_strobe",
+                "rg_cross_fade",
+                "white_fade",
+                "white_strobe",
+                "yellow_fade",
+                "yellow_strobe",
+                "random",
+            ],
+        )
+
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.min_temp, 2700)
+        self.assertEqual(light.max_temp, 6500)
+
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 61)  # RGBWW brightness
+        self.assertEqual(light.getRgb(), (182, 0, 152))
+        self.assertEqual(light.getRgbw(), (182, 0, 152, 0))
+        self.assertEqual(light.getRgbww(), (182, 0, 152, 0, 0))
+
+        self.assertEqual(light.rgbwcapable, True)
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Color: (182, 0, 152) White: 0 raw state: 129,37,35,97,5,16,182,0,152,0,9,0,240,134,]",
+        )
+
+        light.setWarmWhite255(25)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\x19\x19\x0f\x0f\x81")),
+        )
+
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.warm_white, 25)
+        self.assertEqual(light.cold_white, 37)
+        self.assertEqual(light.brightness, 81)  # RGBWW brighness
+        self.assertEqual(light.rgbw, (182, 0, 152, 25))
+        self.assertEqual(light.getRgbw(), (182, 0, 152, 25))
+        self.assertEqual(light.rgbww, (182, 0, 152, 25, 37))
+        self.assertEqual(light.getRgbww(), (182, 0, 152, 25, 37))
+        self.assertEqual(light.rgbcw, (182, 0, 152, 37, 25))
+        self.assertEqual(light.getRgbcw(), (182, 0, 152, 37, 25))
+        self.assertEqual(light.rgbwcapable, True)
+        self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,9,37,15,227,]",
+        )
+
+        # Home Assistant legacy names
+        light.set_effect("colorjump", 50, 100)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+
+        # Library names
+        light.set_effect("seven_color_jumping", 50, 60)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+
+        with pytest.raises(ValueError):
+            light.set_effect("unknown", 50)
+
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 4)
+        self.assertEqual(mock_send.call_count, 6)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+        self.assertEqual(light.mode, "preset")
+        self.assertEqual(light.effect, "colorjump")
+        self.assertEqual(light.brightness, 81)
+
+        self.assertEqual(light.preset_pattern_num, 0x38)
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Pattern: colorjump (Speed 50%) raw state: 129,37,35,56,5,16,182,0,152,25,9,37,15,186,]",
+        )
+
+    @patch("flux_led.WifiLedBulb._send_msg")
+    @patch("flux_led.WifiLedBulb._read_msg")
+    @patch("flux_led.WifiLedBulb.connect")
+    def test_rgbcw_bulb_v4(self, mock_connect, mock_read, mock_send):
 
         calls = 0
 
@@ -589,6 +733,158 @@ class TestLight(unittest.TestCase):
                 self.assertEqual(expected, 14)
                 return bytearray(
                     b"\x81\x35\x23\x38\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xc5"
+                )
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB, COLOR_MODE_CCT}
+        self.assertEqual(light.version_num, 0x04)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.model_num, 0x35)
+        self.assertEqual(light.microphone, False)
+        self.assertEqual(light.model, "Smart Bulb RGBCW (0x35)")
+        self.assertEqual(
+            light.effect_list,
+            [
+                "blue_fade",
+                "blue_strobe",
+                "colorjump",
+                "colorloop",
+                "colorstrobe",
+                "cyan_fade",
+                "cyan_strobe",
+                "gb_cross_fade",
+                "green_fade",
+                "green_strobe",
+                "purple_fade",
+                "purple_strobe",
+                "rb_cross_fade",
+                "red_fade",
+                "red_strobe",
+                "rg_cross_fade",
+                "white_fade",
+                "white_strobe",
+                "yellow_fade",
+                "yellow_strobe",
+                "random",
+            ],
+        )
+
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.min_temp, 2700)
+        self.assertEqual(light.max_temp, 6500)
+
+        self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.brightness, 182)
+        self.assertEqual(light.getRgb(), (182, 0, 152))
+        self.assertEqual(light.getRgbw(), (182, 0, 152, 0))
+        self.assertEqual(light.getRgbww(), (182, 0, 152, 0, 0))
+
+        self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(
+            light.__str__(),
+            (
+                "ON  [Color: (182, 0, 152) Brightness: 71% raw state: "
+                "129,53,35,97,5,16,182,0,152,0,4,0,240,145,]"
+            ),
+        )
+
+        light.setWarmWhite255(25)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\x19\x19\x0f\x0f\x81")),
+        )
+
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "ww")
+        self.assertEqual(light.warm_white, 25)
+        self.assertEqual(light.cold_white, 37)
+        self.assertEqual(light.brightness, 62)
+        self.assertEqual(light.rgbw, (182, 0, 152, 25))
+        self.assertEqual(light.getRgbw(), (255, 255, 255, 255))
+        self.assertEqual(light.rgbww, (182, 0, 152, 25, 37))
+        self.assertEqual(light.getRgbww(), (255, 255, 255, 255, 255))
+        self.assertEqual(light.rgbcw, (182, 0, 152, 37, 25))
+        self.assertEqual(light.getRgbcw(), (255, 255, 255, 255, 255))
+        self.assertEqual(light.rgbwcapable, False)
+        self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(
+            light.__str__(),
+            (
+                "ON  [CCT: 4968K Brightness: 24% raw state: "
+                "129,53,35,97,5,16,182,0,152,25,4,37,15,238,]"
+            ),
+        )
+
+        # Home Assistant legacy names
+        light.set_effect("colorjump", 50, 100)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+
+        # Library names
+        light.set_effect("seven_color_jumping", 50, 60)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a8\x10\x0f\xb8")))
+
+        with pytest.raises(ValueError):
+            light.set_effect("unknown", 50)
+
+        light._transition_complete_time = 0
+        light.update_state()
+        self.assertEqual(mock_read.call_count, 4)
+        self.assertEqual(mock_send.call_count, 6)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+        self.assertEqual(light.mode, "preset")
+        self.assertEqual(light.effect, "colorjump")
+        self.assertEqual(light.brightness, 62)
+
+        self.assertEqual(light.preset_pattern_num, 0x38)
+        self.assertEqual(
+            light.__str__(),
+            (
+                "ON  [Pattern: colorjump (Speed 50%) raw state: "
+                "129,53,35,56,5,16,182,0,152,25,4,37,15,197,]"
+            ),
+        )
+
+    @patch("flux_led.WifiLedBulb._send_msg")
+    @patch("flux_led.WifiLedBulb._read_msg")
+    @patch("flux_led.WifiLedBulb.connect")
+    def test_rgbcw_bulb_v9(self, mock_connect, mock_read, mock_send):
+
+        calls = 0
+
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b"\x81\x35")
+            if calls == 2:
+                self.assertEqual(expected, 12)
+                return bytearray(b"\x23\x61\x05\x10\xb6\x00\x98\x00\x09\x00\xf0\x96")
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\x35\x23\x61\x05\x10\xb6\x00\x98\x19\x09\x25\x0f\xf3"
+                )
+            if calls == 4:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\x35\x23\x38\x05\x10\xb6\x00\x98\x19\x09\x25\x0f\xca"
                 )
 
         mock_read.side_effect = read_data
@@ -646,7 +942,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             (
                 "ON  [Color: (182, 0, 152) Brightness: 71% raw state: "
-                "129,53,35,97,5,16,182,0,152,0,4,0,240,145,]"
+                "129,53,35,97,5,16,182,0,152,0,9,0,240,150,]"
             ),
         )
 
@@ -667,8 +963,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "ww")
-        self.assertEqual(light.warm_white, 0)
-        self.assertEqual(light.cold_white, 0)
+        self.assertEqual(light.warm_white, 25)
+        self.assertEqual(light.cold_white, 37)
         self.assertEqual(light.brightness, 62)
         self.assertEqual(light.rgbw, (182, 0, 152, 25))
         self.assertEqual(light.getRgbw(), (255, 255, 255, 255))
@@ -682,7 +978,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             (
                 "ON  [CCT: 4968K Brightness: 24% raw state: "
-                "129,53,35,97,5,16,182,0,152,25,4,37,15,238,]"
+                "129,53,35,97,5,16,182,0,152,25,9,37,15,243,]"
             ),
         )
 
@@ -711,7 +1007,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             (
                 "ON  [Pattern: colorjump (Speed 50%) raw state: "
-                "129,53,35,56,5,16,182,0,152,25,4,37,15,197,]"
+                "129,53,35,56,5,16,182,0,152,25,9,37,15,202,]"
             ),
         )
 
