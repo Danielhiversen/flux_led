@@ -286,22 +286,14 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_power_state_response(msg)
         else:
             return
-        if self.raw_state != prev_state:
-            _LOGGER.debug(
-                "_async_process_message, changed: %s != %s", self.raw_state, prev_state
-            )
-            futures = self._on_futures if self.is_on else self._off_futures
-            for future in futures:
-                if not future.done():
-                    future.set_result(True)
-            futures.clear()
-            self._updated_callback()
-        else:
-            _LOGGER.debug(
-                "_async_process_message, not changed: %s == %s",
-                self.raw_state,
-                prev_state,
-            )
+        if self.raw_state == prev_state:
+            return
+        futures = self._on_futures if self.is_on else self._off_futures
+        for future in futures:
+            if not future.done():
+                future.set_result(True)
+        futures.clear()
+        self._updated_callback()
 
     def process_addressable_response(self, msg):
         _LOGGER.debug(
