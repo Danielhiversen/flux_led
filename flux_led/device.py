@@ -270,6 +270,7 @@ class WifiLedBulb(LEDENETDevice):
         raise Exception("Cannot determine protocol")
 
     def setPresetPattern(self, pattern, speed, brightness=100, retry=DEFAULT_RETRIES):
+        self._set_transition_complete_time()
         self._send_with_retry(
             self._generate_preset_pattern(pattern, speed, brightness), retry=retry
         )
