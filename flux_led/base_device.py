@@ -866,7 +866,18 @@ class LEDENETDevice:
         full_msg: bytearray,
         fallback_protocol: PROTOCOL_TYPES,
     ) -> None:
-        protocol = MODEL_NUM_PROTOCOL.get(full_msg[1], fallback_protocol)
+        model_num = full_msg[1]
+        version_num = full_msg[10] if len(full_msg) > 10 else 1
+        protocol = MODEL_NUM_PROTOCOL.get(model_num, fallback_protocol)
+        #
+        # Model special cases
+        #
+        # Newer firmwares use the newer protocol
+        # If this turns out to be more common we will need
+        # to account for this in the models_db
+        #
+        if model_num == 0x35 and version_num >= 9:
+            protocol = PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
         self.setProtocol(protocol)
 
     def _generate_preset_pattern(
