@@ -328,6 +328,9 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 class ProtocolLEDENET8Byte(ProtocolBase):
     """The newer LEDENET protocol with checksums that uses 8 bytes to set state."""
 
+    ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+    addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
+
     @property
     def name(self):
         """The name of the protocol."""
@@ -467,6 +470,18 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         37 03 00 3a  Strobe
         """
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
+
+    def is_start_of_addressable_response(self, data):
+        """Check if a message is the start of an addressable state response."""
+        return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
+
+    def is_valid_addressable_response(self, data):
+        """Check if a message is a valid addressable state response."""
+        if len(data) != self.addressable_response_length:
+            return False
+        if not self.is_start_of_addressable_response(data):
+            return False
+        return self.is_checksum_correct(data)
 
 
 class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
@@ -669,10 +684,6 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
-
-    ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
-    addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
-
     def __init__(self):
         self._counter = 0
         super().__init__()
@@ -686,18 +697,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     def dimmable_effects(self):
         """Protocol supports dimmable effects."""
         return True
-
-    def is_start_of_addressable_response(self, data):
-        """Check if a message is the start of an addressable state response."""
-        return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
-
-    def is_valid_addressable_response(self, data):
-        """Check if a message is a valid addressable state response."""
-        if len(data) != self.addressable_response_length:
-            return False
-        if not self.is_start_of_addressable_response(data):
-            return False
-        return self.is_checksum_correct(data)
 
     def _increment_counter(self):
         """Increment the counter byte."""
