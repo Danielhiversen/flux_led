@@ -999,6 +999,7 @@ class TestLight(unittest.TestCase):
         assert white_levels_to_color_temp(64, 64) == (4600, 128)
         assert white_levels_to_color_temp(77, 50) == (4196, 127)
         assert white_levels_to_color_temp(128, 0) == (2700, 128)
+        assert white_levels_to_color_temp(0, 0) == (2700, 0)
         with pytest.raises(ValueError):
             white_levels_to_color_temp(-1, 0)
         with pytest.raises(ValueError):
