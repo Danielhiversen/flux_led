@@ -26,14 +26,16 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 from flux_led.utils import (
-    rgbw_brightness,
-    rgbww_brightness,
-    rgbcw_brightness,
-    rgbwc_to_rgbcw,
-    rgbcw_to_rgbwc,
-    white_levels_to_color_temp,
     color_temp_to_white_levels,
+    rgbcw_brightness,
+    rgbcw_to_rgbwc,
+    rgbw_brightness,
+    rgbwc_to_rgbcw,
+    rgbww_brightness,
+    scaled_color_temp_to_white_levels,
     utils,
+    white_levels_to_color_temp,
+    white_levels_to_scaled_color_temp,
 )
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
@@ -1004,6 +1006,36 @@ class TestLight(unittest.TestCase):
             white_levels_to_color_temp(-1, 0)
         with pytest.raises(ValueError):
             white_levels_to_color_temp(0, 500)
+
+    def test_scaled_color_temp_to_white_levels(self):
+        assert scaled_color_temp_to_white_levels(0, 100) == (255, 0)
+        assert scaled_color_temp_to_white_levels(50, 100) == (128, 128)
+        assert scaled_color_temp_to_white_levels(76, 100) == (61, 194)
+        assert scaled_color_temp_to_white_levels(100, 100) == (0, 255)
+        assert scaled_color_temp_to_white_levels(42, 50) == (74, 54)
+        assert scaled_color_temp_to_white_levels(71, 50) == (37, 91)
+        assert scaled_color_temp_to_white_levels(77, 50) == (29, 98)
+        assert scaled_color_temp_to_white_levels(100, 50) == (0, 128)
+        assert scaled_color_temp_to_white_levels(100, 100) == (0, 255)
+        with pytest.raises(ValueError):
+            scaled_color_temp_to_white_levels(100, -1)
+        with pytest.raises(ValueError):
+            scaled_color_temp_to_white_levels(-1, 100)
+
+    def test_white_levels_to_scaled_color_temp(self):
+        assert white_levels_to_scaled_color_temp(0, 255) == (100, 100)
+        assert white_levels_to_scaled_color_temp(255, 255) == (50, 100)
+        assert white_levels_to_scaled_color_temp(128, 128) == (50, 100)
+        assert white_levels_to_scaled_color_temp(255, 0) == (0, 100)
+        assert white_levels_to_scaled_color_temp(0, 128) == (100, 50)
+        assert white_levels_to_scaled_color_temp(64, 64) == (50, 50)
+        assert white_levels_to_scaled_color_temp(77, 50) == (39, 50)
+        assert white_levels_to_scaled_color_temp(128, 0) == (0, 50)
+        assert white_levels_to_scaled_color_temp(0, 0) == (0, 0)
+        with pytest.raises(ValueError):
+            white_levels_to_scaled_color_temp(-1, 0)
+        with pytest.raises(ValueError):
+            white_levels_to_scaled_color_temp(0, 500)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

@@ -6,7 +6,7 @@ import logging
 from typing import List, Tuple
 
 from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
-from .utils import utils
+from .utils import utils, white_levels_to_scaled_color_temp
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_ADDRESSABLE_A1 = "LEDENET_ADDRESSABLE_A1"
 PROTOCOL_LEDENET_ADDRESSABLE_A2 = "LEDENET_ADDRESSABLE_A2"
 PROTOCOL_LEDENET_ADDRESSABLE_A3 = "LEDENET_ADDRESSABLE_A3"
+PROTOCOL_LEDENET_CCT = "LEDENET_CCT"
 
 TRANSITION_BYTES = {
     TRANSITION_JUMP: 0x3B,
@@ -135,6 +136,17 @@ class ProtocolBase:
     """The base protocol."""
 
     power_state_response_length = MSG_LENGTHS[MSG_POWER_STATE]
+
+    def __init__(self):
+        self._counter = 0
+        super().__init__()
+
+    def _increment_counter(self):
+        """Increment the counter byte."""
+        self._counter += 1
+        if self._counter == 255:
+            self._counter = 0
+        return self._counter
 
     def is_start_of_addressable_response(self, data):
         """Check if a message is the start of an addressable state response."""
@@ -684,10 +696,6 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
-    def __init__(self):
-        self._counter = 0
-        super().__init__()
-
     @property
     def name(self):
         """The name of the protocol."""
@@ -697,13 +705,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     def dimmable_effects(self):
         """Protocol supports dimmable effects."""
         return True
-
-    def _increment_counter(self):
-        """Increment the counter byte."""
-        self._counter += 1
-        if self._counter == 255:
-            self._counter = 0
-        return self._counter
 
     def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""
@@ -748,14 +749,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         red = 0xFF
         green = 0x00
         blue = 0x00
-
-        return self.construct_message(
+        inner_message = self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
-                    counter_byte,
-                    0x00,
-                    0x0D,
                     0x73,
                     0x01,
                     red,
@@ -766,8 +762,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
                     blue,
                     sensitivity,
                     0x64,
-                    0x64,
                 ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
             )
         )
 
@@ -817,14 +818,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         """
         counter_byte = self._increment_counter()
         preset_number = 0x01  # aka fixed color
-
-        return self.construct_message(
+        inner_message = self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
-                    counter_byte,
-                    0x00,
-                    0x0D,
                     0x41,
                     preset_number,
                     red,
@@ -837,7 +833,63 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
                     0x01,
                     0x00,
                     0x00,
-                    0x48,
                 ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
+            )
+        )
+
+
+class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
+
+    MIN_BRIGHTNESS = 2
+
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_CCT
+
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return False
+
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, write_mode
+    ):
+        """The bytes to send for a level change request.
+
+        b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
+        b0 b1 b2 b3 00 01 01 72 00 09 35 b1 64 64 00 00 00 03 b1 a5 - 100% cool
+        b0 b1 b2 b3 00 01 01 9f 00 09 35 b1 64 32 00 00 00 03 7f 6e - 100% cool - dim 50%
+        """
+        counter_byte = self._increment_counter()
+        scaled_temp, brightness = white_levels_to_scaled_color_temp(
+            warm_white, cool_white
+        )
+        inner_message = self.construct_message(
+            bytearray(
+                [
+                    0x35,
+                    0xB1,
+                    scaled_temp,
+                    # If the brightness goes below the precision the device
+                    # will flip from cold to warm
+                    max(self.MIN_BRIGHTNESS, brightness),
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x03,
+                ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x09, *inner_message]
             )
         )

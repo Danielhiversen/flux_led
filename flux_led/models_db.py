@@ -24,6 +24,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
+    PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
 )
 
@@ -283,15 +284,10 @@ MODELS = [
         models=[],
         description="Table Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_CCT,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={
-            STATE_WARM_WHITE: STATE_RED,
-            STATE_RED: STATE_WARM_WHITE,
-            STATE_COOL_WHITE: STATE_GREEN,
-            STATE_GREEN: STATE_COOL_WHITE,
-        },
+        channel_map={},
         microphone=False,
     ),
     LEDENETModel(
@@ -559,6 +555,9 @@ USE_9BYTE_PROTOCOL_MODELS = {
 }
 MICROPHONE_MODELS = {model.model_num for model in MODELS if model.microphone}
 MODEL_NUM_PROTOCOL = {model.model_num: model.protocol for model in MODELS}
+WHITE_ARE_TEMP_BRIGHTNESS = {
+    model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_CCT
+}
 
 
 def get_model_description(model_num):

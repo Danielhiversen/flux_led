@@ -1,9 +1,9 @@
 import ast
+from collections import namedtuple
 import colorsys
 import contextlib
 import datetime
-from typing import Iterable, List, Optional, Tuple, cast, Union
-from collections import namedtuple
+from typing import Iterable, List, Optional, Tuple, Union, cast
 
 import webcolors  # type: ignore
 
@@ -279,6 +279,25 @@ def color_temp_to_white_levels(temperature: int, brightness: float) -> WhiteLeve
     return WhiteLevels(round(255 * warm), round(255 * cold))
 
 
+def scaled_color_temp_to_white_levels(
+    temperature: int, brightness: float
+) -> WhiteLevels:
+    # Assume output temperature of between 0 and 100, and scale
+    # the warm and cold LEDs linearly to provide that
+    if not (0 <= temperature <= 100):
+        raise ValueError(
+            f"Temperature of {temperature} is not valid and must be between {0} and {100}"
+        )
+    if not (0 <= brightness <= 100):
+        raise ValueError(
+            f"Brightness of {brightness} is not valid and must be between 0 and 100"
+        )
+    brightness = round(brightness / 100, 2)
+    warm = ((100 - temperature) / 100) * brightness
+    cold = brightness - warm
+    return WhiteLevels(round(255 * warm), round(255 * cold))
+
+
 def white_levels_to_color_temp(
     warm_white: int, cool_white: int
 ) -> TemperatureBrightness:
@@ -298,3 +317,24 @@ def white_levels_to_color_temp(
     else:
         temperature = ((cold / brightness) * MAX_MIN_TEMP_DIFF) + MIN_TEMP
     return TemperatureBrightness(round(temperature), min(255, round(brightness * 255)))
+
+
+def white_levels_to_scaled_color_temp(
+    warm_white: int, cool_white: int
+) -> TemperatureBrightness:
+    if not (0 <= warm_white <= 255):
+        raise ValueError(
+            f"Warm White of {warm_white} is not valid and must be between 0 and 255"
+        )
+    if not (0 <= cool_white <= 255):
+        raise ValueError(
+            f"Cool White of {cool_white} is not valid and must be between 0 and 255"
+        )
+    warm = warm_white / 255
+    cold = cool_white / 255
+    brightness = warm + cold
+    if brightness == 0:
+        temperature: float = 0
+    else:
+        temperature = (cold / brightness) * 100
+    return TemperatureBrightness(round(temperature), min(100, round(brightness * 100)))

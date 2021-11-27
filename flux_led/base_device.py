@@ -49,6 +49,7 @@ from .models_db import (
     RGBW_PROTOCOL_MODELS,
     UNKNOWN_MODEL,
     USE_9BYTE_PROTOCOL_MODELS,
+    WHITE_ARE_TEMP_BRIGHTNESS,
 )
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
@@ -70,6 +71,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
+    PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     LEDENETOriginalRawState,
     LEDENETRawState,
@@ -80,10 +82,11 @@ from .protocol import (
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
 )
 from .timer import BuiltInTimer
-from .utils import utils, white_levels_to_color_temp
+from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_color_temp
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -96,6 +99,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
+    ProtocolLEDENETCCT,
 ]
 
 ADDRESSABLE_PROTOCOLS = {
@@ -122,6 +126,7 @@ PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A3: ProtocolLEDENETAddressableA3,
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
     PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
+    PROTOCOL_LEDENET_CCT: ProtocolLEDENETCCT,
 }
 
 
@@ -153,8 +158,12 @@ class LEDENETDevice:
 
     @property
     def speed_adjust_off(self) -> int:
-        """Return if the speed of an effect can be adjusted while off."""
+        """Return true if the speed of an effect can be adjusted while off."""
         return self.protocol not in SPEED_ADJUST_WILL_TURN_ON
+
+    def _whites_are_temp_brightness(self, model_num: int) -> bool:
+        """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
+        return model_num in WHITE_ARE_TEMP_BRIGHTNESS
 
     @property
     def model(self) -> str:
@@ -464,6 +473,8 @@ class LEDENETDevice:
         else:
             self._set_raw_state(raw_state)
 
+        _LOGGER.debug("%s: Mapped State: %s", self.ipaddr, self.raw_state)
+
         mode = self._determineMode()
 
         if mode is None:
@@ -496,32 +507,55 @@ class LEDENETDevice:
         raw_state: Union[LEDENETOriginalRawState, LEDENETRawState],
         updated: Optional[Set[str]] = None,
     ) -> None:
-        """Set the raw state remapping channels as needed."""
+        """Set the raw state remapping channels as needed.
+
+        The goal is to normalize the data so the raw state
+        is always in the same format reguardless of the protocol
+
+        Some devices need to have channels remapped
+
+        Other devices uses color_temp/brightness format
+        which needs to be converted back to 0-255 values for
+        warm_white and cool_white
+        """
+        model_num = raw_state.model_num
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
-        if not channel_map:  # Remap channels
-            self.raw_state = raw_state
-            return
         # Only remap updated states as we do not want to switch any
         # state that have not changed since they will already be in
         # the correct slot
         #
         # If updated is None than all raw_state values have been sent
         #
-        if updated is None:
-            updated = set(channel_map.keys())
-        self.raw_state = raw_state._replace(
-            **{
-                name: getattr(raw_state, source)
-                if source in updated
-                else getattr(raw_state, name)
-                for name, source in channel_map.items()
-            }
-        )
-        _LOGGER.debug(
-            "%s: remapped raw state: %s",
-            self.ipaddr,
-            utils.raw_state_to_dec(self.raw_state),
-        )
+        if self._whites_are_temp_brightness(model_num):
+            assert isinstance(raw_state, LEDENETRawState)
+            # Only convert on a full update since we still use 0-255 internally
+            if updated is not None:
+                self.raw_state = raw_state
+                return
+            # warm_white is the color temp from 1-100
+            temp = raw_state.warm_white
+            # cold_white is the brightness from 1-100
+            brightness = raw_state.cool_white
+            warm_white, cool_white = scaled_color_temp_to_white_levels(temp, brightness)
+            self.raw_state = raw_state._replace(
+                warm_white=warm_white, cool_white=cool_white
+            )
+            return
+
+        if channel_map:
+            if updated is None:
+                updated = set(channel_map.keys())
+            self.raw_state = raw_state._replace(
+                **{
+                    name: getattr(raw_state, source)
+                    if source in updated
+                    else getattr(raw_state, name)
+                    for name, source in channel_map.items()
+                }
+            )
+            return
+
+        self.raw_state = raw_state
 
     def __str__(self) -> str:  # noqa: C901
         assert self.raw_state is not None
