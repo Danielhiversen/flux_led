@@ -749,14 +749,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         red = 0xFF
         green = 0x00
         blue = 0x00
-
-        return self.construct_message(
+        inner_message = self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
-                    counter_byte,
-                    0x00,
-                    0x0D,
                     0x73,
                     0x01,
                     red,
@@ -767,8 +762,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
                     blue,
                     sensitivity,
                     0x64,
-                    0x64,
                 ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
             )
         )
 
@@ -818,14 +818,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         """
         counter_byte = self._increment_counter()
         preset_number = 0x01  # aka fixed color
-
-        return self.construct_message(
+        inner_message = self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
-                    counter_byte,
-                    0x00,
-                    0x0D,
                     0x41,
                     preset_number,
                     red,
@@ -838,8 +833,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
                     0x01,
                     0x00,
                     0x00,
-                    0x48,
                 ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
             )
         )
 
@@ -871,7 +871,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         inner_message = self.construct_message(
             bytearray(
                 [
-                    0x09,
                     0x35,
                     0xB1,
                     scaled_temp,
@@ -885,5 +884,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         )
 
         return self.construct_message(
-            bytearray([*self.ADDRESSABLE_HEADER, counter_byte, 0x00, *inner_message])
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x09, *inner_message]
+            )
         )
