@@ -33,6 +33,7 @@ from flux_led.utils import (
     rgbcw_to_rgbwc,
     white_levels_to_color_temp,
     color_temp_to_white_levels,
+    scaled_color_temp_to_white_levels,
     utils,
 )
 
@@ -989,6 +990,21 @@ class TestLight(unittest.TestCase):
             color_temp_to_white_levels(6500, -1)
         with pytest.raises(ValueError):
             color_temp_to_white_levels(-1, 255)
+
+    def test_scaled_color_temp_to_white_levels(self):
+        assert scaled_color_temp_to_white_levels(0, 100) == (255, 0)
+        assert scaled_color_temp_to_white_levels(50, 100) == (128, 128)
+        assert scaled_color_temp_to_white_levels(76, 100) == (61, 194)
+        assert scaled_color_temp_to_white_levels(100, 100) == (0, 255)
+        assert scaled_color_temp_to_white_levels(42, 50) == (74, 54)
+        assert scaled_color_temp_to_white_levels(71, 50) == (37, 91)
+        assert scaled_color_temp_to_white_levels(77, 50) == (29, 98)
+        assert scaled_color_temp_to_white_levels(100, 50) == (0, 128)
+        assert scaled_color_temp_to_white_levels(100, 100) == (0, 255)
+        with pytest.raises(ValueError):
+            scaled_color_temp_to_white_levels(100, -1)
+        with pytest.raises(ValueError):
+            scaled_color_temp_to_white_levels(-1, 100)
 
     def test_white_levels_to_color_temp(self):
         assert white_levels_to_color_temp(0, 255) == (6500, 255)

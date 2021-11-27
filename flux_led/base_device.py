@@ -83,7 +83,7 @@ from .protocol import (
     ProtocolLEDENETOriginal,
 )
 from .timer import BuiltInTimer
-from .utils import utils, white_levels_to_color_temp
+from .utils import utils, white_levels_to_color_temp, scaled_color_temp_to_white_levels
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -153,8 +153,12 @@ class LEDENETDevice:
 
     @property
     def speed_adjust_off(self) -> int:
-        """Return if the speed of an effect can be adjusted while off."""
+        """Return true if the speed of an effect can be adjusted while off."""
         return self.protocol not in SPEED_ADJUST_WILL_TURN_ON
+
+    def _whites_are_temp_brightness(self, model_num: int) -> bool:
+        """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
+        return model_num == 0x1C
 
     @property
     def model(self) -> str:
@@ -464,6 +468,8 @@ class LEDENETDevice:
         else:
             self._set_raw_state(raw_state)
 
+        _LOGGER.debug("%s: Mapped State: %s", self.ipaddr, self.raw_state)
+
         mode = self._determineMode()
 
         if mode is None:
@@ -497,8 +503,10 @@ class LEDENETDevice:
         updated: Optional[Set[str]] = None,
     ) -> None:
         """Set the raw state remapping channels as needed."""
+        model_num = raw_state.model_num
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
-        if not channel_map:  # Remap channels
+        whites_are_temp_brightness = self._whites_are_temp_brightness(model_num)
+        if not channel_map and not whites_are_temp_brightness:
             self.raw_state = raw_state
             return
         # Only remap updated states as we do not want to switch any
@@ -507,16 +515,45 @@ class LEDENETDevice:
         #
         # If updated is None than all raw_state values have been sent
         #
+        full_update = False
         if updated is None:
+            full_update = True
             updated = set(channel_map.keys())
-        self.raw_state = raw_state._replace(
-            **{
-                name: getattr(raw_state, source)
-                if source in updated
-                else getattr(raw_state, name)
-                for name, source in channel_map.items()
-            }
+
+        _LOGGER.debug(
+            "%s: whites_are_temp_brightness=%s, updtes=%s",
+            self.ipaddr,
+            whites_are_temp_brightness,
+            updated,
         )
+        if full_update and whites_are_temp_brightness:
+            if STATE_WARM_WHITE not in updated or STATE_COOL_WHITE not in updated:
+                self.raw_state = raw_state
+                return
+            # warm_white is the color temp from 1-100
+            temp = raw_state.warm_white
+            # cold_white is the brightness from 1-100
+            brightness = raw_state.cool_white
+            warm_white, cool_white = scaled_color_temp_to_white_levels(temp, brightness)
+            _LOGGER.debug(
+                "scaled_color_temp_to_white_levels: in(%s, %s) -> out(%s, %s)",
+                temp,
+                brightness,
+                warm_white,
+                cool_white,
+            )
+            self.raw_state = raw_state._replace(
+                warm_white=warm_white, cool_white=cool_white
+            )
+        else:
+            self.raw_state = raw_state._replace(
+                **{
+                    name: getattr(raw_state, source)
+                    if source in updated
+                    else getattr(raw_state, name)
+                    for name, source in channel_map.items()
+                }
+            )
         _LOGGER.debug(
             "%s: remapped raw state: %s",
             self.ipaddr,

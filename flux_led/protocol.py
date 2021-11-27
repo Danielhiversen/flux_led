@@ -136,6 +136,17 @@ class ProtocolBase:
 
     power_state_response_length = MSG_LENGTHS[MSG_POWER_STATE]
 
+    def __init__(self):
+        self._counter = 0
+        super().__init__()
+
+    def _increment_counter(self):
+        """Increment the counter byte."""
+        self._counter += 1
+        if self._counter == 255:
+            self._counter = 0
+        return self._counter
+
     def is_start_of_addressable_response(self, data):
         """Check if a message is the start of an addressable state response."""
         return False
@@ -684,10 +695,6 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
-    def __init__(self):
-        self._counter = 0
-        super().__init__()
-
     @property
     def name(self):
         """The name of the protocol."""
@@ -697,13 +704,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     def dimmable_effects(self):
         """Protocol supports dimmable effects."""
         return True
-
-    def _increment_counter(self):
-        """Increment the counter byte."""
-        self._counter += 1
-        if self._counter == 255:
-            self._counter = 0
-        return self._counter
 
     def construct_preset_pattern(self, pattern, speed, brightness):
         """The bytes to send for a preset pattern."""

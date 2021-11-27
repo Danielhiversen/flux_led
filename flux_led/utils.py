@@ -279,6 +279,25 @@ def color_temp_to_white_levels(temperature: int, brightness: float) -> WhiteLeve
     return WhiteLevels(round(255 * warm), round(255 * cold))
 
 
+def scaled_color_temp_to_white_levels(
+    temperature: int, brightness: float
+) -> WhiteLevels:
+    # Assume output temperature of between 0 and 100, and scale
+    # the warm and cold LEDs linearly to provide that
+    if not (0 <= temperature <= 100):
+        raise ValueError(
+            f"Temperature of {temperature} is not valid and must be between {0} and {100}"
+        )
+    if not (0 <= brightness <= 100):
+        raise ValueError(
+            f"Brightness of {brightness} is not valid and must be between 0 and 100"
+        )
+    brightness = round(brightness / 100, 2)
+    warm = ((100 - temperature) / 100) * brightness
+    cold = brightness - warm
+    return WhiteLevels(round(255 * warm), round(255 * cold))
+
+
 def white_levels_to_color_temp(
     warm_white: int, cool_white: int
 ) -> TemperatureBrightness:
