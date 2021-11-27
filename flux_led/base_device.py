@@ -510,38 +510,39 @@ class LEDENETDevice:
         model_num = raw_state.model_num
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
         whites_are_temp_brightness = self._whites_are_temp_brightness(model_num)
-        if not channel_map and not whites_are_temp_brightness:
-            self.raw_state = raw_state
-            return
         # Only remap updated states as we do not want to switch any
         # state that have not changed since they will already be in
         # the correct slot
         #
         # If updated is None than all raw_state values have been sent
         #
-        if updated is None:
-            updated = set(channel_map.keys())
-        self.raw_state = raw_state._replace(
-            **{
-                name: getattr(raw_state, source)
-                if source in updated
-                else getattr(raw_state, name)
-                for name, source in channel_map.items()
-            }
-        )
+        if channel_map:
+            if updated is None:
+                updated = set(channel_map.keys())
+            self.raw_state = raw_state._replace(
+                **{
+                    name: getattr(raw_state, source)
+                    if source in updated
+                    else getattr(raw_state, name)
+                    for name, source in channel_map.items()
+                }
+            )
+        else:
+            self.raw_state = raw_state
         _LOGGER.debug(
             "%s: whites_are_temp_brightness=%s, updtes=%s",
             self.ipaddr,
             whites_are_temp_brightness,
             updated,
         )
-        if whites_are_temp_brightness:
-            if STATE_WARM_WHITE not in updated or STATE_COOL_WHITE not in updated:
-                return
+        if whites_are_temp_brightness and (
+            updated is None  # everything updated
+            or (STATE_WARM_WHITE in updated and STATE_COOL_WHITE in updated)
+        ):
             # warm_white is the color temp from 1-100
-            temp = raw_state.warm_white
+            temp = self.raw_state.warm_white
             # cold_white is the brightness from 1-100
-            brightness = raw_state.cool_white
+            brightness = self.raw_state.cool_white
             warm_white, cool_white = scaled_color_temp_to_white_levels(temp, brightness)
             _LOGGER.debug(
                 "scaled_color_temp_to_white_levels: in(%s, %s) -> out(%s, %s)",
@@ -550,7 +551,7 @@ class LEDENETDevice:
                 warm_white,
                 cool_white,
             )
-            self.raw_state = raw_state._replace(
+            self.raw_state = self.raw_state._replace(
                 warm_white=warm_white, cool_white=cool_white
             )
         _LOGGER.debug(
