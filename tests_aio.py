@@ -359,6 +359,34 @@ async def test_handling_unavailable_after_no_response(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set levels."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x33#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x65"
+    )
+    await task
+    assert light.model_num == 0x33
+    assert light.dimmable_effects is False
+
+    transport.reset_mock()
+    with pytest.raises(ValueError):
+        # ValueError: RGBW command sent to non-RGBW devic
+        await light.async_set_levels(255, 255, 255, 255, 255)
+
+    await light.async_set_levels(255, 0, 0)
+
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\x00\x00\x00\x0f?"
+
+
+@pytest.mark.asyncio
 async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can set an effect."""
     light = AIOWifiLedBulb("192.168.1.166")
