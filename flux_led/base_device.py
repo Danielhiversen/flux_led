@@ -528,32 +528,28 @@ class LEDENETDevice:
         #
         if self._whites_are_temp_brightness(model_num):
             assert isinstance(raw_state, LEDENETRawState)
-            if channel_map:
-                raise RuntimeError(
-                    "A channel map cannot be in place when whites are temp and brightness"
-                )
-            if (
-                updated is None
-            ):  # Only convert on a full update since we still use 0-255 internally
-                # warm_white is the color temp from 1-100
-                temp = raw_state.warm_white
-                # cold_white is the brightness from 1-100
-                brightness = raw_state.cool_white
-                warm_white, cool_white = scaled_color_temp_to_white_levels(
-                    temp, brightness
-                )
-                _LOGGER.debug(
-                    "scaled_color_temp_to_white_levels: in(temp %s, bright %s) -> out(ww %s, cw %s)",
-                    temp,
-                    brightness,
-                    warm_white,
-                    cool_white,
-                )
-                self.raw_state = raw_state._replace(
-                    warm_white=warm_white, cool_white=cool_white
-                )
+            # Only convert on a full update since we still use 0-255 internally
+            if updated is not None:
+                self.raw_state = raw_state
                 return
-        elif channel_map:
+            # warm_white is the color temp from 1-100
+            temp = raw_state.warm_white
+            # cold_white is the brightness from 1-100
+            brightness = raw_state.cool_white
+            warm_white, cool_white = scaled_color_temp_to_white_levels(temp, brightness)
+            _LOGGER.debug(
+                "scaled_color_temp_to_white_levels: in(temp %s, bright %s) -> out(ww %s, cw %s)",
+                temp,
+                brightness,
+                warm_white,
+                cool_white,
+            )
+            self.raw_state = raw_state._replace(
+                warm_white=warm_white, cool_white=cool_white
+            )
+            return
+
+        if channel_map:
             if updated is None:
                 updated = set(channel_map.keys())
             self.raw_state = raw_state._replace(
@@ -565,6 +561,7 @@ class LEDENETDevice:
                 }
             )
             return
+
         self.raw_state = raw_state
 
     def __str__(self) -> str:  # noqa: C901
