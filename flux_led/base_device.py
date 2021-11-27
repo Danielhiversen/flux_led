@@ -527,7 +527,7 @@ class LEDENETDevice:
         # If updated is None than all raw_state values have been sent
         #
         if self._whites_are_temp_brightness(model_num):
-            assert isinstance(self.raw_state, LEDENETRawState)
+            assert isinstance(raw_state, LEDENETRawState)
             if channel_map:
                 raise RuntimeError(
                     "A channel map cannot be in place when whites are temp and brightness"
