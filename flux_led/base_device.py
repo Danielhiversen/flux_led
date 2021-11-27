@@ -510,14 +510,39 @@ class LEDENETDevice:
         """Set the raw state remapping channels as needed."""
         model_num = raw_state.model_num
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
-        whites_are_temp_brightness = self._whites_are_temp_brightness(model_num)
         # Only remap updated states as we do not want to switch any
         # state that have not changed since they will already be in
         # the correct slot
         #
         # If updated is None than all raw_state values have been sent
         #
-        if channel_map:
+        if self._whites_are_temp_brightness(model_num):
+            if channel_map:
+                raise RuntimeError(
+                    "A channel map cannot be in place when whites are temp and brightness"
+                )
+            if (
+                updated is None
+            ):  # Only convert on a full update since we still use 0-255 internally
+                # warm_white is the color temp from 1-100
+                temp = self.raw_state.warm_white
+                # cold_white is the brightness from 1-100
+                brightness = self.raw_state.cool_white
+                warm_white, cool_white = scaled_color_temp_to_white_levels(
+                    temp, brightness
+                )
+                _LOGGER.debug(
+                    "scaled_color_temp_to_white_levels: in(%s, %s) -> out(%s, %s)",
+                    temp,
+                    brightness,
+                    warm_white,
+                    cool_white,
+                )
+                self.raw_state = raw_state._replace(
+                    warm_white=warm_white, cool_white=cool_white
+                )
+                return
+        elif channel_map:
             if updated is None:
                 updated = set(channel_map.keys())
             self.raw_state = raw_state._replace(
@@ -530,36 +555,6 @@ class LEDENETDevice:
             )
         else:
             self.raw_state = raw_state
-        _LOGGER.debug(
-            "%s: whites_are_temp_brightness=%s, updtes=%s",
-            self.ipaddr,
-            whites_are_temp_brightness,
-            updated,
-        )
-        if whites_are_temp_brightness and (
-            updated is None  # everything updated
-            or (STATE_WARM_WHITE in updated and STATE_COOL_WHITE in updated)
-        ):
-            # warm_white is the color temp from 1-100
-            temp = self.raw_state.warm_white
-            # cold_white is the brightness from 1-100
-            brightness = self.raw_state.cool_white
-            warm_white, cool_white = scaled_color_temp_to_white_levels(temp, brightness)
-            _LOGGER.debug(
-                "scaled_color_temp_to_white_levels: in(%s, %s) -> out(%s, %s)",
-                temp,
-                brightness,
-                warm_white,
-                cool_white,
-            )
-            self.raw_state = self.raw_state._replace(
-                warm_white=warm_white, cool_white=cool_white
-            )
-        _LOGGER.debug(
-            "%s: remapped raw state: %s",
-            self.ipaddr,
-            utils.raw_state_to_dec(self.raw_state),
-        )
 
     def __str__(self) -> str:  # noqa: C901
         assert self.raw_state is not None
