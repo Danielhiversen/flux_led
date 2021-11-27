@@ -742,6 +742,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0x01)
         self.assertEqual(light.model, "Original LEDENET (0x01)")
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.white_active, True)
 
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
