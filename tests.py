@@ -985,6 +985,10 @@ class TestLight(unittest.TestCase):
         assert color_temp_to_white_levels(5000, 128) == (50, 77)
         assert color_temp_to_white_levels(6500, 128) == (0, 128)
         assert color_temp_to_white_levels(6500, 255) == (0, 255)
+        with pytest.raises(ValueError):
+            color_temp_to_white_levels(6500, -1)
+        with pytest.raises(ValueError):
+            color_temp_to_white_levels(-1, 255)
 
     def test_white_levels_to_color_temp(self):
         assert white_levels_to_color_temp(0, 255) == (6500, 255)
@@ -995,6 +999,10 @@ class TestLight(unittest.TestCase):
         assert white_levels_to_color_temp(64, 64) == (4600, 128)
         assert white_levels_to_color_temp(77, 50) == (4196, 127)
         assert white_levels_to_color_temp(128, 0) == (2700, 128)
+        with pytest.raises(ValueError):
+            white_levels_to_color_temp(-1, 0)
+        with pytest.raises(ValueError):
+            white_levels_to_color_temp(0, 500)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
