@@ -69,10 +69,6 @@ class utils:
         return (dt - datetime.datetime.now()).total_seconds() < 0
 
     @staticmethod
-    def dump_bytes(bytes) -> None:
-        print("".join(f"{x:02x} " for x in bytearray(bytes)))
-
-    @staticmethod
     def raw_state_to_dec(rx: Iterable[int]) -> str:
         raw_state_str = ""
         for _r in rx:
