@@ -181,6 +181,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self, effect: int, speed: int, brightness: int = 100
     ) -> None:
         """Set a preset pattern on the device."""
+        self._set_transition_complete_time()
         await self._async_send_msg(
             self._generate_preset_pattern(effect, speed, brightness)
         )
