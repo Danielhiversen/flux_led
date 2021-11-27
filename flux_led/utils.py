@@ -66,8 +66,7 @@ class utils:
 
     @staticmethod
     def date_has_passed(dt) -> bool:
-        delta = dt - datetime.datetime.now()
-        return delta.total_seconds() < 0
+        return (dt - datetime.datetime.now()).total_seconds() < 0
 
     @staticmethod
     def dump_bytes(bytes) -> None:

@@ -957,6 +957,7 @@ class TestLight(unittest.TestCase):
         assert utils.color_object_to_tuple("blue") == (0, 0, 255)
         green = (0, 255, 0)
         assert utils.color_object_to_tuple(green) == green
+        assert utils.color_object_to_tuple(set()) is None
         assert utils.color_object_to_tuple("#ff00ff") == (255, 0, 255)
         assert utils.color_object_to_tuple("(255,0,255)") == (255, 0, 255)
 
