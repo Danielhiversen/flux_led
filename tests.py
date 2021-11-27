@@ -1031,7 +1031,7 @@ class TestLight(unittest.TestCase):
         assert white_levels_to_scaled_color_temp(64, 64) == (50, 50)
         assert white_levels_to_scaled_color_temp(77, 50) == (39, 50)
         assert white_levels_to_scaled_color_temp(128, 0) == (0, 50)
-        assert white_levels_to_scaled_color_temp(0, 0) == (1, 0)
+        assert white_levels_to_scaled_color_temp(0, 0) == (0, 0)
         with pytest.raises(ValueError):
             white_levels_to_scaled_color_temp(-1, 0)
         with pytest.raises(ValueError):

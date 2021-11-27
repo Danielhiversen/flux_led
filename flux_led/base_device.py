@@ -543,7 +543,7 @@ class LEDENETDevice:
                     temp, brightness
                 )
                 _LOGGER.debug(
-                    "scaled_color_temp_to_white_levels: in(%s, %s) -> out(%s, %s)",
+                    "scaled_color_temp_to_white_levels: in(temp %s, bright %s) -> out(ww %s, cw %s)",
                     temp,
                     brightness,
                     warm_white,

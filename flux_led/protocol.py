@@ -845,6 +845,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
 
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
+
+    MIN_BRIGHTNESS = 2
+
     @property
     def name(self):
         """The name of the protocol."""
@@ -868,13 +871,22 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
+        _LOGGER.debug(
+            "white_levels_to_scaled_color_temp: in(ww %s, cw %s) -> out(temp %s, bright %s)",
+            warm_white,
+            cool_white,
+            scaled_temp,
+            brightness,
+        )
         inner_message = self.construct_message(
             bytearray(
                 [
                     0x35,
                     0xB1,
                     scaled_temp,
-                    brightness,
+                    # If the brightness goes below the precision the device
+                    # will flip from cold to warm
+                    max(self.MIN_BRIGHTNESS, brightness),
                     0x00,
                     0x00,
                     0x00,
