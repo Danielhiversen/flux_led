@@ -354,6 +354,8 @@ class TestLight(unittest.TestCase):
             "OFF  [Color: (255, 91, 212) Brightness: 100% raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,158,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(light.getWarmWhite255(), 255)
+        self.assertEqual(light.getCCT(), (255, 255))
         self.assertEqual(light.is_on, False)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
@@ -1011,8 +1013,8 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"$$\x44\x00\x00\x00\x00\x00\x02\x00\x00\xed")
 
         mock_read.side_effect = read_data
-        switch = flux_led.WifiLedBulb("192.168.1.164")
-        assert switch.color_modes == {COLOR_MODE_RGBW}
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGBW}
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
