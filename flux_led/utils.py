@@ -45,13 +45,10 @@ class utils:
         return None
 
     @staticmethod
-    def color_tuple_to_string(rgb) -> str:
+    def color_tuple_to_string(rgb: Tuple[int, int, int]) -> str:
         # try to convert to an english name
-        try:
+        with contextlib.suppress(Exception):
             return webcolors.rgb_to_name(rgb)
-        except Exception:
-            # print e
-            pass
         return str(rgb)
 
     @staticmethod

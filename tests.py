@@ -966,6 +966,12 @@ class TestLight(unittest.TestCase):
         assert "springgreen" in names
         assert "yellow" in names
 
+    def test_color_tuple_to_string(self):
+        assert utils.color_tuple_to_string((255, 0, 0)) == "red"
+        assert utils.color_tuple_to_string((0, 128, 0)) == "green"
+        assert utils.color_tuple_to_string((0, 0, 255)) == "blue"
+        assert utils.color_tuple_to_string((3, 2, 1)) == "(3, 2, 1)"
+
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
