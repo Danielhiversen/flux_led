@@ -525,9 +525,9 @@ class LEDENETDevice:
                 updated is None
             ):  # Only convert on a full update since we still use 0-255 internally
                 # warm_white is the color temp from 1-100
-                temp = self.raw_state.warm_white
+                temp = raw_state.warm_white
                 # cold_white is the brightness from 1-100
-                brightness = self.raw_state.cool_white
+                brightness = raw_state.cool_white
                 warm_white, cool_white = scaled_color_temp_to_white_levels(
                     temp, brightness
                 )
