@@ -11,7 +11,7 @@ from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import COLOR_MODE_CCT, COLOR_MODE_RGBWW
-from flux_led.protocol import PROTOCOL_LEDENET_9BYTE
+from flux_led.protocol import PROTOCOL_LEDENET_9BYTE, PROTOCOL_LEDENET_ORIGINAL
 
 
 @pytest.fixture
@@ -66,6 +66,7 @@ async def mock_aio_protocol():
 async def test_no_initial_response(mock_aio_protocol):
     """Test we try switching protocol if we get no initial response."""
     light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    assert light.protocol is None
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -82,6 +83,7 @@ async def test_no_initial_response(mock_aio_protocol):
         call.close(),
     ]
     assert not light.available
+    assert light.protocol is PROTOCOL_LEDENET_ORIGINAL
 
 
 @pytest.mark.asyncio
