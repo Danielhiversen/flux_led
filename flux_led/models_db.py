@@ -555,6 +555,9 @@ USE_9BYTE_PROTOCOL_MODELS = {
 }
 MICROPHONE_MODELS = {model.model_num for model in MODELS if model.microphone}
 MODEL_NUM_PROTOCOL = {model.model_num: model.protocol for model in MODELS}
+WHITE_ARE_TEMP_BRIGHTNESS = {
+    model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_CCT
+}
 
 
 def get_model_description(model_num):

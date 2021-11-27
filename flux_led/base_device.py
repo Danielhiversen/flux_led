@@ -49,6 +49,7 @@ from .models_db import (
     RGBW_PROTOCOL_MODELS,
     UNKNOWN_MODEL,
     USE_9BYTE_PROTOCOL_MODELS,
+    WHITE_ARE_TEMP_BRIGHTNESS,
 )
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
@@ -160,10 +161,9 @@ class LEDENETDevice:
         """Return true if the speed of an effect can be adjusted while off."""
         return self.protocol not in SPEED_ADJUST_WILL_TURN_ON
 
-    @property
-    def whites_are_temp_brightness(self) -> bool:
+    def _whites_are_temp_brightness(self, model_num: int) -> bool:
         """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
-        return self.protocol == PROTOCOL_LEDENET_CCT
+        return model_num in WHITE_ARE_TEMP_BRIGHTNESS
 
     @property
     def model(self) -> str:
@@ -508,7 +508,9 @@ class LEDENETDevice:
         updated: Optional[Set[str]] = None,
     ) -> None:
         """Set the raw state remapping channels as needed."""
+        model_num = raw_state.model_num
         channel_map = CHANNEL_REMAP.get(raw_state.model_num)
+        whites_are_temp_brightness = self._whites_are_temp_brightness(model_num)
         # Only remap updated states as we do not want to switch any
         # state that have not changed since they will already be in
         # the correct slot
@@ -531,10 +533,10 @@ class LEDENETDevice:
         _LOGGER.debug(
             "%s: whites_are_temp_brightness=%s, updtes=%s",
             self.ipaddr,
-            self.whites_are_temp_brightness,
+            whites_are_temp_brightness,
             updated,
         )
-        if self.whites_are_temp_brightness and (
+        if whites_are_temp_brightness and (
             updated is None  # everything updated
             or (STATE_WARM_WHITE in updated and STATE_COOL_WHITE in updated)
         ):
