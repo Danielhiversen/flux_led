@@ -871,13 +871,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
-        _LOGGER.debug(
-            "white_levels_to_scaled_color_temp: in(ww %s, cw %s) -> out(temp %s, bright %s)",
-            warm_white,
-            cool_white,
-            scaled_temp,
-            brightness,
-        )
         inner_message = self.construct_message(
             bytearray(
                 [

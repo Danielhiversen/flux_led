@@ -537,13 +537,6 @@ class LEDENETDevice:
             # cold_white is the brightness from 1-100
             brightness = raw_state.cool_white
             warm_white, cool_white = scaled_color_temp_to_white_levels(temp, brightness)
-            _LOGGER.debug(
-                "scaled_color_temp_to_white_levels: in(temp %s, bright %s) -> out(ww %s, cw %s)",
-                temp,
-                brightness,
-                warm_white,
-                cool_white,
-            )
             self.raw_state = raw_state._replace(
                 warm_white=warm_white, cool_white=cool_white
             )
