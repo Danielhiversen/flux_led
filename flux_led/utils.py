@@ -334,7 +334,7 @@ def white_levels_to_scaled_color_temp(
     cold = cool_white / 255
     brightness = warm + cold
     if brightness == 0:
-        temperature: float = 0
+        temperature: float = 1
     else:
         temperature = (cold / brightness) * 100
     return TemperatureBrightness(round(temperature), min(100, round(brightness * 100)))
