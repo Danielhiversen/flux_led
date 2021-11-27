@@ -25,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 MAX_UPDATES_WITHOUT_RESPONSE = 4
-POWER_STATE_TIMEOUT = 1  # number of seconds before declaring on/off failed
+POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -287,12 +287,21 @@ class AIOWifiLedBulb(LEDENETDevice):
         else:
             return
         if self.raw_state != prev_state:
+            _LOGGER.debug(
+                "_async_process_message, changed: %s != %s", self.raw_state, prev_state
+            )
             futures = self._on_futures if self.is_on else self._off_futures
             for future in futures:
                 if not future.done():
                     future.set_result(True)
             futures.clear()
             self._updated_callback()
+        else:
+            _LOGGER.debug(
+                "_async_process_message, not changed: %s == %s",
+                self.raw_state,
+                prev_state,
+            )
 
     def process_addressable_response(self, msg):
         _LOGGER.debug(

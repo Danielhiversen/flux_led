@@ -564,8 +564,8 @@ class LEDENETDevice:
                     for name, source in channel_map.items()
                 }
             )
-        else:
-            self.raw_state = raw_state
+            return
+        self.raw_state = raw_state
 
     def __str__(self) -> str:  # noqa: C901
         assert self.raw_state is not None
