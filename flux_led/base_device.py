@@ -162,7 +162,7 @@ class LEDENETDevice:
 
     def _whites_are_temp_brightness(self, model_num: int) -> bool:
         """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
-        return model_num == 0x1C
+        return self._protocol == PROTOCOL_LEDENET_CCT
 
     @property
     def model(self) -> str:
@@ -519,20 +519,24 @@ class LEDENETDevice:
         #
         # If updated is None than all raw_state values have been sent
         #
-        full_update = False
         if updated is None:
-            full_update = True
             updated = set(channel_map.keys())
-
+        self.raw_state = raw_state._replace(
+            **{
+                name: getattr(raw_state, source)
+                if source in updated
+                else getattr(raw_state, name)
+                for name, source in channel_map.items()
+            }
+        )
         _LOGGER.debug(
             "%s: whites_are_temp_brightness=%s, updtes=%s",
             self.ipaddr,
             whites_are_temp_brightness,
             updated,
         )
-        if full_update and whites_are_temp_brightness:
+        if whites_are_temp_brightness:
             if STATE_WARM_WHITE not in updated or STATE_COOL_WHITE not in updated:
-                self.raw_state = raw_state
                 return
             # warm_white is the color temp from 1-100
             temp = raw_state.warm_white
@@ -548,15 +552,6 @@ class LEDENETDevice:
             )
             self.raw_state = raw_state._replace(
                 warm_white=warm_white, cool_white=cool_white
-            )
-        else:
-            self.raw_state = raw_state._replace(
-                **{
-                    name: getattr(raw_state, source)
-                    if source in updated
-                    else getattr(raw_state, name)
-                    for name, source in channel_map.items()
-                }
             )
         _LOGGER.debug(
             "%s: remapped raw state: %s",

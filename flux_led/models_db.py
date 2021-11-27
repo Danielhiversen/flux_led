@@ -287,12 +287,7 @@ MODELS = [
         protocol=PROTOCOL_LEDENET_CCT,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
-        channel_map={
-            STATE_WARM_WHITE: STATE_RED,
-            STATE_RED: STATE_WARM_WHITE,
-            STATE_COOL_WHITE: STATE_GREEN,
-            STATE_GREEN: STATE_COOL_WHITE,
-        },
+        channel_map={},
         microphone=False,
     ),
     LEDENETModel(
