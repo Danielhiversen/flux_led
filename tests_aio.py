@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import datetime
 import logging
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -641,6 +641,63 @@ async def test_async_set_brightness_rgbw(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b"1\x80\x00k\x80\x80\x00\x0f+"
     assert light.brightness == 128
+
+
+@pytest.mark.asyncio
+async def test_cct_protocol_device(mock_aio_protocol):
+    """Test a cct protocol device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x23\x61\x00\x05\x00\x00\x00\x00\x03\x64\x00\x8D"
+    )
+    await task
+    assert light.getCCT() == (255, 0)
+    assert light.color_temp == 2700
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(32)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\t5\xb1\x00\r\x00\x00\x00\x03\xf6\xbe"
+    )
+    assert light.brightness == 33
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\t5\xb1\x002\x00\x00\x00\x03\x1b\t"
+    )
+    assert light.brightness == 128
+
+    transport.reset_mock()
+    await light.async_set_brightness(1)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\t5\xb1\x00\x02\x00\x00\x00\x03\xeb\xaa"
+    )
+    assert light.brightness == 0
+
+    transport.reset_mock()
+    await light.async_set_levels(w=0, w2=255)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\t5\xb1dd\x00\x00\x00\x03\xb17"
+    )
+    assert light.getCCT() == (0, 255)
+    assert light.color_temp == 6500
+    assert light.brightness == 255
 
 
 @pytest.mark.asyncio

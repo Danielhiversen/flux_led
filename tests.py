@@ -26,16 +26,16 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 from flux_led.utils import (
-    rgbw_brightness,
-    rgbww_brightness,
-    rgbcw_brightness,
-    rgbwc_to_rgbcw,
-    rgbcw_to_rgbwc,
-    white_levels_to_color_temp,
     color_temp_to_white_levels,
+    rgbcw_brightness,
+    rgbcw_to_rgbwc,
+    rgbw_brightness,
+    rgbwc_to_rgbcw,
+    rgbww_brightness,
     scaled_color_temp_to_white_levels,
-    white_levels_to_scaled_color_temp,
     utils,
+    white_levels_to_color_temp,
+    white_levels_to_scaled_color_temp,
 )
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
