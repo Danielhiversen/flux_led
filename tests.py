@@ -25,7 +25,13 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
 )
-from flux_led.utils import rgbw_brightness, rgbww_brightness
+from flux_led.utils import (
+    rgbw_brightness,
+    rgbww_brightness,
+    rgbcw_brightness,
+    rgbwc_to_rgbcw,
+    rgbcw_to_rgbwc,
+)
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
 
@@ -906,12 +912,43 @@ class TestLight(unittest.TestCase):
         assert rgbww_brightness((0, 255, 0, 0, 0), 255) == (0, 255, 0, 255, 255)
         assert rgbww_brightness((0, 255, 0, 0, 0), 128) == (0, 255, 0, 64, 64)
 
+    def test_rgbcw_brightness(self):
+        assert rgbcw_brightness((128, 128, 128, 128, 128), 255) == (
+            255,
+            255,
+            255,
+            255,
+            255,
+        )
+        assert rgbcw_brightness((128, 128, 128, 128, 128), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbcw_brightness((255, 255, 255, 255, 255), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbcw_brightness((0, 255, 0, 0, 0), 255) == (0, 255, 0, 255, 255)
+        assert rgbcw_brightness((0, 255, 0, 0, 0), 128) == (0, 255, 0, 64, 64)
+
     def test_rgbw_brightness(self):
         assert rgbw_brightness((128, 128, 128, 128), 255) == (255, 255, 255, 255)
         assert rgbw_brightness((128, 128, 128, 128), 128) == (128, 128, 128, 128)
         assert rgbw_brightness((255, 255, 255, 255), 128) == (128, 128, 128, 128)
         assert rgbw_brightness((0, 255, 0, 0), 255) == (0, 255, 0, 255)
         assert rgbw_brightness((0, 255, 0, 0), 128) == (0, 255, 0, 0)
+
+    def test_rgbwc_to_rgbcw_rgbcw_to_rgbwc_round_trip(self):
+        rgbwc = (1, 2, 3, 4, 5)
+        rgbcw = rgbwc_to_rgbcw(rgbwc)
+        assert rgbcw == (1, 2, 3, 5, 4)
+        assert rgbcw_to_rgbwc(rgbcw) == rgbwc
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
