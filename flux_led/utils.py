@@ -56,16 +56,16 @@ class utils:
 
     @staticmethod
     def get_color_names_list() -> List[str]:
-        names = set()
-        for key in list(webcolors.CSS2_HEX_TO_NAMES.keys()):
-            names.add(webcolors.CSS2_HEX_TO_NAMES[key])
-        for key in list(webcolors.CSS21_HEX_TO_NAMES.keys()):
-            names.add(webcolors.CSS21_HEX_TO_NAMES[key])
-        for key in list(webcolors.CSS3_HEX_TO_NAMES.keys()):
-            names.add(webcolors.CSS3_HEX_TO_NAMES[key])
-        for key in list(webcolors.HTML4_HEX_TO_NAMES.keys()):
-            names.add(webcolors.HTML4_HEX_TO_NAMES[key])
-        return sorted(names)
+        return sorted(
+            set(
+                [
+                    *webcolors.CSS2_HEX_TO_NAMES.values(),
+                    *webcolors.CSS21_HEX_TO_NAMES.values(),
+                    *webcolors.CSS3_HEX_TO_NAMES.values(),
+                    *webcolors.HTML4_HEX_TO_NAMES.values(),
+                ]
+            )
+        )
 
     @staticmethod
     def date_has_passed(dt) -> bool:

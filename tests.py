@@ -960,6 +960,12 @@ class TestLight(unittest.TestCase):
         assert utils.color_object_to_tuple("#ff00ff") == (255, 0, 255)
         assert utils.color_object_to_tuple("(255,0,255)") == (255, 0, 255)
 
+    def test_get_color_names_list(self):
+        names = utils.get_color_names_list()
+        assert len(names) > 120
+        assert "springgreen" in names
+        assert "yellow" in names
+
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
