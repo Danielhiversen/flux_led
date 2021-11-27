@@ -654,9 +654,16 @@ async def test_cct_protocol_device(mock_aio_protocol):
     task = asyncio.create_task(light.async_setup(_updated_callback))
     transport, protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
-        b"\x81\x1C\x23\x61\x00\x05\x00\x00\x00\x00\x03\x64\x00\x8D"
+        b"\x81\x1C\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC8"
     )
     await task
+    assert light.getCCT() == (0, 255)
+    assert light.color_temp == 6500
+    assert light.brightness == 255
+
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x23\x61\x00\x05\x00\x00\x00\x00\x03\x64\x00\x8D"
+    )
     assert light.getCCT() == (255, 0)
     assert light.color_temp == 2700
     assert light.brightness == 255
