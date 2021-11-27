@@ -31,6 +31,7 @@ from flux_led.utils import (
     rgbcw_brightness,
     rgbwc_to_rgbcw,
     rgbcw_to_rgbwc,
+    utils,
 )
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
@@ -949,6 +950,15 @@ class TestLight(unittest.TestCase):
         rgbcw = rgbwc_to_rgbcw(rgbwc)
         assert rgbcw == (1, 2, 3, 5, 4)
         assert rgbcw_to_rgbwc(rgbcw) == rgbwc
+
+    def test_color_object_to_tuple(self):
+        assert utils.color_object_to_tuple("red") == (255, 0, 0)
+        assert utils.color_object_to_tuple("green") == (0, 128, 0)
+        assert utils.color_object_to_tuple("blue") == (0, 0, 255)
+        green = (0, 255, 0)
+        assert utils.color_object_to_tuple(green) == green
+        assert utils.color_object_to_tuple("#ff00ff") == (255, 0, 255)
+        assert utils.color_object_to_tuple("(255,0,255)") == (255, 0, 255)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

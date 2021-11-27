@@ -2,7 +2,7 @@ import ast
 import colorsys
 import contextlib
 import datetime
-from typing import Iterable, List, Optional, Tuple, cast
+from typing import Iterable, List, Optional, Tuple, cast, Union
 
 import webcolors  # type: ignore
 
@@ -11,14 +11,16 @@ from .const import MAX_TEMP, MIN_TEMP
 
 class utils:
     @staticmethod
-    def color_object_to_tuple(color) -> Optional[Tuple[int, ...]]:
+    def color_object_to_tuple(
+        color: Union[Tuple[int, ...], str]
+    ) -> Optional[Tuple[int, ...]]:
 
         # see if it's already a color tuple
-        if type(color) is tuple and len(color) in [3, 4, 5]:
+        if isinstance(color, tuple) and len(color) in [3, 4, 5]:
             return color
 
         # can't convert non-string
-        if type(color) is not str:
+        if not isinstance(color, str):
             return None
         color = color.strip()
 
