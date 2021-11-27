@@ -70,6 +70,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
+    PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     LEDENETOriginalRawState,
     LEDENETRawState,
@@ -80,10 +81,11 @@ from .protocol import (
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
 )
 from .timer import BuiltInTimer
-from .utils import utils, white_levels_to_color_temp, scaled_color_temp_to_white_levels
+from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_color_temp
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -96,6 +98,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
+    ProtocolLEDENETCCT,
 ]
 
 ADDRESSABLE_PROTOCOLS = {
@@ -122,6 +125,7 @@ PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A3: ProtocolLEDENETAddressableA3,
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
     PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
+    PROTOCOL_LEDENET_CCT: ProtocolLEDENETCCT,
 }
 
 

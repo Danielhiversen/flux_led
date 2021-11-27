@@ -24,6 +24,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
+    PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
 )
 
@@ -283,7 +284,7 @@ MODELS = [
         models=[],
         description="Table Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocol=PROTOCOL_LEDENET_8BYTE,
+        protocol=PROTOCOL_LEDENET_CCT,
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
         channel_map={
