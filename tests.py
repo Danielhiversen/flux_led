@@ -1134,6 +1134,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.model_num, 0xA2)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony v2 (0xA2)")
@@ -1206,6 +1207,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.speed_adjust_off, True)
         self.assertEqual(light.model_num, 0xA3)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony v3 (0xA3)")
@@ -1286,8 +1288,10 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.model_num, 0xA1)
+
         self.assertEqual(light.model, "RGB Symphony v1 (0xA1)")
         assert len(light.effect_list) == 301
         assert light.color_modes == {COLOR_MODE_RGB}
