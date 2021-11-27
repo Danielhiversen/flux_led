@@ -113,6 +113,16 @@ SPEED_ADJUST_WILL_TURN_ON = {
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
 }
+PROTOCOL_NAME_TO_CLS = {
+    PROTOCOL_LEDENET_ORIGINAL: ProtocolLEDENETOriginal,
+    PROTOCOL_LEDENET_8BYTE: ProtocolLEDENET8Byte,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS: ProtocolLEDENET8ByteDimmableEffects,
+    PROTOCOL_LEDENET_9BYTE: ProtocolLEDENET9Byte,
+    PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS: ProtocolLEDENET9ByteDimmableEffects,
+    PROTOCOL_LEDENET_ADDRESSABLE_A3: ProtocolLEDENETAddressableA3,
+    PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
+    PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
+}
 
 
 class DeviceType(Enum):
@@ -705,8 +715,7 @@ class LEDENETDevice:
         w2 = mapped_channels[STATE_COOL_WHITE]
 
         if (r or g or b) and (w or w2) and not self.rgbwcapable:
-            print("RGBW command sent to non-RGBW device")
-            raise ValueError("RGBW command sent to non-RGBW device")
+            raise ValueError("RGB&CW command sent to non-RGB&CW device")
 
         if brightness is not None and r is not None and g is not None and b is not None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
@@ -813,24 +822,10 @@ class LEDENETDevice:
         return int(r), int(g), int(b)
 
     def setProtocol(self, protocol: str) -> None:
-        if protocol == PROTOCOL_LEDENET_ORIGINAL:
-            self._protocol = ProtocolLEDENETOriginal()
-        elif protocol == PROTOCOL_LEDENET_8BYTE:
-            self._protocol = ProtocolLEDENET8Byte()
-        elif protocol == PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS:
-            self._protocol = ProtocolLEDENET8ByteDimmableEffects()
-        elif protocol == PROTOCOL_LEDENET_9BYTE:
-            self._protocol = ProtocolLEDENET9Byte()
-        elif protocol == PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS:
-            self._protocol = ProtocolLEDENET9ByteDimmableEffects()
-        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE_A3:
-            self._protocol = ProtocolLEDENETAddressableA3()
-        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE_A2:
-            self._protocol = ProtocolLEDENETAddressableA2()
-        elif protocol == PROTOCOL_LEDENET_ADDRESSABLE_A1:
-            self._protocol = ProtocolLEDENETAddressableA1()
-        else:
+        cls = PROTOCOL_NAME_TO_CLS.get(protocol)
+        if cls is None:
             raise ValueError(f"Invalid protocol: {protocol}")
+        self._protocol = cls()  # type: ignore
 
     def _set_protocol_from_msg(
         self,

@@ -25,7 +25,16 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
 )
-from flux_led.utils import rgbw_brightness, rgbww_brightness
+from flux_led.utils import (
+    rgbw_brightness,
+    rgbww_brightness,
+    rgbcw_brightness,
+    rgbwc_to_rgbcw,
+    rgbcw_to_rgbwc,
+    white_levels_to_color_temp,
+    color_temp_to_white_levels,
+    utils,
+)
 
 LEDENET_STATE_QUERY = b"\x81\x8a\x8b\x96"
 
@@ -354,6 +363,8 @@ class TestLight(unittest.TestCase):
             "OFF  [Color: (255, 91, 212) Brightness: 100% raw state: 129,69,36,97,33,16,255,91,212,0,4,0,240,158,]",
         )
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(light.getWarmWhite255(), 255)
+        self.assertEqual(light.getCCT(), (255, 255))
         self.assertEqual(light.is_on, False)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
@@ -742,6 +753,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0x01)
         self.assertEqual(light.model, "Original LEDENET (0x01)")
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.white_active, True)
 
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
@@ -903,12 +915,95 @@ class TestLight(unittest.TestCase):
         assert rgbww_brightness((0, 255, 0, 0, 0), 255) == (0, 255, 0, 255, 255)
         assert rgbww_brightness((0, 255, 0, 0, 0), 128) == (0, 255, 0, 64, 64)
 
+    def test_rgbcw_brightness(self):
+        assert rgbcw_brightness((128, 128, 128, 128, 128), 255) == (
+            255,
+            255,
+            255,
+            255,
+            255,
+        )
+        assert rgbcw_brightness((128, 128, 128, 128, 128), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbcw_brightness((255, 255, 255, 255, 255), 128) == (
+            128,
+            128,
+            128,
+            128,
+            128,
+        )
+        assert rgbcw_brightness((0, 255, 0, 0, 0), 255) == (0, 255, 0, 255, 255)
+        assert rgbcw_brightness((0, 255, 0, 0, 0), 128) == (0, 255, 0, 64, 64)
+
     def test_rgbw_brightness(self):
         assert rgbw_brightness((128, 128, 128, 128), 255) == (255, 255, 255, 255)
         assert rgbw_brightness((128, 128, 128, 128), 128) == (128, 128, 128, 128)
         assert rgbw_brightness((255, 255, 255, 255), 128) == (128, 128, 128, 128)
         assert rgbw_brightness((0, 255, 0, 0), 255) == (0, 255, 0, 255)
         assert rgbw_brightness((0, 255, 0, 0), 128) == (0, 255, 0, 0)
+
+    def test_rgbwc_to_rgbcw_rgbcw_to_rgbwc_round_trip(self):
+        rgbwc = (1, 2, 3, 4, 5)
+        rgbcw = rgbwc_to_rgbcw(rgbwc)
+        assert rgbcw == (1, 2, 3, 5, 4)
+        assert rgbcw_to_rgbwc(rgbcw) == rgbwc
+
+    def test_color_object_to_tuple(self):
+        assert utils.color_object_to_tuple("red") == (255, 0, 0)
+        assert utils.color_object_to_tuple("green") == (0, 128, 0)
+        assert utils.color_object_to_tuple("blue") == (0, 0, 255)
+        green = (0, 255, 0)
+        assert utils.color_object_to_tuple(green) == green
+        assert utils.color_object_to_tuple(set()) is None
+        assert utils.color_object_to_tuple("#ff00ff") == (255, 0, 255)
+        assert utils.color_object_to_tuple("(255,0,255)") == (255, 0, 255)
+
+    def test_get_color_names_list(self):
+        names = utils.get_color_names_list()
+        assert len(names) > 120
+        assert "springgreen" in names
+        assert "yellow" in names
+
+    def test_color_tuple_to_string(self):
+        assert utils.color_tuple_to_string((255, 0, 0)) == "red"
+        assert utils.color_tuple_to_string((0, 128, 0)) == "green"
+        assert utils.color_tuple_to_string((0, 0, 255)) == "blue"
+        assert utils.color_tuple_to_string((3, 2, 1)) == "(3, 2, 1)"
+
+    def test_color_temp_to_white_levels(self):
+        assert color_temp_to_white_levels(2700, 255) == (255, 0)
+        assert color_temp_to_white_levels(4600, 255) == (128, 128)
+        assert color_temp_to_white_levels(5000, 255) == (101, 154)
+        assert color_temp_to_white_levels(6500, 255) == (0, 255)
+        assert color_temp_to_white_levels(2700, 128) == (128, 0)
+        assert color_temp_to_white_levels(4600, 128) == (64, 64)
+        assert color_temp_to_white_levels(5000, 128) == (50, 77)
+        assert color_temp_to_white_levels(6500, 128) == (0, 128)
+        assert color_temp_to_white_levels(6500, 255) == (0, 255)
+        with pytest.raises(ValueError):
+            color_temp_to_white_levels(6500, -1)
+        with pytest.raises(ValueError):
+            color_temp_to_white_levels(-1, 255)
+
+    def test_white_levels_to_color_temp(self):
+        assert white_levels_to_color_temp(0, 255) == (6500, 255)
+        assert white_levels_to_color_temp(255, 255) == (4600, 255)
+        assert white_levels_to_color_temp(128, 128) == (4600, 255)
+        assert white_levels_to_color_temp(255, 0) == (2700, 255)
+        assert white_levels_to_color_temp(0, 128) == (6500, 128)
+        assert white_levels_to_color_temp(64, 64) == (4600, 128)
+        assert white_levels_to_color_temp(77, 50) == (4196, 127)
+        assert white_levels_to_color_temp(128, 0) == (2700, 128)
+        assert white_levels_to_color_temp(0, 0) == (2700, 0)
+        with pytest.raises(ValueError):
+            white_levels_to_color_temp(-1, 0)
+        with pytest.raises(ValueError):
+            white_levels_to_color_temp(0, 500)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1010,8 +1105,8 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"$$\x44\x00\x00\x00\x00\x00\x02\x00\x00\xed")
 
         mock_read.side_effect = read_data
-        switch = flux_led.WifiLedBulb("192.168.1.164")
-        assert switch.color_modes == {COLOR_MODE_RGBW}
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGBW}
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1134,6 +1229,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.model_num, 0xA2)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony v2 (0xA2)")
@@ -1170,7 +1266,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'B\x012d\xd9')),
+            mock.call(bytearray(b"B\x012d\xd9")),
         )
         light._transition_complete_time = 0
         light.update_state()
@@ -1179,6 +1275,7 @@ class TestLight(unittest.TestCase):
             "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,162,35,37,1,16,100,0,0,0,4,0,240,212,]",
         )
         assert light.effect == "RBM 1"
+        assert light.brightness == 255
         assert light.getSpeed() == 16
 
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -1205,6 +1302,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.speed_adjust_off, True)
         self.assertEqual(light.model_num, 0xA3)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "RGB Symphony v3 (0xA3)")
@@ -1256,6 +1354,7 @@ class TestLight(unittest.TestCase):
             "ON  [Pattern: RBM 1 (Speed 16%) raw state: 129,163,35,37,1,16,100,0,0,0,4,0,240,213,]",
         )
         assert light.effect == "RBM 1"
+        assert light.brightness == 255
         assert light.getSpeed() == 16
 
     @patch("flux_led.WifiLedBulb._send_msg")
@@ -1284,8 +1383,10 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
+        self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.model_num, 0xA1)
+
         self.assertEqual(light.model, "RGB Symphony v1 (0xA1)")
         assert len(light.effect_list) == 301
         assert light.color_modes == {COLOR_MODE_RGB}
@@ -1320,6 +1421,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"a\x00\xa12\x0fC")))
+        assert light.brightness == 255
+
         light._transition_complete_time = 0
         light.update_state()
         self.assertEqual(

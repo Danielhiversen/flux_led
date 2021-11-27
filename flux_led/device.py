@@ -108,7 +108,7 @@ class WifiLedBulb(LEDENETDevice):
     def setWhiteTemperature(
         self, temperature, brightness, persist=True, retry=DEFAULT_RETRIES
     ):
-        cold, warm = color_temp_to_white_levels(temperature, brightness)
+        warm, cold = color_temp_to_white_levels(temperature, brightness)
         self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
     def setRgb(self, r, g, b, persist=True, brightness=None, retry=DEFAULT_RETRIES):

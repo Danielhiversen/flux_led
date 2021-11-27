@@ -126,7 +126,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_white_temp(self, temperature, brightness, persist=True) -> None:
         """Set the white tempature."""
-        cold, warm = color_temp_to_white_levels(temperature, brightness)
+        warm, cold = color_temp_to_white_levels(temperature, brightness)
         await self.async_set_levels(w=warm, w2=cold, persist=persist)
 
     async def async_update(self):
@@ -137,6 +137,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._updates_without_response == MAX_UPDATES_WITHOUT_RESPONSE:
             if self._aio_protocol:
                 self._aio_protocol.close()
+            self.set_unavailable()
             self._updates_without_response = 0
             raise RuntimeError("Bulb stopped responding")
         await self._async_send_state_query()
@@ -180,13 +181,15 @@ class AIOWifiLedBulb(LEDENETDevice):
         self, effect: int, speed: int, brightness: int = 100
     ) -> None:
         """Set a preset pattern on the device."""
-        msg = self._generate_preset_pattern(effect, speed, brightness)
-        await self._async_send_msg(msg)
+        await self._async_send_msg(
+            self._generate_preset_pattern(effect, speed, brightness)
+        )
 
     async def async_set_custom_pattern(self, rgb_list, speed, transition_type):
         """Set a custom pattern on the device."""
-        msg = self._generate_custom_patterm(rgb_list, speed, transition_type)
-        await self._async_send_msg(msg)
+        await self._async_send_msg(
+            self._generate_custom_patterm(rgb_list, speed, transition_type)
+        )
 
     async def async_set_effect(
         self, effect: str, speed: int, brightness: int = 100
@@ -242,6 +245,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     def _async_connection_lost(self, exc):
         """Called when the connection is lost."""
         self._aio_protocol = None
+        self.set_unavailable()
 
     def _async_data_recieved(self, data):
         """New data on the socket."""
@@ -271,8 +275,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._data_future and not self._data_future.done():
             self._data_future.set_result(msg)
             return
-        if not self._protocol:
-            return
+        self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
         if self._protocol.is_valid_addressable_response(msg):

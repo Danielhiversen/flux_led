@@ -41,23 +41,23 @@ class AIOBulbScanner(BulbScanner):
         """Send the scans."""
         self.send_discovery_messages(transport, destination)
         quit_time = time.monotonic() + timeout
-        remain_time = timeout
+        time_out = timeout / self.BROADCAST_FREQUENCY
         while True:
-            time_out = min(remain_time, timeout / self.BROADCAST_FREQUENCY)
-            if time_out <= 0:
-                return
             try:
                 await asyncio.wait_for(
                     asyncio.shield(found_all_future), timeout=time_out
                 )
             except asyncio.TimeoutError:
-                if time.monotonic() >= quit_time:
-                    return
-                # No response, send broadcast again in cast it got lost
-                self.send_discovery_messages(transport, destination)
+                pass
             else:
                 return  # found_all
-            remain_time = quit_time - time.monotonic()
+            time_out = min(
+                quit_time - time.monotonic(), timeout / self.BROADCAST_FREQUENCY
+            )
+            if time_out <= 0:
+                return
+            # No response, send broadcast again in cast it got lost
+            self.send_discovery_messages(transport, destination)
 
     async def async_scan(self, timeout=10, address=None):
         """Discover LEDENET."""
