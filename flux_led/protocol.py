@@ -6,7 +6,7 @@ import logging
 from typing import List, Tuple
 
 from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
-from .utils import utils
+from .utils import utils, white_levels_to_scaled_color_temp
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -840,4 +840,49 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
                     0x48,
                 ]
             )
+        )
+
+
+class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
+    @property
+    def name(self):
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_CCT
+
+    @property
+    def dimmable_effects(self):
+        """Protocol supports dimmable effects."""
+        return False
+
+    def construct_levels_change(
+        self, persist, red, green, blue, warm_white, cool_white, write_mode
+    ):
+        """The bytes to send for a level change request.
+
+        b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
+        b0 b1 b2 b3 00 01 01 72 00 09 35 b1 64 64 00 00 00 03 b1 a5 - 100% cool
+        b0 b1 b2 b3 00 01 01 9f 00 09 35 b1 64 32 00 00 00 03 7f 6e - 100% cool - dim 50%
+        """
+        counter_byte = self._increment_counter()
+        scaled_temp, brightness = white_levels_to_scaled_color_temp(
+            warm_white, cool_white
+        )
+        inner_message = self.construct_message(
+            bytearray(
+                [
+                    0x09,
+                    0x35,
+                    0xB1,
+                    scaled_temp,
+                    brightness,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x03,
+                ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray([*self.ADDRESSABLE_HEADER, counter_byte, 0x00, *inner_message])
         )
