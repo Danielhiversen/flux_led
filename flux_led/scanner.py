@@ -5,7 +5,8 @@ import select
 import socket
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, cast
+import asyncio
+from typing import Any, Dict, List, Optional, Tuple, cast, Union
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -132,7 +133,7 @@ class BulbScanner:
         data: Optional[bytes],
         from_address: str,
         address: str,
-        response_list: Dict[str, FluxLEDDiscovery],
+        response_list: Dict[str, Dict[str, Any]],
     ) -> bool:
         """Process a response.
 
@@ -163,7 +164,7 @@ class BulbScanner:
             _process_discovery_message(data, decoded_data)
 
     def _found_bulbs(
-        self, response_list: Dict[str, FluxLEDDiscovery]
+        self, response_list: Dict[str, Dict[str, Any]]
     ) -> List[FluxLEDDiscovery]:
         """Return only complete bulb discoveries."""
 
@@ -173,7 +174,9 @@ class BulbScanner:
             if info.get(ATTR_IPADDR)
         ]
 
-    def send_discovery_messages(self, sender: str, destination: str) -> None:
+    def send_discovery_messages(
+        self, sender: Union[socket.socket, asyncio.BaseTransport], destination: str
+    ) -> None:
         _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
         sender.sendto(self.DISCOVER_MESSAGE, destination)
         _LOGGER.debug("discover: %s => %s", destination, self.VERSION_MESSAGE)
