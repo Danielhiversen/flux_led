@@ -37,9 +37,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
-        self._on_futures: List[asyncio.Future[bool]] = []
-        self._off_futures: List[asyncio.Future[bool]] = []
-        self._data_future: Optional[asyncio.Future[bytes]] = None
+        self._on_futures: List["asyncio.Future[bool]"] = []
+        self._off_futures: List["asyncio.Future[bool]"] = []
+        self._data_future: Optional["asyncio.Future[bytes]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
         self._buffer = b""
@@ -61,10 +61,10 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_execute_and_wait_for(
         self,
-        futures: List[asyncio.Future[bool]],
+        futures: List["asyncio.Future[bool]"],
         coro: Callable[[], Coroutine[None, None, None]],
     ) -> bool:
-        future: asyncio.Future[bool] = asyncio.Future()
+        future: "asyncio.Future[bool]" = asyncio.Future()
         futures.append(future)
         await coro()
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)

@@ -47,7 +47,7 @@ class AIOBulbScanner(BulbScanner):
         transport: asyncio.DatagramTransport,
         destination: Tuple[str, int],
         timeout: int,
-        found_all_future: asyncio.Future[bool],
+        found_all_future: "asyncio.Future[bool]",
     ) -> None:
         """Send the scans."""
         self.send_discovery_messages(transport, destination)
@@ -76,7 +76,7 @@ class AIOBulbScanner(BulbScanner):
         """Discover LEDENET."""
         sock = self._create_socket()
         destination = self._destination_from_address(address)
-        found_all_future: asyncio.Future[bool] = asyncio.Future()
+        found_all_future: "asyncio.Future[bool]" = asyncio.Future()
         response_list: Dict[str, Dict[str, Any]] = {}
 
         def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
