@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from collections import namedtuple
 import logging
-from typing import List, Tuple, Union, Optional
+from typing import List, Optional, Tuple, Union
 
 from .const import (
     TRANSITION_GRADUAL,

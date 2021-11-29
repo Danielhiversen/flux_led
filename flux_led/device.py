@@ -4,6 +4,7 @@ import select
 import socket
 import threading
 import time
+from typing import List
 
 from .base_device import LEDENETDevice
 from .const import (
@@ -271,13 +272,25 @@ class WifiLedBulb(LEDENETDevice):
                 return full_msg
         raise Exception("Cannot determine protocol")
 
-    def setPresetPattern(self, pattern, speed, brightness=100, retry=DEFAULT_RETRIES):
+    def setPresetPattern(
+        self,
+        pattern: int,
+        speed: int,
+        brightness: int = 100,
+        retry: int = DEFAULT_RETRIES,
+    ) -> None:
         self._set_transition_complete_time()
         self._send_with_retry(
             self._generate_preset_pattern(pattern, speed, brightness), retry=retry
         )
 
-    def set_effect(self, effect, speed, brightness=100, retry=DEFAULT_RETRIES):
+    def set_effect(
+        self,
+        effect: str,
+        speed: int,
+        brightness: int = 100,
+        retry: int = DEFAULT_RETRIES,
+    ) -> None:
         """Set an effect."""
         if effect == EFFECT_RANDOM:
             self.set_random()
@@ -286,18 +299,18 @@ class WifiLedBulb(LEDENETDevice):
             self._effect_to_pattern(effect), speed, brightness, retry=retry
         )
 
-    def set_random(self, retry=DEFAULT_RETRIES) -> None:
+    def set_random(self, retry: int = DEFAULT_RETRIES) -> None:
         """Set levels randomly."""
         self._process_levels_change(*self._generate_random_levels_change(), retry=retry)
 
     @_socket_retry(attempts=2)
-    def _send_with_retry(self, msg: bytes) -> None:
+    def _send_with_retry(self, msg: bytearray) -> None:
         """Send a message under the lock."""
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
 
-    def getTimers(self):
+    def getTimers(self) -> List[LedTimer]:
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
         resp_len = 88
         with self._lock:
