@@ -39,7 +39,7 @@ class LedTimer:
             if type(value) is int and value == mask:
                 return key
         raise ValueError(
-            f"Mask must be one of 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80"
+            f"{mask} must be one of 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80"
         )
 
     def __init__(self, bytes: Optional[bytearray] = None) -> None:

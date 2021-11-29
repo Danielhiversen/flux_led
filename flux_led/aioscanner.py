@@ -2,13 +2,12 @@ import asyncio
 import contextlib
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from .scanner import BulbScanner, FluxLEDDiscovery
 
 _LOGGER = logging.getLogger(__name__)
 
-from typing import Tuple
 
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 
