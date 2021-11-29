@@ -80,6 +80,11 @@ from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_col
 _LOGGER = logging.getLogger(__name__)
 
 
+PROTOCOL_PROBES: Union[ProtocolLEDENET8Byte, ProtocolLEDENETOriginal] = (
+    ProtocolLEDENET8Byte,
+    ProtocolLEDENETOriginal,
+)
+
 PROTOCOL_TYPES = Union[
     ProtocolLEDENET8Byte,
     ProtocolLEDENET8ByteDimmableEffects,

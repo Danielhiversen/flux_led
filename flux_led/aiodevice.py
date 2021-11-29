@@ -1,10 +1,10 @@
 import asyncio
 import contextlib
 import logging
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
-from .base_device import LEDENETDevice
+from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -18,7 +18,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
@@ -186,7 +185,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._generate_preset_pattern(effect, speed, brightness)
         )
 
-    async def async_set_custom_pattern(self, rgb_list, speed, transition_type):
+    async def async_set_custom_pattern(
+        self, rgb_list: List[Tuple[int, ...]], speed: int, transition_type: str
+    ) -> None:
         """Set a custom pattern on the device."""
         await self._async_send_msg(
             self._generate_custom_patterm(rgb_list, speed, transition_type)
@@ -314,7 +315,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_determine_protocol(self):
         # determine the type of protocol based of first 2 bytes.
-        for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
+        for protocol_cls in PROTOCOL_PROBES:
             self._protocol = protocol = protocol_cls()
             async with self._lock:
                 await self._async_connect()

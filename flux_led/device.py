@@ -4,9 +4,9 @@ import select
 import socket
 import threading
 import time
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
-from .base_device import LEDENETDevice
+from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
     DEFAULT_RETRIES,
     EFFECT_RANDOM,
@@ -16,7 +16,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .sock import _socket_retry
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, utils
@@ -185,6 +184,7 @@ class WifiLedBulb(LEDENETDevice):
                 self._replace_raw_state(updates)
 
     def _send_msg(self, bytes: bytearray) -> None:
+        assert self._socket is not None
         _LOGGER.debug(
             "%s => %s (%d)",
             self.ipaddr,
@@ -194,6 +194,7 @@ class WifiLedBulb(LEDENETDevice):
         self._socket.send(bytes)
 
     def _read_msg(self, expected: int) -> bytearray:
+        assert self._socket is not None
         remaining = expected
         rx = bytearray()
         begin = time.monotonic()
@@ -202,7 +203,7 @@ class WifiLedBulb(LEDENETDevice):
             if timeout_left <= 0:
                 break
             try:
-                self._socket.setblocking(0)
+                self._socket.setblocking(False)
                 read_ready, _, _ = select.select([self._socket], [], [], timeout_left)
                 if not read_ready:
                     _LOGGER.debug(
@@ -224,17 +225,18 @@ class WifiLedBulb(LEDENETDevice):
                 _LOGGER.debug("%s: socket error: %s", self.ipaddr, ex)
                 pass
             finally:
-                self._socket.setblocking(1)
+                self._socket.setblocking(True)
         return rx
 
     def getClock(self) -> Optional[datetime.datetime]:
         msg = bytearray([0x11, 0x1A, 0x1B, 0x0F])
         with self._lock:
             self._connect_if_disconnected()
+            assert self._protocol is not None
             self._send_msg(self._protocol.construct_message(msg))
             rx = self._read_msg(12)
         if len(rx) != 12:
-            return
+            return None
         year = rx[3] + 2000
         month = rx[4]
         date = rx[5]
@@ -243,12 +245,15 @@ class WifiLedBulb(LEDENETDevice):
         second = rx[8]
         # dayofweek = rx[9]
         try:
-            dt = datetime.datetime(year, month, date, hour, minute, second)
+            dt: Optional[datetime.datetime] = datetime.datetime(
+                year, month, date, hour, minute, second
+            )
         except Exception:
             dt = None
         return dt
 
     def setClock(self) -> None:
+        assert self._protocol is not None
         msg = bytearray([0x10, 0x14])
         now = datetime.datetime.now()
         msg.append(now.year - 2000)
@@ -270,7 +275,7 @@ class WifiLedBulb(LEDENETDevice):
     def _determine_protocol(self) -> bytearray:
         """Determine the type of protocol based of first 2 bytes."""
         read_bytes = 2
-        for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
+        for protocol_cls in PROTOCOL_PROBES:
             protocol = protocol_cls()
             with self._lock:
                 self._connect_if_disconnected()
