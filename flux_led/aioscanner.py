@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from .scanner import BulbScanner, FluxLEDDiscovery
 
@@ -80,19 +80,20 @@ class AIOBulbScanner(BulbScanner):
         found_all_future: asyncio.Future[bool] = asyncio.Future()
         response_list: Dict[str, Dict[str, Any]] = {}
 
-        def _on_response(data, addr: Tuple[str, int]) -> None:
+        def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
             _LOGGER.debug("discover: %s <= %s", addr, data)
             if self._process_response(data, addr, address, response_list):
                 with contextlib.suppress(asyncio.InvalidStateError):
                     found_all_future.set_result(True)
 
-        transport, _ = await self.loop.create_datagram_endpoint(
+        transport_proto = await self.loop.create_datagram_endpoint(
             lambda: LEDENETDiscovery(
                 destination=destination,
                 on_response=_on_response,
             ),
             sock=sock,
         )
+        transport = cast(asyncio.DatagramTransport, transport_proto[0])
         try:
             await self._async_run_scan(
                 transport, destination, timeout, found_all_future
