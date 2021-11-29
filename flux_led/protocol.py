@@ -216,7 +216,7 @@ class ProtocolBase:
     @abstractmethod
     def construct_levels_change(
         self,
-        persis: int,
+        persist: int,
         red: int,
         green: int,
         blue: int,
@@ -285,20 +285,20 @@ class ProtocolLEDENETOriginal(ProtocolBase):
     """The original LEDENET protocol with no checksums."""
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ORIGINAL
 
     @property
-    def state_response_length(self):
+    def state_response_length(self) -> int:
         """The length of the query response."""
         return LEDENET_ORIGINAL_STATE_RESPONSE_LEN
 
-    def is_valid_power_state_response(self, msg):
+    def is_valid_power_state_response(self, msg: bytearray) -> bool:
         """Check if a power state response is valid."""
         return len(msg) == self.power_state_response_length and msg[0] == 0x78
 
-    def is_valid_state_response(self, raw_state):
+    def is_valid_state_response(self, raw_state: bytearray) -> bool:
         """Check if a state response is valid."""
         return (
             len(raw_state) == self.state_response_length
@@ -306,27 +306,34 @@ class ProtocolLEDENETOriginal(ProtocolBase):
             and raw_state[1] == 0x01
         )
 
-    def is_start_of_state_response(self, data):
+    def is_start_of_state_response(self, data: bytearray) -> int:
         """Check if a message is the start of a state response."""
         return data[0] == 0x66
 
-    def is_start_of_power_state_response(self, data):
+    def is_start_of_power_state_response(self, data: bytearray) -> int:
         """Check if a message is the start of a state response."""
         return data[0] == 0x78
 
-    def construct_state_query(self):
+    def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0xEF, 0x01, 0x77]))
 
-    def construct_state_change(self, turn_on):
+    def construct_state_change(self, turn_on: int) -> bytearray:
         """The bytes to send for a state change request."""
         return self.construct_message(
             bytearray([0xCC, self.on_byte if turn_on else self.off_byte, 0x33])
         )
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, color_mask
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        color_mask: int,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
@@ -404,8 +411,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         )
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        color_mask: int,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 8-byte protocols (w/ checksum at end)
         #  0  1  2  3  4  5  6
@@ -533,8 +547,15 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         return PROTOCOL_LEDENET_9BYTE
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        color_mask: int,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 9-byte LEDENET protocol (w/ checksum at end)
         #  0  1  2  3  4  5  6  7
@@ -619,8 +640,15 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         return self.construct_message(bytearray([0x42, pattern, speed, brightness]))
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        color_mask: int,
+    ) -> bytearray:
         """The bytes to send for a level change request.
 
         white  41 01 ff ff ff 00 00 00 60 ff 00 00 9e
@@ -784,8 +812,15 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         )
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        color_mask: int,
+    ) -> bytearray:
         """The bytes to send for a level change request.
 
         b0 [unknown static?] b1 [unknown static?] b2 [unknown static?] b3 [unknown static?] 00 [unknown static?] 01 [unknown static?] 01 [unknown static?] 6a [incrementing sequence number] 00 [unknown static?] 0d [unknown, sometimes 0c] 41 [unknown static?] 02 [preset number] ff [foreground r] 00 [foreground g] 00 [foreground b] 00 [background red] ff [background green] 00 [background blue] 06 [speed or direction?] 00 [unknown static?] 00 [unknown static?] 00 [unknown static?] 47 [speed or direction?] cd [check sum]
