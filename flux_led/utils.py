@@ -86,7 +86,7 @@ class utils:
         )
 
     @staticmethod
-    def date_has_passed(dt) -> bool:
+    def date_has_passed(dt: datetime.datetime) -> bool:
         return (dt - datetime.datetime.now()).total_seconds() < 0
 
     @staticmethod

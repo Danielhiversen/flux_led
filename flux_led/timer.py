@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 
 from .pattern import PresetPattern
 from .utils import utils
@@ -9,15 +10,15 @@ class BuiltInTimer:
     sunset = 0xA2
 
     @staticmethod
-    def valid(byte_value):
+    def valid(byte_value: int) -> bool:
         return byte_value == BuiltInTimer.sunrise or byte_value == BuiltInTimer.sunset
 
     @staticmethod
-    def valtostr(pattern):
+    def valtostr(pattern: int) -> str:
         for key, value in list(BuiltInTimer.__dict__.items()):
             if type(value) is int and value == pattern:
                 return key.replace("_", " ").title()
-        return None
+        raise ValueError(f"{pattern} must be 0xA1 or 0xA2")
 
 
 class LedTimer:
@@ -33,13 +34,15 @@ class LedTimer:
     Weekend = Sa | Su
 
     @staticmethod
-    def dayMaskToStr(mask):
+    def dayMaskToStr(mask: int) -> str:
         for key, value in LedTimer.__dict__.items():
             if type(value) is int and value == mask:
                 return key
-        return None
+        raise ValueError(
+            f"Mask must be one of 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80"
+        )
 
-    def __init__(self, bytes=None):
+    def __init__(self, bytes: Optional[bytearray] = None) -> None:
         if bytes is not None:
             self.fromBytes(bytes)
             return
@@ -50,13 +53,13 @@ class LedTimer:
         self.setModeTurnOff()
         self.setActive(False)
 
-    def setActive(self, active=True):
+    def setActive(self, active: bool = True) -> None:
         self.active = active
 
-    def isActive(self):
+    def isActive(self) -> bool:
         return self.active
 
-    def isExpired(self):
+    def isExpired(self) -> bool:
         # if no repeat mask and datetime is in past, return True
         if self.repeat_mask != 0:
             return False
@@ -68,23 +71,23 @@ class LedTimer:
                 return True
         return False
 
-    def setTime(self, hour, minute):
+    def setTime(self, hour: int, minute: int) -> None:
         self.hour = hour
         self.minute = minute
 
-    def setDate(self, year, month, day):
+    def setDate(self, year: int, month: int, day: int) -> None:
         self.year = year
         self.month = month
         self.day = day
         self.repeat_mask = 0
 
-    def setRepeatMask(self, repeat_mask):
+    def setRepeatMask(self, repeat_mask: int) -> None:
         self.year = 0
         self.month = 0
         self.day = 0
         self.repeat_mask = repeat_mask
 
-    def setModeDefault(self):
+    def setModeDefault(self) -> None:
         self.mode = "default"
         self.pattern_code = 0
         self.turn_on = True
@@ -93,14 +96,14 @@ class LedTimer:
         self.blue = 0
         self.warmth_level = 0
 
-    def setModePresetPattern(self, pattern, speed):
+    def setModePresetPattern(self, pattern: int, speed: int) -> None:
         self.mode = "preset"
         self.warmth_level = 0
         self.pattern_code = pattern
         self.delay = utils.speedToDelay(speed)
         self.turn_on = True
 
-    def setModeColor(self, r, g, b):
+    def setModeColor(self, r: int, g: int, b: int) -> None:
         self.mode = "color"
         self.warmth_level = 0
         self.red = r
@@ -109,7 +112,7 @@ class LedTimer:
         self.pattern_code = 0x61
         self.turn_on = True
 
-    def setModeWarmWhite(self, level):
+    def setModeWarmWhite(self, level: int) -> None:
         self.mode = "ww"
         self.warmth_level = utils.percentToByte(level)
         self.pattern_code = 0x61
@@ -118,7 +121,9 @@ class LedTimer:
         self.blue = 0
         self.turn_on = True
 
-    def setModeSunrise(self, startBrightness, endBrightness, duration):
+    def setModeSunrise(
+        self, startBrightness: int, endBrightness: int, duration: int
+    ) -> None:
         self.mode = "sunrise"
         self.turn_on = True
         self.pattern_code = BuiltInTimer.sunrise
@@ -127,7 +132,9 @@ class LedTimer:
         self.warmth_level = utils.percentToByte(endBrightness)
         self.duration = int(duration)
 
-    def setModeSunset(self, startBrightness, endBrightness, duration):
+    def setModeSunset(
+        self, startBrightness: int, endBrightness: int, duration: int
+    ) -> None:
         self.mode = "sunrise"
         self.turn_on = True
         self.pattern_code = BuiltInTimer.sunset
@@ -136,7 +143,7 @@ class LedTimer:
         self.warmth_level = utils.percentToByte(endBrightness)
         self.duration = int(duration)
 
-    def setModeTurnOff(self):
+    def setModeTurnOff(self) -> None:
         self.mode = "off"
         self.turn_on = False
         self.pattern_code = 0
@@ -163,8 +170,7 @@ class LedTimer:
         13: 0f = turn off, f0 = turn on
     """
 
-    def fromBytes(self, bytes):
-        # utils.dump_bytes(bytes)
+    def fromBytes(self, bytes: bytearray) -> None:
         self.red = 0
         self.green = 0
         self.blue = 0
@@ -208,7 +214,7 @@ class LedTimer:
             self.turn_on = False
             self.mode = "off"
 
-    def toBytes(self):
+    def toBytes(self) -> bytearray:
         bytes = bytearray(14)
         if not self.active:
             bytes[0] = 0x0F
@@ -250,7 +256,7 @@ class LedTimer:
 
         return bytes
 
-    def __str__(self):
+    def __str__(self) -> str:
         txt = ""
         if not self.active:
             return "Unset"
