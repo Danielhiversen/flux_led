@@ -57,10 +57,13 @@ class LEDENETModel:
     channel_map: Dict[str, str]  # Used to remap channels
     microphone: bool
 
-    def protocol_for_version_num(self, version_num: int):
+    def protocol_for_version_num(self, version_num: int) -> str:
+        protocol = self.protocols[-1].protocol
         for min_version_protocol in self.protocols:
             if version_num >= min_version_protocol.min_version:
-                return min_version_protocol.protocol
+                protocol = min_version_protocol.protocol
+                break
+        return protocol
 
 
 BASE_MODE_MAP = {
