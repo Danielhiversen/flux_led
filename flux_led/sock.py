@@ -16,11 +16,11 @@ def _socket_retry(attempts: int = 2) -> WrapFuncType:
 
     def decorator_retry(func: WrapFuncType) -> WrapFuncType:
         def _retry_wrap(
-            self: WifiLedBulb,
+            self: "WifiLedBulb",
             *args: Any,
-            retry: Optional[int] = attempts,
+            retry: int = attempts,
             **kwargs: Any,
-        ) -> None:
+        ) -> Any:
             attempts_remaining = retry + 1
             while attempts_remaining:
                 attempts_remaining -= 1

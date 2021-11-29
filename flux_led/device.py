@@ -27,32 +27,32 @@ DEFAULT_RETRIES = 2
 class WifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
 
-    def __init__(self, ipaddr, port=5577, timeout=5):
+    def __init__(self, ipaddr: str, port: int = 5577, timeout: int = 5) -> None:
         """Init and setup the bulb."""
         super().__init__(ipaddr, port, timeout)
         self._socket = None
         self._lock = threading.Lock()
         self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         """Setup the connection and fetch initial state."""
         self.connect(retry=DEFAULT_RETRIES)
         self.update_state()
 
-    def _connect_if_disconnected(self):
+    def _connect_if_disconnected(self) -> None:
         """Connect only if not already connected."""
         if self._socket is None:
             self.connect()
 
     @_socket_retry(attempts=0)
-    def connect(self):
+    def connect(self) -> None:
         self.close()
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(self.timeout)
         _LOGGER.debug("%s: connect", self.ipaddr)
         self._socket.connect((self.ipaddr, self.port))
 
-    def close(self):
+    def close(self) -> None:
         if self._socket is None:
             return
         try:
@@ -62,14 +62,14 @@ class WifiLedBulb(LEDENETDevice):
         finally:
             self._socket = None
 
-    def turnOn(self, retry=DEFAULT_RETRIES):
+    def turnOn(self, retry: int = DEFAULT_RETRIES) -> None:
         self._change_state(retry=retry, turn_on=True)
 
-    def turnOff(self, retry=DEFAULT_RETRIES):
+    def turnOff(self, retry: int = DEFAULT_RETRIES) -> None:
         self._change_state(retry=retry, turn_on=False)
 
     @_socket_retry(attempts=DEFAULT_RETRIES)
-    def _change_state(self, turn_on=True):
+    def _change_state(self, turn_on: bool = True) -> None:
         _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
         with self._lock:
             self._connect_if_disconnected()
@@ -93,13 +93,15 @@ class WifiLedBulb(LEDENETDevice):
             # it stalls
             self.close()
 
-    def setWarmWhite(self, level, persist=True, retry=DEFAULT_RETRIES):
+    def setWarmWhite(
+        self, level: int, persist: bool = True, retry: int = DEFAULT_RETRIES
+    ) -> None:
         self.set_levels(w=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setWarmWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
+    def setWarmWhite255(self, level, persist=True, retry=DEFAULT_RETRIES) -> None:
         self.set_levels(w=level, persist=persist, retry=retry)
 
-    def setColdWhite(self, level, persist=True, retry=DEFAULT_RETRIES):
+    def setColdWhite(self, level, persist=True, retry=DEFAULT_RETRIES) -> None:
         self.set_levels(w2=utils.percentToByte(level), persist=persist, retry=retry)
 
     def setColdWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
