@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from collections import namedtuple
 import logging
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
 from .utils import utils, white_levels_to_scaled_color_temp
@@ -162,10 +162,13 @@ class ProtocolBase:
         If the response is unknown, we assume the response is
         a complete message since we have no way of knowing otherwise.
         """
-        return MSG_LENGTHS.get(MSG_FIRST_BYTE.get(data[0]), len(data))
+        msg_type = MSG_FIRST_BYTE.get(data[0])
+        if msg_type is None:
+            return len(data)
+        return MSG_LENGTHS.get(msg_type, len(data))
 
     @abstractmethod
-    def construct_state_query(self) -> None:
+    def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
 
     @abstractmethod
@@ -222,7 +225,7 @@ class ProtocolBase:
         blue: int,
         warm_white: int,
         cool_white: int,
-        color_mask: int,
+        write_mode: int,
     ) -> bytearray:
         """The bytes to send for a level change request."""
 
@@ -275,6 +278,12 @@ class ProtocolBase:
         """Original protocol uses no checksum."""
 
     @abstractmethod
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
+        """The bytes to send for a preset pattern."""
+
+    @abstractmethod
     def named_raw_state(
         self, raw_state: bytearray
     ) -> Union[LEDENETOriginalRawState, LEDENETRawState]:
@@ -306,11 +315,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
             and raw_state[1] == 0x01
         )
 
-    def is_start_of_state_response(self, data: bytearray) -> int:
+    def is_start_of_state_response(self, data: bytearray) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x66
 
-    def is_start_of_power_state_response(self, data: bytearray) -> int:
+    def is_start_of_power_state_response(self, data: bytearray) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x78
 
@@ -332,7 +341,7 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         blue: int,
         warm_white: int,
         cool_white: int,
-        color_mask: int,
+        write_mode: int,
     ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
@@ -346,11 +355,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         #  head
         return self.construct_message(bytearray([0x56, red, green, blue, 0xAA]))
 
-    def construct_message(self, raw_bytes):
+    def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
         return raw_bytes
 
-    def named_raw_state(self, raw_state) -> LEDENETOriginalRawState:
+    def named_raw_state(self, raw_state: bytearray) -> LEDENETOriginalRawState:
         """Convert raw_state to a namedtuple."""
         return LEDENETOriginalRawState(*raw_state)
 
@@ -362,12 +371,12 @@ class ProtocolLEDENET8Byte(ProtocolBase):
     addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE
 
     @property
-    def state_response_length(self):
+    def state_response_length(self) -> int:
         """The length of the query response."""
         return LEDENET_STATE_RESPONSE_LEN
 
@@ -418,7 +427,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         blue: int,
         warm_white: int,
         cool_white: int,
-        color_mask: int,
+        write_mode: int,
     ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 8-byte protocols (w/ checksum at end)
@@ -459,17 +468,17 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             )
         )
 
-    def construct_message(self, raw_bytes):
+    def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Calculate checksum of byte array and add to end."""
         csum = sum(raw_bytes) & 0xFF
         raw_bytes.append(csum)
         return raw_bytes
 
-    def construct_state_query(self):
+    def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0x81, 0x8A, 0x8B]))
 
-    def named_raw_state(self, raw_state):
+    def named_raw_state(self, raw_state: bytearray) -> LEDENETRawState:
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
@@ -523,16 +532,18 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
 class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
@@ -542,7 +553,7 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE
 
@@ -554,7 +565,7 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        color_mask: int,
+        write_mode: int,
     ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 9-byte LEDENET protocol (w/ checksum at end)
@@ -590,12 +601,12 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
 
@@ -607,12 +618,12 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
 
@@ -626,7 +637,7 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A2
 
@@ -647,7 +658,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        color_mask: int,
+        write_mode: int,
     ) -> bytearray:
         """The bytes to send for a level change request.
 
@@ -736,12 +747,12 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A3
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
@@ -819,7 +830,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        color_mask: int,
+        write_mode: int,
     ) -> bytearray:
         """The bytes to send for a level change request.
 
@@ -900,7 +911,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         return PROTOCOL_LEDENET_CCT
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
 
