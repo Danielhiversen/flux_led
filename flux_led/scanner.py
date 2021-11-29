@@ -32,13 +32,13 @@ class FluxLEDDiscovery(TypedDict):
     """A flux led device."""
 
     ipaddr: str
-    id: str  # aka mac
-    model: str
-    model_num: int
-    version_num: int
-    firmware_date: date
-    model_info: str
-    model_description: str
+    id: Optional[str]  # aka mac
+    model: Optional[str]
+    model_num: Optional[int]
+    version_num: Optional[int]
+    firmware_date: Optional[date]
+    model_info: Optional[str]
+    model_description: Optional[str]
 
 
 def _process_discovery_message(data: Dict[str, Any], decoded_data: str) -> None:
