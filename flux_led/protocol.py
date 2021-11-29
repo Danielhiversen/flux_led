@@ -287,12 +287,6 @@ class ProtocolBase:
         """Original protocol uses no checksum."""
 
     @abstractmethod
-    def construct_preset_pattern(
-        self, pattern: int, speed: int, brightness: int
-    ) -> bytearray:
-        """The bytes to send for a preset pattern."""
-
-    @abstractmethod
     def named_raw_state(
         self, raw_state: bytearray
     ) -> Union[LEDENETOriginalRawState, LEDENETRawState]:
