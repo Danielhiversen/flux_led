@@ -407,7 +407,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             return False
         return self.is_checksum_correct(raw_state)
 
-    def construct_state_change(self, turn_on):
+    def construct_state_change(self, turn_on: int) -> bytearray:
         """The bytes to send for a state change request.
 
         Alternate messages
