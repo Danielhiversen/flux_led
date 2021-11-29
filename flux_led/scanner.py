@@ -175,7 +175,7 @@ class BulbScanner:
         ]
 
     def send_discovery_messages(
-        self, sender: Union[socket.socket, asyncio.BaseTransport], destination: str
+        self, sender: Union[socket.socket, asyncio.DatagramTransport], destination: str
     ) -> None:
         _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
         sender.sendto(self.DISCOVER_MESSAGE, destination)
