@@ -864,7 +864,7 @@ class LEDENETDevice:
         self._model_num = full_msg[1]
         self._model_data = get_model(self._model_num, fallback_protocol)
         version_num = full_msg[10] if len(full_msg) > 10 else 1
-        protocol: str = self._model_data.protocol
+        protocol = self._model_data.protocol
         #
         # Model special cases
         #
