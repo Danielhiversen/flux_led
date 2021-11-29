@@ -557,7 +557,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
-        self.assertEqual(light.brightness, 81)
+        self.assertEqual(light.brightness, 255)
 
         self.assertEqual(light.preset_pattern_num, 0x38)
         self.assertEqual(
@@ -700,7 +700,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
-        self.assertEqual(light.brightness, 81)
+        self.assertEqual(light.brightness, 255)
 
         self.assertEqual(light.preset_pattern_num, 0x38)
         self.assertEqual(
@@ -849,7 +849,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
-        self.assertEqual(light.brightness, 62)
+        self.assertEqual(light.brightness, 255)
 
         self.assertEqual(light.preset_pattern_num, 0x38)
         self.assertEqual(
