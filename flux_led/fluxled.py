@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
 
@@ -41,12 +40,13 @@ See the following for valid color names: http://www.w3schools.com/html/html_colo
 
 import datetime
 import logging
-from optparse import OptionGroup, OptionParser
+from optparse import OptionGroup, OptionParser, Values
 import sys
+from typing import Any, List, Optional, Tuple
 
 from .device import WifiLedBulb
 from .pattern import PresetPattern
-from .scanner import BulbScanner
+from .scanner import BulbScanner, FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import utils
 
@@ -54,7 +54,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # =======================================================================
-def showUsageExamples():
+def showUsageExamples() -> None:
     example_text = """
 Examples:
 
@@ -117,7 +117,7 @@ Use --timerhelp for more details on setting timers
     print(example_text.replace("%prog%", sys.argv[0]))
 
 
-def showTimerHelp():
+def showTimerHelp() -> None:
     timerhelp_text = """
     There are 6 timers available for each bulb.
 
@@ -190,7 +190,7 @@ Example setting strings:
     print(timerhelp_text)
 
 
-def processSetTimerArgs(parser, args):  # noqa: C901
+def processSetTimerArgs(parser: OptionParser, args: Any) -> LedTimer:  # noqa: C901
     mode = args[1]
     num = args[0]
     settings = args[2]
@@ -298,10 +298,11 @@ def processSetTimerArgs(parser, args):  # noqa: C901
             if "color" not in keys:
                 parser.error("color mode needs a color setting")
             # validate color val
-            c = utils.color_object_to_tuple(settings_dict["color"])
+            c = utils.color_object_to_tuple(settings_dict["color"])  # type: ignore
             if c is None:
                 parser.error("Invalid color value: {}".format(settings_dict["color"]))
-            timer.setModeColor(c[0], c[1], c[2])
+            assert c is not None
+            timer.setModeColor(c[0], c[1], c[2])  # type: ignore
 
         if mode == "preset":
             if "code" not in keys:
@@ -349,7 +350,9 @@ def processSetTimerArgs(parser, args):  # noqa: C901
     return timer
 
 
-def processCustomArgs(parser, args):
+def processCustomArgs(
+    parser: OptionParser, args: Any
+) -> Optional[Tuple[Any, int, List[Tuple[int, ...]]]]:
     if args[0] not in ["gradual", "jump", "strobe"]:
         parser.error(f"bad pattern type: {args[0]}")
         return None
@@ -378,7 +381,7 @@ def processCustomArgs(parser, args):
     return args[0], speed, color_list
 
 
-def parseArgs():  # noqa: C901
+def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
 
     parser = OptionParser()
 
@@ -601,7 +604,7 @@ def parseArgs():  # noqa: C901
         sys.exit(0)
 
     if options.listcolors:
-        for c in utils.get_color_names_list():
+        for c in utils.get_color_names_list():  # type: ignore
             print(f"{c}, ")
         print("")
         sys.exit(0)
@@ -679,7 +682,7 @@ def parseArgs():  # noqa: C901
 
 
 # -------------------------------------------
-def main():  # noqa: C901
+def main() -> None:  # noqa: C901
 
     (options, args) = parseArgs()
 
@@ -702,11 +705,7 @@ def main():  # noqa: C901
         addrs = args
         bulb_info_list = []
         for addr in args:
-            info = dict()
-            info["ipaddr"] = addr
-            info["id"] = "Unknown ID"
-
-            bulb_info_list.append(info)
+            bulb_info_list.append(FluxLEDDiscovery({"ipaddr": addr, "id": "Unknown ID"}))  # type: ignore
 
     # now we have our bulb list, perform same operation on all of them
     for info in bulb_info_list:
