@@ -39,18 +39,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     WRITE_ALL_WHITES,
     LevelWriteMode,
 )
-from .models_db import (
-    BASE_MODE_MAP,
-    CHANNEL_REMAP,
-    MICROPHONE_MODELS,
-    MODEL_DESCRIPTIONS,
-    MODEL_MAP,
-    MODEL_NUM_PROTOCOL,
-    RGBW_PROTOCOL_MODELS,
-    UNKNOWN_MODEL,
-    USE_9BYTE_PROTOCOL_MODELS,
-    WHITE_ARE_TEMP_BRIGHTNESS,
-)
+from .models_db import BASE_MODE_MAP, LEDENETModel, get_model, is_known_model
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
     ADDRESSABLE_EFFECT_NAME_ID,
@@ -89,6 +78,7 @@ from .timer import BuiltInTimer
 from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_color_temp
 
 _LOGGER = logging.getLogger(__name__)
+
 
 PROTOCOL_TYPES = Union[
     ProtocolLEDENET8Byte,
@@ -145,6 +135,8 @@ class LEDENETDevice:
         self.timeout: float = timeout
         self.raw_state: Optional[Union[LEDENETOriginalRawState, LEDENETRawState]] = None
         self.available: Optional[bool] = None
+        self._model_num: Optional[int] = None
+        self._model_data: Optional[LEDENETModel] = None
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
@@ -153,24 +145,29 @@ class LEDENETDevice:
     @property
     def model_num(self) -> int:
         """Return the model number."""
-        assert self.raw_state is not None
-        return self.raw_state.model_num if self.raw_state else None
+        assert self._model_num is not None
+        return self._model_num
+
+    @property
+    def model_data(self) -> LEDENETModel:
+        """Return the model data."""
+        assert self._model_data is not None
+        return self._model_data
 
     @property
     def speed_adjust_off(self) -> int:
         """Return true if the speed of an effect can be adjusted while off."""
         return self.protocol not in SPEED_ADJUST_WILL_TURN_ON
 
-    def _whites_are_temp_brightness(self, model_num: int) -> bool:
+    @property
+    def _whites_are_temp_brightness(self) -> bool:
         """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
-        return model_num in WHITE_ARE_TEMP_BRIGHTNESS
+        return self.protocol == PROTOCOL_LEDENET_CCT
 
     @property
     def model(self) -> str:
         """Return the human readable model description."""
-        model_num = self.model_num
-        description = MODEL_DESCRIPTIONS.get(model_num) or UNKNOWN_MODEL
-        return f"{description} (0x{model_num:02X})"
+        return f"{self.model_data.description} (0x{self.model_num:02X})"
 
     @property
     def version_num(self) -> int:
@@ -191,12 +188,12 @@ class LEDENETDevice:
     @property
     def rgbwprotocol(self) -> bool:
         """Devices that don't require a separate rgb/w bit."""
-        return self.model_num in RGBW_PROTOCOL_MODELS
+        return self.model_data.always_writes_white_and_colors
 
     @property
     def microphone(self) -> bool:
         """Devices that have a microphone built in."""
-        return self.model_num in MICROPHONE_MODELS
+        return self.model_data.microphone
 
     @property
     def rgbwcapable(self) -> bool:
@@ -228,11 +225,10 @@ class LEDENETDevice:
     @property
     def _rgbwwprotocol(self) -> bool:
         """Device that uses the 9-byte protocol."""
-        return self._uses_9byte_protocol(self.model_num)
-
-    def _uses_9byte_protocol(self, model_num: int) -> bool:
-        """Devices that use a 9-byte protocol."""
-        return model_num in USE_9BYTE_PROTOCOL_MODELS
+        return self.protocol in (
+            PROTOCOL_LEDENET_9BYTE,
+            PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
+        )
 
     @property
     def white_active(self) -> bool:
@@ -271,13 +267,13 @@ class LEDENETDevice:
     @property
     def _internal_color_modes(self) -> Set[str]:
         """The internal available color modes."""
-        model_db_entry = MODEL_MAP.get(self.model_num)
         assert self.raw_state is not None
-        if not model_db_entry:
+        if not is_known_model(self.model_num):
             # Default mode is RGB
             return BASE_MODE_MAP.get(self.raw_state.mode & 0x0F, {DEFAULT_MODE})
-        return model_db_entry.mode_to_color_mode.get(
-            self.raw_state.mode, model_db_entry.color_modes
+        model_data = self.model_data
+        return model_data.mode_to_color_mode.get(
+            self.raw_state.mode, model_data.color_modes
         )
 
     @property
@@ -521,15 +517,14 @@ class LEDENETDevice:
         which needs to be converted back to 0-255 values for
         warm_white and cool_white
         """
-        model_num = raw_state.model_num
-        channel_map = CHANNEL_REMAP.get(raw_state.model_num)
+        channel_map = self.model_data.channel_map
         # Only remap updated states as we do not want to switch any
         # state that have not changed since they will already be in
         # the correct slot
         #
         # If updated is None than all raw_state values have been sent
         #
-        if self._whites_are_temp_brightness(model_num):
+        if self._whites_are_temp_brightness:
             assert isinstance(raw_state, LEDENETRawState)
             # Only convert on a full update since we still use 0-255 internally
             if updated is not None:
@@ -736,7 +731,7 @@ class LEDENETDevice:
         brightness: Optional[int] = None,
     ) -> Tuple[bytes, Dict[str, int]]:
         """Generate the levels change request."""
-        channel_map = CHANNEL_REMAP.get(self.model_num)
+        channel_map = self.model_data.channel_map
         if channel_map:
             mapped_channels = {
                 channel: channels[channel_map.get(channel, channel)]
@@ -867,21 +862,12 @@ class LEDENETDevice:
     def _set_protocol_from_msg(
         self,
         full_msg: bytearray,
-        fallback_protocol: PROTOCOL_TYPES,
+        fallback_protocol: str,
     ) -> None:
-        model_num = full_msg[1]
+        self._model_num = full_msg[1]
+        self._model_data = get_model(self._model_num, fallback_protocol)
         version_num = full_msg[10] if len(full_msg) > 10 else 1
-        protocol = MODEL_NUM_PROTOCOL.get(model_num, fallback_protocol)
-        #
-        # Model special cases
-        #
-        # Newer firmwares use the newer protocol
-        # If this turns out to be more common we will need
-        # to account for this in the models_db
-        #
-        if model_num == 0x35 and version_num >= 9:
-            protocol = PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
-        self.setProtocol(protocol)
+        self.setProtocol(self._model_data.protocol_for_version_num(version_num))
 
     def _generate_preset_pattern(
         self, pattern: int, speed: int, brightness: int
