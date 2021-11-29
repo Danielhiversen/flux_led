@@ -2,7 +2,7 @@
 
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
 from .const import (
     COLOR_MODE_CCT,
