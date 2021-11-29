@@ -141,7 +141,7 @@ class ProtocolBase:
         self._counter = 0
         super().__init__()
 
-    def _increment_counter(self) -> None:
+    def _increment_counter(self) -> int:
         """Increment the counter byte."""
         self._counter += 1
         if self._counter == 255:
