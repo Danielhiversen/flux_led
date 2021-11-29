@@ -439,7 +439,7 @@ class LEDENETDevice:
     def set_available(self) -> None:
         self.available = True
 
-    def process_state_response(self, rx: bytearray) -> bool:
+    def process_state_response(self, rx: bytes) -> bool:
         assert self._protocol is not None
 
         if not self._protocol.is_valid_state_response(rx):
@@ -492,7 +492,7 @@ class LEDENETDevice:
         self._mode = mode
         return True
 
-    def process_power_state_response(self, msg: bytearray) -> bool:
+    def process_power_state_response(self, msg: bytes) -> bool:
         """Process a power state change message."""
         assert self._protocol is not None
         if not self._protocol.is_valid_power_state_response(msg):
@@ -715,7 +715,7 @@ class LEDENETDevice:
     def getSpeed(self) -> int:
         return self.speed
 
-    def _generate_random_levels_change(self) -> Tuple[bytes, Dict[str, int]]:
+    def _generate_random_levels_change(self) -> Tuple[bytearray, Dict[str, int]]:
         """Generate a random levels change."""
         channels = {STATE_WARM_WHITE}
         if COLOR_MODES_RGB.intersection(self.color_modes):
@@ -734,7 +734,7 @@ class LEDENETDevice:
         channels: Dict[str, Optional[int]],
         persist: bool = True,
         brightness: Optional[int] = None,
-    ) -> Tuple[bytes, Dict[str, int]]:
+    ) -> Tuple[bytearray, Dict[str, int]]:
         """Generate the levels change request."""
         channel_map = self.model_data.channel_map
         if channel_map:
@@ -866,7 +866,7 @@ class LEDENETDevice:
 
     def _set_protocol_from_msg(
         self,
-        full_msg: bytearray,
+        full_msg: bytes,
         fallback_protocol: str,
     ) -> None:
         self._model_num = full_msg[1]

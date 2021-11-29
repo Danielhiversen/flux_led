@@ -148,15 +148,15 @@ class ProtocolBase:
             self._counter = 0
         return self._counter
 
-    def is_start_of_addressable_response(self, data: bytearray) -> bool:
+    def is_start_of_addressable_response(self, data: bytes) -> bool:
         """Check if a message is the start of an addressable state response."""
         return False
 
-    def is_valid_addressable_response(self, data: bytearray) -> bool:
+    def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
         return False
 
-    def expected_response_length(self, data: bytearray) -> int:
+    def expected_response_length(self, data: bytes) -> int:
         """Return the number of bytes expected in the response.
 
         If the response is unknown, we assume the response is
@@ -172,14 +172,14 @@ class ProtocolBase:
         """The bytes to send for a query request."""
 
     @abstractmethod
-    def is_valid_state_response(self, raw_state: bytearray) -> bool:
+    def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
 
     @abstractmethod
-    def is_start_of_state_response(self, data: bytearray) -> bool:
+    def is_start_of_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
 
-    def is_checksum_correct(self, msg: bytearray) -> bool:
+    def is_checksum_correct(self, msg: bytes) -> bool:
         """Check a checksum of a message."""
         expected_sum = sum(msg[0:-1]) & 0xFF
         if expected_sum != msg[-1]:
@@ -190,11 +190,11 @@ class ProtocolBase:
         return True
 
     @abstractmethod
-    def is_valid_power_state_response(self, msg: bytearray) -> bool:
+    def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
 
     @abstractmethod
-    def is_start_of_power_state_response(self, data: bytearray) -> bool:
+    def is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a power response."""
 
     @property
@@ -283,7 +283,7 @@ class ProtocolBase:
 
     @abstractmethod
     def named_raw_state(
-        self, raw_state: bytearray
+        self, raw_state: bytes
     ) -> Union[LEDENETOriginalRawState, LEDENETRawState]:
         """Convert raw_state to a namedtuple."""
 
@@ -301,11 +301,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """The length of the query response."""
         return LEDENET_ORIGINAL_STATE_RESPONSE_LEN
 
-    def is_valid_power_state_response(self, msg: bytearray) -> bool:
+    def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
         return len(msg) == self.power_state_response_length and msg[0] == 0x78
 
-    def is_valid_state_response(self, raw_state: bytearray) -> bool:
+    def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         return (
             len(raw_state) == self.state_response_length
@@ -313,11 +313,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
             and raw_state[1] == 0x01
         )
 
-    def is_start_of_state_response(self, data: bytearray) -> bool:
+    def is_start_of_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x66
 
-    def is_start_of_power_state_response(self, data: bytearray) -> bool:
+    def is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x78
 
@@ -357,7 +357,7 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """Original protocol uses no checksum."""
         return raw_bytes
 
-    def named_raw_state(self, raw_state: bytearray) -> LEDENETOriginalRawState:
+    def named_raw_state(self, raw_state: bytes) -> LEDENETOriginalRawState:
         """Convert raw_state to a namedtuple."""
         return LEDENETOriginalRawState(*raw_state)
 
@@ -378,7 +378,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The length of the query response."""
         return LEDENET_STATE_RESPONSE_LEN
 
-    def is_valid_power_state_response(self, msg: bytearray) -> bool:
+    def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
         if (
             len(msg) != self.power_state_response_length
@@ -389,15 +389,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             return False
         return self.is_checksum_correct(msg)
 
-    def is_start_of_power_state_response(self, data: bytearray) -> bool:
+    def is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
 
-    def is_start_of_state_response(self, data: bytearray) -> bool:
+    def is_start_of_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x81
 
-    def is_valid_state_response(self, raw_state: bytearray) -> bool:
+    def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
@@ -476,7 +476,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0x81, 0x8A, 0x8B]))
 
-    def named_raw_state(self, raw_state: bytearray) -> LEDENETRawState:
+    def named_raw_state(self, raw_state: bytes) -> LEDENETRawState:
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
@@ -515,11 +515,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
-    def is_start_of_addressable_response(self, data: bytearray) -> bool:
+    def is_start_of_addressable_response(self, data: bytes) -> bool:
         """Check if a message is the start of an addressable state response."""
         return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
 
-    def is_valid_addressable_response(self, data: bytearray) -> bool:
+    def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
         if len(data) != self.addressable_response_length:
             return False
