@@ -1,7 +1,7 @@
 import asyncio
 from asyncio.transports import BaseTransport, WriteTransport
 import logging
-from typing import Callable, Optional, cast, Any
+from typing import Any, Callable, Optional, cast
 
 _LOGGER = logging.getLogger(__name__)
 

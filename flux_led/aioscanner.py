@@ -2,42 +2,54 @@ import asyncio
 import contextlib
 import logging
 import time
+from typing import Any, Callable, Dict, List, Optional
 
-from .scanner import BulbScanner
+from .scanner import BulbScanner, FluxLEDDiscovery
 
 _LOGGER = logging.getLogger(__name__)
 
+from typing import Tuple
 
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 
 
 class LEDENETDiscovery(asyncio.DatagramProtocol):
-    def __init__(self, destination, on_response):
+    def __init__(
+        self,
+        destination: Tuple[str, int],
+        on_response: Callable[[bytes, Tuple[str, int]], None],
+    ) -> None:
         """Init the discovery protocol."""
         self.transport = None
         self.destination = destination
         self.on_response = on_response
 
-    def datagram_received(self, data, addr) -> None:
+    def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
         """Trigger on_response."""
         self.on_response(data, addr)
 
-    def error_received(self, ex):
+    def error_received(self, ex: Optional[Exception]) -> None:
         """Handle error."""
         _LOGGER.error("LEDENETDiscovery error: %s", ex)
 
-    def connection_lost(self, ex):
+    def connection_lost(self, ex: Optional[Exception]) -> None:
         """The connection is lost."""
 
 
 class AIOBulbScanner(BulbScanner):
     """A LEDENET discovery scanner."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.loop = asyncio.get_running_loop()
         super().__init__()
 
-    async def _async_run_scan(self, transport, destination, timeout, found_all_future):
+    async def _async_run_scan(
+        self,
+        transport: asyncio.DatagramTransport,
+        destination: Tuple[str, int],
+        timeout: int,
+        found_all_future: asyncio.Future[bool],
+    ) -> None:
         """Send the scans."""
         self.send_discovery_messages(transport, destination)
         quit_time = time.monotonic() + timeout
@@ -59,14 +71,16 @@ class AIOBulbScanner(BulbScanner):
             # No response, send broadcast again in cast it got lost
             self.send_discovery_messages(transport, destination)
 
-    async def async_scan(self, timeout=10, address=None):
+    async def async_scan(
+        self, timeout: int = 10, address: Optional[str] = None
+    ) -> List[FluxLEDDiscovery]:
         """Discover LEDENET."""
         sock = self._create_socket()
         destination = self._destination_from_address(address)
-        found_all_future = asyncio.Future()
-        response_list = {}
+        found_all_future: asyncio.Future[bool] = asyncio.Future()
+        response_list: Dict[str, Dict[str, Any]] = {}
 
-        def _on_response(data, addr):
+        def _on_response(data, addr: Tuple[str, int]) -> None:
             _LOGGER.debug("discover: %s <= %s", addr, data)
             if self._process_response(data, addr, address, response_list):
                 with contextlib.suppress(asyncio.InvalidStateError):
