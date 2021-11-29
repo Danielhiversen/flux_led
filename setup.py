@@ -55,6 +55,7 @@ setup(
     url="https://github.com/Danielhiversen/flux_led",
     license="LGPLv3+",
     include_package_data=True,
+    package_data={"flux_led": ["py.typed"]},
     keywords=[
         "flux_led",
         "smart bulbs",

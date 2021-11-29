@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
-from flux_led.device import DEFAULT_RETRIES
+from .const import DEFAULT_RETRIES
 
 _LOGGER = logging.getLogger(__name__)
 
