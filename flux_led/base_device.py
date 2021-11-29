@@ -162,7 +162,7 @@ class LEDENETDevice:
     @property
     def _whites_are_temp_brightness(self) -> bool:
         """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
-        return self.model_data.protocol == PROTOCOL_LEDENET_CCT
+        return self.protocol == PROTOCOL_LEDENET_CCT
 
     @property
     def model(self) -> str:
@@ -225,7 +225,7 @@ class LEDENETDevice:
     @property
     def _rgbwwprotocol(self) -> bool:
         """Device that uses the 9-byte protocol."""
-        return self.model_data.protocol == PROTOCOL_LEDENET_9BYTE
+        return self.protocol == PROTOCOL_LEDENET_9BYTE
 
     @property
     def white_active(self) -> bool:
