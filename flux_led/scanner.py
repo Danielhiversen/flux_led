@@ -123,7 +123,7 @@ class BulbScanner:
         sock.setblocking(False)
         return sock
 
-    def _destination_from_address(self, address: str) -> Tuple[str, int]:
+    def _destination_from_address(self, address: Optional[str]) -> Tuple[str, int]:
         if address is None:
             address = self.BROADCAST_ADDRESS
         return (address, self.DISCOVERY_PORT)
@@ -131,8 +131,8 @@ class BulbScanner:
     def _process_response(
         self,
         data: Optional[bytes],
-        from_address: str,
-        address: str,
+        from_address: Tuple[str, int],
+        address: Optional[str],
         response_list: Dict[str, Dict[str, Any]],
     ) -> bool:
         """Process a response.
@@ -151,7 +151,7 @@ class BulbScanner:
 
     def _process_data(
         self,
-        from_address: str,
+        from_address: Tuple[str, int],
         decoded_data: str,
         response_list: Dict[str, Dict[str, Any]],
     ) -> None:
@@ -175,7 +175,9 @@ class BulbScanner:
         ]
 
     def send_discovery_messages(
-        self, sender: Union[socket.socket, asyncio.DatagramTransport], destination: str
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
     ) -> None:
         _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
         sender.sendto(self.DISCOVER_MESSAGE, destination)
@@ -194,7 +196,7 @@ class BulbScanner:
         destination = self._destination_from_address(address)
         # set the time at which we will quit the search
         quit_time = time.monotonic() + timeout
-        response_list = {}
+        response_list: Dict[str, Dict[str, Any]] = {}
         found_all = False
         # outer loop for query send
         while not found_all:

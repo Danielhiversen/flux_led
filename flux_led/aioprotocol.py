@@ -1,7 +1,7 @@
 import asyncio
 from asyncio.transports import BaseTransport, WriteTransport
 import logging
-from typing import Optional, cast
+from typing import Callable, Optional, cast, Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -9,7 +9,11 @@ _LOGGER = logging.getLogger(__name__)
 class AIOLEDENETProtocol(asyncio.Protocol):
     """A asyncio.Protocol implementing a wrapper around the LEDENET protocol."""
 
-    def __init__(self, data_received, connection_lost) -> None:
+    def __init__(
+        self,
+        data_received: Callable[[bytes], Any],
+        connection_lost: Callable[[Optional[Exception]], Any],
+    ) -> None:
         self._data_receive_callback = data_received
         self._connection_lost_callback = connection_lost
         self.transport: Optional[WriteTransport] = None
