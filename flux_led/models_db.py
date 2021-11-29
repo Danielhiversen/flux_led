@@ -1,6 +1,7 @@
 """FluxLED Models Database."""
 
-from collections import namedtuple
+from dataclasses import dataclass
+from typing import Dict, List, Set
 
 from .const import (
     COLOR_MODE_CCT,
@@ -28,20 +29,23 @@ from .protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 
-LEDENETModel = namedtuple(
-    "LEDENETModel",
-    [
-        "model_num",  # The model number aka byte 1
-        "models",  # The model names from discovery
-        "description",  # Description of the model
-        "always_writes_white_and_colors",  # Devices that don't require a separate rgb/w bit aka rgbwprotocol
-        "protocol",  # The device protocol
-        "mode_to_color_mode",  # A mapping of mode aka byte 2 to color mode that overrides color_modes
-        "color_modes",  # The color modes to use if there is no mode_to_color_mode_mapping
-        "channel_map",  # Used to remap channels
-        "microphone",  # Device has a built in microphone
-    ],
-)
+
+@dataclass
+class LEDENETModel:
+    model_num: int  # The model number aka byte 1
+    models: List[str]  # The model names from discovery
+    description: str  # Description of the model
+    always_writes_white_and_colors: bool  # Devices that don't require a separate rgb/w bit aka rgbwprotocol
+    protocol: str  # The device protocol
+    mode_to_color_mode: Dict[
+        int, Set[str]
+    ]  # A mapping of mode aka byte 2 to color mode that overrides color_modes
+    color_modes: Set[
+        str
+    ]  # The color modes to use if there is no mode_to_color_mode_mapping
+    channel_map: Dict[str, str]  # Used to remap channels
+    microphone: bool
+
 
 BASE_MODE_MAP = {
     0x01: {COLOR_MODE_DIM},
@@ -102,6 +106,7 @@ GENERIC_RGBWW_MAP = {
 }
 
 UNKNOWN_MODEL = "Unknown Model"
+
 
 MODELS = [
     LEDENETModel(
@@ -182,7 +187,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -253,7 +258,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes -- UNVERIFIED
+        color_modes=set(),  # no color modes -- UNVERIFIED
         channel_map={},
         microphone=False,
     ),
@@ -275,7 +280,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -359,7 +364,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x45,
         models=[],
-        description=None,  # Unknown
+        description=UNKNOWN_MODEL,  # Unknown
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
@@ -413,7 +418,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x81,
         models=[],
-        description=None,  # Unknown
+        description=UNKNOWN_MODEL,  # Unknown
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
@@ -428,7 +433,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -439,7 +444,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -450,7 +455,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -461,7 +466,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -472,7 +477,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes
+        color_modes=set(),  # no color modes
         channel_map={},
         microphone=False,
     ),
@@ -516,7 +521,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes -- UNVERIFIED
+        color_modes=set(),  # no color modes -- UNVERIFIED
         channel_map={},
         microphone=False,
     ),
@@ -527,7 +532,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes -- UNVERIFIED
+        color_modes=set(),  # no color modes -- UNVERIFIED
         channel_map={},
         microphone=False,
     ),
@@ -538,28 +543,43 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocol=PROTOCOL_LEDENET_8BYTE,
         mode_to_color_mode={},
-        color_modes={},  # no color modes -- UNVERIFIED
+        color_modes=set(),  # no color modes -- UNVERIFIED
         channel_map={},
         microphone=False,
     ),
 ]
 
-MODEL_MAP = {model.model_num: model for model in MODELS}
-MODEL_DESCRIPTIONS = {model.model_num: model.description for model in MODELS}
-CHANNEL_REMAP = {model.model_num: model.channel_map for model in MODELS}
-RGBW_PROTOCOL_MODELS = {
-    model.model_num for model in MODELS if model.always_writes_white_and_colors
-}
-USE_9BYTE_PROTOCOL_MODELS = {
-    model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_9BYTE
-}
-MICROPHONE_MODELS = {model.model_num for model in MODELS if model.microphone}
-MODEL_NUM_PROTOCOL = {model.model_num: model.protocol for model in MODELS}
-WHITE_ARE_TEMP_BRIGHTNESS = {
-    model.model_num for model in MODELS if model.protocol == PROTOCOL_LEDENET_CCT
-}
+MODEL_MAP: Dict[int, LEDENETModel] = {model.model_num: model for model in MODELS}
+
+
+def get_model(model_num: int, fallback_protocol: str = None) -> LEDENETModel:
+    """Return the LEDNETModel for the model_num."""
+    return MODEL_MAP.get(
+        model_num,
+        _unknown_ledenet_model(model_num, fallback_protocol or PROTOCOL_LEDENET_8BYTE),
+    )
+
+
+def is_known_model(model_num: int) -> bool:
+    """Return true of the model is known."""
+    return model_num in MODEL_MAP
+
+
+def _unknown_ledenet_model(model_num: int, fallback_protocol: str) -> LEDENETModel:
+    """Create a LEDNETModel for an unknown model_num."""
+    return LEDENETModel(
+        model_num=model_num,
+        models=[],
+        description=UNKNOWN_MODEL,
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        protocol=fallback_protocol,
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_RGB},
+        channel_map={},
+        microphone=False,
+    )
 
 
 def get_model_description(model_num):
     """Return the description for a model."""
-    return MODEL_DESCRIPTIONS.get(model_num, f"Unknown Model {hex(model_num)}")
+    return get_model(model_num).description
