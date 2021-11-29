@@ -391,15 +391,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             return False
         return self.is_checksum_correct(msg)
 
-    def is_start_of_power_state_response(self, data):
+    def is_start_of_power_state_response(self, data: bytearray) -> bool:
         """Check if a message is the start of a state response."""
         return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
 
-    def is_start_of_state_response(self, data):
+    def is_start_of_state_response(self, data: bytearray) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x81
 
-    def is_valid_state_response(self, raw_state):
+    def is_valid_state_response(self, raw_state: bytearray) -> bool:
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
@@ -482,7 +482,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-    def construct_music_mode(self, sensitivity):
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
         """The bytes to send for a level change request.
 
         Known messages
@@ -517,11 +517,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
-    def is_start_of_addressable_response(self, data):
+    def is_start_of_addressable_response(self, data: bytearray) -> bool:
         """Check if a message is the start of an addressable state response."""
         return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
 
-    def is_valid_addressable_response(self, data):
+    def is_valid_addressable_response(self, data: bytearray) -> bool:
         """Check if a message is a valid addressable state response."""
         if len(data) != self.addressable_response_length:
             return False
@@ -610,7 +610,9 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
@@ -627,7 +629,9 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
         """Protocol supports dimmable effects."""
         return False
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         effect = pattern + 99
         return self.construct_message(
@@ -646,7 +650,9 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         """Protocol supports dimmable effects."""
         return True
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         return self.construct_message(bytearray([0x42, pattern, speed, brightness]))
 
@@ -756,7 +762,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         """Protocol supports dimmable effects."""
         return True
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         counter_byte = self._increment_counter()
         return self.construct_message(
@@ -775,7 +783,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
             )
         )
 
-    def construct_music_mode(self, sensitivity):
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
         """The bytes to send for a level change request.
 
         Known messages
@@ -916,8 +924,15 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         return False
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: int,
+    ) -> bytearray:
         """The bytes to send for a level change request.
 
         b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
