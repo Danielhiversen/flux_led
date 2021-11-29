@@ -386,14 +386,16 @@ class LEDENETDevice:
         raw_state = self.raw_state
         assert raw_state is not None
 
-        if self.dimmable_effects and self._mode == MODE_PRESET:
-            if (
-                self.protocol in NEW_EFFECTS_PROTOCOLS
-                and time.monotonic() > self._transition_complete_time
-            ):
-                # the red byte holds the brightness during an effect
-                return min(255, round(raw_state.red * 255 / 100))
-            return round(self._last_effect_brightness * 255 / 100)
+        if self._mode == MODE_PRESET:
+            if self.dimmable_effects:
+                if (
+                    self.protocol in NEW_EFFECTS_PROTOCOLS
+                    and time.monotonic() > self._transition_complete_time
+                ):
+                    # the red byte holds the brightness during an effect
+                    return min(255, round(raw_state.red * 255 / 100))
+                return round(self._last_effect_brightness * 255 / 100)
+            return 255
         if color_mode == COLOR_MODE_DIM:
             return int(raw_state.warm_white)
         elif color_mode == COLOR_MODE_CCT:
