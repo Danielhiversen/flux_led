@@ -1,4 +1,6 @@
-EFFECT_RANDOM = "random"
+from typing import Dict, Optional, cast
+
+FFECT_RANDOM = "random"
 EFFECT_COLORLOOP = "colorloop"
 EFFECT_RED_FADE = "red_fade"
 EFFECT_GREEN_FADE = "green_fade"
@@ -499,35 +501,35 @@ class PresetPattern:
     white_strobe_flash = 0x37
     seven_color_jumping = 0x38
 
-    def __init__(self):
-        self._value_to_str = {
+    def __init__(self) -> None:
+        self._value_to_str: Dict[int, str] = {
             v: k.replace("_", " ").title()
             for k, v in PresetPattern.__dict__.items()
             if type(v) is int
         }
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> "PresetPattern":
         """Get preset pattern instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @staticmethod
-    def valid(pattern):
+    def valid(pattern: int) -> bool:
         if pattern >= 0x25 and pattern <= 0x38 or pattern >= 0x61 and pattern <= 0x63:
             return True
         return False
 
     @staticmethod
-    def valtostr(pattern):
+    def valtostr(pattern: int) -> Optional[str]:
         instance = PresetPattern.instance()
         return instance._value_to_str.get(pattern)
 
     @staticmethod
-    def str_to_val(effect):
+    def str_to_val(effect: str) -> int:
         if effect in EFFECT_MAP:
             return EFFECT_MAP[effect]
         if hasattr(PresetPattern, effect):
-            return getattr(PresetPattern, effect)
+            return cast(int, getattr(PresetPattern, effect))
         raise ValueError(f"{effect} is not a known effect name.")
