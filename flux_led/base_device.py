@@ -225,7 +225,10 @@ class LEDENETDevice:
     @property
     def _rgbwwprotocol(self) -> bool:
         """Device that uses the 9-byte protocol."""
-        return self.protocol == PROTOCOL_LEDENET_9BYTE
+        return self.protocol in (
+            PROTOCOL_LEDENET_9BYTE,
+            PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
+        )
 
     @property
     def white_active(self) -> bool:
@@ -864,17 +867,7 @@ class LEDENETDevice:
         self._model_num = full_msg[1]
         self._model_data = get_model(self._model_num, fallback_protocol)
         version_num = full_msg[10] if len(full_msg) > 10 else 1
-        protocol = self._model_data.protocol
-        #
-        # Model special cases
-        #
-        # Newer firmwares use the newer protocol
-        # If this turns out to be more common we will need
-        # to account for this in the models_db
-        #
-        if self._model_num == 0x35 and version_num >= 9:
-            protocol = PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
-        self.setProtocol(protocol)
+        self.setProtocol(self._model_data.protocol_for_version_num(version_num))
 
     def _generate_preset_pattern(
         self, pattern: int, speed: int, brightness: int
