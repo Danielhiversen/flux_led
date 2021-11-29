@@ -1,13 +1,21 @@
 import logging
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _socket_retry(attempts=2):
+WrapFuncType = TypeVar("WrapFuncType", bound=Callable[..., Any])
+
+
+if TYPE_CHECKING:
+    from .device import WifiLedBulb
+
+
+def _socket_retry(attempts: int = 2) -> WrapFuncType:
     """Define a wrapper to retry on socket failures."""
 
-    def decorator_retry(func):
-        def _retry_wrap(self, *args, retry=attempts, **kwargs) -> None:
+    def decorator_retry(func: WrapFuncType) -> WrapFuncType:
+        def _retry_wrap(self: WifiLedBulb, *args, retry=attempts, **kwargs) -> None:
             attempts_remaining = retry + 1
             while attempts_remaining:
                 attempts_remaining -= 1
@@ -28,6 +36,6 @@ def _socket_retry(attempts=2):
                     # when it goes offline
                     raise
 
-        return _retry_wrap
+        return cast(WrapFuncType, _retry_wrap)
 
-    return decorator_retry
+    return cast(WrapFuncType, decorator_retry)
