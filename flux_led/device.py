@@ -4,10 +4,11 @@ import select
 import socket
 import threading
 import time
-from typing import List
+from typing import List, Optional, Tuple
 
 from .base_device import LEDENETDevice
 from .const import (
+    DEFAULT_RETRIES,
     EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
@@ -22,8 +23,6 @@ from .utils import color_temp_to_white_levels, utils
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_RETRIES = 2
-
 
 class WifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
@@ -31,7 +30,7 @@ class WifiLedBulb(LEDENETDevice):
     def __init__(self, ipaddr: str, port: int = 5577, timeout: int = 5) -> None:
         """Init and setup the bulb."""
         super().__init__(ipaddr, port, timeout)
-        self._socket = None
+        self._socket: Optional[socket.socket] = None
         self._lock = threading.Lock()
         self.setup()
 
@@ -45,7 +44,7 @@ class WifiLedBulb(LEDENETDevice):
         if self._socket is None:
             self.connect()
 
-    @_socket_retry(attempts=0)
+    @_socket_retry(attempts=0)  # type: ignore
     def connect(self) -> None:
         self.close()
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -69,8 +68,9 @@ class WifiLedBulb(LEDENETDevice):
     def turnOff(self, retry: int = DEFAULT_RETRIES) -> None:
         self._change_state(retry=retry, turn_on=False)
 
-    @_socket_retry(attempts=DEFAULT_RETRIES)
+    @_socket_retry(attempts=DEFAULT_RETRIES)  # type: ignore
     def _change_state(self, turn_on: bool = True) -> None:
+        assert self._protocol is not None
         _LOGGER.debug("%s: Changing state to %s", self.ipaddr, turn_on)
         with self._lock:
             self._connect_if_disconnected()
@@ -99,48 +99,66 @@ class WifiLedBulb(LEDENETDevice):
     ) -> None:
         self.set_levels(w=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setWarmWhite255(self, level, persist=True, retry=DEFAULT_RETRIES) -> None:
+    def setWarmWhite255(
+        self, level: int, persist: bool = True, retry: int = DEFAULT_RETRIES
+    ) -> None:
         self.set_levels(w=level, persist=persist, retry=retry)
 
-    def setColdWhite(self, level, persist=True, retry=DEFAULT_RETRIES) -> None:
+    def setColdWhite(
+        self, level: int, persist: bool = True, retry: int = DEFAULT_RETRIES
+    ) -> None:
         self.set_levels(w2=utils.percentToByte(level), persist=persist, retry=retry)
 
-    def setColdWhite255(self, level, persist=True, retry=DEFAULT_RETRIES):
+    def setColdWhite255(
+        self, level: int, persist: bool = True, retry: int = DEFAULT_RETRIES
+    ) -> None:
         self.set_levels(w2=level, persist=persist, retry=retry)
 
     def setWhiteTemperature(
-        self, temperature, brightness, persist=True, retry=DEFAULT_RETRIES
-    ):
+        self,
+        temperature: int,
+        brightness: int,
+        persist: bool = True,
+        retry: int = DEFAULT_RETRIES,
+    ) -> None:
         warm, cold = color_temp_to_white_levels(temperature, brightness)
         self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
-    def setRgb(self, r, g, b, persist=True, brightness=None, retry=DEFAULT_RETRIES):
+    def setRgb(
+        self,
+        r: int,
+        g: int,
+        b: int,
+        persist: bool = True,
+        brightness: Optional[int] = None,
+        retry: int = DEFAULT_RETRIES,
+    ) -> None:
         self.set_levels(r, g, b, persist=persist, brightness=brightness, retry=retry)
 
     def setRgbw(
         self,
-        r=None,
-        g=None,
-        b=None,
-        w=None,
-        persist=True,
-        brightness=None,
-        w2=None,
-        retry=2,
-    ):
-        return self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
+        r: Optional[int] = None,
+        g: Optional[int] = None,
+        b: Optional[int] = None,
+        w: Optional[int] = None,
+        persist: bool = True,
+        brightness: Optional[int] = None,
+        w2: Optional[int] = None,
+        retry: int = 2,
+    ) -> None:
+        self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
 
     def set_levels(
         self,
-        r=None,
-        g=None,
-        b=None,
-        w=None,
-        w2=None,
-        persist=True,
-        brightness=None,
-        retry=None,
-    ):
+        r: Optional[int] = None,
+        g: Optional[int] = None,
+        b: Optional[int] = None,
+        w: Optional[int] = None,
+        w2: Optional[int] = None,
+        persist: bool = True,
+        brightness: Optional[int] = None,
+        retry: int = None,
+    ) -> None:
         self._process_levels_change(
             *self._generate_levels_change(
                 {
@@ -156,8 +174,8 @@ class WifiLedBulb(LEDENETDevice):
             retry=retry,
         )
 
-    @_socket_retry(attempts=2)
-    def _process_levels_change(self, msg, updates):
+    @_socket_retry(attempts=2)  # type: ignore
+    def _process_levels_change(self, msg: bytearray, updates: dict[str, int]) -> None:
         # send the message
         with self._lock:
             self._connect_if_disconnected()
@@ -166,7 +184,7 @@ class WifiLedBulb(LEDENETDevice):
             if updates:
                 self._replace_raw_state(updates)
 
-    def _send_msg(self, bytes):
+    def _send_msg(self, bytes: bytearray) -> None:
         _LOGGER.debug(
             "%s => %s (%d)",
             self.ipaddr,
@@ -175,7 +193,7 @@ class WifiLedBulb(LEDENETDevice):
         )
         self._socket.send(bytes)
 
-    def _read_msg(self, expected):
+    def _read_msg(self, expected: int) -> bytearray:
         remaining = expected
         rx = bytearray()
         begin = time.monotonic()
@@ -209,7 +227,7 @@ class WifiLedBulb(LEDENETDevice):
                 self._socket.setblocking(1)
         return rx
 
-    def getClock(self):
+    def getClock(self) -> Optional[datetime.datetime]:
         msg = bytearray([0x11, 0x1A, 0x1B, 0x0F])
         with self._lock:
             self._connect_if_disconnected()
@@ -230,7 +248,7 @@ class WifiLedBulb(LEDENETDevice):
             dt = None
         return dt
 
-    def setClock(self):
+    def setClock(self) -> None:
         msg = bytearray([0x10, 0x14])
         now = datetime.datetime.now()
         msg.append(now.year - 2000)
@@ -249,7 +267,7 @@ class WifiLedBulb(LEDENETDevice):
             # cycle the connection
             self.close()
 
-    def _determine_protocol(self):
+    def _determine_protocol(self) -> bytearray:
         """Determine the type of protocol based of first 2 bytes."""
         read_bytes = 2
         for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
@@ -333,7 +351,7 @@ class WifiLedBulb(LEDENETDevice):
 
         return timer_list
 
-    def sendTimers(self, timer_list):
+    def sendTimers(self, timer_list: List[LedTimer]) -> None:
         # remove inactive or expired timers from list
         for t in timer_list:
             if not t.isActive() or t.isExpired():
@@ -365,7 +383,7 @@ class WifiLedBulb(LEDENETDevice):
             self._read_msg(4)
 
     @_socket_retry(attempts=2)
-    def query_state(self, led_type=None):
+    def query_state(self, led_type=None) -> bytearray:
         if led_type:
             self.setProtocol(led_type)
         elif not self._protocol:
@@ -376,14 +394,20 @@ class WifiLedBulb(LEDENETDevice):
             self._send_msg(self._protocol.construct_state_query())
             return self._read_msg(self._protocol.state_response_length)
 
-    def update_state(self, retry=2):
+    def update_state(self, retry: int = 2) -> None:
         rx = self.query_state(retry=retry)
         if rx and self.process_state_response(rx):
             self.available = True
             return
         self.set_unavailable()
 
-    def setCustomPattern(self, rgb_list, speed, transition_type, retry=None):
+    def setCustomPattern(
+        self,
+        rgb_list: List[Tuple[int, ...]],
+        speed: int,
+        transition_type: str,
+        retry: int = DEFAULT_RETRIES,
+    ) -> None:
         """Set a custom pattern on the device."""
         self._send_with_retry(
             self._generate_custom_patterm(rgb_list, speed, transition_type), retry=retry

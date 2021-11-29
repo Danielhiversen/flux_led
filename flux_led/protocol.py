@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 import logging
-from typing import List, Tuple, Union, NamedTuple
+from typing import List, NamedTuple, Tuple, Union
 
 from .const import (
     TRANSITION_GRADUAL,

@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 from datetime import date
 import logging
@@ -5,8 +6,7 @@ import select
 import socket
 import sys
 import time
-import asyncio
-from typing import Any, Dict, List, Optional, Tuple, cast, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module

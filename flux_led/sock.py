@@ -1,5 +1,7 @@
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+
+from flux_led.device import DEFAULT_RETRIES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -11,7 +13,7 @@ if TYPE_CHECKING:
     from .device import WifiLedBulb
 
 
-def _socket_retry(attempts: int = 2) -> WrapFuncType:
+def _socket_retry(attempts: int = DEFAULT_RETRIES) -> WrapFuncType:
     """Define a wrapper to retry on socket failures."""
 
     def decorator_retry(func: WrapFuncType) -> WrapFuncType:

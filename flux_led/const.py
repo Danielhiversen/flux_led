@@ -36,6 +36,8 @@ MAX_TEMP = 6500
 WRITE_ALL_COLORS = (LevelWriteMode.ALL, LevelWriteMode.COLORS)
 WRITE_ALL_WHITES = (LevelWriteMode.ALL, LevelWriteMode.WHITES)
 
+DEFAULT_RETRIES = 2
+
 # Modes
 MODE_SWITCH = "switch"
 MODE_COLOR = "color"
