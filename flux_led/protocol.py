@@ -380,7 +380,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """The length of the query response."""
         return LEDENET_STATE_RESPONSE_LEN
 
-    def is_valid_power_state_response(self, msg):
+    def is_valid_power_state_response(self, msg: bytearray) -> bool:
         """Check if a power state response is valid."""
         if (
             len(msg) != self.power_state_response_length
