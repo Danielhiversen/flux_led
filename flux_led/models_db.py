@@ -58,10 +58,9 @@ class LEDENETModel:
     microphone: bool
 
     def protocol_for_version_num(self, version_num: int):
-        for min_version_num, protocol in self.protocols:
-            if version_num >= min_version_num:
-                return protocol
-        raise ValueError(f"{self} is missing a 0 protocol")
+        for min_version_protocol in self.protocols:
+            if version_num >= min_version_protocol.min_version:
+                return min_version_protocol.protocol
 
 
 BASE_MODE_MAP = {
