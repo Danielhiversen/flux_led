@@ -5,7 +5,12 @@ from collections import namedtuple
 import logging
 from typing import List, Tuple, Union, Optional
 
-from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
+from .const import (
+    TRANSITION_GRADUAL,
+    TRANSITION_JUMP,
+    TRANSITION_STROBE,
+    LevelWriteMode,
+)
 from .utils import utils, white_levels_to_scaled_color_temp
 
 _LOGGER = logging.getLogger(__name__)
@@ -217,6 +222,10 @@ class ProtocolBase:
         """The bytes to send for a state change request."""
 
     @abstractmethod
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
+        """The bytes to send to set music mode."""
+
+    @abstractmethod
     def construct_levels_change(
         self,
         persist: int,
@@ -225,7 +234,7 @@ class ProtocolBase:
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request."""
 
@@ -341,7 +350,7 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
@@ -427,7 +436,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 8-byte protocols (w/ checksum at end)
@@ -565,7 +574,7 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 9-byte LEDENET protocol (w/ checksum at end)
@@ -646,7 +655,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         return PROTOCOL_LEDENET_ADDRESSABLE_A2
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
@@ -664,7 +673,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request.
 
@@ -690,7 +699,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
             )
         )
 
-    def construct_music_mode(self, sensitivity):
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
         """The bytes to send for a level change request.
 
         Known messages
@@ -838,7 +847,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request.
 
@@ -914,7 +923,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     MIN_BRIGHTNESS = 2
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_CCT
 
@@ -931,7 +940,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         blue: int,
         warm_white: int,
         cool_white: int,
-        write_mode: int,
+        write_mode: LevelWriteMode,
     ) -> bytearray:
         """The bytes to send for a level change request.
 

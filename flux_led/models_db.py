@@ -1,8 +1,7 @@
 """FluxLED Models Database."""
 
-from collections import namedtuple
 from dataclasses import dataclass
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 
 from .const import (
     COLOR_MODE_CCT,
@@ -30,13 +29,11 @@ from .protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 
-MinVersionProtocol = namedtuple(
-    "MinVersionProtocol",
-    [
-        "min_version",
-        "protocol",
-    ],
-)
+
+@dataclass
+class MinVersionProtocol:
+    min_version: int
+    protocol: str
 
 
 @dataclass
@@ -574,7 +571,7 @@ MODELS = [
 MODEL_MAP: Dict[int, LEDENETModel] = {model.model_num: model for model in MODELS}
 
 
-def get_model(model_num: int, fallback_protocol: str = None) -> LEDENETModel:
+def get_model(model_num: int, fallback_protocol: Optional[str] = None) -> LEDENETModel:
     """Return the LEDNETModel for the model_num."""
     return MODEL_MAP.get(
         model_num,
@@ -602,6 +599,6 @@ def _unknown_ledenet_model(model_num: int, fallback_protocol: str) -> LEDENETMod
     )
 
 
-def get_model_description(model_num):
+def get_model_description(model_num: int) -> str:
     """Return the description for a model."""
     return get_model(model_num).description
