@@ -75,14 +75,12 @@ class utils:
     @staticmethod
     def get_color_names_list() -> List[str]:
         return sorted(
-            set(
-                [
-                    *webcolors.CSS2_HEX_TO_NAMES.values(),
-                    *webcolors.CSS21_HEX_TO_NAMES.values(),
-                    *webcolors.CSS3_HEX_TO_NAMES.values(),
-                    *webcolors.HTML4_HEX_TO_NAMES.values(),
-                ]
-            )
+            {
+                *webcolors.CSS2_HEX_TO_NAMES.values(),
+                *webcolors.CSS21_HEX_TO_NAMES.values(),
+                *webcolors.CSS3_HEX_TO_NAMES.values(),
+                *webcolors.HTML4_HEX_TO_NAMES.values(),
+            }
         )
 
     @staticmethod
