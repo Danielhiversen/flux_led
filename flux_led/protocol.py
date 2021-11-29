@@ -1,9 +1,8 @@
 """FluxLED Protocols."""
 
 from abc import abstractmethod
-from collections import namedtuple
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union, NamedTuple
 
 from .const import (
     TRANSITION_GRADUAL,
@@ -63,22 +62,20 @@ MSG_LENGTHS = {
 }
 
 
-LEDENETOriginalRawState = namedtuple(
-    "LEDENETOriginalRawState",
-    [
-        "head",
-        "model_num",
-        "power_state",
-        "preset_pattern",
-        "mode",
-        "speed",
-        "red",
-        "green",
-        "blue",
-        "warm_white",
-        "check_sum",
-    ],
-)
+class LEDENETOriginalRawState(NamedTuple):
+    head: int
+    model_num: int
+    power_state: int
+    preset_pattern: int
+    mode: int
+    speed: int
+    red: int
+    green: int
+    blue: int
+    warm_white: int
+    check_sum: int
+
+
 # typical response:
 # pos  0  1  2  3  4  5  6  7  8  9 10
 #    66 01 24 39 21 0a ff 00 00 01 99
@@ -97,25 +94,23 @@ LEDENETOriginalRawState = namedtuple(
 #
 
 
-LEDENETRawState = namedtuple(
-    "LEDENETRawState",
-    [
-        "head",
-        "model_num",
-        "power_state",
-        "preset_pattern",
-        "mode",
-        "speed",
-        "red",
-        "green",
-        "blue",
-        "warm_white",
-        "version_number",
-        "cool_white",
-        "color_mode",
-        "check_sum",
-    ],
-)
+class LEDENETRawState(NamedTuple):
+    head: int
+    model_num: int
+    power_state: int
+    preset_pattern: int
+    mode: int
+    speed: int
+    red: int
+    green: int
+    blue: int
+    warm_white: int
+    version_number: int
+    cool_white: int
+    color_mode: int
+    check_sum: int
+
+
 # response from a 5-channel LEDENET controller:
 # pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
 #    81 25 23 61 21 06 38 05 06 f9 01 00 0f 9d
