@@ -434,7 +434,7 @@ class LEDENETDevice:
     def set_available(self) -> None:
         self.available = True
 
-    def process_state_response(self, rx: Tuple[int, ...]) -> bool:
+    def process_state_response(self, rx: bytearray) -> bool:
         assert self._protocol is not None
 
         if not self._protocol.is_valid_state_response(rx):
@@ -487,7 +487,7 @@ class LEDENETDevice:
         self._mode = mode
         return True
 
-    def process_power_state_response(self, msg: Tuple[int, ...]) -> bool:
+    def process_power_state_response(self, msg: bytearray) -> bool:
         """Process a power state change message."""
         assert self._protocol is not None
         if not self._protocol.is_valid_power_state_response(msg):
