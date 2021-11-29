@@ -1,13 +1,9 @@
 import asyncio
 import contextlib
 import logging
-from typing import Callable, Coroutine, Dict, List, Optional, Tuple, Union
+from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
-from flux_led.protocol import (
-    PROTOCOL_LEDENET_8BYTE,
-    ProtocolLEDENET8Byte,
-    ProtocolLEDENETOriginal,
-)
+from flux_led.protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import PROTOCOL_PROBES, LEDENETDevice
