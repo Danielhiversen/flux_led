@@ -4,7 +4,7 @@ import select
 import socket
 import threading
 import time
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 from .base_device import LEDENETDevice
 from .const import (
@@ -157,7 +157,7 @@ class WifiLedBulb(LEDENETDevice):
         w2: Optional[int] = None,
         persist: bool = True,
         brightness: Optional[int] = None,
-        retry: int = None,
+        retry: Optional[int] = None,
     ) -> None:
         self._process_levels_change(
             *self._generate_levels_change(
@@ -175,7 +175,7 @@ class WifiLedBulb(LEDENETDevice):
         )
 
     @_socket_retry(attempts=2)  # type: ignore
-    def _process_levels_change(self, msg: bytearray, updates: dict[str, int]) -> None:
+    def _process_levels_change(self, msg: bytearray, updates: Dict[str, int]) -> None:
         # send the message
         with self._lock:
             self._connect_if_disconnected()
