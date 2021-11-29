@@ -298,7 +298,7 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         switch = flux_led.WifiLedBulb("192.168.1.164")
-        assert switch.color_modes == {}
+        assert switch.color_modes == set()
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
