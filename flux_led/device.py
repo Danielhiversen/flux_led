@@ -326,7 +326,7 @@ class WifiLedBulb(LEDENETDevice):
         """Set levels randomly."""
         self._process_levels_change(*self._generate_random_levels_change(), retry=retry)
 
-    @_socket_retry(attempts=2)
+    @_socket_retry(attempts=2)  # type: ignore
     def _send_with_retry(self, msg: bytearray) -> None:
         """Send a message under the lock."""
         with self._lock:
@@ -334,6 +334,7 @@ class WifiLedBulb(LEDENETDevice):
             self._send_msg(msg)
 
     def getTimers(self) -> List[LedTimer]:
+        assert self._protocol is not None
         msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
         resp_len = 88
         with self._lock:
@@ -357,6 +358,7 @@ class WifiLedBulb(LEDENETDevice):
         return timer_list
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:
+        assert self._protocol is not None
         # remove inactive or expired timers from list
         for t in timer_list:
             if not t.isActive() or t.isExpired():
@@ -387,13 +389,14 @@ class WifiLedBulb(LEDENETDevice):
             # not sure what the resp is, prob some sort of ack?
             self._read_msg(4)
 
-    @_socket_retry(attempts=2)
-    def query_state(self, led_type=None) -> bytearray:
+    @_socket_retry(attempts=2)  # type: ignore
+    def query_state(self, led_type: Optional[str] = None) -> bytearray:
         if led_type:
             self.setProtocol(led_type)
         elif not self._protocol:
             return self._determine_protocol()
 
+        assert self._protocol is not None
         with self._lock:
             self.connect()
             self._send_msg(self._protocol.construct_state_query())
@@ -408,7 +411,7 @@ class WifiLedBulb(LEDENETDevice):
 
     def setCustomPattern(
         self,
-        rgb_list: List[Tuple[int, ...]],
+        rgb_list: List[Tuple[int, int, int]],
         speed: int,
         transition_type: str,
         retry: int = DEFAULT_RETRIES,
@@ -418,5 +421,5 @@ class WifiLedBulb(LEDENETDevice):
             self._generate_custom_patterm(rgb_list, speed, transition_type), retry=retry
         )
 
-    def refreshState(self):
+    def refreshState(self) -> None:
         return self.update_state()

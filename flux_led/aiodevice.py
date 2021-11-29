@@ -186,7 +186,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
 
     async def async_set_custom_pattern(
-        self, rgb_list: List[Tuple[int, ...]], speed: int, transition_type: str
+        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
     ) -> None:
         """Set a custom pattern on the device."""
         await self._async_send_msg(

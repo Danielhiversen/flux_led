@@ -3,7 +3,7 @@ from enum import Enum
 import logging
 import random
 import time
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -80,7 +80,7 @@ from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_col
 _LOGGER = logging.getLogger(__name__)
 
 
-PROTOCOL_PROBES: Union[ProtocolLEDENET8Byte, ProtocolLEDENETOriginal] = (
+PROTOCOL_PROBES: Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]] = (
     ProtocolLEDENET8Byte,
     ProtocolLEDENETOriginal,
 )
