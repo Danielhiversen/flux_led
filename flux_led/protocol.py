@@ -1,11 +1,15 @@
 """FluxLED Protocols."""
 
 from abc import abstractmethod
-from collections import namedtuple
 import logging
-from typing import List, Tuple
+from typing import List, NamedTuple, Tuple, Union
 
-from .const import TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE
+from .const import (
+    TRANSITION_GRADUAL,
+    TRANSITION_JUMP,
+    TRANSITION_STROBE,
+    LevelWriteMode,
+)
 from .utils import utils, white_levels_to_scaled_color_temp
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,22 +62,20 @@ MSG_LENGTHS = {
 }
 
 
-LEDENETOriginalRawState = namedtuple(
-    "LEDENETOriginalRawState",
-    [
-        "head",
-        "model_num",
-        "power_state",
-        "preset_pattern",
-        "mode",
-        "speed",
-        "red",
-        "green",
-        "blue",
-        "warm_white",
-        "check_sum",
-    ],
-)
+class LEDENETOriginalRawState(NamedTuple):
+    head: int
+    model_num: int
+    power_state: int
+    preset_pattern: int
+    mode: int
+    speed: int
+    red: int
+    green: int
+    blue: int
+    warm_white: int
+    check_sum: int
+
+
 # typical response:
 # pos  0  1  2  3  4  5  6  7  8  9 10
 #    66 01 24 39 21 0a ff 00 00 01 99
@@ -92,25 +94,23 @@ LEDENETOriginalRawState = namedtuple(
 #
 
 
-LEDENETRawState = namedtuple(
-    "LEDENETRawState",
-    [
-        "head",
-        "model_num",
-        "power_state",
-        "preset_pattern",
-        "mode",
-        "speed",
-        "red",
-        "green",
-        "blue",
-        "warm_white",
-        "version_number",
-        "cool_white",
-        "color_mode",
-        "check_sum",
-    ],
-)
+class LEDENETRawState(NamedTuple):
+    head: int
+    model_num: int
+    power_state: int
+    preset_pattern: int
+    mode: int
+    speed: int
+    red: int
+    green: int
+    blue: int
+    warm_white: int
+    version_number: int
+    cool_white: int
+    color_mode: int
+    check_sum: int
+
+
 # response from a 5-channel LEDENET controller:
 # pos  0  1  2  3  4  5  6  7  8  9 10 11 12 13
 #    81 25 23 61 21 06 38 05 06 f9 01 00 0f 9d
@@ -137,46 +137,49 @@ class ProtocolBase:
 
     power_state_response_length = MSG_LENGTHS[MSG_POWER_STATE]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._counter = 0
         super().__init__()
 
-    def _increment_counter(self):
+    def _increment_counter(self) -> int:
         """Increment the counter byte."""
         self._counter += 1
         if self._counter == 255:
             self._counter = 0
         return self._counter
 
-    def is_start_of_addressable_response(self, data):
+    def is_start_of_addressable_response(self, data: bytes) -> bool:
         """Check if a message is the start of an addressable state response."""
         return False
 
-    def is_valid_addressable_response(self, data):
+    def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
         return False
 
-    def expected_response_length(self, data):
+    def expected_response_length(self, data: bytes) -> int:
         """Return the number of bytes expected in the response.
 
         If the response is unknown, we assume the response is
         a complete message since we have no way of knowing otherwise.
         """
-        return MSG_LENGTHS.get(MSG_FIRST_BYTE.get(data[0]), len(data))
+        msg_type = MSG_FIRST_BYTE.get(data[0])
+        if msg_type is None:
+            return len(data)
+        return MSG_LENGTHS.get(msg_type, len(data))
 
     @abstractmethod
-    def construct_state_query(self):
+    def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
 
     @abstractmethod
-    def is_valid_state_response(self, raw_state):
+    def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
 
     @abstractmethod
-    def is_start_of_state_response(self, data):
+    def is_start_of_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
 
-    def is_checksum_correct(self, msg):
+    def is_checksum_correct(self, msg: bytes) -> bool:
         """Check a checksum of a message."""
         expected_sum = sum(msg[0:-1]) & 0xFF
         if expected_sum != msg[-1]:
@@ -187,39 +190,52 @@ class ProtocolBase:
         return True
 
     @abstractmethod
-    def is_valid_power_state_response(self, msg):
+    def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
 
     @abstractmethod
-    def is_start_of_power_state_response(self, data):
+    def is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a power response."""
 
     @property
-    def on_byte(self):
+    def on_byte(self) -> int:
         """The on byte."""
         return 0x23
 
     @property
-    def off_byte(self):
+    def off_byte(self) -> int:
         """The off byte."""
         return 0x24
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
 
     @abstractmethod
-    def construct_state_change(self, turn_on):
+    def construct_state_change(self, turn_on: int) -> bytearray:
         """The bytes to send for a state change request."""
 
     @abstractmethod
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
+        """The bytes to send to set music mode."""
+
+    @abstractmethod
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, color_mask
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
@@ -253,20 +269,22 @@ class ProtocolBase:
 
     @property
     @abstractmethod
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
 
     @property
     @abstractmethod
-    def state_response_length(self):
+    def state_response_length(self) -> int:
         """The length of the query response."""
 
     @abstractmethod
-    def construct_message(self, raw_bytes):
+    def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
 
     @abstractmethod
-    def named_raw_state(self, raw_state):
+    def named_raw_state(
+        self, raw_state: bytes
+    ) -> Union[LEDENETOriginalRawState, LEDENETRawState]:
         """Convert raw_state to a namedtuple."""
 
 
@@ -274,20 +292,20 @@ class ProtocolLEDENETOriginal(ProtocolBase):
     """The original LEDENET protocol with no checksums."""
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ORIGINAL
 
     @property
-    def state_response_length(self):
+    def state_response_length(self) -> int:
         """The length of the query response."""
         return LEDENET_ORIGINAL_STATE_RESPONSE_LEN
 
-    def is_valid_power_state_response(self, msg):
+    def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
         return len(msg) == self.power_state_response_length and msg[0] == 0x78
 
-    def is_valid_state_response(self, raw_state):
+    def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         return (
             len(raw_state) == self.state_response_length
@@ -295,27 +313,34 @@ class ProtocolLEDENETOriginal(ProtocolBase):
             and raw_state[1] == 0x01
         )
 
-    def is_start_of_state_response(self, data):
+    def is_start_of_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x66
 
-    def is_start_of_power_state_response(self, data):
+    def is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x78
 
-    def construct_state_query(self):
+    def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0xEF, 0x01, 0x77]))
 
-    def construct_state_change(self, turn_on):
+    def construct_state_change(self, turn_on: int) -> bytearray:
         """The bytes to send for a state change request."""
         return self.construct_message(
             bytearray([0xCC, self.on_byte if turn_on else self.off_byte, 0x33])
         )
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, color_mask
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
@@ -328,11 +353,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         #  head
         return self.construct_message(bytearray([0x56, red, green, blue, 0xAA]))
 
-    def construct_message(self, raw_bytes):
+    def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
         return raw_bytes
 
-    def named_raw_state(self, raw_state):
+    def named_raw_state(self, raw_state: bytes) -> LEDENETOriginalRawState:
         """Convert raw_state to a namedtuple."""
         return LEDENETOriginalRawState(*raw_state)
 
@@ -344,16 +369,16 @@ class ProtocolLEDENET8Byte(ProtocolBase):
     addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE
 
     @property
-    def state_response_length(self):
+    def state_response_length(self) -> int:
         """The length of the query response."""
         return LEDENET_STATE_RESPONSE_LEN
 
-    def is_valid_power_state_response(self, msg):
+    def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
         if (
             len(msg) != self.power_state_response_length
@@ -364,15 +389,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             return False
         return self.is_checksum_correct(msg)
 
-    def is_start_of_power_state_response(self, data):
+    def is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
 
-    def is_start_of_state_response(self, data):
+    def is_start_of_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return data[0] == 0x81
 
-    def is_valid_state_response(self, raw_state):
+    def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
@@ -380,7 +405,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             return False
         return self.is_checksum_correct(raw_state)
 
-    def construct_state_change(self, turn_on):
+    def construct_state_change(self, turn_on: int) -> bytearray:
         """The bytes to send for a state change request.
 
         Alternate messages
@@ -393,8 +418,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         )
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 8-byte protocols (w/ checksum at end)
         #  0  1  2  3  4  5  6
@@ -434,21 +466,21 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             )
         )
 
-    def construct_message(self, raw_bytes):
+    def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Calculate checksum of byte array and add to end."""
         csum = sum(raw_bytes) & 0xFF
         raw_bytes.append(csum)
         return raw_bytes
 
-    def construct_state_query(self):
+    def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0x81, 0x8A, 0x8B]))
 
-    def named_raw_state(self, raw_state):
+    def named_raw_state(self, raw_state: bytes) -> LEDENETRawState:
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-    def construct_music_mode(self, sensitivity):
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
         """The bytes to send for a level change request.
 
         Known messages
@@ -483,11 +515,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
-    def is_start_of_addressable_response(self, data):
+    def is_start_of_addressable_response(self, data: bytes) -> bool:
         """Check if a message is the start of an addressable state response."""
         return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
 
-    def is_valid_addressable_response(self, data):
+    def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
         if len(data) != self.addressable_response_length:
             return False
@@ -498,16 +530,18 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
 class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
@@ -517,13 +551,20 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request."""
         # sample message for 9-byte LEDENET protocol (w/ checksum at end)
         #  0  1  2  3  4  5  6  7
@@ -558,16 +599,18 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
@@ -575,16 +618,18 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         effect = pattern + 99
         return self.construct_message(
@@ -594,22 +639,31 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A2
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         return self.construct_message(bytearray([0x42, pattern, speed, brightness]))
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request.
 
         white  41 01 ff ff ff 00 00 00 60 ff 00 00 9e
@@ -634,7 +688,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
             )
         )
 
-    def construct_music_mode(self, sensitivity):
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
         """The bytes to send for a level change request.
 
         Known messages
@@ -697,16 +751,18 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A3
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
 
-    def construct_preset_pattern(self, pattern, speed, brightness):
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
         """The bytes to send for a preset pattern."""
         counter_byte = self._increment_counter()
         return self.construct_message(
@@ -725,7 +781,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
             )
         )
 
-    def construct_music_mode(self, sensitivity):
+    def construct_music_mode(self, sensitivity: int) -> bytearray:
         """The bytes to send for a level change request.
 
         Known messages
@@ -773,8 +829,15 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         )
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request.
 
         b0 [unknown static?] b1 [unknown static?] b2 [unknown static?] b3 [unknown static?] 00 [unknown static?] 01 [unknown static?] 01 [unknown static?] 6a [incrementing sequence number] 00 [unknown static?] 0d [unknown, sometimes 0c] 41 [unknown static?] 02 [preset number] ff [foreground r] 00 [foreground g] 00 [foreground b] 00 [background red] ff [background green] 00 [background blue] 06 [speed or direction?] 00 [unknown static?] 00 [unknown static?] 00 [unknown static?] 47 [speed or direction?] cd [check sum]
@@ -849,18 +912,25 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     MIN_BRIGHTNESS = 2
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_CCT
 
     @property
-    def dimmable_effects(self):
+    def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
 
     def construct_levels_change(
-        self, persist, red, green, blue, warm_white, cool_white, write_mode
-    ):
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
         """The bytes to send for a level change request.
 
         b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm

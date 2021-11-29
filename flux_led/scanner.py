@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 from datetime import date
 import logging
@@ -5,7 +6,7 @@ import select
 import socket
 import sys
 import time
-from typing import cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -27,7 +28,20 @@ from .models_db import get_model_description
 _LOGGER = logging.getLogger(__name__)
 
 
-def _process_discovery_message(data, decoded_data):
+class FluxLEDDiscovery(TypedDict):
+    """A flux led device."""
+
+    ipaddr: str
+    id: str  # aka mac
+    model: str
+    model_num: int
+    version_num: int
+    firmware_date: date
+    model_info: str
+    model_description: str
+
+
+def _process_discovery_message(data: Dict[str, Any], decoded_data: str) -> None:
     """Process response from b'HF-A11ASSISTHREAD'
 
     b'192.168.214.252,B4E842E10588,AK001-ZJ2145'
@@ -45,7 +59,7 @@ def _process_discovery_message(data, decoded_data):
     )
 
 
-def _process_version_message(data, decoded_data):
+def _process_version_message(data: Dict[str, Any], decoded_data: str) -> None:
     """Process response from b'AT+LVER\r'
 
     b'+ok=07_06_20210106_ZG-BL\r'
@@ -76,19 +90,6 @@ def _process_version_message(data, decoded_data):
     data[ATTR_MODEL_INFO] = data_split[3]
 
 
-class FluxLEDDiscovery(TypedDict):
-    """A flux led device."""
-
-    ipaddr: str
-    id: str  # aka mac
-    model: str
-    model_num: int
-    version_num: int
-    firmware_date: date
-    model_info: str
-    model_description: str
-
-
 class BulbScanner:
 
     DISCOVERY_PORT = 48899
@@ -100,34 +101,40 @@ class BulbScanner:
     VERSION_MESSAGE = b"AT+LVER\r"
     BROADCAST_ADDRESS = "<broadcast>"
 
-    def __init__(self):
-        self.found_bulbs = []
+    def __init__(self) -> None:
+        self.found_bulbs: List[FluxLEDDiscovery] = []
 
-    def getBulbInfoByID(self, id):
+    def getBulbInfoByID(self, id: str) -> FluxLEDDiscovery:
         for b in self.found_bulbs:
             if b["id"] == id:
                 return b
         return b
 
-    def getBulbInfo(self):
+    def getBulbInfo(self) -> List[FluxLEDDiscovery]:
         return self.found_bulbs
 
-    def _create_socket(self):
+    def _create_socket(self) -> socket.socket:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         with contextlib.suppress(Exception):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         sock.bind(("", self.DISCOVERY_PORT))
-        sock.setblocking(0)
+        sock.setblocking(False)
         return sock
 
-    def _destination_from_address(self, address):
+    def _destination_from_address(self, address: Optional[str]) -> Tuple[str, int]:
         if address is None:
             address = self.BROADCAST_ADDRESS
         return (address, self.DISCOVERY_PORT)
 
-    def _process_response(self, data, from_address, address, response_list) -> bool:
+    def _process_response(
+        self,
+        data: Optional[bytes],
+        from_address: Tuple[str, int],
+        address: Optional[str],
+        response_list: Dict[str, Dict[str, Any]],
+    ) -> bool:
         """Process a response.
 
         Returns True if processing should stop
@@ -142,7 +149,12 @@ class BulbScanner:
             return False
         return response_list.get(address, {}).get(ATTR_MODEL_NUM) is not None
 
-    def _process_data(self, from_address, decoded_data, response_list):
+    def _process_data(
+        self,
+        from_address: Tuple[str, int],
+        decoded_data: str,
+        response_list: Dict[str, Dict[str, Any]],
+    ) -> None:
         """Process data."""
         from_ipaddr = from_address[0]
         data = response_list.setdefault(from_ipaddr, {})
@@ -151,7 +163,9 @@ class BulbScanner:
         elif "," in decoded_data:
             _process_discovery_message(data, decoded_data)
 
-    def _found_bulbs(self, response_list):
+    def _found_bulbs(
+        self, response_list: Dict[str, Dict[str, Any]]
+    ) -> List[FluxLEDDiscovery]:
         """Return only complete bulb discoveries."""
 
         return [
@@ -160,13 +174,19 @@ class BulbScanner:
             if info.get(ATTR_IPADDR)
         ]
 
-    def send_discovery_messages(self, sender, destination):
+    def send_discovery_messages(
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
+    ) -> None:
         _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
         sender.sendto(self.DISCOVER_MESSAGE, destination)
         _LOGGER.debug("discover: %s => %s", destination, self.VERSION_MESSAGE)
         sender.sendto(self.VERSION_MESSAGE, destination)
 
-    def scan(self, timeout=10, address=None):
+    def scan(
+        self, timeout: int = 10, address: Optional[str] = None
+    ) -> List[FluxLEDDiscovery]:
         """Scan for bulbs.
 
         If an address is provided, the scan will return
@@ -176,7 +196,7 @@ class BulbScanner:
         destination = self._destination_from_address(address)
         # set the time at which we will quit the search
         quit_time = time.monotonic() + timeout
-        response_list = {}
+        response_list: Dict[str, Dict[str, Any]] = {}
         found_all = False
         # outer loop for query send
         while not found_all:

@@ -1,10 +1,12 @@
 import asyncio
 import contextlib
 import logging
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Coroutine, Dict, List, Optional, Tuple
+
+from flux_led.protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 
 from .aioprotocol import AIOLEDENETProtocol
-from .base_device import LEDENETDevice
+from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -18,7 +20,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,36 +32,39 @@ POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 class AIOWifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
 
-    def __init__(self, ipaddr, port=5577, timeout=5):
+    def __init__(self, ipaddr: str, port: int = 5577, timeout: int = 5) -> None:
         """Init and setup the bulb."""
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
-        self._on_futures: List[asyncio.Future] = []
-        self._off_futures: List[asyncio.Future] = []
-        self._data_future: Optional[asyncio.Future] = None
-        self._updated_callback: Optional[Callable] = None
+        self._on_futures: List["asyncio.Future[bool]"] = []
+        self._off_futures: List["asyncio.Future[bool]"] = []
+        self._data_future: Optional["asyncio.Future[bytes]"] = None
+        self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
 
-    async def async_setup(self, updated_callback):
+    async def async_setup(self, updated_callback: Callable[[], None]) -> None:
         """Setup the connection and fetch initial state."""
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
 
-    async def async_stop(self):
+    async def async_stop(self) -> None:
         """Shutdown the connection"""
         if self._aio_protocol:
             self._aio_protocol.close()
 
-    async def _async_send_state_query(self):
+    async def _async_send_state_query(self) -> None:
+        assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_execute_and_wait_for(
-        self, futures: List[asyncio.Future], coro: Callable
+        self,
+        futures: List["asyncio.Future[bool]"],
+        coro: Callable[[], Coroutine[None, None, None]],
     ) -> bool:
-        future: asyncio.Future = asyncio.Future()
+        future: "asyncio.Future[bool]" = asyncio.Future()
         futures.append(future)
         await coro()
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
@@ -124,12 +128,14 @@ class AIOWifiLedBulb(LEDENETDevice):
             )
         return False
 
-    async def async_set_white_temp(self, temperature, brightness, persist=True) -> None:
+    async def async_set_white_temp(
+        self, temperature: int, brightness: int, persist: bool = True
+    ) -> None:
         """Set the white tempature."""
         warm, cold = color_temp_to_white_levels(temperature, brightness)
         await self.async_set_levels(w=warm, w2=cold, persist=persist)
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         """Request an update.
 
         The callback will be triggered when the state is recieved.
@@ -145,14 +151,14 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_levels(
         self,
-        r=None,
-        g=None,
-        b=None,
-        w=None,
-        w2=None,
-        persist=True,
-        brightness=None,
-    ):
+        r: Optional[int] = None,
+        g: Optional[int] = None,
+        b: Optional[int] = None,
+        w: Optional[int] = None,
+        w2: Optional[int] = None,
+        persist: bool = True,
+        brightness: Optional[int] = None,
+    ) -> None:
         """Set any of the levels."""
         await self._async_process_levels_change(
             *self._generate_levels_change(
@@ -169,7 +175,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
 
     async def _async_process_levels_change(
-        self, msg: bytes, updates: Dict[str, int]
+        self, msg: bytearray, updates: Dict[str, int]
     ) -> None:
         """Process and send a levels change."""
         self._set_transition_complete_time()
@@ -186,7 +192,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._generate_preset_pattern(effect, speed, brightness)
         )
 
-    async def async_set_custom_pattern(self, rgb_list, speed, transition_type):
+    async def async_set_custom_pattern(
+        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
+    ) -> None:
         """Set a custom pattern on the device."""
         await self._async_send_msg(
             self._generate_custom_patterm(rgb_list, speed, transition_type)
@@ -230,10 +238,10 @@ class AIOWifiLedBulb(LEDENETDevice):
             await self.async_set_levels(w=brightness)
             return
 
-    async def _async_connect(self):
+    async def _async_connect(self) -> None:
         """Create connection."""
         _, self._aio_protocol = await asyncio.wait_for(
-            self.loop.create_connection(
+            self.loop.create_connection(  # type: ignore
                 lambda: AIOLEDENETProtocol(
                     self._async_data_recieved, self._async_connection_lost
                 ),
@@ -243,13 +251,15 @@ class AIOWifiLedBulb(LEDENETDevice):
             timeout=self.timeout,
         )
 
-    def _async_connection_lost(self, exc):
+    def _async_connection_lost(self, exc: Optional[Exception]) -> None:
         """Called when the connection is lost."""
         self._aio_protocol = None
         self.set_unavailable()
 
-    def _async_data_recieved(self, data):
+    def _async_data_recieved(self, data: bytes) -> None:
         """New data on the socket."""
+        assert self._protocol is not None
+        assert self._aio_protocol is not None
         start_empty_buffer = not self._buffer
         self._buffer += data
         self._updates_without_response = 0
@@ -271,11 +281,12 @@ class AIOWifiLedBulb(LEDENETDevice):
                 )
             self._async_process_message(msg)
 
-    def _async_process_message(self, msg):
+    def _async_process_message(self, msg: bytes) -> None:
         """Process a full message (maybe reassembled)."""
         if self._data_future and not self._data_future.done():
             self._data_future.set_result(msg)
             return
+        assert self._protocol is not None
         self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
@@ -296,7 +307,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         futures.clear()
         self._updated_callback()
 
-    def process_addressable_response(self, msg):
+    def process_addressable_response(self, msg: bytes) -> bool:
+        assert self._aio_protocol is not None
         _LOGGER.debug(
             "%s <= Extracted response (%s) (%d)",
             self._aio_protocol.peername,
@@ -305,19 +317,23 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
         return self.process_state_response(msg[10:-1])
 
-    async def _async_send_msg(self, msg):
+    async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""
         if not self._aio_protocol:
             async with self._lock:
                 await self._async_connect()
+        assert self._aio_protocol is not None
         self._aio_protocol.write(msg)
 
-    async def _async_determine_protocol(self):
+    async def _async_determine_protocol(self) -> None:
         # determine the type of protocol based of first 2 bytes.
-        for protocol_cls in (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal):
-            self._protocol = protocol = protocol_cls()
+        for protocol_cls in PROTOCOL_PROBES:
+            protocol = protocol_cls()
+            assert isinstance(protocol, (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal))
+            self._protocol = protocol
             async with self._lock:
                 await self._async_connect()
+                assert self._aio_protocol is not None
                 self._data_future = asyncio.Future()
                 self._aio_protocol.write(protocol.construct_state_query())
                 try:

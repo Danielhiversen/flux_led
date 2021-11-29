@@ -69,24 +69,22 @@ class utils:
     def color_tuple_to_string(rgb: Tuple[int, int, int]) -> str:
         # try to convert to an english name
         with contextlib.suppress(Exception):
-            return webcolors.rgb_to_name(rgb)
+            return cast(str, webcolors.rgb_to_name(rgb))
         return str(rgb)
 
     @staticmethod
     def get_color_names_list() -> List[str]:
         return sorted(
-            set(
-                [
-                    *webcolors.CSS2_HEX_TO_NAMES.values(),
-                    *webcolors.CSS21_HEX_TO_NAMES.values(),
-                    *webcolors.CSS3_HEX_TO_NAMES.values(),
-                    *webcolors.HTML4_HEX_TO_NAMES.values(),
-                ]
-            )
+            {
+                *webcolors.CSS2_HEX_TO_NAMES.values(),
+                *webcolors.CSS21_HEX_TO_NAMES.values(),
+                *webcolors.CSS3_HEX_TO_NAMES.values(),
+                *webcolors.HTML4_HEX_TO_NAMES.values(),
+            }
         )
 
     @staticmethod
-    def date_has_passed(dt) -> bool:
+    def date_has_passed(dt: datetime.datetime) -> bool:
         return (dt - datetime.datetime.now()).total_seconds() < 0
 
     @staticmethod
