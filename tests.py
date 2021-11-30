@@ -456,7 +456,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0x25)
         self.assertEqual(light.version_num, 4)
         self.assertEqual(light.microphone, False)
-        self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
+        self.assertEqual(light.model, "Controller RGB/WW/CW (0x25)")
         self.assertEqual(
             light.effect_list,
             [
@@ -599,7 +599,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0x25)
         self.assertEqual(light.version_num, 9)
         self.assertEqual(light.microphone, False)
-        self.assertEqual(light.model, "RGB/WW/CW Controller (0x25)")
+        self.assertEqual(light.model, "Controller RGB/WW/CW (0x25)")
         self.assertEqual(
             light.effect_list,
             [
@@ -742,7 +742,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
         self.assertEqual(light.model_num, 0x35)
         self.assertEqual(light.microphone, False)
-        self.assertEqual(light.model, "Smart Bulb RGBCW (0x35)")
+        self.assertEqual(light.model, "Bulb RGBCW (0x35)")
         self.assertEqual(
             light.effect_list,
             [
@@ -893,7 +893,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS)
         self.assertEqual(light.model_num, 0x35)
         self.assertEqual(light.microphone, False)
-        self.assertEqual(light.model, "Smart Bulb RGBCW (0x35)")
+        self.assertEqual(light.model, "Bulb RGBCW (0x35)")
         self.assertEqual(
             light.effect_list,
             [
@@ -1049,7 +1049,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGB}
         self.assertEqual(light.model_num, 0x01)
-        self.assertEqual(light.model, "Original LEDENET (0x01)")
+        self.assertEqual(light.model, "Legacy Controller RGB (0x01)")
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.white_active, True)
 
@@ -1459,7 +1459,7 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.model_num, 0x41)
-        self.assertEqual(light.model, "Single Channel Controller (0x41)")
+        self.assertEqual(light.model, "Controller Dimmable (0x41)")
         assert light.color_modes == {COLOR_MODE_DIM}
 
         self.assertEqual(mock_read.call_count, 2)
@@ -1560,7 +1560,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.model_num, 0xA2)
         self.assertEqual(light.microphone, True)
-        self.assertEqual(light.model, "RGB Symphony v2 (0xA2)")
+        self.assertEqual(light.model, "Addressable v2 (0xA2)")
         assert len(light.effect_list) == 104
         assert light.color_modes == {COLOR_MODE_RGB}
 
@@ -1633,7 +1633,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.speed_adjust_off, True)
         self.assertEqual(light.model_num, 0xA3)
         self.assertEqual(light.microphone, True)
-        self.assertEqual(light.model, "RGB Symphony v3 (0xA3)")
+        self.assertEqual(light.model, "Addressable v3 (0xA3)")
         assert len(light.effect_list) == 104
         assert light.color_modes == {COLOR_MODE_RGB}
 
@@ -1720,7 +1720,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.model_num, 0xA1)
 
-        self.assertEqual(light.model, "RGB Symphony v1 (0xA1)")
+        self.assertEqual(light.model, "Addressable v1 (0xA1)")
         assert len(light.effect_list) == 301
         assert light.color_modes == {COLOR_MODE_RGB}
 

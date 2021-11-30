@@ -126,7 +126,7 @@ async def test_reassemble(mock_aio_protocol):
     assert light.color_modes == {COLOR_MODE_RGBWW, COLOR_MODE_CCT}
     assert light.protocol == PROTOCOL_LEDENET_9BYTE
     assert light.model_num == 0x25
-    assert light.model == "RGB/WW/CW Controller (0x25)"
+    assert light.model == "Controller RGB/WW/CW (0x25)"
     assert light.is_on is True
     assert len(light.effect_list) == 21
 
@@ -735,7 +735,7 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "id": "B4E842E10588",
             "ipaddr": "192.168.213.252",
             "model": "AK001-ZJ2145",
-            "model_description": "RGB Controller with MIC",
+            "model_description": "Controller RGB with MIC",
             "model_info": "ZG-BL",
             "model_num": 8,
             "version_num": 21,
@@ -745,7 +745,7 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "id": "F4CFA23E1AAF",
             "ipaddr": "192.168.213.65",
             "model": "AK001-ZJ2104",
-            "model_description": "RGB Symphony v2",
+            "model_description": "Addressable v2",
             "model_info": "ZG-LX",
             "model_num": 162,
             "version_num": 51,
@@ -775,7 +775,7 @@ async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
             "id": "B4E842E10588",
             "ipaddr": "192.168.213.252",
             "model": "AK001-ZJ2145",
-            "model_description": "RGB Controller with MIC",
+            "model_description": "Controller RGB with MIC",
             "model_info": "ZG-BL",
             "model_num": 8,
             "version_num": 21,
@@ -786,7 +786,7 @@ async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
         "id": "B4E842E10588",
         "ipaddr": "192.168.213.252",
         "model": "AK001-ZJ2145",
-        "model_description": "RGB Controller with MIC",
+        "model_description": "Controller RGB with MIC",
         "model_info": "ZG-BL",
         "model_num": 8,
         "version_num": 21,
@@ -797,7 +797,7 @@ async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
             "id": "B4E842E10588",
             "ipaddr": "192.168.213.252",
             "model": "AK001-ZJ2145",
-            "model_description": "RGB Controller with MIC",
+            "model_description": "Controller RGB with MIC",
             "model_info": "ZG-BL",
             "model_num": 8,
             "version_num": 21,
