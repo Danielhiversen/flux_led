@@ -40,7 +40,7 @@ class MinVersionProtocol:
 class LEDENETModel:
     model_num: int  # The model number aka byte 1
     models: List[str]  # The model names from discovery
-    description: str  # Description of the model
+    description: str  # Description of the model ({type} {color_mode})
     always_writes_white_and_colors: bool  # Devices that don't require a separate rgb/w bit aka rgbwprotocol
     protocols: List[
         MinVersionProtocol
@@ -128,7 +128,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x01,
         models=[],
-        description="Original LEDENET",
+        description="Legacy Controller RGB",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ORIGINAL)],
         mode_to_color_mode={},
@@ -139,7 +139,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x04,
         models=["AK001-ZJ200"],
-        description="UFO LED WiFi Controller",  # AKA ZJ-WFUF-170F
+        description="UFO Controller RGBW",  # AKA ZJ-WFUF-170F
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -150,7 +150,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x06,
         models=["AK001-ZJ2147"],
-        description="RGBW Controller",
+        description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
         mode_to_color_mode=GENERIC_RGBW_MAP,
@@ -161,7 +161,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x07,
         models=[],
-        description="RGBCW Controller",
+        description="Controller RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS)],
         mode_to_color_mode=GENERIC_RGBWW_MAP,
@@ -172,7 +172,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x08,
         models=[],
-        description="RGB Controller with MIC",
+        description="Controller RGB with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
         mode_to_color_mode=GENERIC_RGB_MAP,
@@ -183,7 +183,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x09,
         models=[],
-        description="CCT Ceiling Light",
+        description="Ceiling Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -199,7 +199,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x0B,
         models=[],
-        description="Smart Switch 1c",
+        description="Switch 1c",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -210,7 +210,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x0E,
         models=["AK001-ZJ2104"],
-        description="Floor Lamp",
+        description="Floor Lamp RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE)],
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
@@ -292,7 +292,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x19,
         models=[],
-        description="Smart Socket 2 USB",
+        description="Socket 2 USB",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -314,7 +314,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x21,
         models=["AK001-ZJ2101", "AK001-ZJ2104"],
-        description="Smart Bulb Dimmable",
+        description="Bulb Dimmable",
         always_writes_white_and_colors=True,  # Verified required with AK001-ZJ200 bulb
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -325,7 +325,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x25,
         models=["AK001-ZJ200"],
-        description="RGB/WW/CW Controller",
+        description="Controller RGB/WW/CW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE)],
         mode_to_color_mode=BASE_MODE_MAP,
@@ -336,7 +336,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x33,
         models=["AK001-ZJ2145", "AK001-ZJ2146"],
-        description="RGB Controller",
+        description="Controller RGB",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode=GENERIC_RGB_MAP,
@@ -347,7 +347,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x35,
         models=["AK001-ZJ2145", "AK001-ZJ2101", "AK001-ZJ2104"],
-        description="Smart Bulb RGBCW",
+        description="Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
             MinVersionProtocol(9, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS),
@@ -361,7 +361,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x41,
         models=[],
-        description="Single Channel Controller",
+        description="Controller Dimmable",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},  # Only mode should be 0x41
@@ -372,7 +372,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x44,
         models=[],
-        description="Smart Bulb RGBW",
+        description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -394,7 +394,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x52,
         models=[],
-        description="Smart Bulb CCT",
+        description="Bulb CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -421,7 +421,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x62,
         models=[],
-        description="CCT Controller",
+        description="Controller CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -448,7 +448,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x93,
         models=[],
-        description="Smart Switch 1C",
+        description="Switch 1C",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -459,7 +459,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x94,
         models=[],
-        description="Smart Switch 1c Watt",
+        description="Switch 1c Watt",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -470,7 +470,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x95,
         models=[],
-        description="Smart Switch 2c",
+        description="Switch 2c",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -481,7 +481,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x96,
         models=[],
-        description="Smart Switch 4c",
+        description="Switch 4c",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -492,7 +492,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x97,  # 0x97
         models=["AK001-ZJ2134"],
-        description="Smart Socket 1c",
+        description="Socket 1c",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -503,7 +503,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA1,
         models=[],
-        description="RGB Symphony v1",
+        description="Addressable v1",
         always_writes_white_and_colors=False,
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A1)],
         mode_to_color_mode={},
@@ -514,7 +514,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA2,
         models=["AK001-ZJ2104"],
-        description="RGB Symphony v2",
+        description="Addressable v2",
         always_writes_white_and_colors=False,
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A2)],
         mode_to_color_mode={},
@@ -525,7 +525,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA3,
         models=["K001-ZJ2148"],
-        description="RGB Symphony v3",
+        description="Addressable v3",
         always_writes_white_and_colors=False,
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
         mode_to_color_mode={},
