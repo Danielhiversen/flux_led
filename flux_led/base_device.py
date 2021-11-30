@@ -125,6 +125,12 @@ PROTOCOL_NAME_TO_CLS = {
 }
 
 
+PATTERN_CODE_TO_EFFECT = {
+    PRESET_MUSIC_MODE: MODE_MUSIC,
+    EFFECT_CUSTOM_CODE: EFFECT_CUSTOM,
+}
+
+
 class DeviceType(Enum):
     Bulb = 0
     Switch = 1
@@ -342,13 +348,14 @@ class LEDENETDevice:
     @property
     def effect(self) -> Optional[str]:
         """Return the current effect."""
+        return PATTERN_CODE_TO_EFFECT.get(self.preset_pattern_num, self._named_effect)
+
+    @property
+    def _named_effect(self) -> Optional[str]:
+        """Returns the named effect."""
         assert self.raw_state is not None
-        pattern_code = self.preset_pattern_num
-        if pattern_code == PRESET_MUSIC_MODE:
-            return MODE_MUSIC
-        if pattern_code == EFFECT_CUSTOM_CODE:
-            return EFFECT_CUSTOM
         mode = self.raw_state.mode
+        pattern_code = self.preset_pattern_num
         protocol = self.protocol
         if protocol in OLD_EFFECTS_PROTOCOLS:
             effect_id = (pattern_code << 8) + mode - 99
@@ -386,7 +393,7 @@ class LEDENETDevice:
         raw_state = self.raw_state
         assert raw_state is not None
 
-        if self._mode == MODE_PRESET:
+        if self._named_effect:
             if self.dimmable_effects:
                 if (
                     self.protocol in NEW_EFFECTS_PROTOCOLS

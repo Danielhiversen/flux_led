@@ -143,7 +143,7 @@ class WifiLedBulb(LEDENETDevice):
         persist: bool = True,
         brightness: Optional[int] = None,
         w2: Optional[int] = None,
-        retry: int = 2,
+        retry: int = DEFAULT_RETRIES,
     ) -> None:
         self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
 
@@ -156,7 +156,7 @@ class WifiLedBulb(LEDENETDevice):
         w2: Optional[int] = None,
         persist: bool = True,
         brightness: Optional[int] = None,
-        retry: Optional[int] = None,
+        retry: int = DEFAULT_RETRIES,
     ) -> None:
         self._process_levels_change(
             *self._generate_levels_change(
