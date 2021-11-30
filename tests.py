@@ -1707,6 +1707,11 @@ class TestLight(unittest.TestCase):
                 return bytearray(
                     b"\x81\xA1#\x00\xa1\x01\x64\x00\x00\x00\x04\x00\xf0\x3f"
                 )
+            if calls == 4:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\xA1\x23\x00\x61\x64\x07\x00\x21\x03\x03\x01\x2C\x65"
+                )
             raise ValueError("Too many calls")
 
         mock_read.side_effect = read_data
@@ -1764,3 +1769,14 @@ class TestLight(unittest.TestCase):
         assert light.getSpeed() == 1
         light.set_effect("random", 50)
         self.assertEqual(mock_send.call_count, 5)
+
+        light.set_levels(128, 0, 0)
+        self.assertEqual(mock_read.call_count, 3)
+        self.assertEqual(mock_send.call_count, 6)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x80\x00\x00\x00\x00\xf0\x0f\xb0")),
+        )
+        light.update_state()
+        assert light.effect is None
+        assert light.brightness == 128
