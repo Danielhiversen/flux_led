@@ -13,16 +13,6 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import TypedDict
 
-from .const import (
-    ATTR_FIRMWARE_DATE,
-    ATTR_ID,
-    ATTR_IPADDR,
-    ATTR_MODEL,
-    ATTR_MODEL_DESCRIPTION,
-    ATTR_MODEL_INFO,
-    ATTR_MODEL_NUM,
-    ATTR_VERSION_NUM,
-)
 from .models_db import get_model_description
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,7 +31,7 @@ class FluxLEDDiscovery(TypedDict):
     model_description: Optional[str]
 
 
-def _process_discovery_message(data: Dict[str, Any], decoded_data: str) -> None:
+def _process_discovery_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     """Process response from b'HF-A11ASSISTHREAD'
 
     b'192.168.214.252,B4E842E10588,AK001-ZJ2145'
@@ -52,14 +42,14 @@ def _process_discovery_message(data: Dict[str, Any], decoded_data: str) -> None:
     ipaddr = data_split[0]
     data.update(
         {
-            ATTR_IPADDR: ipaddr,
-            ATTR_ID: data_split[1],
-            ATTR_MODEL: data_split[2],
+            "ipaddr": ipaddr,
+            "id": data_split[1],
+            "model": data_split[2],
         }
     )
 
 
-def _process_version_message(data: Dict[str, Any], decoded_data: str) -> None:
+def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     """Process response from b'AT+LVER\r'
 
     b'+ok=07_06_20210106_ZG-BL\r'
@@ -69,16 +59,17 @@ def _process_version_message(data: Dict[str, Any], decoded_data: str) -> None:
     if len(data_split) < 2:
         return
     try:
-        data[ATTR_MODEL_NUM] = int(data_split[0], 16)
-        data[ATTR_VERSION_NUM] = int(data_split[1], 16)
+        data["model_num"] = int(data_split[0], 16)
+        data["version_num"] = int(data_split[1], 16)
     except ValueError:
         return
-    data[ATTR_MODEL_DESCRIPTION] = get_model_description(data[ATTR_MODEL_NUM])
+    assert data["model_num"] is not None
+    data["model_description"] = get_model_description(data["model_num"])
     if len(data_split) < 3:
         return
     firmware_date = data_split[2]
     try:
-        data[ATTR_FIRMWARE_DATE] = date(
+        data["firmware_date"] = date(
             int(firmware_date[:4]),
             int(firmware_date[4:6]),
             int(firmware_date[6:8]),
@@ -87,15 +78,13 @@ def _process_version_message(data: Dict[str, Any], decoded_data: str) -> None:
         return
     if len(data_split) < 4:
         return
-    data[ATTR_MODEL_INFO] = data_split[3]
+    data["model_info"] = data_split[3]
 
 
 class BulbScanner:
 
     DISCOVERY_PORT = 48899
-    BROADCAST_FREQUENCY = (
-        5  # At least 5 for A1 models (Magic Home Branded RGB Symphony [Addressable])
-    )
+    BROADCAST_FREQUENCY = 6  # At least 6 for 0xA1 models
     RESPONSE_SIZE = 64
     DISCOVER_MESSAGE = b"HF-A11ASSISTHREAD"
     VERSION_MESSAGE = b"AT+LVER\r"
@@ -133,7 +122,7 @@ class BulbScanner:
         data: Optional[bytes],
         from_address: Tuple[str, int],
         address: Optional[str],
-        response_list: Dict[str, Dict[str, Any]],
+        response_list: Dict[str, FluxLEDDiscovery],
     ) -> bool:
         """Process a response.
 
@@ -145,34 +134,41 @@ class BulbScanner:
             return False
         decoded_data = data.decode("ascii")
         self._process_data(from_address, decoded_data, response_list)
-        if address is None:
+        if address is None or address not in response_list:
             return False
-        return response_list.get(address, {}).get(ATTR_MODEL_NUM) is not None
+        return response_list[address]["model_num"] is not None
 
     def _process_data(
         self,
         from_address: Tuple[str, int],
         decoded_data: str,
-        response_list: Dict[str, Dict[str, Any]],
+        response_list: Dict[str, FluxLEDDiscovery],
     ) -> None:
         """Process data."""
         from_ipaddr = from_address[0]
-        data = response_list.setdefault(from_ipaddr, {})
+        data = response_list.setdefault(
+            from_ipaddr,
+            FluxLEDDiscovery(
+                ipaddr=from_ipaddr,
+                id=None,
+                model=None,
+                model_num=None,
+                version_num=None,
+                firmware_date=None,
+                model_info=None,
+                model_description=None,
+            ),
+        )
         if decoded_data.startswith("+ok="):
             _process_version_message(data, decoded_data)
         elif "," in decoded_data:
             _process_discovery_message(data, decoded_data)
 
     def _found_bulbs(
-        self, response_list: Dict[str, Dict[str, Any]]
+        self, response_list: Dict[str, FluxLEDDiscovery]
     ) -> List[FluxLEDDiscovery]:
         """Return only complete bulb discoveries."""
-
-        return [
-            cast(FluxLEDDiscovery, info)
-            for info in response_list.values()
-            if info.get(ATTR_IPADDR)
-        ]
+        return [info for info in response_list.values() if info["id"]]
 
     def send_discovery_messages(
         self,
@@ -196,7 +192,7 @@ class BulbScanner:
         destination = self._destination_from_address(address)
         # set the time at which we will quit the search
         quit_time = time.monotonic() + timeout
-        response_list: Dict[str, Dict[str, Any]] = {}
+        response_list: Dict[str, FluxLEDDiscovery] = {}
         found_all = False
         # outer loop for query send
         while not found_all:
