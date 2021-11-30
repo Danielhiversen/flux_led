@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, cast
+from typing import Callable, Dict, List, Optional, Tuple, cast
 
 from .scanner import BulbScanner, FluxLEDDiscovery
 
@@ -77,7 +77,7 @@ class AIOBulbScanner(BulbScanner):
         sock = self._create_socket()
         destination = self._destination_from_address(address)
         found_all_future: "asyncio.Future[bool]" = asyncio.Future()
-        response_list: Dict[str, Dict[str, Any]] = {}
+        response_list: Dict[str, FluxLEDDiscovery] = {}
 
         def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
             _LOGGER.debug("discover: %s <= %s", addr, data)
