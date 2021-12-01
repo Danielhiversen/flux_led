@@ -1,6 +1,7 @@
 """FluxLED Models Database."""
 
 from enum import Enum
+from typing import Final
 
 
 class LevelWriteMode(Enum):
@@ -9,47 +10,47 @@ class LevelWriteMode(Enum):
     WHITES = 0x0F
 
 
-PRESET_MUSIC_MODE = 0x62
+PRESET_MUSIC_MODE: Final = 0x62
 
-ATTR_IPADDR = "ipaddr"
-ATTR_ID = "id"
-ATTR_MODEL = "model"
-ATTR_MODEL_NUM = "model_num"
-ATTR_VERSION_NUM = "version_num"
-ATTR_FIRMWARE_DATE = "firmware_date"
-ATTR_MODEL_INFO = "model_info"
-ATTR_MODEL_DESCRIPTION = "model_description"
+ATTR_IPADDR: Final = "ipaddr"
+ATTR_ID: Final = "id"
+ATTR_MODEL: Final = "model"
+ATTR_MODEL_NUM: Final = "model_num"
+ATTR_VERSION_NUM: Final = "version_num"
+ATTR_FIRMWARE_DATE: Final = "firmware_date"
+ATTR_MODEL_INFO: Final = "model_info"
+ATTR_MODEL_DESCRIPTION: Final = "model_description"
 
 # Color modes
-COLOR_MODE_DIM = "DIM"
-COLOR_MODE_CCT = "CCT"
-COLOR_MODE_RGB = "RGB"
-COLOR_MODE_RGBW = "RGBW"
-COLOR_MODE_RGBWW = "RGBWW"
-COLOR_MODE_ADDRESSABLE = "ADDRESSABLE"
+COLOR_MODE_DIM: Final = "DIM"
+COLOR_MODE_CCT: Final = "CCT"
+COLOR_MODE_RGB: Final = "RGB"
+COLOR_MODE_RGBW: Final = "RGBW"
+COLOR_MODE_RGBWW: Final = "RGBWW"
+COLOR_MODE_ADDRESSABLE: Final = "ADDRESSABLE"
 
-STATE_CHANGE_LATENCY = 1
-ADDRESSABLE_STATE_CHANGE_LATENCY = 5
-MIN_TEMP = 2700
-MAX_TEMP = 6500
+STATE_CHANGE_LATENCY: Final = 1
+ADDRESSABLE_STATE_CHANGE_LATENCY: Final = 5
+MIN_TEMP: Final = 2700
+MAX_TEMP: Final = 6500
 
 WRITE_ALL_COLORS = (LevelWriteMode.ALL, LevelWriteMode.COLORS)
 WRITE_ALL_WHITES = (LevelWriteMode.ALL, LevelWriteMode.WHITES)
 
-DEFAULT_RETRIES = 2
+DEFAULT_RETRIES: Final = 2
 
 # Modes
-MODE_SWITCH = "switch"
-MODE_COLOR = "color"
-MODE_WW = "ww"
-MODE_CUSTOM = "custom"
-MODE_MUSIC = "music"
-MODE_PRESET = "preset"
+MODE_SWITCH: Final = "switch"
+MODE_COLOR: Final = "color"
+MODE_WW: Final = "ww"
+MODE_CUSTOM: Final = "custom"
+MODE_MUSIC: Final = "music"
+MODE_PRESET: Final = "preset"
 
 # Transitions
-TRANSITION_JUMP = "jump"
-TRANSITION_STROBE = "strobe"
-TRANSITION_GRADUAL = "gradual"
+TRANSITION_JUMP: Final = "jump"
+TRANSITION_STROBE: Final = "strobe"
+TRANSITION_GRADUAL: Final = "gradual"
 
 STATIC_MODES = {MODE_COLOR, MODE_WW}
 
@@ -68,24 +69,24 @@ COLOR_MODES_RGB_W = {  # AKA RGB/W in the Magic Home Pro app
 COLOR_MODES_ADDRESSABLE = {COLOR_MODE_RGB}
 
 
-DEFAULT_MODE = COLOR_MODE_RGB
+DEFAULT_MODE: Final = COLOR_MODE_RGB
 
 
 # States
-STATE_HEAD = "head"
-STATE_MODEL_NUM = "model_num"
-STATE_POWER_STATE = "power_state"
-STATE_PRESET_PATTERN = "preset_pattern"
-STATE_MODE = "mode"
-STATE_SPEED = "speed"
-STATE_RED = "red"
-STATE_GREEN = "green"
-STATE_BLUE = "blue"
-STATE_WARM_WHITE = "warm_white"
-STATE_VERSION_NUMBER = "version_number"
-STATE_COOL_WHITE = "cool_white"
-STATE_COLOR_MODE = "color_mode"
-STATE_CHECK_SUM = "check_sum"
+STATE_HEAD: Final = "head"
+STATE_MODEL_NUM: Final = "model_num"
+STATE_POWER_STATE: Final = "power_state"
+STATE_PRESET_PATTERN: Final = "preset_pattern"
+STATE_MODE: Final = "mode"
+STATE_SPEED: Final = "speed"
+STATE_RED: Final = "red"
+STATE_GREEN: Final = "green"
+STATE_BLUE: Final = "blue"
+STATE_WARM_WHITE: Final = "warm_white"
+STATE_VERSION_NUMBER: Final = "version_number"
+STATE_COOL_WHITE: Final = "cool_white"
+STATE_COLOR_MODE: Final = "color_mode"
+STATE_CHECK_SUM: Final = "check_sum"
 
 CHANNEL_STATES = {
     STATE_RED,
