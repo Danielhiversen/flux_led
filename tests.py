@@ -904,6 +904,7 @@ class TestLight(unittest.TestCase):
                 "colorstrobe",
                 "cyan_fade",
                 "cyan_strobe",
+                "cycle_rgb",
                 "gb_cross_fade",
                 "green_fade",
                 "green_strobe",

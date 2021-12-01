@@ -20,6 +20,7 @@ EFFECT_YELLOW_STROBE = "yellow_strobe"
 EFFECT_CYAN_STROBE = "cyan_strobe"
 EFFECT_PURPLE_STROBE = "purple_strobe"
 EFFECT_WHITE_STROBE = "white_strobe"
+EFFECT_CYCLE_RGB = "cycle_rgb"
 EFFECT_COLORJUMP = "colorjump"
 EFFECT_CUSTOM = "custom"
 
@@ -45,11 +46,16 @@ EFFECT_MAP = {
     EFFECT_WHITE_STROBE: 0x37,
     EFFECT_COLORJUMP: 0x38,
 }
+EFFECT_MAP_DIMMABLE = {
+    **EFFECT_MAP,
+    EFFECT_CYCLE_RGB: 0x39,
+}
 
-EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP.items()}
+EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_DIMMABLE.items()}
 EFFECT_CUSTOM_CODE = 0x60
 
 EFFECT_LIST = sorted(EFFECT_MAP)
+EFFECT_LIST_DIMMABLE = sorted(EFFECT_MAP_DIMMABLE)
 
 ADDRESSABLE_EFFECT_ID_NAME = {
     1: "RBM 1",
@@ -478,28 +484,28 @@ ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID = {
 
 
 class PresetPattern:
-
     _instance = None
-    seven_color_cross_fade = 0x25
-    red_gradual_change = 0x26
-    green_gradual_change = 0x27
-    blue_gradual_change = 0x28
-    yellow_gradual_change = 0x29
-    cyan_gradual_change = 0x2A
-    purple_gradual_change = 0x2B
-    white_gradual_change = 0x2C
-    red_green_cross_fade = 0x2D
-    red_blue_cross_fade = 0x2E
-    green_blue_cross_fade = 0x2F
-    seven_color_strobe_flash = 0x30
-    red_strobe_flash = 0x31
-    green_strobe_flash = 0x32
-    blue_strobe_flash = 0x33
-    yellow_strobe_flash = 0x34
-    cyan_strobe_flash = 0x35
-    purple_strobe_flash = 0x36
-    white_strobe_flash = 0x37
-    seven_color_jumping = 0x38
+    seven_color_cross_fade = EFFECT_MAP[EFFECT_COLORLOOP]
+    red_gradual_change = EFFECT_MAP[EFFECT_RED_FADE]
+    green_gradual_change = EFFECT_MAP[EFFECT_GREEN_FADE]
+    blue_gradual_change = EFFECT_MAP[EFFECT_BLUE_FADE]
+    yellow_gradual_change = EFFECT_MAP[EFFECT_YELLOW_FADE]
+    cyan_gradual_change = EFFECT_MAP[EFFECT_CYAN_FADE]
+    purple_gradual_change = EFFECT_MAP[EFFECT_PURPLE_FADE]
+    white_gradual_change = EFFECT_MAP[EFFECT_WHITE_FADE]
+    red_green_cross_fade = EFFECT_MAP[EFFECT_RED_GREEN_CROSS_FADE]
+    red_blue_cross_fade = EFFECT_MAP[EFFECT_RED_BLUE_CROSS_FADE]
+    green_blue_cross_fade = EFFECT_MAP[EFFECT_GREEN_BLUE_CROSS_FADE]
+    seven_color_strobe_flash = EFFECT_MAP[EFFECT_COLORSTROBE]
+    red_strobe_flash = EFFECT_MAP[EFFECT_RED_STROBE]
+    green_strobe_flash = EFFECT_MAP[EFFECT_GREEN_STROBE]
+    blue_strobe_flash = EFFECT_MAP[EFFECT_BLUE_STROBE]
+    yellow_strobe_flash = EFFECT_MAP[EFFECT_YELLOW_STROBE]
+    cyan_strobe_flash = EFFECT_MAP[EFFECT_CYAN_STROBE]
+    purple_strobe_flash = EFFECT_MAP[EFFECT_PURPLE_STROBE]
+    white_strobe_flash = EFFECT_MAP[EFFECT_WHITE_STROBE]
+    seven_color_jumping = EFFECT_MAP[EFFECT_COLORJUMP]
+    cycle_rgb = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_RGB]
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
@@ -517,7 +523,7 @@ class PresetPattern:
 
     @staticmethod
     def valid(pattern: int) -> bool:
-        if pattern >= 0x25 and pattern <= 0x38 or pattern >= 0x61 and pattern <= 0x63:
+        if pattern >= 0x25 and pattern <= 0x39 or pattern >= 0x61 and pattern <= 0x63:
             return True
         return False
 
