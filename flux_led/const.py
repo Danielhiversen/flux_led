@@ -1,7 +1,12 @@
 """FluxLED Models Database."""
 
 from enum import Enum
-from typing import Final
+import sys
+
+if sys.version_info >= (3, 8):
+    from typing import Final  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import Final
 
 
 class LevelWriteMode(Enum):
