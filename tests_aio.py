@@ -706,6 +706,11 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert light.color_temp == 6500
     assert light.brightness == 255
 
+    transport.reset_mock()
+    await light.async_set_effect("random", 50)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3\x00")
+
 
 @pytest.mark.asyncio
 async def test_async_scanner(mock_discovery_aio_protocol):

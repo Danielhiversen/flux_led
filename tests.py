@@ -994,6 +994,12 @@ class TestLight(unittest.TestCase):
         with pytest.raises(ValueError):
             light.set_effect("unknown", 50)
 
+        with pytest.raises(ValueError):
+            light.setPresetPattern(0x38, 50, 200)
+
+        with pytest.raises(ValueError):
+            light.setPresetPattern(0x99, 50, 100)
+
         light._transition_complete_time = 0
         light.update_state()
         self.assertEqual(mock_read.call_count, 4)
@@ -1121,6 +1127,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "color")
         self.assertEqual(light.warm_white, 0)
+        self.assertEqual(light.cool_white, 0)
         self.assertEqual(light.brightness, 80)
         self.assertEqual(light.getRgb(), (1, 25, 80))
         self.assertEqual(light.version_num, 1)
@@ -1554,6 +1561,11 @@ class TestLight(unittest.TestCase):
                 return bytearray(
                     b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
                 )
+            if calls == 4:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\xA2#\x24\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd3"
+                )
             raise ValueError("Too many calls")
 
         mock_read.side_effect = read_data
@@ -1606,6 +1618,20 @@ class TestLight(unittest.TestCase):
         assert light.effect == "RBM 1"
         assert light.brightness == 255
         assert light.getSpeed() == 16
+        light.update_state()
+        self.assertEqual(
+            light.__str__(),
+            "ON  [Pattern: Multi Color Static (Speed 16%) raw state: 129,162,35,36,1,16,100,0,0,0,4,0,240,211,]",
+        )
+        assert light.effect == "Multi Color Static"
+        assert light.brightness == 255
+        assert light.getSpeed() == 16
+
+        with pytest.raises(ValueError):
+            light.setPresetPattern(1, 50, 200)
+
+        with pytest.raises(ValueError):
+            light.setPresetPattern(105, 50, 100)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1781,3 +1807,9 @@ class TestLight(unittest.TestCase):
         light.update_state()
         assert light.effect is None
         assert light.brightness == 128
+
+        with pytest.raises(ValueError):
+            light.setPresetPattern(1, 50, 200)
+
+        with pytest.raises(ValueError):
+            light.setPresetPattern(305, 50, 100)
