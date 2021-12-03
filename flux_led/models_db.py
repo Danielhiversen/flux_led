@@ -149,7 +149,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x06,
-        models=["AK001-ZJ2147"],
+        models=["AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
@@ -302,7 +302,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x1C,
-        models=[],
+        models=["AK001-ZJ2149"],
         description="Table Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_CCT)],
@@ -335,7 +335,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x33,
-        models=["AK001-ZJ2145", "AK001-ZJ2146"],
+        models=["AK001-ZJ2145", "AK001-ZJ2146", "AK001-ZJ210"],
         description="Controller RGB",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
@@ -346,7 +346,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x35,
-        models=["AK001-ZJ2145", "AK001-ZJ2101", "AK001-ZJ2104"],
+        models=["AK001-ZJ2101", "AK001-ZJ2104", "AK001-ZJ2145", "AK001-ZJ2146"],
         description="Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
@@ -360,7 +360,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x41,
-        models=[],
+        models=["AK001-ZJ2104"],
         description="Controller Dimmable",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
@@ -524,7 +524,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA3,
-        models=["K001-ZJ2148"],
+        models=["AK001-ZJ2147", "AK001-ZJ2148"],
         description="Addressable v3",
         always_writes_white_and_colors=False,
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
@@ -546,7 +546,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xE1,
-        models=[],
+        models=["AK001-ZJ2104"],
         description="Ceiling Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
