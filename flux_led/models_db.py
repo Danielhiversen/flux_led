@@ -149,6 +149,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x06,
+        # AK001-ZJ2147 has RF remote support
         models=["AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -160,7 +161,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x07,
-        models=[],
+        # AK001-ZJ2146 has RF remote support
+        models=["AK001-ZJ2146"],
         description="Controller RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS)],
@@ -302,6 +304,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x1C,
+        # AK001-ZJ2149 has RF remote support
         models=["AK001-ZJ2149"],
         description="Table Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -346,6 +349,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x35,
+        # AK001-ZJ2146 40w flood light, newer smart bulbs (with RF remote control support)
         models=["AK001-ZJ2101", "AK001-ZJ2104", "AK001-ZJ2145", "AK001-ZJ2146"],
         description="Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -502,7 +506,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA1,
-        models=[],
+        models=["AK001-ZJ210"],
         description="Addressable v1",
         always_writes_white_and_colors=False,
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A1)],
@@ -524,6 +528,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA3,
+        # AK001-ZJ2147 has RF remote support
+        # AK001-ZJ2148 has RF remote support
         models=["AK001-ZJ2147", "AK001-ZJ2148"],
         description="Addressable v3",
         always_writes_white_and_colors=False,
