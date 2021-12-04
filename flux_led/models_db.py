@@ -326,11 +326,15 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x21,
+        # 'AK001-ZJ2104' is v2
         # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         models=["AK001-ZJ2101", "AK001-ZJ2104"],
         description="Bulb Dimmable",
         always_writes_white_and_colors=True,  # Verified required with AK001-ZJ200 bulb
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[
+            MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+        ],
         mode_to_color_mode={},
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
         channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
@@ -392,11 +396,15 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x41,
+        # 'AK001-ZJ2104' is v2
         # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         models=["AK001-ZJ2104"],
         description="Controller Dimmable",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[
+            MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+        ],
         mode_to_color_mode={},  # Only mode should be 0x41
         color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
         channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},

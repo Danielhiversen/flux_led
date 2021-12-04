@@ -1611,7 +1611,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,0,0,255,4,0,240,138,]",
         )
-        self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE_AUTO_ON)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "ww")
         self.assertEqual(light.warm_white, 0)
@@ -1673,7 +1673,7 @@ class TestLight(unittest.TestCase):
             "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,255,255,255,4,0,240,239,]",
         )
         self.assertEqual(light.dimmable_effects, False)
-        self.assertEqual(light.requires_turn_on, True)
+        self.assertEqual(light.requires_turn_on, False)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
