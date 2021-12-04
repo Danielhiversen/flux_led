@@ -376,6 +376,7 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await task
     assert light.model_num == 0x33
     assert light.dimmable_effects is False
+    assert light.requires_turn_on is True
 
     transport.reset_mock()
     with pytest.raises(ValueError):
@@ -404,6 +405,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await task
     assert light.model_num == 0xA3
     assert light.dimmable_effects is True
+    assert light.requires_turn_on is False
 
     transport.reset_mock()
     await light.async_set_effect("random", 50)

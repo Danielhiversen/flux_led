@@ -319,6 +319,12 @@ class LEDENETDevice:
         return self._protocol.dimmable_effects
 
     @property
+    def requires_turn_on(self) -> bool:
+        """Return true of the device requires a power on command before setting levels/effects."""
+        assert self._protocol is not None
+        return self._protocol.requires_turn_on
+
+    @property
     def is_on(self) -> bool:
         assert self.raw_state is not None
         assert self._protocol is not None
