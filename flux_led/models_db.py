@@ -19,8 +19,10 @@ from .const import (
 )
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_AUTO_ON,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_9BYTE_AUTO_ON,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
@@ -149,6 +151,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x06,
+        # "AK001-ZJ2145" == v2
+        # "AK001-ZJ2147" == v3
         # AK001-ZJ2147 has RF remote support
         models=["AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGBW",
@@ -161,6 +165,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x07,
+        # "AK001-ZJ2146" == v2
         # AK001-ZJ2146 has RF remote support
         models=["AK001-ZJ2146"],
         description="Controller RGBCW",
@@ -173,7 +178,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x08,
-        models=[],
+        models=["AK001-ZJ2147"],
         description="Controller RGB with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
@@ -210,11 +215,16 @@ MODELS = [
         microphone=False,
     ),
     LEDENETModel(
+        # 'AK001-ZJ2104' likely supports turning on by effect/levels set
+        # 'AK001-ZJ2104' is v7
         model_num=0x0E,
         models=["AK001-ZJ2104"],
         description="Floor Lamp RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE)],
+        protocols=[
+            MinVersionProtocol(7, PROTOCOL_LEDENET_9BYTE_AUTO_ON),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE),
+        ],
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
@@ -316,6 +326,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x21,
+        # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         models=["AK001-ZJ2101", "AK001-ZJ2104"],
         description="Bulb Dimmable",
         always_writes_white_and_colors=True,  # Verified required with AK001-ZJ200 bulb
@@ -338,11 +349,21 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x33,
-        models=["AK001-ZJ2145", "AK001-ZJ2146", "AK001-ZJ210"],
+        # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
+        # "AK001-ZJ2145" == v9
+        # "AK001-ZJ2146" == v10
+        models=[
+            "AK001-ZJ2104",
+            "AK001-ZJ2101",
+            "AK001-ZJ2145",
+            "AK001-ZJ2146",
+            "AK001-ZJ210",
+        ],
         description="Controller RGB",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[
             MinVersionProtocol(9, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(7, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
             MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
         ],
         mode_to_color_mode=GENERIC_RGB_MAP,
@@ -367,6 +388,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x41,
+        # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         models=["AK001-ZJ2104"],
         description="Controller Dimmable",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -520,6 +542,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA2,
+        # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         models=["AK001-ZJ2104"],
         description="Addressable v2",
         always_writes_white_and_colors=False,

@@ -17,8 +17,10 @@ _LOGGER = logging.getLogger(__name__)
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
+PROTOCOL_LEDENET_9BYTE_AUTO_ON = "LEDENET_AUTO_ON"
 PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS = "LEDENET_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
+PROTOCOL_LEDENET_8BYTE_AUTO_ON = "LEDENET_8BYTES_AUTO_ON"
 PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
 PROTOCOL_LEDENET_ADDRESSABLE_A1 = "LEDENET_ADDRESSABLE_A1"
 PROTOCOL_LEDENET_ADDRESSABLE_A2 = "LEDENET_ADDRESSABLE_A2"
@@ -533,16 +535,27 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return self.is_checksum_correct(data)
 
 
-class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
-    @property
-    def dimmable_effects(self) -> bool:
-        """Protocol supports dimmable effects."""
-        return True
+class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
+    """Protocol that uses 8 bytes, and turns on by changing levels or effects."""
 
     @property
     def requires_turn_on(self) -> bool:
         """If True the device must be turned on before setting level/patterns/modes."""
         return False
+
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_8BYTE_AUTO_ON
+
+
+class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
+    """Protocol that uses 8 bytes, and supports dimmable effects and auto on by changing levels or effects."""
+
+    @property
+    def dimmable_effects(self) -> bool:
+        """Protocol supports dimmable effects."""
+        return True
 
     @property
     def name(self) -> str:
@@ -605,7 +618,21 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         )
 
 
-class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
+class ProtocolLEDENET9ByteAutoOn(ProtocolLEDENET9Byte):
+    """Protocol that uses 9 bytes, and turns on by changing levels or effects."""
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
+
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_9BYTE_AUTO_ON
+
+
+class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
     @property
@@ -617,11 +644,6 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
-
-    @property
-    def requires_turn_on(self) -> bool:
-        """If True the device must be turned on before setting level/patterns/modes."""
-        return False
 
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
