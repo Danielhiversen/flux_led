@@ -184,14 +184,15 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     caplog.clear()
     caplog.set_level(logging.DEBUG)
     # Handle the failure case
-    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         await asyncio.create_task(light.async_turn_off())
         assert light.is_on is True
-        assert "Failed to turn off (1/3)" in caplog.text
-        assert "Failed to turn off (2/3)" in caplog.text
-        assert "Failed to turn off (3/3)" in caplog.text
+        assert "Failed to turn off (1/4)" in caplog.text
+        assert "Failed to turn off (2/4)" in caplog.text
+        assert "Failed to turn off (3/4)" in caplog.text
+        assert "Failed to turn off (4/4)" in caplog.text
 
-    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         task = asyncio.create_task(light.async_turn_off())
         # Do NOT wait for the future to get added, we know the retry logic works
         light._aio_protocol.data_received(
@@ -205,12 +206,13 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     caplog.clear()
     caplog.set_level(logging.DEBUG)
     # Handle the failure case
-    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.05):
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         await asyncio.create_task(light.async_turn_on())
         assert light.is_on is False
-        assert "Failed to turn on (1/3)" in caplog.text
-        assert "Failed to turn on (2/3)" in caplog.text
-        assert "Failed to turn on (3/3)" in caplog.text
+        assert "Failed to turn on (1/4)" in caplog.text
+        assert "Failed to turn on (2/4)" in caplog.text
+        assert "Failed to turn on (3/4)" in caplog.text
+        assert "Failed to turn on (4/4)" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -817,7 +819,7 @@ async def test_async_scanner_times_out_with_nothing(mock_discovery_aio_protocol)
     """Test scanner."""
     scanner = AIOBulbScanner()
 
-    task = asyncio.ensure_future(scanner.async_scan(timeout=0.05))
+    task = asyncio.ensure_future(scanner.async_scan(timeout=0.025))
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task
     assert data == []
@@ -831,7 +833,7 @@ async def test_async_scanner_times_out_with_nothing_specific_address(
     scanner = AIOBulbScanner()
 
     task = asyncio.ensure_future(
-        scanner.async_scan(timeout=0.05, address="192.168.213.252")
+        scanner.async_scan(timeout=0.025, address="192.168.213.252")
     )
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task

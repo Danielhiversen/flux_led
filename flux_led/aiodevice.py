@@ -94,7 +94,12 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_turn_on(self) -> bool:
         """Turn on the device."""
-        calls = (self._async_turn_on, self._async_turn_off_on, self._async_turn_on)
+        calls = (
+            self._async_turn_on,
+            self._async_turn_off_on,
+            self._async_turn_on,
+            self._async_turn_on,
+        )
         for idx, call in enumerate(calls):
             if (
                 await self._async_execute_and_wait_for(self._on_futures, call)
@@ -116,7 +121,12 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_turn_off(self) -> bool:
         """Turn off the device."""
-        calls = (self._async_turn_off, self._async_turn_on_off, self._async_turn_off)
+        calls = (
+            self._async_turn_off,
+            self._async_turn_on_off,
+            self._async_turn_off,
+            self._async_turn_off,
+        )
         for idx, call in enumerate(calls):
             if (
                 await self._async_execute_and_wait_for(self._off_futures, call)
