@@ -341,7 +341,10 @@ MODELS = [
         models=["AK001-ZJ2145", "AK001-ZJ2146", "AK001-ZJ210"],
         description="Controller RGB",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[
+            MinVersionProtocol(9, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+        ],
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
