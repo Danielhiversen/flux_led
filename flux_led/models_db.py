@@ -354,6 +354,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x33,
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
+        # 'AK001-ZJ2101' == v8
         # "AK001-ZJ2145" == v9
         # "AK001-ZJ2146" == v10
         models=[
