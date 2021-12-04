@@ -55,8 +55,10 @@ from .pattern import (
 )
 from .protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_AUTO_ON,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_9BYTE_AUTO_ON,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
@@ -66,8 +68,10 @@ from .protocol import (
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
+    ProtocolLEDENET8ByteAutoOn,
     ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
+    ProtocolLEDENET9ByteAutoOn,
     ProtocolLEDENET9ByteDimmableEffects,
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
@@ -88,8 +92,10 @@ PROTOCOL_PROBES: Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]
 
 PROTOCOL_TYPES = Union[
     ProtocolLEDENET8Byte,
+    ProtocolLEDENET8ByteAutoOn,
     ProtocolLEDENET8ByteDimmableEffects,
     ProtocolLEDENET9Byte,
+    ProtocolLEDENET9ByteAutoOn,
     ProtocolLEDENET9ByteDimmableEffects,
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
@@ -116,8 +122,10 @@ SPEED_ADJUST_WILL_TURN_ON = {
 PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ORIGINAL: ProtocolLEDENETOriginal,
     PROTOCOL_LEDENET_8BYTE: ProtocolLEDENET8Byte,
+    PROTOCOL_LEDENET_8BYTE_AUTO_ON: ProtocolLEDENET8ByteAutoOn,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS: ProtocolLEDENET8ByteDimmableEffects,
     PROTOCOL_LEDENET_9BYTE: ProtocolLEDENET9Byte,
+    PROTOCOL_LEDENET_9BYTE_AUTO_ON: ProtocolLEDENET9ByteAutoOn,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS: ProtocolLEDENET9ByteDimmableEffects,
     PROTOCOL_LEDENET_ADDRESSABLE_A3: ProtocolLEDENETAddressableA3,
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
