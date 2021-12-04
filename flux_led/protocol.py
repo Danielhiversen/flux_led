@@ -141,6 +141,11 @@ class ProtocolBase:
         self._counter = 0
         super().__init__()
 
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return True
+
     def _increment_counter(self) -> int:
         """Increment the counter byte."""
         self._counter += 1
@@ -535,6 +540,11 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8Byte):
         return True
 
     @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
+
+    @property
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
@@ -608,6 +618,11 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
 
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
+
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
     ) -> bytearray:
@@ -625,6 +640,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
     @property
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
+        return False
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
         return False
 
     def construct_preset_pattern(
@@ -647,6 +667,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
 
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
@@ -759,6 +784,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return True
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
 
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
@@ -919,6 +949,11 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     @property
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
+        return False
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
         return False
 
     def construct_levels_change(

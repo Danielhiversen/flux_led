@@ -534,6 +534,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgbcw(), (182, 0, 152, 37, 25))
         self.assertEqual(light.rgbwcapable, True)
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.requires_turn_on, True)
         self.assertEqual(
             light.__str__(),
             "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,4,37,15,222,]",
@@ -677,6 +678,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgbcw(), (182, 0, 152, 37, 25))
         self.assertEqual(light.rgbwcapable, True)
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.requires_turn_on, True)
         self.assertEqual(
             light.__str__(),
             "ON  [Color: (182, 0, 152) White: 25 raw state: 129,37,35,97,5,16,182,0,152,25,9,37,15,227,]",
@@ -823,6 +825,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgbcw(), (255, 255, 255, 255, 255))
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.requires_turn_on, True)
         self.assertEqual(
             light.__str__(),
             (
@@ -975,6 +978,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgbcw(), (255, 255, 255, 255, 255))
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.dimmable_effects, True)
+        self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(
             light.__str__(),
             (
@@ -1058,6 +1062,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0x01)
         self.assertEqual(light.model, "Legacy Controller RGB (0x01)")
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.requires_turn_on, True)
         self.assertEqual(light.white_active, True)
 
         self.assertEqual(mock_read.call_count, 3)
@@ -1540,6 +1545,7 @@ class TestLight(unittest.TestCase):
             "ON  [Warm White: 100% raw state: 129,65,35,97,65,16,0,255,255,255,4,0,240,239,]",
         )
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.requires_turn_on, True)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1593,6 +1599,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
         self.assertEqual(light.dimmable_effects, True)
+        self.assertEqual(light.requires_turn_on, False)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1680,6 +1687,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
         self.assertEqual(light.dimmable_effects, True)
+        self.assertEqual(light.requires_turn_on, False)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1745,6 +1753,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(light.model_num, 0xA1)
 
         self.assertEqual(light.model, "Addressable v1 (0xA1)")
