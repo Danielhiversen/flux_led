@@ -373,12 +373,16 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x35,
-        # AK001-ZJ2146 40w flood light, newer smart bulbs (with RF remote control support)
+        # 'AK001-ZJ2101' and 'AK001-ZJ2104' is v7
+        # 'AK001-ZJ2145' is v8
+        # 'AK001-ZJ2146' is v9
+        # 'AK001-ZJ2146' 40w flood light, newer smart bulbs (with RF remote control support)
         models=["AK001-ZJ2101", "AK001-ZJ2104", "AK001-ZJ2145", "AK001-ZJ2146"],
         description="Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
             MinVersionProtocol(9, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(7, PROTOCOL_LEDENET_9BYTE_AUTO_ON),
             MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE),
         ],
         mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
