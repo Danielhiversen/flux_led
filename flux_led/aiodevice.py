@@ -38,7 +38,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
-        self._ic_future: asyncio.Future = asyncio.Future()
+        self._ic_future: "asyncio.Future[bool]" = asyncio.Future()
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
         self._data_future: Optional["asyncio.Future[bytes]"] = None
