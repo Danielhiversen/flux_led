@@ -302,7 +302,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         prev_state = self.raw_state
         if self._protocol.is_valid_addressable_response(msg):
             self.process_addressable_response(msg)
-        if self._protocol.is_valid_state_response(msg):
+        elif self._protocol.is_valid_state_response(msg):
             self.process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
