@@ -1825,18 +1825,18 @@ class TestLight(unittest.TestCase):
             mock_send.call_args,
             mock.call(
                 bytearray(
-                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\rA\x01\x00\xff\x00\x00\x00\x00\x06\x01\x00\x00Hf"
+                    b'\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\rA\x01\x00\xff\x00\x00\x00\x00\x06\x01\x00\x00He'
                 )
             ),
         )
 
         light.set_effect("RBM 1", 50)
         self.assertEqual(mock_read.call_count, 2)
-        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(mock_send.call_count, 3)   
         self.assertEqual(
             mock_send.call_args,
             mock.call(
-                bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\x00\xa8")
+                bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\x00\xa7')
             ),
         )
         light._transition_complete_time = 0
@@ -1853,15 +1853,15 @@ class TestLight(unittest.TestCase):
             2, [(255, 255, 255), (0, 255, 0)], 100, MultiColorEffects.STATIC
         )
         assert data == (
-            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x0fY\x00\x0f\xff\xff\xff"
-            b"\x00\xff\x00\x00\x1e\x01d\x00\xe7\xa8"
+            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0fY\x00\x0f\xff\xff\xff"
+            b"\x00\xff\x00\x00\x1e\x01d\x00\xe7\xa7"
         )
         data = light._protocol.construct_zone_change(
             4, [(255, 255, 255), (0, 255, 0)], 100, MultiColorEffects.STATIC
         )
         assert data == (
-            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x15Y\x00\x15\xff\xff\xff"
-            b"\xff\xff\xff\x00\xff\x00\x00\xff\x00\x00\x1e\x01d\x00\xe9\xb3"
+            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x15Y\x00\x15\xff\xff\xff"
+            b"\xff\xff\xff\x00\xff\x00\x00\xff\x00\x00\x1e\x01d\x00\xe9\xb2"
         )
 
     @patch("flux_led.WifiLedBulb._send_msg")
