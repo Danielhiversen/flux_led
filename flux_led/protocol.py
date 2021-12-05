@@ -997,7 +997,8 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         """
         zones = 50
         sent_zones = len(rgb_list)
-        pixels = bytearray([0x01, 0x35])
+        pixel_bits = 9 + (zones * 3)
+        pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
         msg = bytearray([0x59])
         msg.extend(pixels)
         zone_size = zones // sent_zones
