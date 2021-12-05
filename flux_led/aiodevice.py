@@ -6,7 +6,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 from flux_led.protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 
 from .aioprotocol import AIOLEDENETProtocol
-from .base_device import PROTOCOL_PROBES, LEDENETDevice
+from .base_device import PROTOCOL_PROBES, LEDENETDevice, ADDRESSABLE_PROTOCOLS
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -49,6 +49,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Setup the connection and fetch initial state."""
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
+        if self.protocol in ADDRESSABLE_PROTOCOLS:
+            self._async_send_msg(self._protocol.construct_request_strip_setting())
 
     async def async_stop(self) -> None:
         """Shutdown the connection"""

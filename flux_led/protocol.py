@@ -655,7 +655,13 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
 
 
-class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
+
+    @property
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_message(bytearray[0x63, 0x12, 0x21])
+
+class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -681,7 +687,7 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
         )
 
 
-class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -830,7 +836,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         return self.construct_message(msg)
 
 
-class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
     @property
     def name(self) -> str:
         """The name of the protocol."""
