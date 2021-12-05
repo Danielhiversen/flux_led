@@ -39,11 +39,11 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
-LEDENET_IC_STATE_RESPONSE_LEN = 10
-# pos  0  1  2  3  4  5  6  7  8  9
-#    63 00 3c 04 00 00 00 00 00 02
-#     |  |  |  |  |  |  |  |  |  |
-#     |  |  |  |  |  |  |  |  |  checksum
+LEDENET_IC_STATE_RESPONSE_LEN = 11
+# pos  0  1  2  3  4  5  6  7  8  9 10
+#    00 63 00 3c 04 00 00 00 00 00 02
+#     |  |  |  |  |  |  |  |  |  |  checksum
+#     |  |  |  |  |  |  |  |  |  ??
 #     |  |  |  |  |  |  |  |  ??
 #     |  |  |  |  |  |  |  ??
 #     |  |  |  |  |  |  ??
@@ -72,7 +72,7 @@ MSG_FIRST_BYTE = {
     0x66: MSG_ORIGINAL_STATE,
     0x81: MSG_STATE,
     0xB0: MSG_ADDRESSABLE_STATE,
-    0x63: MSG_IC_CONFIG,
+    0x00: MSG_IC_CONFIG,
 }
 MSG_LENGTHS = {
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
@@ -167,6 +167,11 @@ class ProtocolBase:
     def requires_turn_on(self) -> bool:
         """If True the device must be turned on before setting level/patterns/modes."""
         return True
+
+    @property
+    def zones(self) -> bool:
+        """If the protocol supports zones."""
+        return False
 
     def _increment_counter(self) -> int:
         """Increment the counter byte."""
@@ -685,16 +690,6 @@ class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
     def construct_request_strip_setting(self) -> bytearray:
         return self.construct_message(bytearray([0x63, 0x12, 0x21]))
 
-    def is_start_of_ic_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an ic state response."""
-        return data[0] == 0x63
-
-    def is_valid_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is a valid addressable state response."""
-        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
-            return False
-        return self.is_checksum_correct(data)
-
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     @property
@@ -726,7 +721,6 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
     # ic response
     # 0x96 0x63 0x00 0x32 0x00 0x01 0x01 0x04 0x32 0x01 0x64 (11)
-
 
     @property
     def name(self) -> str:
@@ -878,8 +872,24 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
 
-    # ic response -- we should wrap with b0
+    # ic response
     # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
+    # b0 b1 b2 b3 00 01 01 37 00 0b 00 63 00 32 00 01 04 03 32 01 d0 aa
+
+    @property
+    def zones(self) -> bool:
+        """If the protocol supports zones."""
+        return True
+
+    def is_start_of_ic_response(self, data: bytes) -> bool:
+        """Check if a message is the start of an ic state response."""
+        return data.startswith(bytearray([0x00, 0x63]))
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
+        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
+            return False
+        return self.is_checksum_correct(data)
 
     @property
     def name(self) -> str:
@@ -1044,6 +1054,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
 
     def construct_zone_change(
         self,
+        points: int,  # the number of points on the strip
         rgb_list: List[Tuple[int, int, int]],
         speed: int,
         effect: MultiColorEffects,
@@ -1075,7 +1086,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         Red - Brething
         590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
         """
-        points = 50  # TODO: we need to get this from the strip
         sent_zones = len(rgb_list)
         pixel_bits = 9 + (points * 3)
         pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])

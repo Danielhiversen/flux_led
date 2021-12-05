@@ -6,8 +6,9 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 from flux_led.protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 
 from .aioprotocol import AIOLEDENETProtocol
-from .base_device import PROTOCOL_PROBES, LEDENETDevice, ADDRESSABLE_PROTOCOLS
+from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
+    MultiColorEffects,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -37,12 +38,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
+        self._ic_future: asyncio.Future = asyncio.Future()
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
         self._data_future: Optional["asyncio.Future[bytes]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
-        self._pixels: Optional[int] = None
+        self._pixels_per_segment: Optional[int] = None
+        self._segments: Optional[int] = None
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
 
@@ -50,8 +53,13 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Setup the connection and fetch initial state."""
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
-        if self.protocol in ADDRESSABLE_PROTOCOLS:
-            await self._async_send_msg(self._protocol.construct_request_strip_setting())
+        if not self._protocol.zones:
+            return
+        await self._async_send_msg(self._protocol.construct_request_strip_setting())
+        try:
+            await asyncio.wait_for(self._ic_future, timeout=self.timeout)
+        except asyncio.TimeoutError:
+            raise RuntimeError("Could not determine number pixels")
 
     async def async_stop(self) -> None:
         """Shutdown the connection"""
@@ -224,6 +232,19 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._effect_to_pattern(effect), speed, brightness
         )
 
+    async def async_set_zones(
+        self,         
+        rgb_list: List[Tuple[int, int, int]],
+        speed: int,
+        effect: MultiColorEffects,
+    ) -> None:
+        """Set zones."""
+        if not self._protocol.zones:
+            raise ValueError("{self.protocol} does not support zones")
+        await self._async_send_msg(self._protocol.construct_zone_change(
+            self._pixels_per_segment, rgb_list, speed, effect
+        ))
+
     async def async_set_random(self) -> None:
         """Set levels randomly."""
         await self._async_process_levels_change(*self._generate_random_levels_change())
@@ -303,7 +324,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
-        _LOGGER.debug("msg: %s", msg)
         if self._protocol.is_valid_addressable_response(msg):
             self.process_addressable_response(msg)
         if self._protocol.is_valid_state_response(msg):
@@ -325,10 +345,22 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     def process_ic_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
-        high_byte = msg[1]
-        low_byte = msg[0]
-        self._pixels = (high_byte << 8) + low_byte
-        _LOGGER.debug("Pixel count is: %s", self._pixels)
+        high_byte = msg[2]
+        low_byte = msg[3]
+        self._pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug(
+            "Pixel count (high: %s, low: %s) is: %s",
+            hex(high_byte),
+            hex(low_byte),
+            self._pixels_per_segment,
+        )
+        self._segments = msg[5]
+        _LOGGER.debug(
+            "Segment count (%s) is: %s",
+            hex(msg[5]),
+            self._segments,
+        )        
+        self._ic_future.set_result(True)
 
     def process_addressable_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
