@@ -995,7 +995,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         Red - Brething
         590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
         """
-        zones = 100
+        zones = 50
         sent_zones = len(rgb_list)
         pixels = bytearray([0x01, 0x35])
         msg = bytearray([0x59])
