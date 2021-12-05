@@ -470,16 +470,20 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
         [(255, 0, 0), (0, 0, 255)], 100, MultiColorEffects.STROBE
     )
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == (b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00TY\x00T\xff\x00\x00'
-          b'\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff'
-          b'\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00'
-          b'\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff'
-          b'\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00'
-          b'\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O')
+    assert transport.mock_calls[0][1][0] == (
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00TY\x00T\xff\x00\x00"
+        b"\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
+        b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
+        b"\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
+        b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
+        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O"
+    )
 
 
 @pytest.mark.asyncio
-async def test_async_failed_callback(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+async def test_async_failed_callback(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
     """Test we log on failed callback."""
     light = AIOWifiLedBulb("192.168.1.166")
     caplog.set_level(logging.DEBUG)
@@ -499,6 +503,7 @@ async def test_async_failed_callback(mock_aio_protocol, caplog: pytest.LogCaptur
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
     assert "something went wrong" in caplog.text
+
 
 @pytest.mark.asyncio
 async def test_async_set_custom_effect(
