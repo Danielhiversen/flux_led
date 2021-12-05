@@ -659,7 +659,7 @@ class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
 
     @property
     def construct_request_strip_setting(self) -> bytearray:
-        return self.construct_message(bytearray[0x63, 0x12, 0x21])
+        return self.construct_message(bytearray([0x63, 0x12, 0x21]))
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     @property
