@@ -3,7 +3,11 @@ import contextlib
 import logging
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
-from flux_led.protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
+from flux_led.protocol import (
+    ProtocolLEDENET8Byte,
+    ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETOriginal,
+)
 
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import PROTOCOL_PROBES, LEDENETDevice
@@ -53,8 +57,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Setup the connection and fetch initial state."""
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
+        assert self._protocol is not None
         if not self._protocol.zones:
             return
+        assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
             await asyncio.wait_for(self._ic_future, timeout=self.timeout)
@@ -239,6 +245,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         effect: MultiColorEffects,
     ) -> None:
         """Set zones."""
+        assert self._protocol is not None
+        assert self._pixels_per_segment is not None
+        assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         if not self._protocol.zones:
             raise ValueError("{self.protocol} does not support zones")
         await self._async_send_msg(
@@ -363,6 +372,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._segments,
         )
         self._ic_future.set_result(True)
+        return True
 
     def process_addressable_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
