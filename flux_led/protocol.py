@@ -158,7 +158,7 @@ class ProtocolBase:
     power_state_response_length = MSG_LENGTHS[MSG_POWER_STATE]
 
     def __init__(self) -> None:
-        self._counter = 0
+        self._counter = -1
         super().__init__()
 
     @property

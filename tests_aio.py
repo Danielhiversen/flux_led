@@ -443,7 +443,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\x00\xa8"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\x00\xa7"
     )
     assert light.effect == "RBM 1"
 
@@ -452,7 +452,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x10d\x00\x87"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\x00\x86"
     )
 
     transport.reset_mock()
@@ -460,7 +460,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x05B\x01\x102\x00V"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x102\x00U"
     )
 
 
@@ -490,12 +490,12 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     )
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == (
-        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00TY\x00T\xff\x00\x00"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00TY\x00T\xff\x00\x00"
         b"\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
         b"\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
-        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O"
+        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19N"
     )
 
 
@@ -786,7 +786,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\t5\xb1\x00\r\x00\x00\x00\x03\xf6\xbe"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\t5\xb1\x00\r\x00\x00\x00\x03\xf6\xbd"
     )
     assert light.brightness == 33
 
@@ -795,7 +795,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\t5\xb1\x002\x00\x00\x00\x03\x1b\t"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\t5\xb1\x002\x00\x00\x00\x03\x1b\x08"
     )
     assert light.brightness == 128
 
@@ -804,7 +804,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\t5\xb1\x00\x02\x00\x00\x00\x03\xeb\xaa"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\t5\xb1\x00\x02\x00\x00\x00\x03\xeb\xa9"
     )
     assert light.brightness == 0
 
@@ -813,7 +813,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\t5\xb1dd\x00\x00\x00\x03\xb17"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\t5\xb1dd\x00\x00\x00\x03\xb16"
     )
     assert light.getCCT() == (0, 255)
     assert light.color_temp == 6500
