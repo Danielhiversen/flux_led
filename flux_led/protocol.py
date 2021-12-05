@@ -12,6 +12,8 @@ from .const import (
 )
 from .utils import utils, white_levels_to_scaled_color_temp
 
+from .const import MultiColorEffects
+
 _LOGGER = logging.getLogger(__name__)
 
 # Protocol names
@@ -62,6 +64,8 @@ MSG_LENGTHS = {
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
 }
+
+
 
 
 class LEDENETOriginalRawState(NamedTuple):
@@ -958,6 +962,64 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
             )
         )
 
+    def construct_zone_change(
+        self,
+        rgb_list: List[Tuple[int, int, int]],
+        speed: int,
+        effect: MultiColorEffects,
+    ) -> bytearray:
+        """The bytes to send for multiple zones.
+
+        Blue/Green - Static
+        590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00000000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff001e04640024
+
+        Red/Blue - Jump
+        5900630000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00001e01640021
+
+        White/Green - Static
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00001e01640003
+            11111 22222 33333 44444 55555 66666 77777 88888 99999 00000 11111 22222 33333 44444 55555
+
+        White - Static
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001e016400e5
+
+        White - Running Water - Full speed
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001e026400e6
+
+        White - Running Water - 50% speed
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001e023200b4
+
+        Red - Blue - Gradient
+        590063ff0000f60008ed0011e4001adb0023d3002bca0034c1003db80046af004fa700579e00609500698c007283007b7b008372008c69009560009e5700a74f00af4600b83d00c13400ca2b00d32300db1a00e41100ed0800f60000ff001e01640005
+
+        Red - Brething
+        590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
+        """
+        zones = 30
+        sent_zones = len(rgb_list)
+        msg = bytearray([0x59, 0x00, 0x63])
+        zone_size = zones // sent_zones
+        remaining = zones
+        for rgb in rgb_list:
+            for _ in range(zone_size):
+                r, g, b = rgb
+                msg.extend(bytearray([r, g, b]))
+                remaining -= 1
+        while remaining:
+            remaining -= 1
+            r, g, b = rgb_list[-1]
+            msg.extend(bytearray([r, g, b]))
+        msg.extend(bytearray([0x00, 0x1E]))
+        msg.extend(bytearray([effect.value, speed]))
+        msg.append(0x00)
+        inner_message = self.construct_message(msg)
+        counter_byte = self._increment_counter()
+
+        return self.construct_message(
+            bytearray(
+                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x09, *inner_message]
+            )
+        )
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 

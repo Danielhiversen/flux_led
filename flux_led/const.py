@@ -15,6 +15,14 @@ class LevelWriteMode(Enum):
     WHITES = 0x0F
 
 
+class MultiColorEffects(Enum):
+    STATIC = 0x01
+    RUNNING_WATER = 0x02
+    STROBE = 0x03
+    JUMP = 0x04
+    BREATHING = 0x05
+
+
 PRESET_MUSIC_MODE: Final = 0x62
 
 ATTR_IPADDR: Final = "ipaddr"

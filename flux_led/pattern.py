@@ -1,5 +1,7 @@
 from typing import Dict, Optional, cast
 
+from .const import MultiColorEffects
+
 FFECT_RANDOM = "random"
 EFFECT_COLORLOOP = "colorloop"
 EFFECT_RED_FADE = "red_fade"
@@ -165,12 +167,13 @@ ADDRESSABLE_EFFECT_ID_NAME = {
 ADDRESSABLE_EFFECT_NAME_ID = {v: k for k, v in ADDRESSABLE_EFFECT_ID_NAME.items()}
 
 ASSESSABLE_MULTI_COLOR_ID_NAME = {
-    1: "Multi Color Static",
-    2: "Multi Color Running Water",
-    3: "Multi Color Strobe",
-    4: "Multi Color Jump",
-    5: "Multi Color Breathing",
+    MultiColorEffects.STATIC.value: "Multi Color Static",
+    MultiColorEffects.RUNNING_WATER.value: "Multi Color Running Water",
+    MultiColorEffects.STROBE.value: "Multi Color Strobe",
+    MultiColorEffects.JUMP.value: "Multi Color Jump",
+    MultiColorEffects.BREATHING.value: "Multi Color Breathing",
 }
+
 
 ASSESSABLE_MULTI_COLOR_NAME_ID = {
     v: k for k, v in ASSESSABLE_MULTI_COLOR_ID_NAME.items()
