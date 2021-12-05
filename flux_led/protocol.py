@@ -178,16 +178,8 @@ class ProtocolBase:
             self._counter = 0
         return self._counter
 
-    def is_start_of_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an addressable state response."""
-        return False
-
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
-        return False
-
-    def is_start_of_ic_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an ic state response."""
         return False
 
     def is_valid_ic_response(self, data: bytes) -> bool:
@@ -213,10 +205,6 @@ class ProtocolBase:
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
 
-    @abstractmethod
-    def is_start_of_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-
     def is_checksum_correct(self, msg: bytes) -> bool:
         """Check a checksum of a message."""
         expected_sum = sum(msg[0:-1]) & 0xFF
@@ -230,10 +218,6 @@ class ProtocolBase:
     @abstractmethod
     def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
-
-    @abstractmethod
-    def is_start_of_power_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a power response."""
 
     @property
     def on_byte(self) -> int:
@@ -351,14 +335,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
             and raw_state[1] == 0x01
         )
 
-    def is_start_of_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-        return data[0] == 0x66
-
-    def is_start_of_power_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-        return data[0] == 0x78
-
     def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0xEF, 0x01, 0x77]))
@@ -420,26 +396,22 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Check if a power state response is valid."""
         if (
             len(msg) != self.power_state_response_length
-            or not self.is_start_of_power_state_response(msg)
+            or not self._is_start_of_power_state_response(msg)
             or msg[1] != 0x71
             or msg[2] not in (self.on_byte, self.off_byte)
         ):
             return False
         return self.is_checksum_correct(msg)
 
-    def is_start_of_power_state_response(self, data: bytes) -> bool:
+    def _is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
-
-    def is_start_of_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-        return data[0] == 0x81
 
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
-        if not self.is_start_of_state_response(raw_state):
+        if not raw_state[0] == 0x81:
             return False
         return self.is_checksum_correct(raw_state)
 
@@ -553,15 +525,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
-    def is_start_of_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an addressable state response."""
-        return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
-
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
         if len(data) != self.addressable_response_length:
             return False
-        if not self.is_start_of_addressable_response(data):
+        if not data.startswith(bytearray(self.ADDRESSABLE_HEADER)):
             return False
         return self.is_checksum_correct(data)
 
@@ -847,13 +815,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         """If the protocol supports zones."""
         return True
 
-    def is_start_of_ic_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an ic state response."""
-        return data.startswith(bytearray([0x00, 0x63]))
-
     def is_valid_ic_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
+            return False
+        if not data.startswith(bytearray([0x00, 0x63])):
             return False
         return self.is_checksum_correct(data)
 
