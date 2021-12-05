@@ -1825,18 +1825,18 @@ class TestLight(unittest.TestCase):
             mock_send.call_args,
             mock.call(
                 bytearray(
-                    b'\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\rA\x01\x00\xff\x00\x00\x00\x00\x06\x01\x00\x00He'
+                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\rA\x01\x00\xff\x00\x00\x00\x00\x06\x01\x00\x00He"
                 )
             ),
         )
 
         light.set_effect("RBM 1", 50)
         self.assertEqual(mock_read.call_count, 2)
-        self.assertEqual(mock_send.call_count, 3)   
+        self.assertEqual(mock_send.call_count, 3)
         self.assertEqual(
             mock_send.call_args,
             mock.call(
-                bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\x00\xa7')
+                bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\x00\xa7")
             ),
         )
         light._transition_complete_time = 0
