@@ -66,8 +66,6 @@ MSG_LENGTHS = {
 }
 
 
-
-
 class LEDENETOriginalRawState(NamedTuple):
     head: int
     model_num: int
@@ -799,6 +797,38 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
             )
         )
 
+    def construct_zone_change(
+        self,
+        rgb_list: List[Tuple[int, int, int]],
+        speed: int,
+        effect: MultiColorEffects,
+    ) -> bytearray:
+        """The bytes to send for multiple zones.
+
+        This currently only takes effect for 1s.
+
+        There doesn't seem to be a away to keep it active.
+        """
+        points = 50  ## we need to get this from the strip
+        sent_zones = len(rgb_list)
+        pixel_bits = 6 + (points * 3)
+        pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
+        msg = bytearray([0x53])
+        msg.extend(pixels)
+        zone_size = points // sent_zones
+        remaining = points
+        for rgb in rgb_list:
+            for _ in range(zone_size):
+                r, g, b = rgb
+                msg.extend(bytearray([r, g, b]))
+                remaining -= 1
+        while remaining:
+            remaining -= 1
+            r, g, b = rgb_list[-1]
+            msg.extend(bytearray([r, g, b]))
+        msg.extend(bytearray([0x00, 0x32]))
+        return self.construct_message(msg)
+
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
     @property
@@ -995,7 +1025,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         Red - Brething
         590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
         """
-        points = 50 ## we need to get this from the strip
+        points = 50  # TODO: we need to get this from the strip
         sent_zones = len(rgb_list)
         pixel_bits = 9 + (points * 3)
         pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
@@ -1019,10 +1049,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         counter_byte = self._increment_counter()
 
         return self.construct_message(
-            bytearray(
-                [*self.ADDRESSABLE_HEADER, counter_byte, *pixels, *inner_message]
-            )
+            bytearray([*self.ADDRESSABLE_HEADER, counter_byte, *pixels, *inner_message])
         )
+
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
