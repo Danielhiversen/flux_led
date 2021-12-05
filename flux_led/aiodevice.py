@@ -65,6 +65,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         try:
             await asyncio.wait_for(self._ic_future, timeout=self.timeout)
         except asyncio.TimeoutError:
+            self.set_unavailable()
             raise RuntimeError("Could not determine number pixels")
 
     async def async_stop(self) -> None:
@@ -246,10 +247,10 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         """Set zones."""
         assert self._protocol is not None
-        assert self._pixels_per_segment is not None
-        assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         if not self._protocol.zones:
             raise ValueError("{self.protocol} does not support zones")
+        assert self._pixels_per_segment is not None
+        assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(
             self._protocol.construct_zone_change(
                 self._pixels_per_segment, rgb_list, speed, effect

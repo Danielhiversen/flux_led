@@ -110,6 +110,25 @@ async def test_invalid_initial_response(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_cannot_determine_strip_type(mock_aio_protocol):
+    """Test we raise RuntimeError when we cannot determine the strip type."""
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    # protocol state
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
+    with pytest.raises(RuntimeError):
+        await task
+    assert not light.available
+
+
+@pytest.mark.asyncio
 async def test_reassemble(mock_aio_protocol):
     """Test we can reassemble."""
     light = AIOWifiLedBulb("192.168.1.166")
@@ -478,6 +497,31 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
         b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O"
     )
+
+
+@pytest.mark.asyncio
+async def test_async_set_zones_unsupported_device(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set set zone colors raises valueerror on unsupported."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x57"
+    )
+    await task
+    assert light.model_num == 0x25
+
+    transport.reset_mock()
+    with pytest.raises(ValueError):
+        await light.async_set_zones(
+            [(255, 0, 0), (0, 0, 255)], 100, MultiColorEffects.STROBE
+        )
 
 
 @pytest.mark.asyncio
