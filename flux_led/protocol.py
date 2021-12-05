@@ -39,6 +39,20 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
+LEDENET_IC_STATE_RESPONSE_LEN = 10
+# pos  0  1  2  3  4  5  6  7  8  9
+#    63 00 3c 04 00 00 00 00 00 02
+#     |  |  |  |  |  |  |  |  |  |
+#     |  |  |  |  |  |  |  |  |  checksum
+#     |  |  |  |  |  |  |  |  ??
+#     |  |  |  |  |  |  |  ??
+#     |  |  |  |  |  |  ??
+#     |  |  |  |  |  ???
+#     |  |  |  |  ????
+#     |  |  |  ic
+#     |  |  num pixels (16 bit, low byte)
+#     |  num pixels (16 bit, high byte)
+#     msg head
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -48,6 +62,8 @@ MSG_STATE = "state"
 
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
+MSG_IC_CONFIG = "ic_config"
+
 MSG_FIRST_BYTE = {
     0xF0: MSG_POWER_STATE,
     0x00: MSG_POWER_STATE,
@@ -56,6 +72,7 @@ MSG_FIRST_BYTE = {
     0x66: MSG_ORIGINAL_STATE,
     0x81: MSG_STATE,
     0xB0: MSG_ADDRESSABLE_STATE,
+    0x63: MSG_IC_CONFIG,
 }
 MSG_LENGTHS = {
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
@@ -63,6 +80,7 @@ MSG_LENGTHS = {
     MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
+    MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
 }
 
 
@@ -163,6 +181,14 @@ class ProtocolBase:
 
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
+        return False
+
+    def is_start_of_ic_response(self, data: bytes) -> bool:
+        """Check if a message is the start of an ic state response."""
+        return False
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
         return False
 
     def expected_response_length(self, data: bytes) -> int:
@@ -656,10 +682,19 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
 
 
 class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
-
-    @property
     def construct_request_strip_setting(self) -> bytearray:
         return self.construct_message(bytearray([0x63, 0x12, 0x21]))
+
+    def is_start_of_ic_response(self, data: bytes) -> bool:
+        """Check if a message is the start of an ic state response."""
+        return data[0] == 0x63
+
+    def is_valid_addressable_response(self, data: bytes) -> bool:
+        """Check if a message is a valid addressable state response."""
+        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
+            return False
+        return self.is_checksum_correct(data)
+
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     @property

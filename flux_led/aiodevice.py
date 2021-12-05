@@ -42,6 +42,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._data_future: Optional["asyncio.Future[bytes]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
+        self._pixels: Optional[int] = None
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
 
@@ -50,7 +51,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         if self.protocol in ADDRESSABLE_PROTOCOLS:
-            self._async_send_msg(self._protocol.construct_request_strip_setting())
+            await self._async_send_msg(self._protocol.construct_request_strip_setting())
 
     async def async_stop(self) -> None:
         """Shutdown the connection"""
@@ -308,6 +309,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
+        elif self._protocol.is_valid_ic_response(msg):
+            self.process_ic_response(msg)
         else:
             return
         if self.raw_state == prev_state:
@@ -318,6 +321,13 @@ class AIOWifiLedBulb(LEDENETDevice):
                 future.set_result(True)
         futures.clear()
         self._updated_callback()
+
+    def process_ic_response(self, msg: bytes) -> bool:
+        assert self._aio_protocol is not None
+        high_byte = msg[1]
+        low_byte = msg[0]
+        self._pixels = (high_byte << 8) + low_byte
+        _LOGGER.debug("Pixel count is: %s", self._pixels)
 
     def process_addressable_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
