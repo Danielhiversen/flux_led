@@ -995,14 +995,14 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
         Red - Brething
         590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
         """
-        zones = 10
+        points = 50
         sent_zones = len(rgb_list)
-        pixel_bits = 9 + (zones * 3)
+        pixel_bits = 9 + (points * 3)
         pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
         msg = bytearray([0x59])
         msg.extend(pixels)
-        zone_size = zones // sent_zones
-        remaining = zones
+        zone_size = points // sent_zones
+        remaining = points
         for rgb in rgb_list:
             for _ in range(zone_size):
                 r, g, b = rgb
