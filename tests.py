@@ -6,6 +6,7 @@ import pytest
 
 import flux_led
 from flux_led.const import (
+    MultiColorEffects,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -1847,6 +1848,21 @@ class TestLight(unittest.TestCase):
         assert light.effect == "RBM 1"
         assert light.brightness == 255
         assert light.getSpeed() == 16
+
+        data = light._protocol.construct_zone_change(
+            2, [(255, 255, 255), (0, 255, 0)], 100, MultiColorEffects.STATIC
+        )
+        assert data == (
+            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x0fY\x00\x0f\xff\xff\xff"
+            b"\x00\xff\x00\x00\x1e\x01d\x00\xe7\xa8"
+        )
+        data = light._protocol.construct_zone_change(
+            4, [(255, 255, 255), (0, 255, 0)], 100, MultiColorEffects.STATIC
+        )
+        assert data == (
+            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x15Y\x00\x15\xff\xff\xff"
+            b"\xff\xff\xff\x00\xff\x00\x00\xff\x00\x00\x1e\x01d\x00\xe9\xb3"
+        )
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

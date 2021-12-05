@@ -9,6 +9,7 @@ from .const import (
     TRANSITION_JUMP,
     TRANSITION_STROBE,
     LevelWriteMode,
+    MultiColorEffects,
 )
 from .utils import utils, white_levels_to_scaled_color_temp
 
@@ -37,6 +38,20 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
+LEDENET_IC_STATE_RESPONSE_LEN = 11
+# pos  0  1  2  3  4  5  6  7  8  9 10
+#    00 63 00 3c 04 00 00 00 00 00 02
+#     |  |  |  |  |  |  |  |  |  |  checksum
+#     |  |  |  |  |  |  |  |  |  ??
+#     |  |  |  |  |  |  |  |  ??
+#     |  |  |  |  |  |  |  ??
+#     |  |  |  |  |  |  ??
+#     |  |  |  |  |  ???
+#     |  |  |  |  ????
+#     |  |  |  ic
+#     |  |  num pixels (16 bit, low byte)
+#     |  num pixels (16 bit, high byte)
+#     msg head
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -46,14 +61,16 @@ MSG_STATE = "state"
 
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
+MSG_IC_CONFIG = "ic_config"
+
 MSG_FIRST_BYTE = {
     0xF0: MSG_POWER_STATE,
-    0x00: MSG_POWER_STATE,
     0x0F: MSG_POWER_STATE,
     0x78: MSG_ORIGINAL_POWER_STATE,
     0x66: MSG_ORIGINAL_STATE,
     0x81: MSG_STATE,
     0xB0: MSG_ADDRESSABLE_STATE,
+    0x00: MSG_IC_CONFIG,
 }
 MSG_LENGTHS = {
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
@@ -61,6 +78,7 @@ MSG_LENGTHS = {
     MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
+    MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
 }
 
 
@@ -148,6 +166,11 @@ class ProtocolBase:
         """If True the device must be turned on before setting level/patterns/modes."""
         return True
 
+    @property
+    def zones(self) -> bool:
+        """If the protocol supports zones."""
+        return False
+
     def _increment_counter(self) -> int:
         """Increment the counter byte."""
         self._counter += 1
@@ -155,12 +178,12 @@ class ProtocolBase:
             self._counter = 0
         return self._counter
 
-    def is_start_of_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an addressable state response."""
-        return False
-
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
+        return False
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
         return False
 
     def expected_response_length(self, data: bytes) -> int:
@@ -182,10 +205,6 @@ class ProtocolBase:
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
 
-    @abstractmethod
-    def is_start_of_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-
     def is_checksum_correct(self, msg: bytes) -> bool:
         """Check a checksum of a message."""
         expected_sum = sum(msg[0:-1]) & 0xFF
@@ -199,10 +218,6 @@ class ProtocolBase:
     @abstractmethod
     def is_valid_power_state_response(self, msg: bytes) -> bool:
         """Check if a power state response is valid."""
-
-    @abstractmethod
-    def is_start_of_power_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a power response."""
 
     @property
     def on_byte(self) -> int:
@@ -320,14 +335,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
             and raw_state[1] == 0x01
         )
 
-    def is_start_of_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-        return data[0] == 0x66
-
-    def is_start_of_power_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-        return data[0] == 0x78
-
     def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
         return self.construct_message(bytearray([0xEF, 0x01, 0x77]))
@@ -389,26 +396,22 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Check if a power state response is valid."""
         if (
             len(msg) != self.power_state_response_length
-            or not self.is_start_of_power_state_response(msg)
+            or not self._is_start_of_power_state_response(msg)
             or msg[1] != 0x71
             or msg[2] not in (self.on_byte, self.off_byte)
         ):
             return False
         return self.is_checksum_correct(msg)
 
-    def is_start_of_power_state_response(self, data: bytes) -> bool:
+    def _is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
         return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
-
-    def is_start_of_state_response(self, data: bytes) -> bool:
-        """Check if a message is the start of a state response."""
-        return data[0] == 0x81
 
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         if len(raw_state) != self.state_response_length:
             return False
-        if not self.is_start_of_state_response(raw_state):
+        if not raw_state[0] == 0x81:
             return False
         return self.is_checksum_correct(raw_state)
 
@@ -522,15 +525,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """
         return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
 
-    def is_start_of_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is the start of an addressable state response."""
-        return data.startswith(bytearray(self.ADDRESSABLE_HEADER))
-
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
         if len(data) != self.addressable_response_length:
             return False
-        if not self.is_start_of_addressable_response(data):
+        if not data.startswith(bytearray(self.ADDRESSABLE_HEADER)):
             return False
         return self.is_checksum_correct(data)
 
@@ -653,7 +652,12 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
 
 
-class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_message(bytearray([0x63, 0x12, 0x21]))
+
+
+class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -679,7 +683,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENET9Byte):
         )
 
 
-class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
+
+    # ic response
+    # 0x96 0x63 0x00 0x32 0x00 0x01 0x01 0x04 0x32 0x01 0x64 (11)
+
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -796,7 +804,25 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENET9Byte):
         )
 
 
-class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
+class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
+
+    # ic response
+    # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
+    # b0 b1 b2 b3 00 01 01 37 00 0b 00 63 00 32 00 01 04 03 32 01 d0 aa
+
+    @property
+    def zones(self) -> bool:
+        """If the protocol supports zones."""
+        return True
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
+        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
+            return False
+        if not data.startswith(bytearray([0x00, 0x63])):
+            return False
+        return self.is_checksum_correct(data)
+
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -956,6 +982,66 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENET9Byte):
             bytearray(
                 [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
             )
+        )
+
+    def construct_zone_change(
+        self,
+        points: int,  # the number of points on the strip
+        rgb_list: List[Tuple[int, int, int]],
+        speed: int,
+        effect: MultiColorEffects,
+    ) -> bytearray:
+        """The bytes to send for multiple zones.
+
+        Blue/Green - Static
+        590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00000000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff001e04640024
+
+        Red/Blue - Jump
+        5900630000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00001e01640021
+
+        White/Green - Static
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff00001e01640003
+            11111 22222 33333 44444 55555 66666 77777 88888 99999 00000 11111 22222 33333 44444 55555
+
+        White - Static
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001e016400e5
+
+        White - Running Water - Full speed
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001e026400e6
+
+        White - Running Water - 50% speed
+        590063ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff001e023200b4
+
+        Red - Blue - Gradient
+        590063ff0000f60008ed0011e4001adb0023d3002bca0034c1003db80046af004fa700579e00609500698c007283007b7b008372008c69009560009e5700a74f00af4600b83d00c13400ca2b00d32300db1a00e41100ed0800f60000ff001e01640005
+
+        Red - Brething
+        590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
+        """
+        sent_zones = len(rgb_list)
+        pixel_bits = 9 + (points * 3)
+        pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
+        msg = bytearray([0x59])
+        msg.extend(pixels)
+        zone_size = points // sent_zones
+        remaining = points
+        for rgb in rgb_list:
+            for _ in range(zone_size):
+                r, g, b = rgb
+                msg.extend(bytearray([r, g, b]))
+                remaining -= 1
+        while remaining:
+            remaining -= 1
+            r, g, b = rgb_list[-1]
+            msg.extend(bytearray([r, g, b]))
+        msg.extend(bytearray([0x00, 0x1E]))
+        msg.extend(bytearray([effect.value, speed]))
+        msg.append(0x00)
+        inner_message = self.construct_message(msg)
+        counter_byte = self._increment_counter()
+
+        return self.construct_message(
+            bytearray([*self.ADDRESSABLE_HEADER, counter_byte, *pixels, *inner_message])
         )
 
 
