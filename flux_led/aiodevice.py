@@ -8,7 +8,6 @@ from flux_led.protocol import ProtocolLEDENET8Byte, ProtocolLEDENETOriginal
 from .aioprotocol import AIOLEDENETProtocol
 from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
-    MultiColorEffects,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -20,6 +19,7 @@ from .const import (
     STATE_GREEN,
     STATE_RED,
     STATE_WARM_WHITE,
+    MultiColorEffects,
 )
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
@@ -233,7 +233,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
 
     async def async_set_zones(
-        self,         
+        self,
         rgb_list: List[Tuple[int, int, int]],
         speed: int,
         effect: MultiColorEffects,
@@ -241,9 +241,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Set zones."""
         if not self._protocol.zones:
             raise ValueError("{self.protocol} does not support zones")
-        await self._async_send_msg(self._protocol.construct_zone_change(
-            self._pixels_per_segment, rgb_list, speed, effect
-        ))
+        await self._async_send_msg(
+            self._protocol.construct_zone_change(
+                self._pixels_per_segment, rgb_list, speed, effect
+            )
+        )
 
     async def async_set_random(self) -> None:
         """Set levels randomly."""
@@ -359,7 +361,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             "Segment count (%s) is: %s",
             hex(msg[5]),
             self._segments,
-        )        
+        )
         self._ic_future.set_result(True)
 
     def process_addressable_response(self, msg: bytes) -> bool:

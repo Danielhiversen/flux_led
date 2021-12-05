@@ -9,10 +9,9 @@ from .const import (
     TRANSITION_JUMP,
     TRANSITION_STROBE,
     LevelWriteMode,
+    MultiColorEffects,
 )
 from .utils import utils, white_levels_to_scaled_color_temp
-
-from .const import MultiColorEffects
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -836,38 +835,6 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                 ]
             )
         )
-
-    def construct_zone_change(
-        self,
-        rgb_list: List[Tuple[int, int, int]],
-        speed: int,
-        effect: MultiColorEffects,
-    ) -> bytearray:
-        """The bytes to send for multiple zones.
-
-        This currently only takes effect for 1s.
-
-        There doesn't seem to be a away to keep it active.
-        """
-        points = 50  ## we need to get this from the strip
-        sent_zones = len(rgb_list)
-        pixel_bits = 6 + (points * 3)
-        pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
-        msg = bytearray([0x53])
-        msg.extend(pixels)
-        zone_size = points // sent_zones
-        remaining = points
-        for rgb in rgb_list:
-            for _ in range(zone_size):
-                r, g, b = rgb
-                msg.extend(bytearray([r, g, b]))
-                remaining -= 1
-        while remaining:
-            remaining -= 1
-            r, g, b = rgb_list[-1]
-            msg.extend(bytearray([r, g, b]))
-        msg.extend(bytearray([0x00, 0x32]))
-        return self.construct_message(msg)
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
