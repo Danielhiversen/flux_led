@@ -723,6 +723,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
 
 
 class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
+
+    # ic response
+    # 0x96 0x63 0x00 0x32 0x00 0x01 0x01 0x04 0x32 0x01 0x64 (11)
+
+
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -872,6 +877,10 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
+
+    # ic response -- we should wrap with b0
+    # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
+
     @property
     def name(self) -> str:
         """The name of the protocol."""

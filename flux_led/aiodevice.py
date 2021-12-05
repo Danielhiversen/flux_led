@@ -303,6 +303,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
+        _LOGGER.debug("msg: %s", msg)
         if self._protocol.is_valid_addressable_response(msg):
             self.process_addressable_response(msg)
         if self._protocol.is_valid_state_response(msg):
