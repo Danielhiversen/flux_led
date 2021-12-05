@@ -10,7 +10,7 @@ from flux_led import aiodevice
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
-from flux_led.const import COLOR_MODE_CCT, COLOR_MODE_RGBWW
+from flux_led.const import COLOR_MODE_CCT, COLOR_MODE_RGBWW, MultiColorEffects
 from flux_led.protocol import PROTOCOL_LEDENET_9BYTE, PROTOCOL_LEDENET_ORIGINAL
 
 
@@ -262,9 +262,12 @@ async def test_turn_on_off_via_assessable_state_message(
 
     task = asyncio.create_task(light.async_setup(_updated_callback))
     await mock_aio_protocol()
+    # protocol state
     light._aio_protocol.data_received(
         b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
     )
+    # ic sorting
+    light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
     await task
 
     task = asyncio.create_task(light.async_turn_off())
@@ -404,6 +407,8 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     light._aio_protocol.data_received(
         b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
     )
+    # ic state
+    light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
     await task
     assert light.model_num == 0xA3
     assert light.dimmable_effects is True
@@ -439,6 +444,61 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
         == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x05B\x01\x102\x00V"
     )
 
+
+@pytest.mark.asyncio
+async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set set zone colors."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
+    # ic state
+    light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
+    await task
+    assert light.model_num == 0xA3
+    assert light.dimmable_effects is True
+    assert light.requires_turn_on is False
+
+    transport.reset_mock()
+    await light.async_set_zones(
+        [(255, 0, 0), (0, 0, 255)], 100, MultiColorEffects.STROBE
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == (b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00TY\x00T\xff\x00\x00'
+          b'\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff'
+          b'\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00'
+          b'\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff'
+          b'\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00'
+          b'\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O')
+
+
+@pytest.mark.asyncio
+async def test_async_failed_callback(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we log on failed callback."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    caplog.set_level(logging.DEBUG)
+
+    def _updated_callback(*args, **kwargs):
+        raise ValueError("something went wrong")
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
+    # ic state
+    light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
+    await task
+    assert light.model_num == 0xA3
+    assert light.dimmable_effects is True
+    assert light.requires_turn_on is False
+    assert "something went wrong" in caplog.text
 
 @pytest.mark.asyncio
 async def test_async_set_custom_effect(

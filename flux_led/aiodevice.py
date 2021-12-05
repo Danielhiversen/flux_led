@@ -45,7 +45,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._ic_future: "asyncio.Future[bool]" = asyncio.Future()
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
-        self._data_future: Optional["asyncio.Future[bytes]"] = None
+        self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
         self._pixels_per_segment: Optional[int] = None
@@ -326,19 +326,26 @@ class AIOWifiLedBulb(LEDENETDevice):
                 )
             self._async_process_message(msg)
 
+    def _async_process_state_response(self, msg: bytes) -> bool:
+        if (
+            self._determine_protocol_future
+            and not self._determine_protocol_future.done()
+        ):
+            assert self._protocol is not None
+            self._set_protocol_from_msg(msg, self._protocol.name)
+            self._determine_protocol_future.set_result(True)
+        return self.process_state_response(msg)
+
     def _async_process_message(self, msg: bytes) -> None:
         """Process a full message (maybe reassembled)."""
-        if self._data_future and not self._data_future.done():
-            self._data_future.set_result(msg)
-            return
         assert self._protocol is not None
         self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
         if self._protocol.is_valid_addressable_response(msg):
             self.process_addressable_response(msg)
-        if self._protocol.is_valid_state_response(msg):
-            self.process_state_response(msg)
+        elif self._protocol.is_valid_state_response(msg):
+            self._async_process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
         elif self._protocol.is_valid_ic_response(msg):
@@ -352,7 +359,10 @@ class AIOWifiLedBulb(LEDENETDevice):
             if not future.done():
                 future.set_result(True)
         futures.clear()
-        self._updated_callback()
+        try:
+            self._updated_callback()
+        except Exception as ex:  # pylint: disable=broad-except
+            _LOGGER.error("Error while calling callback: %s", ex)
 
     def process_ic_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
@@ -382,7 +392,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             " ".join(f"0x{x:02X}" for x in msg[10:-1]),
             len(msg[10:-1]),
         )
-        return self.process_state_response(msg[10:-1])
+        return self._async_process_state_response(msg[10:-1])
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""
@@ -401,21 +411,16 @@ class AIOWifiLedBulb(LEDENETDevice):
             async with self._lock:
                 await self._async_connect()
                 assert self._aio_protocol is not None
-                self._data_future = asyncio.Future()
+                self._determine_protocol_future = asyncio.Future()
                 self._aio_protocol.write(protocol.construct_state_query())
                 try:
-                    full_msg = await asyncio.wait_for(
-                        self._data_future, timeout=self.timeout
+                    await asyncio.wait_for(
+                        self._determine_protocol_future, timeout=self.timeout
                     )
                 except asyncio.TimeoutError:
                     self._aio_protocol.close()
                     continue
-                if not protocol.is_valid_state_response(full_msg):
-                    # We just sent a garage query which the old procotol
-                    # cannot process, recycle the connection
-                    self._aio_protocol.close()
-                    continue
-                self._set_protocol_from_msg(full_msg, protocol.name)
-                self.process_state_response(full_msg)
-                return
+                else:
+                    return
+        self.set_unavailable()
         raise RuntimeError("Cannot determine protocol")
