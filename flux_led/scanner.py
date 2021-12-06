@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 from datetime import date
 import logging
 import select
@@ -112,10 +111,7 @@ class BulbScanner:
     def _create_socket(self) -> socket.socket:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        with contextlib.suppress(Exception):
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        sock.bind(("", self.DISCOVERY_PORT))
+        sock.bind(("", 0))
         sock.setblocking(False)
         return sock
 
