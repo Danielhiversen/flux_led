@@ -31,6 +31,13 @@ class FluxLEDDiscovery(TypedDict):
     model_description: Optional[str]
 
 
+def merge_discoveries(target: FluxLEDDiscovery, source: FluxLEDDiscovery) -> None:
+    """Merge keys from a second discovery that may be missing from the first one."""
+    for k, v in source.items():
+        if target.get(k) is None:
+            target[k] = v  # type: ignore[misc]
+
+
 def _process_discovery_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     """Process response from b'HF-A11ASSISTHREAD'
 
