@@ -6,7 +6,6 @@ import pytest
 
 import flux_led
 from flux_led.const import (
-    MultiColorEffects,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -16,6 +15,7 @@ from flux_led.const import (
     STATE_GREEN,
     STATE_RED,
     STATE_WARM_WHITE,
+    MultiColorEffects,
 )
 from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,

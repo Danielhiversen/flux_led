@@ -12,6 +12,34 @@ from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import COLOR_MODE_CCT, COLOR_MODE_RGBWW, MultiColorEffects
 from flux_led.protocol import PROTOCOL_LEDENET_9BYTE, PROTOCOL_LEDENET_ORIGINAL
+from flux_led.scanner import FluxLEDDiscovery, merge_discoveries
+
+IP_ADDRESS = "127.0.0.1"
+MODEL_NUM_HEX = "0x35"
+MODEL = "AZ120444"
+MODEL_DESCRIPTION = "Bulb RGBCW"
+FLUX_MAC_ADDRESS = "aabbccddeeff"
+
+FLUX_DISCOVERY_PARTIAL = FluxLEDDiscovery(
+    ipaddr=IP_ADDRESS,
+    model=MODEL,
+    id=FLUX_MAC_ADDRESS,
+    model_num=None,
+    version_num=None,
+    firmware_date=None,
+    model_info=None,
+    model_description=None,
+)
+FLUX_DISCOVERY = FluxLEDDiscovery(
+    ipaddr=IP_ADDRESS,
+    model=MODEL,
+    id=FLUX_MAC_ADDRESS,
+    model_num=0x25,
+    version_num=0x04,
+    firmware_date=datetime.date(2021, 5, 5),
+    model_info=MODEL,
+    model_description=MODEL_DESCRIPTION,
+)
 
 
 @pytest.fixture
@@ -947,3 +975,17 @@ async def test_async_scanner_times_out_with_nothing_specific_address(
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task
     assert data == []
+
+
+def test_merge_discoveries() -> None:
+    """Unit test to make sure we can merge two discoveries."""
+    full = FLUX_DISCOVERY.copy()
+    partial = FLUX_DISCOVERY_PARTIAL.copy()
+    merge_discoveries(partial, full)
+    assert partial == FLUX_DISCOVERY
+    assert full == FLUX_DISCOVERY
+
+    full = FLUX_DISCOVERY.copy()
+    partial = FLUX_DISCOVERY_PARTIAL.copy()
+    merge_discoveries(full, partial)
+    assert full == FLUX_DISCOVERY
