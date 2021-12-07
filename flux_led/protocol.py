@@ -545,8 +545,8 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         # 0x02 - Jump
         # 0x03 - Strobe
         return [
-            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
             self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
+            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
         ]
 
     def is_valid_addressable_response(self, data: bytes) -> bool:
