@@ -241,7 +241,7 @@ class ProtocolBase:
     @abstractmethod
     def construct_music_mode(
         self, sensitivity: int, brightness: int, mode: int
-    ) -> list[bytearray]:
+    ) -> List[bytearray]:
         """The bytes to send to set music mode."""
 
     @abstractmethod
@@ -494,7 +494,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
     def construct_music_mode(
         self, sensitivity: int, brightness: int, mode: int
-    ) -> list[bytearray]:
+    ) -> List[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -752,7 +752,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
     def construct_music_mode(
         self, sensitivity: int, brightness: int, mode: int
-    ) -> list[bytearray]:
+    ) -> List[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -871,7 +871,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
 
     def construct_music_mode(
         self, sensitivity: int, brightness: int, mode: int
-    ) -> list[bytearray]:
+    ) -> List[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
