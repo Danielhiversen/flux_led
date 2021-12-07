@@ -29,6 +29,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_WW,
     MODEL_NUMS_SWITCHS,
     PRESET_MUSIC_MODE,
+    PRESET_MUSIC_MODE_LEGACY,
     STATE_BLUE,
     STATE_CHANGE_LATENCY,
     STATE_COOL_WHITE,
@@ -137,6 +138,7 @@ PROTOCOL_NAME_TO_CLS = {
 
 PATTERN_CODE_TO_EFFECT = {
     PRESET_MUSIC_MODE: MODE_MUSIC,
+    PRESET_MUSIC_MODE_LEGACY: MODE_MUSIC,
     EFFECT_CUSTOM_CODE: EFFECT_CUSTOM,
 }
 
@@ -450,7 +452,7 @@ class LEDENETDevice:
             return MODE_COLOR
         elif pattern_code == EFFECT_CUSTOM_CODE:
             return MODE_CUSTOM
-        elif pattern_code == PRESET_MUSIC_MODE:
+        elif pattern_code in (PRESET_MUSIC_MODE, PRESET_MUSIC_MODE_LEGACY):
             return MODE_MUSIC
         elif PresetPattern.valid(pattern_code):
             return MODE_PRESET
