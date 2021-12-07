@@ -266,6 +266,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         sensitivity: int = 100,
         brightness: int = 100,
         mode: Optional[int] = None,
+        effect: Optional[int] = None,
     ) -> None:
         """Set music mode."""
         assert self._protocol is not None
@@ -273,7 +274,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self.microphone:
             raise ValueError("{self.model} does not have a built-in microphone")
         for bytes_send in self._protocol.construct_music_mode(
-            sensitivity, brightness, mode
+            sensitivity, brightness, mode, effect
         ):
             await self._async_send_msg(bytes_send)
 
