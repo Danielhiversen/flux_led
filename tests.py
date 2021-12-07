@@ -1709,7 +1709,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0xA2)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "Addressable v2 (0xA2)")
-        assert len(light.effect_list) == 104
+        assert len(light.effect_list) == 105
         assert light.color_modes == {COLOR_MODE_RGB}
 
         self.assertEqual(mock_read.call_count, 2)
@@ -1797,7 +1797,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.model_num, 0xA3)
         self.assertEqual(light.microphone, True)
         self.assertEqual(light.model, "Addressable v3 (0xA3)")
-        assert len(light.effect_list) == 104
+        assert len(light.effect_list) == 105
         assert light.color_modes == {COLOR_MODE_RGB}
 
         self.assertEqual(mock_read.call_count, 2)
