@@ -17,6 +17,7 @@ from .const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
+    EFFECT_MUSIC,
     EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
@@ -234,6 +235,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Set an effect."""
         if effect == EFFECT_RANDOM:
             await self.async_set_random()
+            return
+        if effect == EFFECT_MUSIC:
+            await self.async_set_music_mode()
             return
         await self.async_set_preset_pattern(
             self._effect_to_pattern(effect), speed, brightness
