@@ -793,6 +793,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         red = 0xFF
         green = 0x00
         blue = 0x00
+        effect = 0x01
         return [
             self.construct_message(
                 bytearray(
@@ -800,6 +801,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                         0x73,
                         0x01,
                         mode or 0x26,  # strip mode 0x26, light bar mode 0x27
+                        effect,
                         red,
                         green,
                         blue,
@@ -890,17 +892,26 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         b0 b1 b2 b3 00 01 01 5f 00 0d 73 01 27 01 ff a6 00 ff 00 00 64 64 08 44 - Music mode (various sensitivity)
         b0 b1 b2 b3 00 01 01 69 00 0d 73 01 26 01 ff 00 00 ff 00 00 00 64 fd 38 - Music mode (various sensitivity)
         b0 b1 b2 b3 00 01 01 68 00 0d 73 01 26 01 ff 00 00 ff 00 00 64 64 61 ff - Music mode (various sensitivity)
+
+
+        b0 b1 b2 b3 00 01 01 08 00 0d 73 01 26 02 00 00 00 00 ff ff 64 60 5e 99 -- red lines
+        b0 b1 b2 b3 00 01 01 16 00 0d 73 01 26 02 00 00 00 00 ff ff 64 64 62 af -- red lines
+        b0 b1 b2 b3 00 01 01 17 00 0d 73 01 26 01 00 00 00 00 ff ff 64 64 61 ae -- rainbow lines
+                                                                       ^^
+                                                                       Likely brightness from 0-100 (0x64)
         """
         counter_byte = self._increment_counter()
         red = 0xFF
         green = 0x00
         blue = 0x00
+        effect = 0x1
         inner_message = self.construct_message(
             bytearray(
                 [
                     0x73,
                     0x01,
                     mode or 0x26,  # strip mode 0x26, light bar mode 0x27
+                    effect,
                     red,
                     green,
                     blue,
