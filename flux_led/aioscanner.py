@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import logging
 import time
-from typing import Callable, Dict, List, Optional, Tuple, cast
+from typing import Callable, List, Optional, Tuple, cast
 
 from .scanner import BulbScanner, FluxLEDDiscovery
 
