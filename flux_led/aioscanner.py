@@ -9,9 +9,6 @@ from .scanner import BulbScanner, FluxLEDDiscovery
 _LOGGER = logging.getLogger(__name__)
 
 
-MAX_UPDATES_WITHOUT_RESPONSE = 4
-
-
 class LEDENETDiscovery(asyncio.DatagramProtocol):
     def __init__(
         self,
