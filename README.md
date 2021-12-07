@@ -38,12 +38,11 @@ in PyQt, Kivy, or some other framework.
 * Reading timers
 * Setting timers
 * Sync clock
+* Music Mode for devices with a built-in microphone (asyncio version only)
 	
 ##### Some missing pieces:
 * Initial administration to set up WiFi SSID and passphrase/key.
 * Remote access administration
-* Music-relating pulsing. This feature isn't so impressive on the Magic Home app, 
-and looks like it might be a bit of work.
 	  
 ##### Cool feature:
 * Specify colors with names or web hex values.  Requires that python "webcolors" 

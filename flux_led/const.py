@@ -111,3 +111,4 @@ CHANNEL_STATES = {
 
 
 EFFECT_RANDOM = "random"
+EFFECT_MUSIC = "music"

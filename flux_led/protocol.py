@@ -239,7 +239,7 @@ class ProtocolBase:
         """The bytes to send for a state change request."""
 
     @abstractmethod
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
+    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
         """The bytes to send to set music mode."""
 
     @abstractmethod
@@ -490,8 +490,8 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
-        """The bytes to send for a level change request.
+    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+        """The bytes to send for music mode.
 
         Known messages
         73 01 4d 0f d0
@@ -523,7 +523,10 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         37 02 00 39  Jump
         37 03 00 3a  Strobe
         """
-        return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
+        return [
+            self.construct_message(bytearray([0x37, mode or 0x01, 0x00])),
+            self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
+        ]
 
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
@@ -743,8 +746,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             )
         )
 
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
-        """The bytes to send for a level change request.
+    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+        """The bytes to send for music mode.
 
         Known messages
         73 01 27 01 00 00 00 00 ff ff 64 64 62 - lowest brightness music
@@ -784,12 +787,12 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         red = 0xFF
         green = 0x00
         blue = 0x00
-
-        return self.construct_message(
+        return [self.construct_message(
             bytearray(
                 [
                     0x73,
                     0x01,
+                    mode or 0x26, # strip mode 0x26, light bar mode 0x27
                     red,
                     green,
                     blue,
@@ -797,11 +800,10 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                     green,
                     blue,
                     sensitivity,
-                    0x64,
-                    0x64,
+                    brightness,
                 ]
             )
-        )
+        )]
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
@@ -859,8 +861,8 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
             )
         )
 
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
-        """The bytes to send for a level change request.
+    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+        """The bytes to send for music mode.
 
         Known messages
         b0 b1 b2 b3 00 01 01 1f 00 0d 73 01 27 01 ff 00 00 ff 00 00 64 64 62 b8 - Music mode
@@ -888,6 +890,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
                 [
                     0x73,
                     0x01,
+                    mode or 0x26, # strip mode 0x26, light bar mode 0x27
                     red,
                     green,
                     blue,
@@ -895,16 +898,16 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
                     green,
                     blue,
                     sensitivity,
-                    0x64,
+                    brightness,
                 ]
             )
         )
 
-        return self.construct_message(
+        return [self.construct_message(
             bytearray(
                 [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
             )
-        )
+        )]
 
     def construct_levels_change(
         self,

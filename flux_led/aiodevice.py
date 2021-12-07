@@ -248,7 +248,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Set zones."""
         assert self._protocol is not None
         if not self._protocol.zones:
-            raise ValueError("{self.protocol} does not support zones")
+            raise ValueError("{self.model} does not support zones")
         assert self._pixels_per_segment is not None
         assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(
@@ -256,6 +256,20 @@ class AIOWifiLedBulb(LEDENETDevice):
                 self._pixels_per_segment, rgb_list, speed, effect
             )
         )
+
+    async def async_set_music_mode(
+        self,
+        sensitivity: int = 100,
+        brightness: int = 100,
+        mode: Optional[int] = None,
+    ) -> None:
+        """Set music mode."""
+        assert self._protocol is not None
+        assert self.microphone
+        if not self.microphone:
+            raise ValueError("{self.model} does not have a built-in microphone")
+        for bytes_send in self._protocol.construct_music_mode(sensitivity, brightness, mode):
+            await self._async_send_msg(bytes_send)
 
     async def async_set_random(self) -> None:
         """Set levels randomly."""

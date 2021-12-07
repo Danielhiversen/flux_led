@@ -17,6 +17,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
+    EFFECT_MUSIC,
     EFFECT_RANDOM,
     MAX_TEMP,
     MIN_TEMP,
@@ -358,6 +359,8 @@ class LEDENETDevice:
             effects = ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
             effects = EFFECT_LIST_DIMMABLE if self.dimmable_effects else EFFECT_LIST
+        if self.microphone:
+            return [*effects, EFFECT_RANDOM, EFFECT_MUSIC]
         return [*effects, EFFECT_RANDOM]
 
     @property
