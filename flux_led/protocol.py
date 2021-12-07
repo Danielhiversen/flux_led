@@ -240,7 +240,11 @@ class ProtocolBase:
 
     @abstractmethod
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
     ) -> List[bytearray]:
         """The bytes to send to set music mode."""
 
@@ -493,7 +497,11 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return LEDENETRawState(*raw_state)
 
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -756,7 +764,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         )
 
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -876,7 +888,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         )
 
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
