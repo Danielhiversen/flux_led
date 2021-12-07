@@ -1,6 +1,7 @@
 """FluxLED Models Database."""
 
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Dict, List, Optional, Set
 
 from .const import (
@@ -65,6 +66,21 @@ class LEDENETModel:
         return protocol
 
 
+class LEDENETChip(Enum):
+    ESP8266 = auto()  # aka ESP8285
+    BL602 = auto()
+    S82GESNC = auto()
+    UNKNOWN = auto()
+
+
+@dataclass
+class LEDENETHardware:
+    model: str  # The model string
+    chip: LEDENETChip
+    ir_remote: bool
+    rf_remote: bool
+
+
 BASE_MODE_MAP = {
     0x01: {COLOR_MODE_DIM},
     0x02: {COLOR_MODE_CCT},
@@ -125,6 +141,125 @@ GENERIC_RGBWW_MAP = {
 
 UNKNOWN_MODEL = "Unknown Model"
 
+# Assumed model version scheme
+#
+# Example AK001-ZJ2149
+#
+#  0  1  2  3  4  5
+#  Z  J  2  1  4  9
+#  |  |  |  |  |  |
+#  |  |  |  |  |  |
+#  |  |  |  |  |  Minor Version
+#  |  |  |  |  Major Version
+#  |  |  |  Chip
+#  |  |  Generation
+#  |  Unknown
+#  Zengge
+#
+HARDWARE = [
+    LEDENETHardware(
+        model="AK001-ZJ100",
+        chip=LEDENETChip.ESP8266,
+        ir_remote=False,  # verified
+        rf_remote=False,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ200",
+        chip=LEDENETChip.ESP8266,
+        ir_remote=False,  # verified
+        rf_remote=False,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ210",  # might also be "AK001-ZJ2100"
+        chip=LEDENETChip.ESP8266,  # verified
+        ir_remote=False,  # verified
+        rf_remote=False,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2101",
+        chip=LEDENETChip.ESP8266,
+        ir_remote=False,
+        rf_remote=False,
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2104",
+        chip=LEDENETChip.ESP8266,
+        ir_remote=True,  # verified - seen on fairy lights
+        rf_remote=False,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2134",  # seen in smart plugs only?
+        chip=LEDENETChip.S82GESNC,  # couldn't get the device appart
+        ir_remote=False,
+        rf_remote=False,
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2145",
+        chip=LEDENETChip.BL602,
+        ir_remote=True,  # verified - seen on Controller RGBW
+        rf_remote=False,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on these
+        chip=LEDENETChip.BL602,  # verified
+        ir_remote=False,  # verified
+        rf_remote=True,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2147",  # seen on Controller RGBW
+        chip=LEDENETChip.BL602,
+        ir_remote=False,  # verified
+        rf_remote=True,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2148",  # seen on older Addressable v3
+        chip=LEDENETChip.BL602,
+        ir_remote=False,  # verified
+        rf_remote=True,  # verified
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ2149",  # seen on newer Addressable v3
+        chip=LEDENETChip.BL602,
+        ir_remote=False,  # verified
+        rf_remote=True,  # verified
+    ),
+    LEDENETHardware(
+        model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100",  # reported on older UFO
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-0",  # reported on older UFO
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-1",  # reported on older UFO
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-ZJ002",  # seen on older UFO
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-ZJ200",  # seen on RGBW Downlight
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
+    ),
+]
 
 MODELS = [
     LEDENETModel(
@@ -140,7 +275,13 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x04,
-        models=["AK001-ZJ200"],
+        models=[
+            "HF-LPB100",
+            "HF-LPB100-0",
+            "HF-LPB100-1",
+            "HF-LPB100-ZJ002",
+            "AK001-ZJ200",
+        ],
         description="UFO Controller RGBW",  # AKA ZJ-WFUF-170F
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
@@ -154,7 +295,7 @@ MODELS = [
         # "AK001-ZJ2145" == v2
         # "AK001-ZJ2147" == v3
         # AK001-ZJ2147 has RF remote support
-        models=["AK001-ZJ2145", "AK001-ZJ2147"],
+        models=["AK001-ZJ100", "AK001-ZJ200", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
@@ -342,7 +483,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x25,
-        models=["AK001-ZJ200"],
+        models=["HF-LPB100-ZJ200", "AK001-ZJ200"],
         description="Controller RGB/WW/CW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE)],
@@ -413,7 +554,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x44,
-        models=[],
+        models=["AK001-ZJ200"],
         description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
