@@ -24,6 +24,7 @@ class MultiColorEffects(Enum):
 
 
 PRESET_MUSIC_MODE: Final = 0x62
+PRESET_MUSIC_MODE_LEGACY: Final = 0x5D
 
 ATTR_IPADDR: Final = "ipaddr"
 ATTR_ID: Final = "id"
