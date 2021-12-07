@@ -158,6 +158,12 @@ UNKNOWN_MODEL = "Unknown Model"
 #
 HARDWARE = [
     LEDENETHardware(
+        model="AK001-ZJ100",
+        chip=LEDENETChip.ESP8266,
+        ir_remote=False,  # verified
+        rf_remote=False,  # verified
+    ),
+    LEDENETHardware(
         model="AK001-ZJ200",
         chip=LEDENETChip.ESP8266,
         ir_remote=False,  # verified
@@ -216,6 +222,12 @@ HARDWARE = [
         chip=LEDENETChip.BL602,
         ir_remote=False,  # verified
         rf_remote=True,  # verified
+    ),
+    LEDENETHardware(
+        model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
+        chip=LEDENETChip.UNKNOWN,
+        ir_remote=False,
+        rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
@@ -283,7 +295,7 @@ MODELS = [
         # "AK001-ZJ2145" == v2
         # "AK001-ZJ2147" == v3
         # AK001-ZJ2147 has RF remote support
-        models=["AK001-ZJ2145", "AK001-ZJ2147"],
+        models=["AK001-ZJ100", "AK001-ZJ200", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
@@ -471,7 +483,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x25,
-        models=["AK001-ZJ200"],
+        models=["HF-LPB100-ZJ200", "AK001-ZJ200"],
         description="Controller RGB/WW/CW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE)],
@@ -542,7 +554,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x44,
-        models=[],
+        models=["AK001-ZJ200"],
         description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
