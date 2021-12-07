@@ -240,7 +240,7 @@ class ProtocolBase:
 
     @abstractmethod
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int]
+        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
     ) -> List[bytearray]:
         """The bytes to send to set music mode."""
 
@@ -493,7 +493,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return LEDENETRawState(*raw_state)
 
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int]
+        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -527,8 +527,13 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         37 02 00 39  Jump
         37 03 00 3a  Strobe
         """
+        # Valid modes
+        # 0x00 - Fade In
+        # 0x01 - Gradual
+        # 0x02 - Jump
+        # 0x03 - Strobe
         return [
-            self.construct_message(bytearray([0x37, mode or 0x01, 0x00])),
+            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
             self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
         ]
 
@@ -751,7 +756,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         )
 
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int]
+        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -793,7 +798,6 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         red = 0xFF
         green = 0x00
         blue = 0x00
-        effect = 0x01
         return [
             self.construct_message(
                 bytearray(
@@ -801,7 +805,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                         0x73,
                         0x01,
                         mode or 0x26,  # strip mode 0x26, light bar mode 0x27
-                        effect,
+                        effect or 0x01,
                         red,
                         green,
                         blue,
@@ -872,7 +876,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         )
 
     def construct_music_mode(
-        self, sensitivity: int, brightness: int, mode: Optional[int]
+        self, sensitivity: int, brightness: int, mode: Optional[int], effect: Optional[int]
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -904,14 +908,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         red = 0xFF
         green = 0x00
         blue = 0x00
-        effect = 0x1
         inner_message = self.construct_message(
             bytearray(
                 [
                     0x73,
                     0x01,
                     mode or 0x26,  # strip mode 0x26, light bar mode 0x27
-                    effect,
+                    effect or 0x01,
                     red,
                     green,
                     blue,
