@@ -287,9 +287,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 background_colors,
             )
         ):
-            await self._async_send_msg(bytes_send)
             if idx > 0:
                 await asyncio.sleep(COMMAND_SPACING_DELAY)
+            await self._async_send_msg(bytes_send)
 
     async def async_set_random(self) -> None:
         """Set levels randomly."""
