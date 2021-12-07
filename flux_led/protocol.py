@@ -887,6 +887,10 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
             )
         )
 
+    # To query music mode
+    # Send     -> b0 b1 b2 b3 00 01 01 1c 00 03 72 00 72 cb
+    # Responds <- b0 b1 b2 b3 00 01 01 1c 00 0d 72 01 26 01 00 00 00 00 00 00 64 64 62 b5
+
     def construct_music_mode(
         self,
         sensitivity: int,
