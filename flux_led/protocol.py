@@ -239,7 +239,9 @@ class ProtocolBase:
         """The bytes to send for a state change request."""
 
     @abstractmethod
-    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+    def construct_music_mode(
+        self, sensitivity: int, brightness: int, mode: int
+    ) -> list[bytearray]:
         """The bytes to send to set music mode."""
 
     @abstractmethod
@@ -490,7 +492,9 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+    def construct_music_mode(
+        self, sensitivity: int, brightness: int, mode: int
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -525,7 +529,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """
         return [
             self.construct_message(bytearray([0x37, mode or 0x01, 0x00])),
-            self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
+            self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
         ]
 
     def is_valid_addressable_response(self, data: bytes) -> bool:
@@ -746,7 +750,9 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             )
         )
 
-    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+    def construct_music_mode(
+        self, sensitivity: int, brightness: int, mode: int
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -787,23 +793,25 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         red = 0xFF
         green = 0x00
         blue = 0x00
-        return [self.construct_message(
-            bytearray(
-                [
-                    0x73,
-                    0x01,
-                    mode or 0x26, # strip mode 0x26, light bar mode 0x27
-                    red,
-                    green,
-                    blue,
-                    red,
-                    green,
-                    blue,
-                    sensitivity,
-                    brightness,
-                ]
+        return [
+            self.construct_message(
+                bytearray(
+                    [
+                        0x73,
+                        0x01,
+                        mode or 0x26,  # strip mode 0x26, light bar mode 0x27
+                        red,
+                        green,
+                        blue,
+                        red,
+                        green,
+                        blue,
+                        sensitivity,
+                        brightness,
+                    ]
+                )
             )
-        )]
+        ]
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
@@ -861,7 +869,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
             )
         )
 
-    def construct_music_mode(self, sensitivity: int, brightness: int, mode: int) -> list[bytearray]:
+    def construct_music_mode(
+        self, sensitivity: int, brightness: int, mode: int
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -890,7 +900,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
                 [
                     0x73,
                     0x01,
-                    mode or 0x26, # strip mode 0x26, light bar mode 0x27
+                    mode or 0x26,  # strip mode 0x26, light bar mode 0x27
                     red,
                     green,
                     blue,
@@ -903,11 +913,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
             )
         )
 
-        return [self.construct_message(
-            bytearray(
-                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
+        return [
+            self.construct_message(
+                bytearray(
+                    [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
+                )
             )
-        )]
+        ]
 
     def construct_levels_change(
         self,

@@ -268,7 +268,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self.microphone
         if not self.microphone:
             raise ValueError("{self.model} does not have a built-in microphone")
-        for bytes_send in self._protocol.construct_music_mode(sensitivity, brightness, mode):
+        for bytes_send in self._protocol.construct_music_mode(
+            sensitivity, brightness, mode
+        ):
             await self._async_send_msg(bytes_send)
 
     async def async_set_random(self) -> None:
