@@ -939,7 +939,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
                         self._increment_counter(),
                         0x00,
                         0x0D,
-                        *inner_message,
+                        *inner_message[0],
                     ]
                 )
             )
