@@ -30,7 +30,7 @@ from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
 
-
+COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
@@ -277,10 +277,19 @@ class AIOWifiLedBulb(LEDENETDevice):
             raise ValueError("{self.model} does not have a built-in microphone")
         if foreground_colors is None:
             foreground_colors = self.rgb
-        for bytes_send in self._protocol.construct_music_mode(
-            sensitivity, brightness, mode, effect, foreground_colors, background_colors
+        for idx, bytes_send in enumerate(
+            self._protocol.construct_music_mode(
+                sensitivity,
+                brightness,
+                mode,
+                effect,
+                foreground_colors,
+                background_colors,
+            )
         ):
             await self._async_send_msg(bytes_send)
+            if idx > 0:
+                await asyncio.sleep(COMMAND_SPACING_DELAY)
 
     async def async_set_random(self) -> None:
         """Set levels randomly."""
