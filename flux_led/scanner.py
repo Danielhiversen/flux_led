@@ -97,7 +97,12 @@ class BulbScanner:
     BROADCAST_ADDRESS = "<broadcast>"
 
     def __init__(self) -> None:
-        self.found_bulbs: List[FluxLEDDiscovery] = []
+        self._discoveries: Dict[str, FluxLEDDiscovery] = {}
+
+    @property
+    def found_bulbs(self) -> List[FluxLEDDiscovery]:
+        """Return only complete bulb discoveries."""
+        return [info for info in self._discoveries.values() if info["id"]]
 
     def getBulbInfoByID(self, id: str) -> FluxLEDDiscovery:
         for b in self.found_bulbs:
@@ -167,12 +172,6 @@ class BulbScanner:
         elif "," in decoded_data:
             _process_discovery_message(data, decoded_data)
 
-    def _found_bulbs(
-        self, response_list: Dict[str, FluxLEDDiscovery]
-    ) -> List[FluxLEDDiscovery]:
-        """Return only complete bulb discoveries."""
-        return [info for info in response_list.values() if info["id"]]
-
     def send_discovery_messages(
         self,
         sender: Union[socket.socket, asyncio.DatagramTransport],
@@ -195,7 +194,6 @@ class BulbScanner:
         destination = self._destination_from_address(address)
         # set the time at which we will quit the search
         quit_time = time.monotonic() + timeout
-        response_list: Dict[str, FluxLEDDiscovery] = {}
         found_all = False
         # outer loop for query send
         while not found_all:
@@ -223,9 +221,8 @@ class BulbScanner:
                 except socket.timeout:
                     continue
 
-                if self._process_response(data, addr, address, response_list):
+                if self._process_response(data, addr, address, self._discoveries):
                     found_all = True
                     break
 
-        self.found_bulbs = self._found_bulbs(response_list)
         return self.found_bulbs
