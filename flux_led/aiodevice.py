@@ -237,7 +237,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             await self.async_set_random()
             return
         if effect == EFFECT_MUSIC:
-            await self.async_set_music_mode()
+            await self.async_set_music_mode(brightness=brightness)
             return
         await self.async_set_preset_pattern(
             self._effect_to_pattern(effect), speed, brightness
