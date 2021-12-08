@@ -272,18 +272,15 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         """Set music mode."""
         assert self._protocol is not None
-        assert self.microphone
         if not self.microphone:
             raise ValueError("{self.model} does not have a built-in microphone")
-        if foreground_colors is None:
-            foreground_colors = self.rgb
         for idx, bytes_send in enumerate(
             self._protocol.construct_music_mode(
                 sensitivity,
                 brightness,
                 mode,
                 effect,
-                foreground_colors,
+                foreground_colors or self.rgb,
                 background_colors,
             )
         ):
