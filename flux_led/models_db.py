@@ -70,7 +70,7 @@ class LEDENETChip(Enum):
     ESP8266 = auto()  # aka ESP8285
     BL602 = auto()  # supports BLE as well
     S82GESNC = auto()
-    UNKNOWN = auto()
+    HFLPB100 = auto()
 
 
 @dataclass
@@ -213,32 +213,32 @@ HARDWARE = [
     ),
     LEDENETHardware(
         model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
-        chip=LEDENETChip.UNKNOWN,
+        chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
-        chip=LEDENETChip.UNKNOWN,
+        chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-0",  # reported on older UFO
-        chip=LEDENETChip.UNKNOWN,
+        chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-1",  # reported on older UFO
-        chip=LEDENETChip.UNKNOWN,
+        chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ002",  # seen on older UFO
-        chip=LEDENETChip.UNKNOWN,
+        chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ200",  # seen on RGBW Downlight
-        chip=LEDENETChip.UNKNOWN,
+        chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
 ]
