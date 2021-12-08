@@ -68,7 +68,7 @@ class LEDENETModel:
 
 class LEDENETChip(Enum):
     ESP8266 = auto()  # aka ESP8285
-    BL602 = auto()
+    BL602 = auto()  # supports BLE as well
     S82GESNC = auto()
     UNKNOWN = auto()
 
@@ -77,7 +77,6 @@ class LEDENETChip(Enum):
 class LEDENETHardware:
     model: str  # The model string
     chip: LEDENETChip
-    ir_remote: bool
     rf_remote: bool
 
 
@@ -160,103 +159,86 @@ HARDWARE = [
     LEDENETHardware(
         model="AK001-ZJ100",
         chip=LEDENETChip.ESP8266,
-        ir_remote=False,  # verified
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ200",
         chip=LEDENETChip.ESP8266,
-        ir_remote=False,  # verified
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ210",  # might also be "AK001-ZJ2100"
         chip=LEDENETChip.ESP8266,  # verified
-        ir_remote=False,  # verified
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ2101",
         chip=LEDENETChip.ESP8266,
-        ir_remote=False,
         rf_remote=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2104",
         chip=LEDENETChip.ESP8266,
-        ir_remote=True,  # verified - seen on fairy lights
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ2134",  # seen in smart plugs only?
         chip=LEDENETChip.S82GESNC,  # couldn't get the device appart
-        ir_remote=False,
         rf_remote=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2145",
         chip=LEDENETChip.BL602,
-        ir_remote=True,  # verified - seen on Controller RGBW
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on these
         chip=LEDENETChip.BL602,  # verified
-        ir_remote=False,  # verified
         rf_remote=True,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ2147",  # seen on Controller RGBW
         chip=LEDENETChip.BL602,
-        ir_remote=False,  # verified
         rf_remote=True,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ2148",  # seen on older Addressable v3
         chip=LEDENETChip.BL602,
-        ir_remote=False,  # verified
         rf_remote=True,  # verified
     ),
     LEDENETHardware(
         model="AK001-ZJ2149",  # seen on newer Addressable v3
         chip=LEDENETChip.BL602,
-        ir_remote=False,  # verified
         rf_remote=True,  # verified
     ),
     LEDENETHardware(
         model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.UNKNOWN,
-        ir_remote=False,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
         chip=LEDENETChip.UNKNOWN,
-        ir_remote=False,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-0",  # reported on older UFO
         chip=LEDENETChip.UNKNOWN,
-        ir_remote=False,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-1",  # reported on older UFO
         chip=LEDENETChip.UNKNOWN,
-        ir_remote=False,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ002",  # seen on older UFO
         chip=LEDENETChip.UNKNOWN,
-        ir_remote=False,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ200",  # seen on RGBW Downlight
         chip=LEDENETChip.UNKNOWN,
-        ir_remote=False,
         rf_remote=False,  # unverified
     ),
 ]

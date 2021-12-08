@@ -26,7 +26,7 @@ class FluxLEDDiscovery(TypedDict):
     model_num: Optional[int]
     version_num: Optional[int]
     firmware_date: Optional[date]
-    model_info: Optional[str]
+    model_info: Optional[str]  # contains if IR (and maybe BL) if the device supports IR
     model_description: Optional[str]
 
 
