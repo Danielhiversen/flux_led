@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 import logging
-from typing import List, NamedTuple, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
     TRANSITION_GRADUAL,
@@ -239,7 +239,15 @@ class ProtocolBase:
         """The bytes to send for a state change request."""
 
     @abstractmethod
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
+    def construct_music_mode(
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
+        foreground_colors: Optional[Tuple[int, int, int]] = None,
+        background_colors: Optional[Tuple[int, int, int]] = None,
+    ) -> List[bytearray]:
         """The bytes to send to set music mode."""
 
     @abstractmethod
@@ -490,8 +498,16 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         return LEDENETRawState(*raw_state)
 
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
-        """The bytes to send for a level change request.
+    def construct_music_mode(
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
+        foreground_colors: Optional[Tuple[int, int, int]] = None,
+        background_colors: Optional[Tuple[int, int, int]] = None,
+    ) -> List[bytearray]:
+        """The bytes to send for music mode.
 
         Known messages
         73 01 4d 0f d0
@@ -523,7 +539,15 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         37 02 00 39  Jump
         37 03 00 3a  Strobe
         """
-        return self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))
+        # Valid modes
+        # 0x00 - Fade In
+        # 0x01 - Gradual
+        # 0x02 - Jump
+        # 0x03 - Strobe
+        return [
+            self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
+            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
+        ]
 
     def is_valid_addressable_response(self, data: bytes) -> bool:
         """Check if a message is a valid addressable state response."""
@@ -743,8 +767,16 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             )
         )
 
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
-        """The bytes to send for a level change request.
+    def construct_music_mode(
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
+        foreground_colors: Optional[Tuple[int, int, int]] = None,
+        background_colors: Optional[Tuple[int, int, int]] = None,
+    ) -> List[bytearray]:
+        """The bytes to send for music mode.
 
         Known messages
         73 01 27 01 00 00 00 00 ff ff 64 64 62 - lowest brightness music
@@ -781,30 +813,29 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                                          ^brightness <-- led strip mode color
 
         """
-        red = 0xFF
-        green = 0x00
-        blue = 0x00
-
-        return self.construct_message(
-            bytearray(
-                [
-                    0x73,
-                    0x01,
-                    red,
-                    green,
-                    blue,
-                    red,
-                    green,
-                    blue,
-                    sensitivity,
-                    0x64,
-                    0x64,
-                ]
+        if foreground_colors is None:
+            foreground_colors = (0xFF, 0x00, 0x00)
+        if background_colors is None:
+            background_colors = (0x00, 0x00, 0x00)
+        return [
+            self.construct_message(
+                bytearray(
+                    [
+                        0x73,
+                        0x01,
+                        mode or 0x26,  # strip mode 0x26, light bar mode 0x27
+                        effect or 0x01,
+                        *foreground_colors,
+                        *background_colors,
+                        sensitivity,
+                        brightness,
+                    ]
+                )
             )
-        )
+        ]
 
 
-class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
+class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
 
     # ic response
     # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
@@ -842,12 +873,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         self, pattern: int, speed: int, brightness: int
     ) -> bytearray:
         """The bytes to send for a preset pattern."""
-        counter_byte = self._increment_counter()
         return self.construct_message(
             bytearray(
                 [
                     *self.ADDRESSABLE_HEADER,
-                    counter_byte,
+                    self._increment_counter(),
                     0x00,
                     0x05,
                     0x42,
@@ -859,8 +889,20 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
             )
         )
 
-    def construct_music_mode(self, sensitivity: int) -> bytearray:
-        """The bytes to send for a level change request.
+    # To query music mode
+    # Send     -> b0 b1 b2 b3 00 01 01 1c 00 03 72 00 72 cb
+    # Responds <- b0 b1 b2 b3 00 01 01 1c 00 0d 72 01 26 01 00 00 00 00 00 00 64 64 62 b5
+
+    def construct_music_mode(
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
+        foreground_colors: Optional[Tuple[int, int, int]] = None,
+        background_colors: Optional[Tuple[int, int, int]] = None,
+    ) -> List[bytearray]:
+        """The bytes to send for music mode.
 
         Known messages
         b0 b1 b2 b3 00 01 01 1f 00 0d 73 01 27 01 ff 00 00 ff 00 00 64 64 62 b8 - Music mode
@@ -878,33 +920,30 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         b0 b1 b2 b3 00 01 01 5f 00 0d 73 01 27 01 ff a6 00 ff 00 00 64 64 08 44 - Music mode (various sensitivity)
         b0 b1 b2 b3 00 01 01 69 00 0d 73 01 26 01 ff 00 00 ff 00 00 00 64 fd 38 - Music mode (various sensitivity)
         b0 b1 b2 b3 00 01 01 68 00 0d 73 01 26 01 ff 00 00 ff 00 00 64 64 61 ff - Music mode (various sensitivity)
-        """
-        counter_byte = self._increment_counter()
-        red = 0xFF
-        green = 0x00
-        blue = 0x00
-        inner_message = self.construct_message(
-            bytearray(
-                [
-                    0x73,
-                    0x01,
-                    red,
-                    green,
-                    blue,
-                    red,
-                    green,
-                    blue,
-                    sensitivity,
-                    0x64,
-                ]
-            )
-        )
 
-        return self.construct_message(
-            bytearray(
-                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
-            )
+
+        b0 b1 b2 b3 00 01 01 08 00 0d 73 01 26 02 00 00 00 00 ff ff 64 60 5e 99 -- red lines
+        b0 b1 b2 b3 00 01 01 16 00 0d 73 01 26 02 00 00 00 00 ff ff 64 64 62 af -- red lines
+        b0 b1 b2 b3 00 01 01 17 00 0d 73 01 26 01 00 00 00 00 ff ff 64 64 61 ae -- rainbow lines
+                                                                       ^^
+                                                                       Likely brightness from 0-100 (0x64)
+        """
+        inner_message = super().construct_music_mode(
+            sensitivity, brightness, mode, effect, foreground_colors, background_colors
         )
+        return [
+            self.construct_message(
+                bytearray(
+                    [
+                        *self.ADDRESSABLE_HEADER,
+                        self._increment_counter(),
+                        0x00,
+                        0x0D,
+                        *inner_message[0],
+                    ]
+                )
+            )
+        ]
 
     def construct_levels_change(
         self,
@@ -957,7 +996,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         Set Red
         b0b1b2b30001010d0034a0000600010000ff0000ff0002ff00000000ff00030000ff0000ff0004ff00000000ff00050000ff0000ff0006ff00000000ffaf67
         """
-        counter_byte = self._increment_counter()
         preset_number = 0x01  # aka fixed color
         inner_message = self.construct_message(
             bytearray(
@@ -980,7 +1018,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
 
         return self.construct_message(
             bytearray(
-                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x0D, *inner_message]
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    self._increment_counter(),
+                    0x00,
+                    0x0D,
+                    *inner_message,
+                ]
             )
         )
 
@@ -1038,10 +1082,16 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableBase):
         msg.extend(bytearray([effect.value, speed]))
         msg.append(0x00)
         inner_message = self.construct_message(msg)
-        counter_byte = self._increment_counter()
 
         return self.construct_message(
-            bytearray([*self.ADDRESSABLE_HEADER, counter_byte, *pixels, *inner_message])
+            bytearray(
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    self._increment_counter(),
+                    *pixels,
+                    *inner_message,
+                ]
+            )
         )
 
 
@@ -1080,7 +1130,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         b0 b1 b2 b3 00 01 01 72 00 09 35 b1 64 64 00 00 00 03 b1 a5 - 100% cool
         b0 b1 b2 b3 00 01 01 9f 00 09 35 b1 64 32 00 00 00 03 7f 6e - 100% cool - dim 50%
         """
-        counter_byte = self._increment_counter()
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
@@ -1103,6 +1152,12 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
         return self.construct_message(
             bytearray(
-                [*self.ADDRESSABLE_HEADER, counter_byte, 0x00, 0x09, *inner_message]
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    self._increment_counter(),
+                    0x00,
+                    0x09,
+                    *inner_message,
+                ]
             )
         )

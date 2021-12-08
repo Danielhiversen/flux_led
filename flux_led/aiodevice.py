@@ -17,6 +17,7 @@ from .const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
+    EFFECT_MUSIC,
     EFFECT_RANDOM,
     STATE_BLUE,
     STATE_COOL_WHITE,
@@ -29,7 +30,7 @@ from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
 
-
+COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
@@ -235,6 +236,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         if effect == EFFECT_RANDOM:
             await self.async_set_random()
             return
+        if effect == EFFECT_MUSIC:
+            await self.async_set_music_mode(brightness=brightness)
+            return
         await self.async_set_preset_pattern(
             self._effect_to_pattern(effect), speed, brightness
         )
@@ -248,7 +252,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Set zones."""
         assert self._protocol is not None
         if not self._protocol.zones:
-            raise ValueError("{self.protocol} does not support zones")
+            raise ValueError("{self.model} does not support zones")
         assert self._pixels_per_segment is not None
         assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(
@@ -256,6 +260,33 @@ class AIOWifiLedBulb(LEDENETDevice):
                 self._pixels_per_segment, rgb_list, speed, effect
             )
         )
+
+    async def async_set_music_mode(
+        self,
+        sensitivity: int = 100,
+        brightness: int = 100,
+        mode: Optional[int] = None,
+        effect: Optional[int] = None,
+        foreground_colors: Optional[Tuple[int, int, int]] = None,
+        background_colors: Optional[Tuple[int, int, int]] = None,
+    ) -> None:
+        """Set music mode."""
+        assert self._protocol is not None
+        if not self.microphone:
+            raise ValueError("{self.model} does not have a built-in microphone")
+        for idx, bytes_send in enumerate(
+            self._protocol.construct_music_mode(
+                sensitivity,
+                brightness,
+                mode,
+                effect,
+                foreground_colors or self.rgb,
+                background_colors,
+            )
+        ):
+            if idx > 0:
+                await asyncio.sleep(COMMAND_SPACING_DELAY)
+            await self._async_send_msg(bytes_send)
 
     async def async_set_random(self) -> None:
         """Set levels randomly."""

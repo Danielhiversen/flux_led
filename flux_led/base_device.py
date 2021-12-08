@@ -17,6 +17,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
+    EFFECT_MUSIC,
     EFFECT_RANDOM,
     MAX_TEMP,
     MIN_TEMP,
@@ -28,6 +29,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_WW,
     MODEL_NUMS_SWITCHS,
     PRESET_MUSIC_MODE,
+    PRESET_MUSIC_MODE_LEGACY,
     STATE_BLUE,
     STATE_CHANGE_LATENCY,
     STATE_COOL_WHITE,
@@ -136,6 +138,7 @@ PROTOCOL_NAME_TO_CLS = {
 
 PATTERN_CODE_TO_EFFECT = {
     PRESET_MUSIC_MODE: MODE_MUSIC,
+    PRESET_MUSIC_MODE_LEGACY: MODE_MUSIC,
     EFFECT_CUSTOM_CODE: EFFECT_CUSTOM,
 }
 
@@ -358,6 +361,8 @@ class LEDENETDevice:
             effects = ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
             effects = EFFECT_LIST_DIMMABLE if self.dimmable_effects else EFFECT_LIST
+        if self.microphone:
+            return [*effects, EFFECT_RANDOM, EFFECT_MUSIC]
         return [*effects, EFFECT_RANDOM]
 
     @property
@@ -447,7 +452,7 @@ class LEDENETDevice:
             return MODE_COLOR
         elif pattern_code == EFFECT_CUSTOM_CODE:
             return MODE_CUSTOM
-        elif pattern_code == PRESET_MUSIC_MODE:
+        elif pattern_code in (PRESET_MUSIC_MODE, PRESET_MUSIC_MODE_LEGACY):
             return MODE_MUSIC
         elif PresetPattern.valid(pattern_code):
             return MODE_PRESET
