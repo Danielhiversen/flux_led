@@ -571,10 +571,11 @@ async def test_async_set_music_mode_0x08(
         task = asyncio.create_task(light.async_setup(_updated_callback))
         transport, protocol = await mock_aio_protocol()
         light._aio_protocol.data_received(
-            b"\x81\x08#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x3a"
+            b"\x81\x08#\x5d\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x72"
         )
         await task
         assert light.model_num == 0x08
+        assert light.effect == EFFECT_MUSIC
         assert light.microphone is True
 
         transport.reset_mock()
@@ -598,12 +599,13 @@ async def test_async_set_music_mode_a2(
     task = asyncio.create_task(light.async_setup(_updated_callback))
     transport, protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
-        b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
+        b"\x81\xA2#\x62\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x11"
     )
     # ic state
     light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
     await task
     assert light.model_num == 0xA2
+    assert light.effect == EFFECT_MUSIC
     assert light.microphone is True
 
     transport.reset_mock()
@@ -630,12 +632,13 @@ async def test_async_set_music_mode_a3(
     task = asyncio.create_task(light.async_setup(_updated_callback))
     transport, protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
-        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+        b"\x81\xA3#\x62\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x12"
     )
     # ic state
     light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
     await task
     assert light.model_num == 0xA3
+    assert light.effect == EFFECT_MUSIC
     assert light.microphone is True
 
     transport.reset_mock()
