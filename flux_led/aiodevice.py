@@ -413,7 +413,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             hex(msg[5]),
             self._segments,
         )
-        self._ic_future.set_result(True)
+        if not self._ic_future.done():
+            self._ic_future.set_result(True)
         return True
 
     def process_addressable_response(self, msg: bytes) -> bool:
