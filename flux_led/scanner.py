@@ -56,7 +56,7 @@ def _process_discovery_message(data: FluxLEDDiscovery, decoded_data: str) -> Non
 
 
 def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
-    """Process response from b'AT+LVER\r'
+    r"""Process response from b'AT+LVER\r'
 
     b'+ok=07_06_20210106_ZG-BL\r'
     """

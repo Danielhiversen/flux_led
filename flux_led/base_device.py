@@ -589,7 +589,7 @@ class LEDENETDevice:
 
         self.raw_state = raw_state
 
-    def __str__(self) -> str:  # noqa: C901
+    def __str__(self) -> str:
         assert self.raw_state is not None
         assert self._protocol is not None
 
