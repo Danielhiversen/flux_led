@@ -435,7 +435,7 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert light.version_num == 4
     assert light.dimmable_effects is False
     assert light.requires_turn_on is True
-    assert light._protocol.power_push_updates is True
+    assert light._protocol.power_push_updates is False
     assert light._protocol.state_push_updates is False
 
     transport.reset_mock()
@@ -460,7 +460,7 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await asyncio.sleep(0)
     assert len(transport.mock_calls) == 4
 
-    # light is off - poll less frequently since we support power push updates
+    # light is off
     light._aio_protocol.data_received(
         b"\x81\x33\x24\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x66"
     )
@@ -470,7 +470,7 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await light.async_update()
     await light.async_update()
     await asyncio.sleep(0)
-    assert len(transport.mock_calls) == 0
+    assert len(transport.mock_calls) == 4
 
 
 @pytest.mark.asyncio

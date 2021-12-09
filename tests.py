@@ -1676,7 +1676,8 @@ class TestLight(unittest.TestCase):
         )
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.requires_turn_on, False)
-        self.assertEqual(light._protocol.power_push_updates, True)
+        self.assertEqual(light._protocol.power_push_updates, False)
+        self.assertEqual(light._protocol.state_push_updates, False)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

@@ -401,11 +401,6 @@ class ProtocolLEDENET8Byte(ProtocolBase):
     addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
 
     @property
-    def power_push_updates(self) -> bool:
-        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
-        return True
-
-    @property
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE
@@ -586,6 +581,15 @@ class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE_AUTO_ON
 
+
+class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
+    """Protocol that uses 8 bytes, and supports dimmable effects and auto on by changing levels or effects."""
+
+    @property
+    def dimmable_effects(self) -> bool:
+        """Protocol supports dimmable effects."""
+        return True
+
     @property
     def power_push_updates(self) -> bool:
         """If True the protocol pushes power state updates when controlled via ir/rf/app."""
@@ -594,15 +598,6 @@ class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
     @property
     def state_push_updates(self) -> bool:
         """If True the protocol pushes state updates when controlled via ir/rf/app."""
-        return True
-
-
-class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
-    """Protocol that uses 8 bytes, and supports dimmable effects and auto on by changing levels or effects."""
-
-    @property
-    def dimmable_effects(self) -> bool:
-        """Protocol supports dimmable effects."""
         return True
 
     @property
@@ -679,6 +674,15 @@ class ProtocolLEDENET9ByteAutoOn(ProtocolLEDENET9Byte):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_AUTO_ON
 
+
+class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
+    """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
+
+    @property
+    def dimmable_effects(self) -> bool:
+        """Protocol supports dimmable effects."""
+        return True
+
     @property
     def power_push_updates(self) -> bool:
         """If True the protocol pushes power state updates when controlled via ir/rf/app."""
@@ -687,15 +691,6 @@ class ProtocolLEDENET9ByteAutoOn(ProtocolLEDENET9Byte):
     @property
     def state_push_updates(self) -> bool:
         """If True the protocol pushes state updates when controlled via ir/rf/app."""
-        return True
-
-
-class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
-    """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
-
-    @property
-    def dimmable_effects(self) -> bool:
-        """Protocol supports dimmable effects."""
         return True
 
     @property
