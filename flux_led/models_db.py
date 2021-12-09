@@ -449,9 +449,10 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x21,
+        # 'AK001-ZJ200' is v1 but with new firmware it will change to v2
         # 'AK001-ZJ2104' is v2
         # 'AK001-ZJ2104' likely supports turning on by effect/levels set
-        models=["AK001-ZJ2101", "AK001-ZJ2104"],
+        models=["AK001-ZJ200", "AK001-ZJ2101", "AK001-ZJ2104"],
         description="Bulb Dimmable",
         always_writes_white_and_colors=True,  # Verified required with AK001-ZJ200 bulb
         protocols=[
