@@ -432,8 +432,11 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     )
     await task
     assert light.model_num == 0x33
+    assert light.version_num == 4
     assert light.dimmable_effects is False
     assert light.requires_turn_on is True
+    assert light._protocol.power_push_updates is True
+    assert light._protocol.state_push_updates is False
 
     transport.reset_mock()
     with pytest.raises(ValueError):
@@ -444,6 +447,28 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
 
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b"1\xff\x00\x00\x00\x00\x0f?"
+
+    # light is on
+    light._aio_protocol.data_received(
+        b"\x81\x33\x23\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x65"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    assert len(transport.mock_calls) == 4
+
+    # light is off - poll less frequently since we support power push updates
+    light._aio_protocol.data_received(
+        b"\x81\x33\x24\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x66"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    assert len(transport.mock_calls) == 0
 
 
 @pytest.mark.asyncio
@@ -612,6 +637,8 @@ async def test_async_set_music_mode_a2(
     assert light.model_num == 0xA2
     assert light.effect == EFFECT_MUSIC
     assert light.microphone is True
+    assert light._protocol.state_push_updates is False
+    assert light._protocol.power_push_updates is False
 
     transport.reset_mock()
     await light.async_set_music_mode()
@@ -622,6 +649,28 @@ async def test_async_set_music_mode_a2(
     await light.async_set_effect(EFFECT_MUSIC, 100, 100)
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b"s\x01&\x01d\x00\x00\x00\x00\x00dd\xc7"
+
+    # light is on
+    light._aio_protocol.data_received(
+        b"\x81\xA2\x23\x62\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x11"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    assert len(transport.mock_calls) == 4
+
+    # light is off
+    light._aio_protocol.data_received(
+        b"\x81\xA2\x24\x62\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x12"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    assert len(transport.mock_calls) == 4
 
 
 @pytest.mark.asyncio
@@ -932,6 +981,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert light.getCCT() == (255, 0)
     assert light.color_temp == 2700
     assert light.brightness == 255
+    assert light._protocol.power_push_updates is True
 
     transport.reset_mock()
     await light.async_set_brightness(32)
@@ -975,6 +1025,28 @@ async def test_cct_protocol_device(mock_aio_protocol):
     await light.async_set_effect("random", 50)
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3\x00")
+
+    # light is on
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC8"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    assert len(transport.mock_calls) == 0
+
+    # light is off
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x24\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC9"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    assert len(transport.mock_calls) == 0
 
 
 @pytest.mark.asyncio

@@ -1107,6 +1107,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgbcw(), (255, 255, 255, 255, 255))
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.dimmable_effects, True)
+        self.assertEqual(light._protocol.power_push_updates, True)
         self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(
             light.__str__(),
@@ -1675,6 +1676,7 @@ class TestLight(unittest.TestCase):
         )
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, True)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1729,6 +1731,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
         self.assertEqual(light.dimmable_effects, True)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, False)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1817,6 +1820,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
         self.assertEqual(light.dimmable_effects, True)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, True)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1897,6 +1901,7 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light._protocol.power_push_updates, True)
         self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(light.model_num, 0xA1)
 
