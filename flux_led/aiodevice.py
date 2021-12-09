@@ -36,13 +36,13 @@ MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
 #
-# OFF_UPDATE_INTERVAL reduces polling the device for state when its off
+# PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
 # since we do not care about the state when its off. When it turns on
 # the device will push its new state to us anyways (except for buggy firmwares
 # are identified in protocol.py)
 #
 # The downside to a longer polling interval for OFF is the
-# time to declare the device offline is MAX_UPDATES_WITHOUT_RESPONSE*OFF_UPDATE_INTERVAL
+# time to declare the device offline is MAX_UPDATES_WITHOUT_RESPONSE*PUSH_UPDATE_INTERVAL
 #
 PUSH_UPDATE_INTERVAL = 90  # seconds
 
