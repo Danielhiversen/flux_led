@@ -614,7 +614,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x93,
         models=[],
-        description="Switch 1C",
+        description="Switch",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -625,7 +625,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x94,
         models=[],
-        description="Switch 1c Watt",
+        description="Switch Watt",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -636,7 +636,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x95,
         models=[],
-        description="Switch 2c",
+        description="Switch 2 Channel",  # 2 channels
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -647,7 +647,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x96,
         models=[],
-        description="Switch 4c",
+        description="Switch 4 Channel",  # 4 channels
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -658,7 +658,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x97,  # 0x97
         models=["AK001-ZJ2134"],
-        description="Socket 1c",
+        description="Socket",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
