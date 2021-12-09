@@ -1197,7 +1197,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.white_active, True)
         self.assertEqual(light._protocol.power_push_updates, False)
         self.assertEqual(light._protocol.state_push_updates, False)
-        
+
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xef\x01w")))
