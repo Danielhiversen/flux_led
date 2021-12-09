@@ -1826,7 +1826,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.dimmable_effects, True)
         self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(light._protocol.power_push_updates, True)
-        self.assertEqual(light._protocol.state_push_updates, True)
+        self.assertEqual(light._protocol.state_push_updates, False)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1908,7 +1908,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light._protocol.power_push_updates, True)
-        self.assertEqual(light._protocol.state_push_updates, True)
+        self.assertEqual(light._protocol.state_push_updates, False)
         self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(light.model_num, 0xA1)
 
