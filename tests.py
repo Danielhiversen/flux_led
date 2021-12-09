@@ -20,6 +20,7 @@ from flux_led.const import (
 from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_8BYTE_AUTO_ON,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_9BYTE_AUTO_ON,
     PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS,
@@ -955,6 +956,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.microphone, False)
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, False)
+        self.assertEqual(light._protocol.state_push_updates, False)
         self.assertEqual(light.model, "Controller RGB (0x33)")
         self.assertEqual(
             light.effect_list,
@@ -966,6 +969,72 @@ class TestLight(unittest.TestCase):
                 "colorstrobe",
                 "cyan_fade",
                 "cyan_strobe",
+                "gb_cross_fade",
+                "green_fade",
+                "green_strobe",
+                "purple_fade",
+                "purple_strobe",
+                "rb_cross_fade",
+                "red_fade",
+                "red_strobe",
+                "rg_cross_fade",
+                "white_fade",
+                "white_strobe",
+                "yellow_fade",
+                "yellow_strobe",
+                "random",
+            ],
+        )
+
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
+
+        self.assertEqual(light.is_on, True)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.min_temp, 2700)
+        self.assertEqual(light.max_temp, 6500)
+
+    @patch("flux_led.WifiLedBulb._send_msg")
+    @patch("flux_led.WifiLedBulb._read_msg")
+    @patch("flux_led.WifiLedBulb.connect")
+    def test_rgb_controller_33_v9(self, mock_connect, mock_read, mock_send):
+        calls = 0
+
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b"\x81\x33")
+            if calls == 2:
+                self.assertEqual(expected, 12)
+                return bytearray(b"\x23\x61\x07\x10\xb6\x00\x98\x00\x09\x00\xf0\x96")
+            raise ValueError
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB}
+        self.assertEqual(light.version_num, 0x09)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)
+        self.assertEqual(light.model_num, 0x33)
+        self.assertEqual(light.microphone, False)
+        self.assertEqual(light.dimmable_effects, True)
+        self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, True)
+        self.assertEqual(light._protocol.state_push_updates, True)
+        self.assertEqual(light.model, "Controller RGB (0x33)")
+        self.assertEqual(
+            light.effect_list,
+            [
+                "blue_fade",
+                "blue_strobe",
+                "colorjump",
+                "colorloop",
+                "colorstrobe",
+                "cyan_fade",
+                "cyan_strobe",
+                "cycle_rgb",
                 "gb_cross_fade",
                 "green_fade",
                 "green_strobe",
@@ -1107,6 +1176,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgbcw(), (255, 255, 255, 255, 255))
         self.assertEqual(light.rgbwcapable, False)
         self.assertEqual(light.dimmable_effects, True)
+        self.assertEqual(light._protocol.power_push_updates, True)
+        self.assertEqual(light._protocol.state_push_updates, True)
         self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(
             light.__str__(),
@@ -1193,6 +1264,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.requires_turn_on, True)
         self.assertEqual(light.white_active, True)
+        self.assertEqual(light._protocol.power_push_updates, False)
+        self.assertEqual(light._protocol.state_push_updates, False)
 
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 2)
@@ -1675,6 +1748,8 @@ class TestLight(unittest.TestCase):
         )
         self.assertEqual(light.dimmable_effects, False)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, False)
+        self.assertEqual(light._protocol.state_push_updates, False)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1729,6 +1804,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
         self.assertEqual(light.dimmable_effects, True)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, False)
+        self.assertEqual(light._protocol.state_push_updates, False)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1817,6 +1894,8 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.device_type, flux_led.DeviceType.Bulb)
         self.assertEqual(light.dimmable_effects, True)
         self.assertEqual(light.requires_turn_on, False)
+        self.assertEqual(light._protocol.power_push_updates, True)
+        self.assertEqual(light._protocol.state_push_updates, False)
 
         light.setRgbw(0, 255, 0)
         self.assertEqual(mock_read.call_count, 2)
@@ -1897,6 +1976,8 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         self.assertEqual(light.speed_adjust_off, False)
         self.assertEqual(light.dimmable_effects, False)
+        self.assertEqual(light._protocol.power_push_updates, True)
+        self.assertEqual(light._protocol.state_push_updates, False)
         self.assertEqual(light.requires_turn_on, False)
         self.assertEqual(light.model_num, 0xA1)
 

@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import time
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from flux_led.protocol import (
@@ -34,6 +35,19 @@ COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
+#
+# PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
+# since we do not care about the state when its off. When it turns on
+# the device will push its new state to us anyways (except for buggy firmwares
+# are identified in protocol.py)
+#
+# The downside to a longer polling interval for OFF is the
+# time to declare the device offline is MAX_UPDATES_WITHOUT_RESPONSE*PUSH_UPDATE_INTERVAL
+#
+PUSH_UPDATE_INTERVAL = 90  # seconds
+
+NEVER_TIME = -PUSH_UPDATE_INTERVAL
+
 
 class AIOWifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
@@ -51,6 +65,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updates_without_response = 0
         self._pixels_per_segment: Optional[int] = None
         self._segments: Optional[int] = None
+        self._last_update_time: float = NEVER_TIME
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
 
@@ -169,6 +184,21 @@ class AIOWifiLedBulb(LEDENETDevice):
 
         The callback will be triggered when the state is recieved.
         """
+        now = time.monotonic()
+        assert self._protocol is not None
+        if (self._last_update_time + PUSH_UPDATE_INTERVAL) > now:
+            if self.is_on:
+                # If the device pushes state updates when on
+                # then no need to poll except for the interval
+                # to make sure the device is still responding
+                if self._protocol.state_push_updates:
+                    return
+            elif self._protocol.power_push_updates:
+                # If the device pushes power updates
+                # then no need to poll except for the interval
+                # to make sure the device is still responding
+                return
+        self._last_update_time = now
         if self._updates_without_response == MAX_UPDATES_WITHOUT_RESPONSE:
             if self._aio_protocol:
                 self._aio_protocol.close()

@@ -167,6 +167,16 @@ class ProtocolBase:
         return True
 
     @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return False
+
+    @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return False
+
+    @property
     def zones(self) -> bool:
         """If the protocol supports zones."""
         return False
@@ -581,6 +591,16 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         return True
 
     @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
@@ -664,6 +684,16 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
         return True
 
     @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS
@@ -686,6 +716,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
+
+    @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
 
     @property
     def dimmable_effects(self) -> bool:
@@ -716,6 +751,12 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A2
+
+    @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        # This is likely due to buggy firmware
+        return False
 
     @property
     def dimmable_effects(self) -> bool:
@@ -840,6 +881,10 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
     # ic response
     # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
     # b0 b1 b2 b3 00 01 01 37 00 0b 00 63 00 32 00 01 04 03 32 01 d0 aa
+    @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
 
     @property
     def zones(self) -> bool:
@@ -1108,6 +1153,16 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
+
+    @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return True
 
     @property
     def requires_turn_on(self) -> bool:

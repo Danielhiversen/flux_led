@@ -606,10 +606,7 @@ class LEDENETDevice:
 
         if mode in STATIC_MODES:
             if color_mode in COLOR_MODES_RGB:
-                red = rx.red
-                green = rx.green
-                blue = rx.blue
-                mode_str = f"Color: {(red, green, blue)}"
+                mode_str = f"Color: {(rx.red, rx.green, rx.blue)}"
                 # Should add ability to get CCT from rgbwcapable*
                 if self.rgbwcapable:
                     mode_str += f" White: {rx.warm_white}"
@@ -623,8 +620,7 @@ class LEDENETDevice:
                     cct_value[0], round(cct_value[1] * 100 / 255)
                 )
         elif mode == MODE_PRESET:
-            pat = self.effect
-            mode_str = f"Pattern: {pat} (Speed {self.speed}%)"
+            mode_str = f"Pattern: {self.effect} (Speed {self.speed}%)"
         elif mode == MODE_CUSTOM:
             mode_str = f"Custom pattern (Speed {self.speed}%)"
         elif BuiltInTimer.valid(rx.preset_pattern):
