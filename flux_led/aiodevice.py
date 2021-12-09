@@ -62,10 +62,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._off_futures: List["asyncio.Future[bool]"] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
-        self._updates_without_response = NEVER_TIME
+        self._updates_without_response = 0
         self._pixels_per_segment: Optional[int] = None
         self._segments: Optional[int] = None
-        self._last_update_time: float = 0
+        self._last_update_time: float = NEVER_TIME
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
 

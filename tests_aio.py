@@ -457,6 +457,7 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await light.async_update()
     await light.async_update()
     await light.async_update()
+    await asyncio.sleep(0)
     assert len(transport.mock_calls) == 4
 
     # light is off - poll less frequently since we support power push updates
@@ -468,6 +469,7 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await light.async_update()
     await light.async_update()
     await light.async_update()
+    await asyncio.sleep(0)
     assert len(transport.mock_calls) == 0
 
 
@@ -659,6 +661,7 @@ async def test_async_set_music_mode_a2(
     await light.async_update()
     await light.async_update()
     await light.async_update()
+    await asyncio.sleep(0)
     assert len(transport.mock_calls) == 4
 
     # light is off
@@ -670,6 +673,7 @@ async def test_async_set_music_mode_a2(
     await light.async_update()
     await light.async_update()
     await light.async_update()
+    await asyncio.sleep(0)
     assert len(transport.mock_calls) == 4
 
 
@@ -1030,12 +1034,14 @@ async def test_cct_protocol_device(mock_aio_protocol):
     light._aio_protocol.data_received(
         b"\x81\x1C\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC8"
     )
+    assert light._last_update_time == aiodevice.NEVER_TIME
     transport.reset_mock()
     await light.async_update()
     await light.async_update()
     await light.async_update()
     await light.async_update()
-    assert len(transport.mock_calls) == 0
+    await asyncio.sleep(0)
+    assert len(transport.mock_calls) == 1
 
     # light is off
     light._aio_protocol.data_received(
@@ -1046,6 +1052,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     await light.async_update()
     await light.async_update()
     await light.async_update()
+    await asyncio.sleep(0)
     assert len(transport.mock_calls) == 0
 
 
