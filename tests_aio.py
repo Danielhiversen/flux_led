@@ -987,7 +987,9 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert light.getCCT() == (255, 0)
     assert light.color_temp == 2700
     assert light.brightness == 255
+    assert light.dimmable_effects is False
     assert light._protocol.power_push_updates is True
+    assert light._protocol.state_push_updates is True
 
     transport.reset_mock()
     await light.async_set_brightness(32)
