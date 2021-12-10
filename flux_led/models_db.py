@@ -192,7 +192,7 @@ HARDWARE = [
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
-        model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on these
+        model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on plugs
         chip=LEDENETChip.BL602,  # verified
         rf_remote=True,  # verified
     ),
@@ -479,7 +479,7 @@ MODELS = [
         model_num=0x33,
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8
-        # "AK001-ZJ2145" == v9
+        # "AK001-ZJ2145" == v9 # no rf support!
         # "AK001-ZJ2146" == v10
         models=[
             "AK001-ZJ2104",
