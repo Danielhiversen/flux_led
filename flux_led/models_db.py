@@ -192,7 +192,7 @@ HARDWARE = [
         rf_remote=False,  # verified
     ),
     LEDENETHardware(
-        model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on these
+        model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on plugs
         chip=LEDENETChip.BL602,  # verified
         rf_remote=True,  # verified
     ),
@@ -449,9 +449,10 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x21,
+        # 'AK001-ZJ200' is v1 but with new firmware it will change to v2
         # 'AK001-ZJ2104' is v2
         # 'AK001-ZJ2104' likely supports turning on by effect/levels set
-        models=["AK001-ZJ2101", "AK001-ZJ2104"],
+        models=["AK001-ZJ200", "AK001-ZJ2101", "AK001-ZJ2104"],
         description="Bulb Dimmable",
         always_writes_white_and_colors=True,  # Verified required with AK001-ZJ200 bulb
         protocols=[
@@ -478,14 +479,16 @@ MODELS = [
         model_num=0x33,
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8
-        # "AK001-ZJ2145" == v9
-        # "AK001-ZJ2146" == v10
+        # "AK001-ZJ2145" == v9 # no rf support!
+        # "AK001-ZJ2146" == v10 # rf support
+        # "AK001-ZJ2148" == v10.63 # rf support
         models=[
+            "AK001-ZJ210",
             "AK001-ZJ2104",
             "AK001-ZJ2101",
             "AK001-ZJ2145",
             "AK001-ZJ2146",
-            "AK001-ZJ210",
+            "AK001-ZJ2148",
         ],
         description="Controller RGB",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
@@ -613,7 +616,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x93,
         models=[],
-        description="Switch 1C",
+        description="Switch",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -624,7 +627,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x94,
         models=[],
-        description="Switch 1c Watt",
+        description="Switch Watt",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -635,7 +638,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x95,
         models=[],
-        description="Switch 2c",
+        description="Switch 2 Channel",  # 2 channels
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -646,7 +649,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x96,
         models=[],
-        description="Switch 4c",
+        description="Switch 4 Channel",  # 4 channels
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -657,7 +660,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x97,  # 0x97
         models=["AK001-ZJ2134"],
-        description="Socket 1c",
+        description="Socket",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
