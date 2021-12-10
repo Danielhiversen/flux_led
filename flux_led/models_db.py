@@ -480,13 +480,15 @@ MODELS = [
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8
         # "AK001-ZJ2145" == v9 # no rf support!
-        # "AK001-ZJ2146" == v10
+        # "AK001-ZJ2146" == v10 # rf support
+        # "AK001-ZJ2148" == v10.63 # rf support
         models=[
+            "AK001-ZJ210",
             "AK001-ZJ2104",
             "AK001-ZJ2101",
             "AK001-ZJ2145",
             "AK001-ZJ2146",
-            "AK001-ZJ210",
+            "AK001-ZJ2148",
         ],
         description="Controller RGB",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
