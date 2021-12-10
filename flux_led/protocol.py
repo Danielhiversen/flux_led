@@ -582,6 +582,7 @@ class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
         return PROTOCOL_LEDENET_8BYTE_AUTO_ON
 
 
+# This protocol also supports Candle mode but its not currently implemented here
 class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
     """Protocol that uses 8 bytes, and supports dimmable effects and auto on by changing levels or effects."""
 
@@ -675,6 +676,7 @@ class ProtocolLEDENET9ByteAutoOn(ProtocolLEDENET9Byte):
         return PROTOCOL_LEDENET_9BYTE_AUTO_ON
 
 
+# This protocol also supports Candle mode but its not currently implemented here
 class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
     """The newer LEDENET protocol with checksums that uses 9 bytes to set state."""
 
