@@ -1155,7 +1155,7 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     )
     protocol.datagram_received(
         b"+ok=TCP,GARBAGE,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
-    )    
+    )
     protocol.datagram_received(
         b"+ok=TCP,8816,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
     )
