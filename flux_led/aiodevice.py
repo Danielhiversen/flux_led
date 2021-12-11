@@ -9,9 +9,9 @@ from flux_led.protocol import (
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
 )
-from .aioscanner import AIOBulbScanner
 
 from .aioprotocol import AIOLEDENETProtocol
+from .aioscanner import AIOBulbScanner
 from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,

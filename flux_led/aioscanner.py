@@ -133,12 +133,16 @@ class AIOBulbScanner(BulbScanner):
         """Send a command and reboot."""
         sock = self._create_socket()
         destination = self._destination_from_address(address)
-        responded = asyncio.Event()
+        response1 = asyncio.Event()
+        response2 = asyncio.Event()
 
         def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
             _LOGGER.debug("udp: %s <= %s", addr, data)
             if data.startswith(b"+ok"):
-                responded.set()
+                if response1.is_set():
+                    response2.set()
+                else:
+                    response1.set()
 
         transport_proto = await self.loop.create_datagram_endpoint(
             lambda: LEDENETDiscovery(
@@ -151,9 +155,8 @@ class AIOBulbScanner(BulbScanner):
         try:
             self.send_start_message(transport, destination)
             msg_sender(transport, destination)
-            await asyncio.wait_for(responded.wait(), timeout=timeout)
-            responded.clear()
+            await asyncio.wait_for(response1.wait(), timeout=timeout)
             self.send_reboot_message(transport, destination)
-            await asyncio.wait_for(responded.wait(), timeout=timeout)
+            await asyncio.wait_for(response2.wait(), timeout=timeout)
         finally:
             transport.close()

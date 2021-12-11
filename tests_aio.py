@@ -1081,6 +1081,54 @@ async def test_cct_protocol_device(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_async_enable_remote_access(mock_aio_protocol):
+    """Test we can enable remote access."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x04\x10\xb6\x00\x98\x19\x04\x25\x0f\xdd"
+    )
+    await task
+
+    with patch(
+        "flux_led.aiodevice.AIOBulbScanner.async_enable_remote_access"
+    ) as mock_async_enable_remote_access:
+        await light.async_enable_remote_access("host", 1234)
+
+    assert mock_async_enable_remote_access.mock_calls == [
+        call("192.168.1.166", "host", 1234)
+    ]
+
+
+@pytest.mark.asyncio
+async def test_async_disable_remote_access(mock_aio_protocol):
+    """Test we can disable remote access."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x04\x10\xb6\x00\x98\x19\x04\x25\x0f\xdd"
+    )
+    await task
+
+    with patch(
+        "flux_led.aiodevice.AIOBulbScanner.async_disable_remote_access"
+    ) as mock_async_disable_remote_access:
+        await light.async_disable_remote_access()
+
+    assert mock_async_disable_remote_access.mock_calls == [call("192.168.1.166")]
+
+
+@pytest.mark.asyncio
 async def test_async_scanner(mock_discovery_aio_protocol):
     """Test scanner."""
     scanner = AIOBulbScanner()
@@ -1225,6 +1273,87 @@ async def test_async_scanner_times_out_with_nothing_specific_address(
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task
     assert data == []
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_enable_remote_access(mock_discovery_aio_protocol):
+    """Test scanner enabling remote access with a specific address."""
+    scanner = AIOBulbScanner()
+
+    task = asyncio.ensure_future(
+        scanner.async_enable_remote_access(
+            timeout=10,
+            address="192.168.213.252",
+            remote_access_host="ra8815us02.magichue.net",
+            remote_access_port=8815,
+        )
+    )
+    transport, protocol = await mock_discovery_aio_protocol()
+    protocol.datagram_received(
+        b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(b"+ok\r", ("192.168.213.252", 48899))
+    protocol.datagram_received(b"+ok\r", ("192.168.213.252", 48899))
+    await task
+    assert transport.mock_calls == [
+        call.sendto(b"HF-A11ASSISTHREAD", ("192.168.213.252", 48899)),
+        call.sendto(
+            b"AT+SOCKB=TCP,8815,ra8815us02.magichue.net\r", ("192.168.213.252", 48899)
+        ),
+        call.sendto(b"AT+Z\r", ("192.168.213.252", 48899)),
+        call.close(),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_disable_remote_access(mock_discovery_aio_protocol):
+    """Test scanner disable remote access with a specific address."""
+    scanner = AIOBulbScanner()
+
+    task = asyncio.ensure_future(
+        scanner.async_disable_remote_access(
+            timeout=10,
+            address="192.168.213.252",
+        )
+    )
+    transport, protocol = await mock_discovery_aio_protocol()
+    protocol.datagram_received(
+        b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(b"+ok\r", ("192.168.213.252", 48899))
+    protocol.datagram_received(b"+ok\r", ("192.168.213.252", 48899))
+    await task
+    assert transport.mock_calls == [
+        call.sendto(b"HF-A11ASSISTHREAD", ("192.168.213.252", 48899)),
+        call.sendto(b"AT+SOCKB=NONE\r", ("192.168.213.252", 48899)),
+        call.sendto(b"AT+Z\r", ("192.168.213.252", 48899)),
+        call.close(),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_disable_remote_access_timeout(mock_discovery_aio_protocol):
+    """Test scanner disable remote access with a specific address failure."""
+    scanner = AIOBulbScanner()
+    task = asyncio.ensure_future(
+        scanner.async_disable_remote_access(
+            timeout=0.02,
+            address="192.168.213.252",
+        )
+    )
+    transport, protocol = await mock_discovery_aio_protocol()
+    protocol.datagram_received(
+        b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(b"+ok\r", ("192.168.213.252", 48899))
+    with pytest.raises(asyncio.TimeoutError):
+        await task
+    assert transport.mock_calls == [
+        call.sendto(b"HF-A11ASSISTHREAD", ("192.168.213.252", 48899)),
+        call.sendto(b"AT+SOCKB=NONE\r", ("192.168.213.252", 48899)),
+        call.sendto(b"AT+Z\r", ("192.168.213.252", 48899)),
+        call.close(),
+    ]
 
 
 def test_merge_discoveries() -> None:
