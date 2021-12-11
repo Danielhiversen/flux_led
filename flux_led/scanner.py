@@ -91,7 +91,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
 
 
 def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
-    """Process response from b'HF-A11ASSISTHREAD'
+    """Process response from b'AT+SOCKB\r'
 
     b'+ok=TCP,8816,ra8816us02.magichue.net\r'
     """
