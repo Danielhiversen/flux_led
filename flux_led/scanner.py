@@ -97,7 +97,8 @@ def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) ->
     """
     data_split = decoded_data.replace("\r", "").split(",")
     if len(data_split) < 3:
-        data["remote_access_enabled"] = False
+        if not data.get("remote_access_enabled"):
+            data["remote_access_enabled"] = False
         return
     try:
         data.update(
@@ -196,7 +197,11 @@ class BulbScanner:
                 remote_access_port=None,
             ),
         )
-        if decoded_data.startswith("+ok=T") or decoded_data.startswith("+ok=N"):
+        if (
+            decoded_data.startswith("+ok=T")
+            or decoded_data == "+ok="
+            or decoded_data == "+ok=\r"
+        ):
             _process_remote_access_message(data, decoded_data)
         if decoded_data.startswith("+ok="):
             _process_version_message(data, decoded_data)
