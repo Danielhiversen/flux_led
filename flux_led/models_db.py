@@ -311,9 +311,9 @@ MODELS = [
         microphone=True,
     ),
     LEDENETModel(
-        model_num=0x09,
+        model_num=0x09,  # same as 0xE1
         models=[],
-        description="Ceiling Light CCT",
+        description="High Voltage Ceiling Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -705,6 +705,19 @@ MODELS = [
         microphone=True,
     ),
     LEDENETModel(
+        model_num=0xA4,
+        models=["AK001-ZJ2149"],
+        description="Addressable v4",
+        always_writes_white_and_colors=False,
+        protocols=[
+            MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)
+        ],  # Currently no difference from v3 proto
+        mode_to_color_mode={},
+        color_modes=COLOR_MODES_ADDRESSABLE,
+        channel_map={},
+        microphone=True,
+    ),
+    LEDENETModel(
         model_num=0xD1,
         models=[],
         description="Digital Light",
@@ -718,12 +731,17 @@ MODELS = [
     LEDENETModel(
         model_num=0xE1,
         models=["AK001-ZJ2104"],
-        description="Ceiling Light",
+        description="Ceiling Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
-        color_modes=set(),  # no color modes -- UNVERIFIED
-        channel_map={},
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
+        channel_map={
+            STATE_WARM_WHITE: STATE_RED,
+            STATE_RED: STATE_WARM_WHITE,
+            STATE_COOL_WHITE: STATE_GREEN,
+            STATE_GREEN: STATE_COOL_WHITE,
+        },
         microphone=False,
     ),
     LEDENETModel(
