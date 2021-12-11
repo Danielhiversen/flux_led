@@ -1060,6 +1060,25 @@ async def test_cct_protocol_device(mock_aio_protocol):
     await asyncio.sleep(0)
     assert len(transport.mock_calls) == 0
 
+    transport.reset_mock()
+    for _ in range(4):
+        light._last_update_time = aiodevice.NEVER_TIME
+        await light.async_update()
+    await asyncio.sleep(0)
+    assert len(transport.mock_calls) == 4
+
+    light._last_update_time = aiodevice.NEVER_TIME
+    for _ in range(4):
+        # First failure should keep the device in
+        # a failure state until we get to an update
+        # time
+        with pytest.raises(RuntimeError):
+            await light.async_update()
+
+    # Should not raise now that bulb has recovered
+    light._last_update_time = aiodevice.NEVER_TIME
+    await light.async_update()
+
 
 @pytest.mark.asyncio
 async def test_async_scanner(mock_discovery_aio_protocol):
