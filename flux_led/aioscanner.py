@@ -104,7 +104,7 @@ class AIOBulbScanner(BulbScanner):
             self.send_disable_remote_access_message, address, timeout
         )
 
-    async def async_disable_remote_access(
+    async def async_enable_remote_access(
         self,
         address: str,
         remote_access_host: str,
