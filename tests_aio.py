@@ -47,6 +47,16 @@ FLUX_DISCOVERY = FluxLEDDiscovery(
 )
 
 
+def mock_coro(return_value=None, exception=None):
+    """Return a coro that returns a value or raise an exception."""
+    fut = asyncio.Future()
+    if exception is not None:
+        fut.set_exception(exception)
+    else:
+        fut.set_result(return_value)
+    return fut
+
+
 @pytest.fixture
 async def mock_discovery_aio_protocol():
     """Fixture to mock an asyncio connection."""
@@ -1096,7 +1106,8 @@ async def test_async_enable_remote_access(mock_aio_protocol):
     await task
 
     with patch(
-        "flux_led.aiodevice.AIOBulbScanner.async_enable_remote_access"
+        "flux_led.aiodevice.AIOBulbScanner.async_enable_remote_access",
+        return_value=mock_coro(True),
     ) as mock_async_enable_remote_access:
         await light.async_enable_remote_access("host", 1234)
 
@@ -1121,7 +1132,8 @@ async def test_async_disable_remote_access(mock_aio_protocol):
     await task
 
     with patch(
-        "flux_led.aiodevice.AIOBulbScanner.async_disable_remote_access"
+        "flux_led.aiodevice.AIOBulbScanner.async_disable_remote_access",
+        return_value=mock_coro(True),
     ) as mock_async_disable_remote_access:
         await light.async_disable_remote_access()
 
