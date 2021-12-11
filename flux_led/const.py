@@ -34,6 +34,10 @@ ATTR_VERSION_NUM: Final = "version_num"
 ATTR_FIRMWARE_DATE: Final = "firmware_date"
 ATTR_MODEL_INFO: Final = "model_info"
 ATTR_MODEL_DESCRIPTION: Final = "model_description"
+ATTR_REMOTE_ACCESS_ENABLED: Final = "remote_access_enabled"
+ATTR_REMOTE_ACCESS_HOST: Final = "remote_access_host"
+ATTR_REMOTE_ACCESS_PORT: Final = "remote_access_port"
+
 
 # Color modes
 COLOR_MODE_DIM: Final = "DIM"
