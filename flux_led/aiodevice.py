@@ -11,6 +11,7 @@ from flux_led.protocol import (
 )
 
 from .aioprotocol import AIOLEDENETProtocol
+from .aioscanner import AIOBulbScanner
 from .base_device import PROTOCOL_PROBES, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
@@ -351,6 +352,18 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self.color_mode == COLOR_MODE_DIM:
             await self.async_set_levels(w=brightness)
             return
+
+    async def async_enable_remote_access(
+        self, remote_access_host: str, remote_access_port: int
+    ) -> None:
+        """Enable remote access."""
+        await AIOBulbScanner().async_enable_remote_access(
+            self.ipaddr, remote_access_host, remote_access_port
+        )
+
+    async def async_disable_remote_access(self) -> None:
+        """Disable remote access."""
+        await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
 
     async def _async_connect(self) -> None:
         """Create connection."""

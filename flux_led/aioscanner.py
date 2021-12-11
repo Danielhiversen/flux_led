@@ -97,3 +97,66 @@ class AIOBulbScanner(BulbScanner):
             transport.close()
 
         return self.found_bulbs
+
+    async def async_disable_remote_access(self, address: str, timeout: int = 5) -> None:
+        """Disable remote access."""
+        await self._send_command_and_reboot(
+            self.send_disable_remote_access_message, address, timeout
+        )
+
+    async def async_enable_remote_access(
+        self,
+        address: str,
+        remote_access_host: str,
+        remote_access_port: int,
+        timeout: int = 5,
+    ) -> None:
+        """Enable remote access."""
+
+        def _enable_remote_access_message(
+            sender: asyncio.DatagramTransport, destination: Tuple[str, int]
+        ) -> None:
+            self.send_enable_remote_access_message(
+                sender, destination, remote_access_host, remote_access_port
+            )
+
+        await self._send_command_and_reboot(
+            _enable_remote_access_message, address, timeout
+        )
+
+    async def _send_command_and_reboot(
+        self,
+        msg_sender: Callable[[asyncio.DatagramTransport, Tuple[str, int]], None],
+        address: str,
+        timeout: int = 5,
+    ) -> None:
+        """Send a command and reboot."""
+        sock = self._create_socket()
+        destination = self._destination_from_address(address)
+        response1 = asyncio.Event()
+        response2 = asyncio.Event()
+
+        def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
+            _LOGGER.debug("udp: %s <= %s", addr, data)
+            if data.startswith(b"+ok"):
+                if response1.is_set():
+                    response2.set()
+                else:
+                    response1.set()
+
+        transport_proto = await self.loop.create_datagram_endpoint(
+            lambda: LEDENETDiscovery(
+                destination=destination,
+                on_response=_on_response,
+            ),
+            sock=sock,
+        )
+        transport = cast(asyncio.DatagramTransport, transport_proto[0])
+        try:
+            self.send_start_message(transport, destination)
+            msg_sender(transport, destination)
+            await asyncio.wait_for(response1.wait(), timeout=timeout)
+            self.send_reboot_message(transport, destination)
+            await asyncio.wait_for(response2.wait(), timeout=timeout)
+        finally:
+            transport.close()
