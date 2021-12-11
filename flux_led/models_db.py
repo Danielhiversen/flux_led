@@ -709,7 +709,9 @@ MODELS = [
         models=["AK001-ZJ2149"],
         description="Addressable v4",
         always_writes_white_and_colors=False,
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)], # Currently no difference from v3 proto
+        protocols=[
+            MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)
+        ],  # Currently no difference from v3 proto
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
