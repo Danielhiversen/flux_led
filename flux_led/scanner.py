@@ -33,6 +33,15 @@ class FluxLEDDiscovery(TypedDict):
     remote_access_port: Optional[int]  # the remote access port
 
 
+def create_udp_socket() -> socket.socket:
+    """Create a udp socket used for communicating with the device."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.bind(("", 0))
+    sock.setblocking(False)
+    return sock
+
+
 def merge_discoveries(target: FluxLEDDiscovery, source: FluxLEDDiscovery) -> None:
     """Merge keys from a second discovery that may be missing from the first one."""
     for k, v in source.items():
@@ -120,6 +129,8 @@ class BulbScanner:
     DISCOVER_MESSAGE = b"HF-A11ASSISTHREAD"
     VERSION_MESSAGE = b"AT+LVER\r"
     REMOTE_ACCESS_MESSAGE = b"AT+SOCKB\r"
+    DISABLE_REMOTE_ACCESS_MESSAGE = b"AT+SOCKB=NONE\r"
+    REBOOT_MESSAGE = b"AT+Z\r"
     ALL_MESSAGES = {DISCOVER_MESSAGE, VERSION_MESSAGE, REMOTE_ACCESS_MESSAGE}
     BROADCAST_ADDRESS = "<broadcast>"
 
@@ -141,11 +152,7 @@ class BulbScanner:
         return self.found_bulbs
 
     def _create_socket(self) -> socket.socket:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.bind(("", 0))
-        sock.setblocking(False)
-        return sock
+        return create_udp_socket()
 
     def _destination_from_address(self, address: Optional[str]) -> Tuple[str, int]:
         if address is None:
@@ -208,17 +215,54 @@ class BulbScanner:
         elif "," in decoded_data:
             _process_discovery_message(data, decoded_data)
 
+    def send_start_message(
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
+    ) -> None:
+        self._send_message(sender, destination, self.DISCOVER_MESSAGE)
+
+    def send_enable_remote_access_message(
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
+        remote_access_host: str,
+        remote_access_port: int,
+    ) -> None:
+        enable_message = f"AT+SOCKB=TCP,{remote_access_port},{remote_access_host}\r"
+        self._send_message(sender, destination, enable_message.encode())
+
+    def send_disable_remote_access_message(
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
+    ) -> None:
+        self._send_message(sender, destination, self.DISABLE_REMOTE_ACCESS_MESSAGE)
+
+    def send_reboot_message(
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
+    ) -> None:
+        self._send_message(sender, destination, self.REBOOT_MESSAGE)
+
+    def _send_message(
+        self,
+        sender: Union[socket.socket, asyncio.DatagramTransport],
+        destination: Tuple[str, int],
+        message: bytes,
+    ) -> None:
+        _LOGGER.debug("udp: %s => %s", destination, message)
+        sender.sendto(message, destination)
+
     def send_discovery_messages(
         self,
         sender: Union[socket.socket, asyncio.DatagramTransport],
         destination: Tuple[str, int],
     ) -> None:
-        _LOGGER.debug("discover: %s => %s", destination, self.DISCOVER_MESSAGE)
-        sender.sendto(self.DISCOVER_MESSAGE, destination)
-        _LOGGER.debug("discover: %s => %s", destination, self.VERSION_MESSAGE)
-        sender.sendto(self.VERSION_MESSAGE, destination)
-        _LOGGER.debug("discover: %s => %s", destination, self.REMOTE_ACCESS_MESSAGE)
-        sender.sendto(self.REMOTE_ACCESS_MESSAGE, destination)
+        self.send_start_message(sender, destination)
+        self._send_message(sender, destination, self.VERSION_MESSAGE)
+        self._send_message(sender, destination, self.REMOTE_ACCESS_MESSAGE)
 
     def scan(
         self, timeout: int = 10, address: Optional[str] = None
