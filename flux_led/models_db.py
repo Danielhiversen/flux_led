@@ -735,7 +735,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
-        color_modes=set(),  # no color modes -- UNVERIFIED
+        color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
         channel_map={
             STATE_WARM_WHITE: STATE_RED,
             STATE_RED: STATE_WARM_WHITE,
