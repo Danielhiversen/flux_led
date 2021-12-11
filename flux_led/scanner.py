@@ -28,6 +28,9 @@ class FluxLEDDiscovery(TypedDict):
     firmware_date: Optional[date]
     model_info: Optional[str]  # contains if IR (and maybe BL) if the device supports IR
     model_description: Optional[str]
+    remote_access_enabled: Optional[bool]
+    remote_access_host: Optional[str]  # the remote access host
+    remote_access_port: Optional[int]  # the remote access port
 
 
 def merge_discoveries(target: FluxLEDDiscovery, source: FluxLEDDiscovery) -> None:
@@ -87,6 +90,27 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     data["model_info"] = data_split[3]
 
 
+def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
+    """Process response from b'HF-A11ASSISTHREAD'
+
+    b'+ok=TCP,8816,ra8816us02.magichue.net\r'
+    """
+    data_split = decoded_data.replace("\r", "").split(",")
+    if len(data_split) < 3:
+        data["remote_access_enabled"] = False
+        return
+    try:
+        data.update(
+            {
+                "remote_access_enabled": True,
+                "remote_access_port": int(data_split[1]),
+                "remote_access_host": data_split[2],
+            }
+        )
+    except ValueError:
+        return
+
+
 class BulbScanner:
 
     DISCOVERY_PORT = 48899
@@ -94,6 +118,8 @@ class BulbScanner:
     RESPONSE_SIZE = 64
     DISCOVER_MESSAGE = b"HF-A11ASSISTHREAD"
     VERSION_MESSAGE = b"AT+LVER\r"
+    REMOTE_ACCESS_MESSAGE = b"AT+SOCKB\r"
+    ALL_MESSAGES = {DISCOVER_MESSAGE, VERSION_MESSAGE, REMOTE_ACCESS_MESSAGE}
     BROADCAST_ADDRESS = "<broadcast>"
 
     def __init__(self) -> None:
@@ -138,7 +164,7 @@ class BulbScanner:
         """
         if data is None:
             return False
-        if data in (self.DISCOVER_MESSAGE, self.VERSION_MESSAGE):
+        if data in self.ALL_MESSAGES:
             return False
         decoded_data = data.decode("ascii")
         self._process_data(from_address, decoded_data, response_list)
@@ -165,8 +191,13 @@ class BulbScanner:
                 firmware_date=None,
                 model_info=None,
                 model_description=None,
+                remote_access_enabled=None,
+                remote_access_host=None,
+                remote_access_port=None,
             ),
         )
+        if decoded_data.startswith("+ok=T") or decoded_data.startswith("+ok=N"):
+            _process_remote_access_message(data, decoded_data)
         if decoded_data.startswith("+ok="):
             _process_version_message(data, decoded_data)
         elif "," in decoded_data:
@@ -181,6 +212,8 @@ class BulbScanner:
         sender.sendto(self.DISCOVER_MESSAGE, destination)
         _LOGGER.debug("discover: %s => %s", destination, self.VERSION_MESSAGE)
         sender.sendto(self.VERSION_MESSAGE, destination)
+        _LOGGER.debug("discover: %s => %s", destination, self.REMOTE_ACCESS_MESSAGE)
+        sender.sendto(self.REMOTE_ACCESS_MESSAGE, destination)
 
     def scan(
         self, timeout: int = 10, address: Optional[str] = None
