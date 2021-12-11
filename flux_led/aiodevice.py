@@ -192,11 +192,13 @@ class AIOWifiLedBulb(LEDENETDevice):
                 # then no need to poll except for the interval
                 # to make sure the device is still responding
                 if self._protocol.state_push_updates:
+                    self._async_raise_if_offline()
                     return
             elif self._protocol.power_push_updates:
                 # If the device pushes power updates
                 # then no need to poll except for the interval
                 # to make sure the device is still responding
+                self._async_raise_if_offline()
                 return
         self._last_update_time = now
         if self._updates_without_response == MAX_UPDATES_WITHOUT_RESPONSE:
@@ -207,6 +209,11 @@ class AIOWifiLedBulb(LEDENETDevice):
             raise RuntimeError("Bulb stopped responding")
         await self._async_send_state_query()
         self._updates_without_response += 1
+
+    def _async_raise_if_offline(self) -> None:
+        """Raise RuntimeError if the bulb is offline."""
+        if not self.available:
+            raise RuntimeError("Bulb not responding, too soon to retry")
 
     async def async_set_levels(
         self,
