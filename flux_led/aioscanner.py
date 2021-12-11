@@ -26,7 +26,7 @@ class LEDENETDiscovery(asyncio.DatagramProtocol):
 
     def error_received(self, ex: Optional[Exception]) -> None:
         """Handle error."""
-        _LOGGER.error("LEDENETDiscovery error: %s", ex)
+        _LOGGER.debug("LEDENETDiscovery error: %s", ex)
 
     def connection_lost(self, ex: Optional[Exception]) -> None:
         """The connection is lost."""
