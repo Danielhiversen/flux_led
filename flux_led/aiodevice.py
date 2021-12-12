@@ -360,10 +360,17 @@ class AIOWifiLedBulb(LEDENETDevice):
         await AIOBulbScanner().async_enable_remote_access(
             self.ipaddr, remote_access_host, remote_access_port
         )
+        self._async_handle_reboot()
 
     async def async_disable_remote_access(self) -> None:
         """Disable remote access."""
         await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
+        self._async_handle_reboot()
+
+    def _async_handle_reboot(self) -> None:
+        self.set_unavailable()  # will reboot
+        if self._aio_protocol:
+            self._aio_protocol.close()
 
     async def _async_connect(self) -> None:
         """Create connection."""
