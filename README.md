@@ -35,9 +35,9 @@ in PyQt, Kivy, or some other framework.
 * Setting single color mode
 * Setting preset pattern mode
 * Setting custom pattern mode
-* Reading timers
-* Setting timers
-* Sync clock
+* Reading timers (sync version only)
+* Setting timers (sync version only)
+* Sync clock (sync version only)
 * Music Mode for devices with a built-in microphone (asyncio version only)
 * Remote access administration (asyncio version only)
 	
