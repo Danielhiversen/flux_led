@@ -86,9 +86,15 @@ class AIOWifiLedBulb(LEDENETDevice):
             raise RuntimeError("Could not determine number pixels")
 
     async def async_stop(self) -> None:
-        """Shutdown the connection"""
+        """Shutdown the connection."""
+        self._async_stop()
+
+    def _async_stop(self) -> None:
+        """Shutdown the connection and mark unavailable."""
+        self.set_unavailable()
         if self._aio_protocol:
             self._aio_protocol.close()
+        self._last_update_time = NEVER_TIME
 
     async def _async_send_state_query(self) -> None:
         assert self._protocol is not None
@@ -360,17 +366,12 @@ class AIOWifiLedBulb(LEDENETDevice):
         await AIOBulbScanner().async_enable_remote_access(
             self.ipaddr, remote_access_host, remote_access_port
         )
-        self._async_handle_reboot()
+        self._async_stop()
 
     async def async_disable_remote_access(self) -> None:
         """Disable remote access."""
         await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
-        self._async_handle_reboot()
-
-    def _async_handle_reboot(self) -> None:
-        self.set_unavailable()  # will reboot
-        if self._aio_protocol:
-            self._aio_protocol.close()
+        self._async_stop()
 
     async def _async_connect(self) -> None:
         """Create connection."""
