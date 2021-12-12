@@ -5,22 +5,21 @@ import select
 import socket
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 from .const import (
-    ATTR_IPADDR,
-    ATTR_ID,
-    ATTR_MODEL,
-    ATTR_MODEL_NUM,
-    ATTR_VERSION_NUM,
     ATTR_FIRMWARE_DATE,
-    ATTR_MODEL_INFO,
+    ATTR_ID,
+    ATTR_IPADDR,
+    ATTR_MODEL,
     ATTR_MODEL_DESCRIPTION,
+    ATTR_MODEL_INFO,
+    ATTR_MODEL_NUM,
     ATTR_REMOTE_ACCESS_ENABLED,
     ATTR_REMOTE_ACCESS_HOST,
     ATTR_REMOTE_ACCESS_PORT,
+    ATTR_VERSION_NUM,
 )
-
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -97,7 +96,9 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     except ValueError:
         return
     assert data[ATTR_MODEL_NUM] is not None
-    data[ATTR_MODEL_DESCRIPTION] = get_model_description(data[ATTR_MODEL_NUM])
+    data[ATTR_MODEL_DESCRIPTION] = get_model_description(
+        cast(int, data[ATTR_MODEL_NUM])
+    )
     if len(data_split) < 3:
         return
     firmware_date = data_split[2]
@@ -111,7 +112,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
         return
     if len(data_split) < 4:
         return
-    data["model_info"] = data_split[3]
+    data[ATTR_MODEL_INFO] = data_split[3]
 
 
 def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
