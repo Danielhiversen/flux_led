@@ -5,7 +5,21 @@ import select
 import socket
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
+
+from .const import (
+    ATTR_FIRMWARE_DATE,
+    ATTR_ID,
+    ATTR_IPADDR,
+    ATTR_MODEL,
+    ATTR_MODEL_DESCRIPTION,
+    ATTR_MODEL_INFO,
+    ATTR_MODEL_NUM,
+    ATTR_REMOTE_ACCESS_ENABLED,
+    ATTR_REMOTE_ACCESS_HOST,
+    ATTR_REMOTE_ACCESS_PORT,
+    ATTR_VERSION_NUM,
+)
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -60,9 +74,9 @@ def _process_discovery_message(data: FluxLEDDiscovery, decoded_data: str) -> Non
     ipaddr = data_split[0]
     data.update(
         {
-            "ipaddr": ipaddr,
-            "id": data_split[1],
-            "model": data_split[2],
+            ATTR_IPADDR: ipaddr,
+            ATTR_ID: data_split[1],
+            ATTR_MODEL: data_split[2],
         }
     )
 
@@ -77,17 +91,19 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     if len(data_split) < 2:
         return
     try:
-        data["model_num"] = int(data_split[0], 16)
-        data["version_num"] = int(data_split[1], 16)
+        data[ATTR_MODEL_NUM] = int(data_split[0], 16)
+        data[ATTR_VERSION_NUM] = int(data_split[1], 16)
     except ValueError:
         return
-    assert data["model_num"] is not None
-    data["model_description"] = get_model_description(data["model_num"])
+    assert data[ATTR_MODEL_NUM] is not None
+    data[ATTR_MODEL_DESCRIPTION] = get_model_description(
+        cast(int, data[ATTR_MODEL_NUM])
+    )
     if len(data_split) < 3:
         return
     firmware_date = data_split[2]
     try:
-        data["firmware_date"] = date(
+        data[ATTR_FIRMWARE_DATE] = date(
             int(firmware_date[:4]),
             int(firmware_date[4:6]),
             int(firmware_date[6:8]),
@@ -96,7 +112,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
         return
     if len(data_split) < 4:
         return
-    data["model_info"] = data_split[3]
+    data[ATTR_MODEL_INFO] = data_split[3]
 
 
 def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
@@ -106,15 +122,15 @@ def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) ->
     """
     data_split = decoded_data.replace("\r", "").split(",")
     if len(data_split) < 3:
-        if not data.get("remote_access_enabled"):
-            data["remote_access_enabled"] = False
+        if not data.get(ATTR_REMOTE_ACCESS_ENABLED):
+            data[ATTR_REMOTE_ACCESS_ENABLED] = False
         return
     try:
         data.update(
             {
-                "remote_access_enabled": True,
-                "remote_access_port": int(data_split[1]),
-                "remote_access_host": data_split[2],
+                ATTR_REMOTE_ACCESS_ENABLED: True,
+                ATTR_REMOTE_ACCESS_PORT: int(data_split[1]),
+                ATTR_REMOTE_ACCESS_HOST: data_split[2],
             }
         )
     except ValueError:
@@ -178,7 +194,11 @@ class BulbScanner:
         self._process_data(from_address, decoded_data, response_list)
         if address is None or address not in response_list:
             return False
-        return response_list[address]["model_num"] is not None
+        response = response_list[address]
+        return (
+            response[ATTR_MODEL_NUM] is not None
+            and response[ATTR_REMOTE_ACCESS_ENABLED] is not None
+        )
 
     def _process_data(
         self,
