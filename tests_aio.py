@@ -1110,6 +1110,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     await task
     assert light.rgb == (0, 255, 0)
     assert light.brightness == 255
+    assert len(light.effect_list) == 101
     assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
     assert light.dimmable_effects is False
     assert light.requires_turn_on is False
