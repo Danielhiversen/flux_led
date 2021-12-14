@@ -16,7 +16,11 @@ from flux_led.const import (
     EFFECT_MUSIC,
     MultiColorEffects,
 )
-from flux_led.protocol import PROTOCOL_LEDENET_9BYTE, PROTOCOL_LEDENET_ORIGINAL
+from flux_led.protocol import (
+    PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
+    PROTOCOL_LEDENET_ORIGINAL,
+)
 from flux_led.scanner import FluxLEDDiscovery, merge_discoveries
 
 IP_ADDRESS = "127.0.0.1"
@@ -1106,6 +1110,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     await task
     assert light.rgb == (0, 255, 0)
     assert light.brightness == 255
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
     assert light.dimmable_effects is False
     assert light.requires_turn_on is False
     assert light._protocol.power_push_updates is True
