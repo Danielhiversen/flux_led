@@ -46,6 +46,8 @@ from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
     ADDRESSABLE_EFFECT_NAME_ID,
     ASSESSABLE_MULTI_COLOR_ID_NAME,
+    CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME,
+    CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
@@ -65,6 +67,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
+    PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     LEDENETOriginalRawState,
@@ -78,6 +81,7 @@ from .protocol import (
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
 )
@@ -104,6 +108,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETCCT,
+    ProtocolLEDENETAddressableChristmas,
 ]
 
 ADDRESSABLE_PROTOCOLS = {
@@ -111,7 +116,7 @@ ADDRESSABLE_PROTOCOLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
 }
-
+CHRISTMAS_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS}
 OLD_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_A1}
 NEW_EFFECTS_PROTOCOLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
@@ -133,6 +138,7 @@ PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
     PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
     PROTOCOL_LEDENET_CCT: ProtocolLEDENETCCT,
+    PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS: ProtocolLEDENETAddressableChristmas,
 }
 
 
@@ -359,6 +365,8 @@ class LEDENETDevice:
             effects = ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif protocol in NEW_EFFECTS_PROTOCOLS:
             effects = ADDRESSABLE_EFFECT_ID_NAME.values()
+        elif protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            effects = CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
             effects = EFFECT_LIST_DIMMABLE if self.dimmable_effects else EFFECT_LIST
         if self.microphone:
@@ -368,6 +376,8 @@ class LEDENETDevice:
     @property
     def effect(self) -> Optional[str]:
         """Return the current effect."""
+        if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            return self._named_effect
         return PATTERN_CODE_TO_EFFECT.get(self.preset_pattern_num, self._named_effect)
 
     @property
@@ -385,6 +395,9 @@ class LEDENETDevice:
                 return ADDRESSABLE_EFFECT_ID_NAME.get(mode)
             if pattern_code == 0x24:
                 return ASSESSABLE_MULTI_COLOR_ID_NAME.get(mode)
+        if protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            if pattern_code == 0x60:
+                return CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.get(mode)
         return EFFECT_ID_NAME.get(pattern_code)
 
     @property
@@ -451,7 +464,7 @@ class LEDENETDevice:
                 return MODE_WW
             return MODE_COLOR
         elif pattern_code == EFFECT_CUSTOM_CODE:
-            return MODE_CUSTOM
+            return MODE_PRESET if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS else MODE_CUSTOM
         elif pattern_code in (PRESET_MUSIC_MODE, PRESET_MUSIC_MODE_LEGACY):
             return MODE_MUSIC
         elif PresetPattern.valid(pattern_code):
@@ -735,6 +748,8 @@ class LEDENETDevice:
         assert self.raw_state is not None
         if self.protocol in ADDRESSABLE_PROTOCOLS:
             return self.raw_state.speed
+        if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            return utils.delayToSpeed(self.raw_state.green)
         return utils.delayToSpeed(self.raw_state.speed)
 
     def getSpeed(self) -> int:
@@ -910,6 +925,9 @@ class LEDENETDevice:
         elif protocol in NEW_EFFECTS_PROTOCOLS:
             if pattern not in ADDRESSABLE_EFFECT_ID_NAME:
                 raise ValueError("Pattern must be between 1 and 100")
+        elif protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            if pattern not in CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME:
+                raise ValueError("Pattern must be between 1 and 100")
         else:
             PresetPattern.valtostr(pattern)
             if not PresetPattern.valid(pattern):
@@ -940,6 +958,8 @@ class LEDENETDevice:
     def _effect_to_pattern(self, effect: str) -> int:
         """Convert an effect to a pattern code."""
         protocol = self.protocol
+        if protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            return CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID[effect]
         if protocol in NEW_EFFECTS_PROTOCOLS:
             return ADDRESSABLE_EFFECT_NAME_ID[effect]
         if protocol in OLD_EFFECTS_PROTOCOLS:

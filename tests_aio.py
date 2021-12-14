@@ -16,7 +16,11 @@ from flux_led.const import (
     EFFECT_MUSIC,
     MultiColorEffects,
 )
-from flux_led.protocol import PROTOCOL_LEDENET_9BYTE, PROTOCOL_LEDENET_ORIGINAL
+from flux_led.protocol import (
+    PROTOCOL_LEDENET_9BYTE,
+    PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
+    PROTOCOL_LEDENET_ORIGINAL,
+)
 from flux_led.scanner import FluxLEDDiscovery, merge_discoveries
 
 IP_ADDRESS = "127.0.0.1"
@@ -1088,6 +1092,74 @@ async def test_cct_protocol_device(mock_aio_protocol):
     # Should not raise now that bulb has recovered
     light._last_update_time = aiodevice.NEVER_TIME
     await light.async_update()
+
+
+@pytest.mark.asyncio
+async def test_christmas_protocol_device(mock_aio_protocol):
+    """Test a christmas protocol device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x61\x00\x00\x00\xff\x00\x00\x01\x00\x06\x25"
+    )
+    await task
+    assert light.rgb == (0, 255, 0)
+    assert light.brightness == 255
+    assert len(light.effect_list) == 101
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+    assert light.dimmable_effects is False
+    assert light.requires_turn_on is False
+    assert light._protocol.power_push_updates is True
+    assert light._protocol.state_push_updates is False
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b";\xa1<dd\x00\x00\x00\x00\x00\x00\x00\xe0"
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b";\xa1<d2\x00\x00\x00\x00\x00\x00\x00\xae"
+    assert light.brightness == 128
+
+    transport.reset_mock()
+    await light.async_set_effect("Random Jump Async", 50)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x07\xa3\x01\x10\x00\x00\x00\xb47"
+    )
+    light._transition_complete_time = 0
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x60\x01\x00\x64\x10\x00\x00\x01\x00\x06\x9a"
+    )
+    assert light.effect == "Random Jump Async"
+    assert light.speed == 50
+
+    transport.reset_mock()
+    await light.async_set_effect("Random Jump Async", 100)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x07\xa3\x01\x01\x00\x00\x00\xa5\x1a"
+    )
+
+    light._transition_complete_time = 0
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x60\x02\x00\x64\x01\x00\x00\x01\x00\x06\x8c"
+    )
+    assert light.effect == "Random Gradient Async"
+    assert light.speed == 100
+
+    with pytest.raises(ValueError):
+        await light.async_set_preset_pattern(101, 50, 100)
 
 
 @pytest.mark.asyncio

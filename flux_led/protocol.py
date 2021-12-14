@@ -1,6 +1,7 @@
 """FluxLED Protocols."""
 
 from abc import abstractmethod
+import colorsys
 import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
 
@@ -27,6 +28,7 @@ PROTOCOL_LEDENET_ADDRESSABLE_A1 = "LEDENET_ADDRESSABLE_A1"
 PROTOCOL_LEDENET_ADDRESSABLE_A2 = "LEDENET_ADDRESSABLE_A2"
 PROTOCOL_LEDENET_ADDRESSABLE_A3 = "LEDENET_ADDRESSABLE_A3"
 PROTOCOL_LEDENET_CCT = "LEDENET_CCT"
+PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS = "LEDENET_CHRISTMAS"
 
 TRANSITION_BYTES = {
     TRANSITION_JUMP: 0x3B,
@@ -1215,6 +1217,102 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
                     0x00,
                     0x09,
                     *inner_message,
+                ]
+            )
+        )
+
+
+class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+
+    @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
+    def dimmable_effects(self) -> bool:
+        """Protocol supports dimmable effects."""
+        return False
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
+
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
+        """The bytes to send for a preset pattern.
+
+            ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+
+        b0 b1 b2 b3 00 01 01 2b 00 07 a3 01 10 00 00 00 b4 62
+
+          inner = a3 01 10 00 00 00 b4
+        """
+        inner_message = self.construct_message(
+            bytearray(
+                [
+                    0xA3,
+                    pattern,
+                    utils.speedToDelay(speed),
+                    0x00,
+                    0x00,
+                    0x00,
+                ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    self._increment_counter(),
+                    0x00,
+                    0x07,
+                    *inner_message,
+                ]
+            )
+        )
+
+    def construct_levels_change(
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
+        """The bytes to send for a level change request.
+
+        red
+        0b0b1b2b3000101080034a0000600010000ff0000ff00020000ff0000ff00030000ff0000ff00040000ff0000ff00050000ff0000ff00060000ff0000ffaf62
+
+        blue
+        0b0b1b2b3000101070034a000060001ff00000000ff0002ff00000000ff0003ff00000000ff0004ff00000000ff0005ff00000000ff0006ff00000000ffaf61
+        """
+        h, s, v = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
+        return self.construct_message(
+            bytearray(
+                [
+                    0x3B,
+                    0xA1,
+                    int(h * 180),
+                    int(s * 100),
+                    int(v * 100),
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
                 ]
             )
         )
