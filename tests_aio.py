@@ -1152,6 +1152,9 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert light.effect == "Random Gradient Async"
     assert light.speed == 100
 
+    with pytest.raises(ValueError):
+        await light.async_set_preset_pattern(101, 50, 100)
+
 
 @pytest.mark.asyncio
 async def test_async_enable_remote_access(mock_aio_protocol):
