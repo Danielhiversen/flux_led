@@ -570,6 +570,14 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     81: "Jump Sync Blue",
     82: "Jump Sync Purple",
     83: "Jump Sync Cyan",
+    84: "Red Wave, Breathe Sync, Flash, Jump",
+    85: "Green Wave, Breathe Sync, Flash, Jump",
+    86: "Yellow Wave, Breathe Sync, Flash, Jump",
+    87: "Blue Wave, Breathe Sync, Flash, Jump",
+    88: "Purple Wave, Breathe Sync, Flash, Jump",
+    89: "Cyan Wave, Breathe Sync, Flash, Jump",    
+    90: "White Wave, Breathe Sync, Flash, Jump",    
+
 }
 
 CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID = {
