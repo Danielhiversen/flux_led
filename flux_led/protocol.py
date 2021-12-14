@@ -1304,7 +1304,40 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         Red & Blue 255 and 40%
         b0b1b2b30001014e000d3ba196642800000000000000fe1f
 
+        Inner messages
 
+        Single - Green - Brightness 100%
+        3b a1 3c 64 64 00 00 00 00 00 00 00 e0
+
+        Single - Green - Brightness 50%
+        3b a1 3c 64 32 00 00 00 00 00 00 00 ae
+
+        Single - Blue - Brightness 100%
+        3b a1 78 64 64 00 00 00 00 00 00 00 1c
+
+        Single - Red - Brightness 100%
+        3b a1 00 64 64 00 00 00 00 00 00 00 a4
+
+        Single - Pink (100% Red, 100% Blue) - Brightness 100%
+        3b a1 96 64 64 00 00 00 00 00 00 00 3a
+
+        Single - White (100% Red, 100% Green, 100% Blue) - Brightness 100%
+        3b a1 00 00 64 00 00 00 00 00 00 00 40
+
+        Single - Yellow (100% Red, 100% Green) - Brightness 100%
+        3b a1 1e 64 64 00 00 00 00 00 00 00 c2
+
+        Single - Light Blue (100% Blue, 100% Green) - Brightness 100%
+        3b a1 5a 64 64 00 00 00 00 00 00 00 fe
+
+        Single - Red - Brightness 0%
+        3b a1 00 64 00 00 00 00 00 00 00 00 40
+
+        Single - Red - Brightness 50%
+        3b a1 00 64 32 00 00 00 00 00 00 00 72
+
+        Single - Blue - Brightness 50%
+        3b a1 78 64 32 00 00 00 00 00 00 00 ea
         """
         h, s, v = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
         inner_message = self.construct_message(
