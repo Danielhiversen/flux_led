@@ -358,20 +358,20 @@ MODELS = [
         models=[],
         description="Christmas Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
         mode_to_color_mode={},
-        color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
+        color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
         microphone=False,
     ),
     LEDENETModel(
         model_num=0x1A,
-        models=[],
+        models=["AK001-ZJ2147"],
         description="Christmas Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
         mode_to_color_mode={},
-        color_modes={COLOR_MODE_RGB},  # Formerly rgbwcapable
+        color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
         microphone=False,
     ),
