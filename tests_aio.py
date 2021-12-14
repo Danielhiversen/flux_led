@@ -1134,6 +1134,26 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     await light.async_set_effect("Random Jump Async", 50)
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x07\xa3\x01\x10\x00\x00\x00\xb47'
+    light._transition_complete_time = 0
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x60\x01\x00\x64\x10\x00\x00\x01\x00\x06\x9a"
+
+    )
+    assert light.effect == 'Random Jump Async'
+    assert light.speed == 50
+
+    transport.reset_mock()
+    await light.async_set_effect("Random Jump Async", 100)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x07\xa3\x01\x01\x00\x00\x00\xa5\x1a'
+
+    light._transition_complete_time = 0
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x60\x02\x00\x64\x01\x00\x00\x01\x00\x06\x8c"
+    )
+    assert light.effect == 'Random Gradient Async'
+    assert light.speed == 100
+
 
 
 @pytest.mark.asyncio

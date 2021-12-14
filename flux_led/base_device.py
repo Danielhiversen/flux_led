@@ -376,6 +376,8 @@ class LEDENETDevice:
     @property
     def effect(self) -> Optional[str]:
         """Return the current effect."""
+        if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            return self._named_effect
         return PATTERN_CODE_TO_EFFECT.get(self.preset_pattern_num, self._named_effect)
 
     @property
@@ -746,6 +748,8 @@ class LEDENETDevice:
         assert self.raw_state is not None
         if self.protocol in ADDRESSABLE_PROTOCOLS:
             return self.raw_state.speed
+        if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            return utils.delayToSpeed(self.raw_state.green)
         return utils.delayToSpeed(self.raw_state.speed)
 
     def getSpeed(self) -> int:
