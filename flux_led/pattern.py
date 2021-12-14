@@ -554,6 +554,7 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     65: "Strobe Cyan, Purple",
     66: "Strobe Purple, White",
     67: "Strobe Black, White",
+    68: "Flash Sync Seven-color",
 
 
 }
