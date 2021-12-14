@@ -577,6 +577,9 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     88: "Purple Wave, Breathe Sync, Flash, Jump",
     89: "Cyan Wave, Breathe Sync, Flash, Jump",    
     90: "White Wave, Breathe Sync, Flash, Jump",    
+    91: "Seven-color Wave, Breathe Sync",    
+    92: "Seven-color Breathe Sync, Flash Sync",    
+    93: "Seven-color Flash Sync, Jump Sync",    
 
 }
 
