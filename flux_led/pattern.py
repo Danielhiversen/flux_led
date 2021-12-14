@@ -575,12 +575,20 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     86: "Yellow Wave, Breathe Sync, Flash, Jump",
     87: "Blue Wave, Breathe Sync, Flash, Jump",
     88: "Purple Wave, Breathe Sync, Flash, Jump",
-    89: "Cyan Wave, Breathe Sync, Flash, Jump",    
-    90: "White Wave, Breathe Sync, Flash, Jump",    
-    91: "Seven-color Wave, Breathe Sync",    
-    92: "Seven-color Breathe Sync, Flash Sync",    
-    93: "Seven-color Flash Sync, Jump Sync",    
-
+    89: "Cyan Wave, Breathe Sync, Flash, Jump",
+    90: "White Wave, Breathe Sync, Flash, Jump",
+    91: "Seven-color Wave, Breathe Sync",
+    92: "Seven-color Breathe Sync, Flash Sync",
+    93: "Seven-color Flash Sync, Jump Sync",
+    93: "Seven-color Flash Sync, Jump Sync",
+    93: "Seven-color Flash Sync, Jump Sync",
+    94: "Seven-color Wave, Breathe Sync, Flash Sync, Jump Sync",
+    95: "Overlap Red, Green, Blue",
+    96: "Overlap Red, Green, Blue, Cyan, Purple, White",
+    97: "Overlap Green, Blue, Cyan",
+    98: "Overlap Blue, Cyan, Purple",
+    99: "Overlap Cyan, Purple, White",
+    100: "Overlap White, Black, Red",
 }
 
 CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID = {
