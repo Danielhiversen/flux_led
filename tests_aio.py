@@ -1120,21 +1120,36 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b";\xa1<dd\x00\x00\x00\x00\x00\x00\x00\xe0"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x0d\x3b\xa1<dd\x00\x00\x00\x00\x00\x00\x00\xe0\x95"
+    )
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b";\xa1<d2\x00\x00\x00\x00\x00\x00\x00\xae"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\r;\xa1<d2\x00\x00\x00\x00\x00\x00\x00\xae2"
+    )
     assert light.brightness == 128
+
+    transport.reset_mock()
+    await light.async_set_levels(r=255, g=255, b=255)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\r;\xa1\x00\x00\x64\x00\x00\x00\x00\x00\x00\x00@W"
+    )
+    assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_effect("Random Jump Async", 50)
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x07\xa3\x01\x10\x00\x00\x00\xb47"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x07\xa3\x01\x10\x00\x00\x00\xb4:"
     )
     light._transition_complete_time = 0
     light._aio_protocol.data_received(
@@ -1148,7 +1163,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x07\xa3\x01\x01\x00\x00\x00\xa5\x1a"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x07\xa3\x01\x01\x00\x00\x00\xa5\x1d"
     )
 
     light._transition_complete_time = 0
@@ -1160,6 +1175,14 @@ async def test_christmas_protocol_device(mock_aio_protocol):
 
     with pytest.raises(ValueError):
         await light.async_set_preset_pattern(101, 50, 100)
+
+    light._transition_complete_time = 0
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x61\x07\x00\x66\x00\x66\x00\x01\x00\x06\xf9"
+    )
+    assert light.effect is None
+    assert light.rgb == (102, 0, 102)
+    assert light.speed == 100
 
 
 @pytest.mark.asyncio
