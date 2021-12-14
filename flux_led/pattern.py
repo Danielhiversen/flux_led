@@ -547,6 +547,13 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     58: "Strobe Cyan, Green, Blue, Yellow, Red, Purple, White",
     59: "Strobe Purple, Green, Blue, Yellow, Cyan, Red, White",
     60: "Strobe White, Green, Blue, Yellow, Cyan, Purple, Red",
+    61: "Strobe Red, Green",
+    62: "Strobe Green, Blue",
+    63: "Strobe Blue, Yellow",
+    64: "Strobe Yellow, Cyan",
+    65: "Strobe Cyan, Purple",
+    66: "Strobe Purple, White",
+    67: "Strobe Black, White",
 
 
 }
