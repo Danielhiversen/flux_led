@@ -1291,14 +1291,23 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     ) -> bytearray:
         """The bytes to send for a level change request.
 
-        red
-        0b0b1b2b3000101080034a0000600010000ff0000ff00020000ff0000ff00030000ff0000ff00040000ff0000ff00050000ff0000ff00060000ff0000ffaf62
 
-        blue
-        0b0b1b2b3000101070034a000060001ff00000000ff0002ff00000000ff0003ff00000000ff0004ff00000000ff0005ff00000000ff0006ff00000000ffaf61
+        Green 100%:
+        b0b1b2b300010180000d3ba100646400000000000000a49d
+
+        Blue 50%
+        b0b1b2b300010110000d3ba176e4320000000000000068b5
+
+        Red & green 255 and 25% bright
+        b0b1b2b300010133000d3ba11e64190000000000000077f6
+
+        Red & Blue 255 and 40%
+        b0b1b2b30001014e000d3ba196642800000000000000fe1f
+
+
         """
         h, s, v = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
-        return self.construct_message(
+        inner_message = self.construct_message(
             bytearray(
                 [
                     0x3B,
@@ -1313,6 +1322,18 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                     0x00,
                     0x00,
                     0x00,
+                ]
+            )
+        )
+
+        return self.construct_message(
+            bytearray(
+                [
+                    *self.ADDRESSABLE_HEADER,
+                    self._increment_counter(),
+                    0x00,
+                    0x0D,
+                    *inner_message,
                 ]
             )
         )
