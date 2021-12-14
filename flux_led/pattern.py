@@ -555,8 +555,21 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     66: "Strobe Purple, White",
     67: "Strobe Black, White",
     68: "Flash Sync Seven-color",
-
-
+    69: "Flash Sync RGB",
+    70: "Flash Sync Red",
+    71: "Flash Sync Green",
+    72: "Flash Sync Yellow",
+    73: "Flash Sync Blue",
+    74: "Flash Sync Purple",
+    75: "Flash Sync Cyan",
+    76: "Jump Sync Seven-color",
+    77: "Jump Sync RGB",
+    78: "Jump Sync Red",
+    79: "Jump Sync Green",
+    80: "Jump Sync Yellow",
+    81: "Jump Sync Blue",
+    82: "Jump Sync Purple",
+    83: "Jump Sync Cyan",
 }
 
 CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID = {
