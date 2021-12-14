@@ -540,6 +540,15 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     51: "Fill-in and Reset Red, Blue, Green, White",
     52: "Fill-in and Reset Blue, White, Purple, Yellow",
     53: "Fill-in and Reset White, Purple, Cyan, Green",
+    54: "Strobe Red, Green, Blue, Yellow, Cyan, Purple, White",
+    55: "Strobe Green, Red, Blue, Yellow, Cyan, Purple, White",
+    56: "Strobe Blue, Green, Red, Yellow, Cyan, Purple, White",
+    57: "Strobe Yellow, Green, Blue, Red, Cyan, Purple, White",
+    58: "Strobe Cyan, Green, Blue, Yellow, Red, Purple, White",
+    59: "Strobe Purple, Green, Blue, Yellow, Cyan, Red, White",
+    60: "Strobe White, Green, Blue, Yellow, Cyan, Purple, Red",
+
+
 }
 
 CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID = {
