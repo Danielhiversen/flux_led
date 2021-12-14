@@ -1133,7 +1133,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_effect("Random Jump Async", 50)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3\x00")
+    assert transport.mock_calls[0][1][0] == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x07\xa3\x01\x10\x00\x00\x00\xb47'
 
 
 @pytest.mark.asyncio

@@ -47,6 +47,7 @@ from .pattern import (
     ADDRESSABLE_EFFECT_NAME_ID,
     ASSESSABLE_MULTI_COLOR_ID_NAME,
     CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME,
+    CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
@@ -920,6 +921,9 @@ class LEDENETDevice:
         elif protocol in NEW_EFFECTS_PROTOCOLS:
             if pattern not in ADDRESSABLE_EFFECT_ID_NAME:
                 raise ValueError("Pattern must be between 1 and 100")
+        elif protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            if pattern not in CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME:
+                raise ValueError("Pattern must be between 1 and 100")
         else:
             PresetPattern.valtostr(pattern)
             if not PresetPattern.valid(pattern):
@@ -950,6 +954,8 @@ class LEDENETDevice:
     def _effect_to_pattern(self, effect: str) -> int:
         """Convert an effect to a pattern code."""
         protocol = self.protocol
+        if protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            return CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID[effect]
         if protocol in NEW_EFFECTS_PROTOCOLS:
             return ADDRESSABLE_EFFECT_NAME_ID[effect]
         if protocol in OLD_EFFECTS_PROTOCOLS:
