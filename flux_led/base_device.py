@@ -464,7 +464,7 @@ class LEDENETDevice:
                 return MODE_WW
             return MODE_COLOR
         elif pattern_code == EFFECT_CUSTOM_CODE:
-            return MODE_CUSTOM
+            return MODE_PRESET if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS else MODE_CUSTOM
         elif pattern_code in (PRESET_MUSIC_MODE, PRESET_MUSIC_MODE_LEGACY):
             return MODE_MUSIC
         elif PresetPattern.valid(pattern_code):
