@@ -46,6 +46,7 @@ from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
     ADDRESSABLE_EFFECT_NAME_ID,
     ASSESSABLE_MULTI_COLOR_ID_NAME,
+    CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME,
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
@@ -65,6 +66,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A1,
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
+    PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     LEDENETOriginalRawState,
@@ -78,6 +80,7 @@ from .protocol import (
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
 )
@@ -104,6 +107,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETCCT,
+    ProtocolLEDENETAddressableChristmas,
 ]
 
 ADDRESSABLE_PROTOCOLS = {
@@ -111,7 +115,7 @@ ADDRESSABLE_PROTOCOLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
 }
-
+CHRISTMAS_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS}
 OLD_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_A1}
 NEW_EFFECTS_PROTOCOLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
@@ -133,6 +137,7 @@ PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
     PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
     PROTOCOL_LEDENET_CCT: ProtocolLEDENETCCT,
+    PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS: ProtocolLEDENETAddressableChristmas,
 }
 
 
@@ -359,6 +364,8 @@ class LEDENETDevice:
             effects = ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif protocol in NEW_EFFECTS_PROTOCOLS:
             effects = ADDRESSABLE_EFFECT_ID_NAME.values()
+        elif protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            effects = CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
             effects = EFFECT_LIST_DIMMABLE if self.dimmable_effects else EFFECT_LIST
         if self.microphone:
@@ -385,6 +392,9 @@ class LEDENETDevice:
                 return ADDRESSABLE_EFFECT_ID_NAME.get(mode)
             if pattern_code == 0x24:
                 return ASSESSABLE_MULTI_COLOR_ID_NAME.get(mode)
+        if protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
+            if pattern_code == 0x60:
+                return CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.get(mode)
         return EFFECT_ID_NAME.get(pattern_code)
 
     @property

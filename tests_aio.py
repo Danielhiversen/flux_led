@@ -1090,6 +1090,52 @@ async def test_cct_protocol_device(mock_aio_protocol):
     await light.async_update()
 
 
+
+@pytest.mark.asyncio
+async def test_christmas_protocol_device(mock_aio_protocol):
+    """Test a christmas protocol device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x61\x00\x00\x00\xff\x00\x00\x01\x00\x06\x25"
+    )
+    await task
+    assert light.rgb == (0, 255, 0)
+    assert light.brightness == 255
+    assert light.dimmable_effects is False
+    assert light.requires_turn_on is False
+    assert light._protocol.power_push_updates is True
+    assert light._protocol.state_push_updates is False
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b';\xa1<dd\x00\x00\x00\x00\x00\x00\x00\xe0'
+    )
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b';\xa1<d2\x00\x00\x00\x00\x00\x00\x00\xae'
+    )
+    assert light.brightness == 128
+
+    transport.reset_mock()
+    await light.async_set_effect("Random Jump Async", 50)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3\x00")
+
+
 @pytest.mark.asyncio
 async def test_async_enable_remote_access(mock_aio_protocol):
     """Test we can enable remote access."""

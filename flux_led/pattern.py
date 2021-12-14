@@ -486,6 +486,31 @@ ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID = {
 }
 
 
+CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
+    1: "Random Jump Async",
+    2: "Random Gradient Async",
+    3: "Fill-in Red, Green",
+    4: "Fill-in Green, Blue",
+    5: "Fill-in Green, Yellow",
+    6: "Fill-in Green, Cyan",
+    7: "Fill-in Green, White",
+    8: "Fill-in Green, Red",
+    9: "Twinkle Red",
+    10: "Twinkle Green",
+    11: "Twinkle Yellow",
+    12: "Twinkle Blue",
+    13: "Twinkle Purple",
+    14: "Twinkle Cyan",
+    15: "Twinkle White",
+    16: "Alternating Flash Red, Green, Blue",
+    17: "Alternating Flash Red, Green",
+    18: "Alternating Flash Green, Blue",
+}
+CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID = {
+    v: k for k, v in CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.items()
+}
+
+
 class PresetPattern:
     _instance = None
     seven_color_cross_fade = EFFECT_MAP[EFFECT_COLORLOOP]
