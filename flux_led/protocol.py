@@ -108,7 +108,9 @@ MSG_LENGTHS = {
 
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
 OUTER_MESSAGE_WRAPPER_START_LEN = 10
-MIN_WRAPPER_LENGTH = 11
+MIN_WRAPPER_LENGTH = (
+    12  # minimum bytes needed to determine the contents of a wrapped message
+)
 CHECKSUM_LEN = 1
 
 

@@ -12,6 +12,7 @@ from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import (
     COLOR_MODE_CCT,
+    COLOR_MODE_RGB,
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
     MultiColorEffects,
@@ -210,6 +211,55 @@ async def test_reassemble(mock_aio_protocol):
     light._aio_protocol.data_received(b"\xde")
     await asyncio.sleep(0)
     assert light.is_on is True
+
+
+
+@pytest.mark.asyncio
+async def test_extract_from_outer_message(mock_aio_protocol):
+    """Test we can can extract a message wrapped with an outer message."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x81\x00\x0e\x81\x1a\x23\x61\x07\x00\xff\x00\x00\x00\x01\x00\x06\x2c\xaf"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x81\x00\x0e\x81\x1a\x23\x61\x07\x00\xff\x00\x00\x00\x01\x00\x06\x2c\xaf"
+    )
+    await task
+    assert light.color_modes == {COLOR_MODE_RGB}
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+    assert light.model_num == 0x1A
+    assert light.model == "Christmas Light (0x1A)"
+    assert light.is_on is True
+    assert len(light.effect_list) == 101
+    assert light.rgb == (255,0,0)
+
+
+
+
+@pytest.mark.asyncio
+async def test_extract_from_outer_message_and_reassemble(mock_aio_protocol):
+    """Test we can can extract a message wrapped with an outer message."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    for byte in b"\xb0\xb1\xb2\xb3\x00\x01\x01\x81\x00\x0e\x81\x1a\x23\x61\x07\x00\xff\x00\x00\x00\x01\x00\x06\x2c\xaf":
+        light._aio_protocol.data_received(bytearray([byte]))
+    await task
+    assert light.color_modes == {COLOR_MODE_RGB}
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+    assert light.model_num == 0x1A
+    assert light.model == "Christmas Light (0x1A)"
+    assert light.is_on is True
+    assert len(light.effect_list) == 101
+    assert light.rgb == (255,0,0)
 
 
 @pytest.mark.asyncio
