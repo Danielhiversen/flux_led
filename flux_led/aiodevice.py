@@ -476,6 +476,10 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         if self.raw_state == prev_state:
             return
+        self._process_futures_and_callbacks()
+
+    def _process_futures_and_callbacks(self):
+        """Called when state changes."""
         futures = self._on_futures if self.is_on else self._off_futures
         for future in futures:
             if not future.done():
