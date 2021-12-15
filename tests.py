@@ -1902,11 +1902,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(
-                bytearray(
-                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\rA\x01\x00\xff\x00\x00\x00\x00\x06\x01\x00\x00He"
-                )
-            ),
+            mock.call(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x0eA\x01\x00\xff\x00\x00\x00\x00`\xff\x00\x00\xa0@V'))
         )
 
         light.set_effect("RBM 1", 50)
