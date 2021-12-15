@@ -7,6 +7,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 from flux_led.protocol import (
     ProtocolLEDENET8Byte,
     ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETOriginal,
 )
 
@@ -76,6 +77,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_determine_protocol()
         assert self._protocol is not None
         if not self._protocol.zones:
+            return
+        if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
+            self._pixels_per_segment = 6  # currently hard coded
             return
         assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
@@ -290,15 +294,18 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def async_set_zones(
         self,
         rgb_list: List[Tuple[int, int, int]],
-        speed: int,
-        effect: MultiColorEffects,
+        speed: int = 100,
+        effect: MultiColorEffects = MultiColorEffects.STATIC,
     ) -> None:
         """Set zones."""
         assert self._protocol is not None
         if not self._protocol.zones:
             raise ValueError("{self.model} does not support zones")
         assert self._pixels_per_segment is not None
-        assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
+        assert isinstance(
+            self._protocol,
+            (ProtocolLEDENETAddressableA3, ProtocolLEDENETAddressableChristmas),
+        )
         await self._async_send_msg(
             self._protocol.construct_zone_change(
                 self._pixels_per_segment, rgb_list, speed, effect
