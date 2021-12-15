@@ -84,7 +84,7 @@ MSG_IC_CONFIG = "ic_config"
 # f0320ff0f0f001
 # Power on state keep last state
 # f032f0f0f0f0e2
-
+OUTER_MESSAGE_FIRST_BYTE = 0xB0
 
 MSG_UNIQUE_START = {
     (0xF0, 0x71): MSG_POWER_STATE,
@@ -94,7 +94,6 @@ MSG_UNIQUE_START = {
     (0x78,): MSG_ORIGINAL_POWER_STATE,
     (0x66,): MSG_ORIGINAL_STATE,
     (0x81,): MSG_STATE,
-    (0xB0,): MSG_ADDRESSABLE_STATE,  # Special case since this is the outer message
     (0x00, 0x63): MSG_IC_CONFIG,
 }
 MSG_LENGTHS = {
@@ -107,8 +106,10 @@ MSG_LENGTHS = {
     MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
 }
 
-OUTER_MESSAGE_WRAPPER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+OUTER_MESSAGE_WRAPPER_START_LEN = 10
 MIN_WRAPPER_LENGTH = 11
+CHECKSUM_LEN = 1
 
 
 def _message_type_from_start_of_msg(data: bytes) -> str:
@@ -239,12 +240,15 @@ class ProtocolBase:
         If the response is unknown, we assume the response is
         a complete message since we have no way of knowing otherwise.
         """
-        if data[0] == 0xB0:  # This is a wrapper message
+        if data[0] == OUTER_MESSAGE_FIRST_BYTE:  # This is a wrapper message
             if len(data) < MIN_WRAPPER_LENGTH:
                 return MIN_WRAPPER_LENGTH
-            inner_msg_start_bytes = bytearray(data[10], data[11])
-            MSG_LENGTHS.get(_message_type_from_start_of_msg(inner_msg_start_bytes))
-            data[10], data[11]
+            inner_msg_length = MSG_LENGTHS.get(
+                _message_type_from_start_of_msg((data[10], data[11]))
+            )
+            if inner_msg_length:
+                return OUTER_MESSAGE_WRAPPER_START_LEN + inner_msg_length + CHECKSUM_LEN
+            return len(data)
 
         return MSG_LENGTHS.get(_message_type_from_start_of_msg(data), len(data))
 
