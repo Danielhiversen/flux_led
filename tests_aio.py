@@ -12,6 +12,7 @@ from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import (
     COLOR_MODE_CCT,
+    COLOR_MODE_RGB,
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
     MultiColorEffects,
@@ -210,6 +211,54 @@ async def test_reassemble(mock_aio_protocol):
     light._aio_protocol.data_received(b"\xde")
     await asyncio.sleep(0)
     assert light.is_on is True
+
+
+@pytest.mark.asyncio
+async def test_extract_from_outer_message(mock_aio_protocol):
+    """Test we can can extract a message wrapped with an outer message."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x81\x00\x0e\x81\x1a\x23\x61\x07\x00\xff\x00\x00\x00\x01\x00\x06\x2c\xaf"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x81\x00\x0e\x81\x1a\x23\x61\x07\x00\xff\x00\x00\x00\x01\x00\x06\x2c\xaf"
+    )
+    await task
+    assert light.color_modes == {COLOR_MODE_RGB}
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+    assert light.model_num == 0x1A
+    assert light.model == "Christmas Light (0x1A)"
+    assert light.is_on is True
+    assert len(light.effect_list) == 101
+    assert light.rgb == (255, 0, 0)
+
+
+@pytest.mark.asyncio
+async def test_extract_from_outer_message_and_reassemble(mock_aio_protocol):
+    """Test we can can extract a message wrapped with an outer message."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    for (
+        byte
+    ) in b"\xb0\xb1\xb2\xb3\x00\x01\x01\x81\x00\x0e\x81\x1a\x23\x61\x07\x00\xff\x00\x00\x00\x01\x00\x06\x2c\xaf":
+        light._aio_protocol.data_received(bytearray([byte]))
+    await task
+    assert light.color_modes == {COLOR_MODE_RGB}
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+    assert light.model_num == 0x1A
+    assert light.model == "Christmas Light (0x1A)"
+    assert light.is_on is True
+    assert len(light.effect_list) == 101
+    assert light.rgb == (255, 0, 0)
 
 
 @pytest.mark.asyncio
@@ -519,7 +568,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\x00\xa7"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\xd9\x80"
     )
     assert light.effect == "RBM 1"
 
@@ -528,7 +577,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\x00\x86"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\xb7="
     )
 
     transport.reset_mock()
@@ -536,7 +585,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x102\x00U"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x102\x85\xda"
     )
 
 
@@ -1193,7 +1242,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     await light.async_set_zones([(255, 0, 0), (0, 0, 255)])
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == (
-        b"\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\xff\x00\x00\x00\x00\xff\x00\x03\xff\x00\x00\x00\x00\xff\x00\x04\x00\x00\xff\x00\x00\xff\x00\x05\x00\x00\xff\x00\x00\xff\x00\x06\x00\x00\xff\x00\x00\xff\t"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x004\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\xff\x00\x00\x00\x00\xff\x00\x03\xff\x00\x00\x00\x00\xff\x00\x04\x00\x00\xff\x00\x00\xff\x00\x05\x00\x00\xff\x00\x00\xff\x00\x06\x00\x00\xff\x00\x00\xff\t\x13"
     )
 
     transport.reset_mock()
@@ -1202,7 +1251,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     )
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == (
-        b"\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\x00\x00\xff\x00\x00\xff\x00\x03\x00\xff\x00\x00\x00\xff\x00\x04\xff\xff\xff\x00\x00\xff\x00\x05\xff\xff\xff\x00\x00\xff\x00\x06\xff\xff\xff\x00\x00\xff\x03"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x06\x004\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\x00\x00\xff\x00\x00\xff\x00\x03\x00\xff\x00\x00\x00\xff\x00\x04\xff\xff\xff\x00\x00\xff\x00\x05\xff\xff\xff\x00\x00\xff\x00\x06\xff\xff\xff\x00\x00\xff\x03\x08"
     )
 
     with pytest.raises(ValueError):
@@ -1267,6 +1316,45 @@ async def test_async_disable_remote_access(mock_aio_protocol):
         await light.async_disable_remote_access()
 
     assert mock_async_disable_remote_access.mock_calls == [call("192.168.1.166")]
+
+
+@pytest.mark.asyncio
+async def test_power_state_response_processing(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can turn on and off via power state message."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+    light._aio_protocol.data_received(b"\xf0\x32\xf0\xf0\xf0\xf0\xe2")
+    assert light.power_restore_states == aiodevice.PowerRestoreStates(
+        channel1=aiodevice.PowerRestoreState.LAST_STATE,
+        channel2=aiodevice.PowerRestoreState.LAST_STATE,
+        channel3=aiodevice.PowerRestoreState.LAST_STATE,
+        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    )
+    light._aio_protocol.data_received(b"\xf0\x32\x0f\xf0\xf0\xf0\x01")
+    assert light.power_restore_states == aiodevice.PowerRestoreStates(
+        channel1=aiodevice.PowerRestoreState.ALWAYS_ON,
+        channel2=aiodevice.PowerRestoreState.LAST_STATE,
+        channel3=aiodevice.PowerRestoreState.LAST_STATE,
+        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    )
+    light._aio_protocol.data_received(b"\xf0\x32\xff\xf0\xf0\xf0\xf1")
+    assert light.power_restore_states == aiodevice.PowerRestoreStates(
+        channel1=aiodevice.PowerRestoreState.ALWAYS_OFF,
+        channel2=aiodevice.PowerRestoreState.LAST_STATE,
+        channel3=aiodevice.PowerRestoreState.LAST_STATE,
+        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    )
 
 
 @pytest.mark.asyncio

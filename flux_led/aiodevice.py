@@ -1,5 +1,7 @@
 import asyncio
 import contextlib
+from dataclasses import dataclass
+from enum import Enum
 import logging
 import time
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
@@ -33,6 +35,7 @@ from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
 
+
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
@@ -49,6 +52,25 @@ POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 PUSH_UPDATE_INTERVAL = 90  # seconds
 
 NEVER_TIME = -PUSH_UPDATE_INTERVAL
+
+
+class PowerRestoreState(Enum):
+    ALWAYS_OFF = 0xFF
+    ALWAYS_ON = 0x0F
+    LAST_STATE = 0xF0
+
+
+POWER_RESTORE_BYTES_TO_POWER_RESTORE = {
+    restore_state.value: restore_state for restore_state in PowerRestoreState
+}
+
+
+@dataclass
+class PowerRestoreStates:
+    channel1: PowerRestoreState
+    channel2: PowerRestoreState
+    channel3: PowerRestoreState
+    channel4: PowerRestoreState
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -68,8 +90,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._pixels_per_segment: Optional[int] = None
         self._segments: Optional[int] = None
         self._last_update_time: float = NEVER_TIME
+        self._power_restore_state: Optional[PowerRestoreStates] = None
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
+
+    @property
+    def power_restore_states(self) -> Optional[PowerRestoreStates]:
+        """Returns the power restore states for all channels."""
+        return self._power_restore_state
 
     async def async_setup(self, updated_callback: Callable[[], None]) -> None:
         """Setup the connection and fetch initial state."""
@@ -437,29 +465,52 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Process a full message (maybe reassembled)."""
         assert self._protocol is not None
         self.set_available()
-        assert self._updated_callback is not None
         prev_state = self.raw_state
-        if self._protocol.is_valid_addressable_response(msg):
-            self.process_addressable_response(msg)
-        elif self._protocol.is_valid_state_response(msg):
+        if self._protocol.is_valid_outer_message(msg):
+            msg = self._protocol.extract_inner_message(msg)
+
+        if self._protocol.is_valid_state_response(msg):
             self._async_process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
         elif self._protocol.is_valid_ic_response(msg):
             self.process_ic_response(msg)
+        elif self._protocol.is_valid_power_restore_state_response(msg):
+            self.process_power_restore_state_response(msg)
         else:
             return
         if self.raw_state == prev_state:
             return
+        self._process_futures_and_callbacks()
+
+    def _process_futures_and_callbacks(self) -> None:
+        """Called when state changes."""
         futures = self._on_futures if self.is_on else self._off_futures
         for future in futures:
             if not future.done():
                 future.set_result(True)
         futures.clear()
+        assert self._updated_callback is not None
         try:
             self._updated_callback()
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.error("Error while calling callback: %s", ex)
+
+    def process_power_restore_state_response(self, msg: bytes) -> None:
+        """Process a power restore state response.
+        Power on state always off
+        f0 32 ff f0 f0 f0 f1
+        Power on state always on
+        f0 32 0f f0 f0 f0 01
+        Power on state keep last state
+        f0 32 f0 f0 f0 f0 e2
+        """
+        self._power_restore_state = PowerRestoreStates(
+            channel1=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[2]],
+            channel2=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[3]],
+            channel3=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[4]],
+            channel4=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[5]],
+        )
 
     def process_ic_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
@@ -481,16 +532,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self._ic_future.done():
             self._ic_future.set_result(True)
         return True
-
-    def process_addressable_response(self, msg: bytes) -> bool:
-        assert self._aio_protocol is not None
-        _LOGGER.debug(
-            "%s <= Extracted response (%s) (%d)",
-            self._aio_protocol.peername,
-            " ".join(f"0x{x:02X}" for x in msg[10:-1]),
-            len(msg[10:-1]),
-        )
-        return self._async_process_state_response(msg[10:-1])
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""

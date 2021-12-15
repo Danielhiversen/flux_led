@@ -36,6 +36,9 @@ TRANSITION_BYTES = {
     TRANSITION_GRADUAL: 0x3A,
 }
 
+
+LEDNET_MUSIC_MODE_RESPONSE_LEN = 13  # 72 01 26 01 00 00 00 00 00 00 64 64 62
+LEDENET_POWER_RESTORE_RESPONSE_LEN = 7
 LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
@@ -58,30 +61,68 @@ LEDENET_IC_STATE_RESPONSE_LEN = 11
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
 
+MSG_POWER_RESTORE_STATE = "power_restore_state"
 MSG_POWER_STATE = "power_state"
 MSG_STATE = "state"
 
+MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
 MSG_IC_CONFIG = "ic_config"
 
-MSG_FIRST_BYTE = {
-    0xF0: MSG_POWER_STATE,
-    0x0F: MSG_POWER_STATE,
-    0x78: MSG_ORIGINAL_POWER_STATE,
-    0x66: MSG_ORIGINAL_STATE,
-    0x81: MSG_STATE,
-    0xB0: MSG_ADDRESSABLE_STATE,
-    0x00: MSG_IC_CONFIG,
+
+# Set power on state to keep last state
+# 31f0f0f0f0f0e1
+# Set power on state to always on
+# 310ff0f0f0f000
+# Set power on state to always off
+# 31fff0f0f0f0f0
+
+# Query power on state
+# f032ffffffff1e
+
+# Power on state always off
+# f032fff0f0f0f1
+# Power on state always on
+# f0320ff0f0f001
+# Power on state keep last state
+# f032f0f0f0f0e2
+OUTER_MESSAGE_FIRST_BYTE = 0xB0
+
+MSG_UNIQUE_START = {
+    (0xF0, 0x71): MSG_POWER_STATE,
+    (0x0F, 0x71): MSG_POWER_STATE,
+    (0x00, 0x71): MSG_POWER_STATE,
+    (0xF0, 0x32): MSG_POWER_RESTORE_STATE,
+    (0x78,): MSG_ORIGINAL_POWER_STATE,
+    (0x66,): MSG_ORIGINAL_STATE,
+    (0x81,): MSG_STATE,
+    (0x00, 0x63): MSG_IC_CONFIG,
+    (0x72,): MSG_MUSIC_MODE_STATE,
 }
+
 MSG_LENGTHS = {
+    MSG_MUSIC_MODE_STATE: LEDNET_MUSIC_MODE_RESPONSE_LEN,
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
+    MSG_POWER_RESTORE_STATE: LEDENET_POWER_RESTORE_RESPONSE_LEN,
     MSG_ORIGINAL_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
     MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
     MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
 }
+
+OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+OUTER_MESSAGE_WRAPPER_START_LEN = 10
+CHECKSUM_LEN = 1
+
+
+def _message_type_from_start_of_msg(data: bytes) -> Optional[str]:
+    if len(data) > 1:
+        return MSG_UNIQUE_START.get(
+            (data[0], data[1]), MSG_UNIQUE_START.get((data[0],))
+        )
+    return MSG_UNIQUE_START.get((data[0],))
 
 
 class LEDENETOriginalRawState(NamedTuple):
@@ -190,9 +231,23 @@ class ProtocolBase:
             self._counter = 0
         return self._counter
 
-    def is_valid_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is a valid addressable state response."""
-        return False
+    def is_valid_power_restore_state_response(self, msg: bytes) -> bool:
+        """Check if a power state response is valid."""
+        return (
+            _message_type_from_start_of_msg(msg) == MSG_POWER_RESTORE_STATE
+            and len(msg) == LEDENET_POWER_RESTORE_RESPONSE_LEN
+            and self.is_checksum_correct(msg)
+        )
+
+    def is_valid_outer_message(self, data: bytes) -> bool:
+        """Check if a message is a valid outer message."""
+        if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER)):
+            return False
+        return self.is_checksum_correct(data)
+
+    def extract_inner_message(self, msg: bytes) -> bytes:
+        """Extract the inner message from a wrapped message."""
+        return msg[10:-1]
 
     def is_valid_ic_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
@@ -204,10 +259,16 @@ class ProtocolBase:
         If the response is unknown, we assume the response is
         a complete message since we have no way of knowing otherwise.
         """
-        msg_type = MSG_FIRST_BYTE.get(data[0])
+        if data[0] == OUTER_MESSAGE_FIRST_BYTE:  # This is a wrapper message
+            if len(data) < OUTER_MESSAGE_WRAPPER_START_LEN:
+                return OUTER_MESSAGE_WRAPPER_START_LEN
+            inner_msg_len = (data[8] << 8) + data[9]
+            return OUTER_MESSAGE_WRAPPER_START_LEN + inner_msg_len + CHECKSUM_LEN
+
+        msg_type = _message_type_from_start_of_msg(data)
         if msg_type is None:
             return len(data)
-        return MSG_LENGTHS.get(msg_type, len(data))
+        return MSG_LENGTHS[msg_type]
 
     @abstractmethod
     def construct_state_query(self) -> bytearray:
@@ -323,6 +384,27 @@ class ProtocolBase:
     def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
 
+    def construct_wrapped_message(
+        self, msg: bytearray, inner_pre_constructed: bool = False
+    ) -> bytearray:
+        """Construct a wrapped message."""
+        if inner_pre_constructed:  # msg has already been inner_pre_constructed
+            inner_msg = msg
+        else:
+            inner_msg = self.construct_message(msg)
+        inner_msg_len = len(inner_msg)
+        return self.construct_message(
+            bytearray(
+                [
+                    *OUTER_MESSAGE_WRAPPER,
+                    self._increment_counter(),
+                    inner_msg_len >> 8,
+                    inner_msg_len & 0xFF,
+                    *inner_msg,
+                ]
+            )
+        )
+
     @abstractmethod
     def named_raw_state(
         self, raw_state: bytes
@@ -399,9 +481,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 class ProtocolLEDENET8Byte(ProtocolBase):
     """The newer LEDENET protocol with checksums that uses 8 bytes to set state."""
 
-    ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
-    addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
-
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -425,7 +504,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
     def _is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
-        return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
+        return _message_type_from_start_of_msg(data) == MSG_POWER_STATE
 
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
@@ -560,14 +639,6 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
             self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
         ]
-
-    def is_valid_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is a valid addressable state response."""
-        if len(data) != self.addressable_response_length:
-            return False
-        if not data.startswith(bytearray(self.ADDRESSABLE_HEADER)):
-            return False
-        return self.is_checksum_correct(data)
 
 
 class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
@@ -922,20 +993,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         self, pattern: int, speed: int, brightness: int
     ) -> bytearray:
         """The bytes to send for a preset pattern."""
-        return self.construct_message(
-            bytearray(
-                [
-                    *self.ADDRESSABLE_HEADER,
-                    self._increment_counter(),
-                    0x00,
-                    0x05,
-                    0x42,
-                    pattern,
-                    speed,
-                    brightness,
-                    0x00,
-                ]
-            )
+        return self.construct_wrapped_message(
+            super().construct_preset_pattern(pattern, speed, brightness),
+            inner_pre_constructed=True,
         )
 
     # To query music mode
@@ -977,20 +1037,15 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
                                                                        ^^
                                                                        Likely brightness from 0-100 (0x64)
         """
-        inner_message = super().construct_music_mode(
-            sensitivity, brightness, mode, effect, foreground_colors, background_colors
-        )
         return [
-            self.construct_message(
-                bytearray(
-                    [
-                        *self.ADDRESSABLE_HEADER,
-                        self._increment_counter(),
-                        0x00,
-                        0x0D,
-                        *inner_message[0],
-                    ]
-                )
+            self.construct_wrapped_message(msg, inner_pre_constructed=True)
+            for msg in super().construct_music_mode(
+                sensitivity,
+                brightness,
+                mode,
+                effect,
+                foreground_colors,
+                background_colors,
             )
         ]
 
@@ -1045,36 +1100,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         Set Red
         b0b1b2b30001010d0034a0000600010000ff0000ff0002ff00000000ff00030000ff0000ff0004ff00000000ff00050000ff0000ff0006ff00000000ffaf67
         """
-        preset_number = 0x01  # aka fixed color
-        inner_message = self.construct_message(
-            bytearray(
-                [
-                    0x41,
-                    preset_number,
-                    red,
-                    green,
-                    blue,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x06,
-                    0x01,
-                    0x00,
-                    0x00,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *self.ADDRESSABLE_HEADER,
-                    self._increment_counter(),
-                    0x00,
-                    0x0D,
-                    *inner_message,
-                ]
-            )
+        return self.construct_wrapped_message(
+            super().construct_levels_change(
+                persist, red, green, blue, warm_white, cool_white, write_mode
+            ),
+            inner_pre_constructed=True,
         )
 
     def construct_zone_change(
@@ -1130,18 +1160,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         msg.extend(bytearray([0x00, 0x1E]))
         msg.extend(bytearray([effect.value, speed]))
         msg.append(0x00)
-        inner_message = self.construct_message(msg)
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *self.ADDRESSABLE_HEADER,
-                    self._increment_counter(),
-                    *pixels,
-                    *inner_message,
-                ]
-            )
-        )
+        return self.construct_wrapped_message(msg)
 
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
@@ -1192,7 +1211,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0x35,
@@ -1205,18 +1224,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
                     0x00,
                     0x00,
                     0x03,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *self.ADDRESSABLE_HEADER,
-                    self._increment_counter(),
-                    0x00,
-                    0x09,
-                    *inner_message,
                 ]
             )
         )
@@ -1253,13 +1260,13 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     ) -> bytearray:
         """The bytes to send for a preset pattern.
 
-            ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+        OUTER_MESSAGE_WRAPPER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
 
         b0 b1 b2 b3 00 01 01 2b 00 07 a3 01 10 00 00 00 b4 62
 
           inner = a3 01 10 00 00 00 b4
         """
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0xA3,
@@ -1268,18 +1275,6 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                     0x00,
                     0x00,
                     0x00,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *self.ADDRESSABLE_HEADER,
-                    self._increment_counter(),
-                    0x00,
-                    0x07,
-                    *inner_message,
                 ]
             )
         )
@@ -1345,7 +1340,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         3b a1 78 64 32 00 00 00 00 00 00 00 ea
         """
         h, s, v = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0x3B,
@@ -1360,18 +1355,6 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                     0x00,
                     0x00,
                     0x00,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *self.ADDRESSABLE_HEADER,
-                    self._increment_counter(),
-                    0x00,
-                    0x0D,
-                    *inner_message,
                 ]
             )
         )
@@ -1415,4 +1398,4 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             msg.extend(
                 bytearray([0x00, points - remaining, *rgb_list[-1], 0x00, 0x00, 0xFF])
             )
-        return self.construct_message(msg)
+        return self.construct_wrapped_message(msg)
