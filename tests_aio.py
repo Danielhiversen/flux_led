@@ -1335,21 +1335,21 @@ async def test_power_state_response_processing(
     )
     await task
     light._aio_protocol.data_received(b"\xf0\x32\xf0\xf0\xf0\xf0\xe2")
-    assert light._power_restore_state == aiodevice.PowerRestoreStates(
+    assert light.power_restore_states == aiodevice.PowerRestoreStates(
         channel1=aiodevice.PowerRestoreState.LAST_STATE,
         channel2=aiodevice.PowerRestoreState.LAST_STATE,
         channel3=aiodevice.PowerRestoreState.LAST_STATE,
         channel4=aiodevice.PowerRestoreState.LAST_STATE,
     )
     light._aio_protocol.data_received(b"\xf0\x32\x0f\xf0\xf0\xf0\x01")
-    assert light._power_restore_state == aiodevice.PowerRestoreStates(
+    assert light.power_restore_states == aiodevice.PowerRestoreStates(
         channel1=aiodevice.PowerRestoreState.ALWAYS_ON,
         channel2=aiodevice.PowerRestoreState.LAST_STATE,
         channel3=aiodevice.PowerRestoreState.LAST_STATE,
         channel4=aiodevice.PowerRestoreState.LAST_STATE,
     )
     light._aio_protocol.data_received(b"\xf0\x32\xff\xf0\xf0\xf0\xf1")
-    assert light._power_restore_state == aiodevice.PowerRestoreStates(
+    assert light.power_restore_states == aiodevice.PowerRestoreStates(
         channel1=aiodevice.PowerRestoreState.ALWAYS_OFF,
         channel2=aiodevice.PowerRestoreState.LAST_STATE,
         channel3=aiodevice.PowerRestoreState.LAST_STATE,

@@ -90,8 +90,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._pixels_per_segment: Optional[int] = None
         self._segments: Optional[int] = None
         self._last_update_time: float = NEVER_TIME
+        self._power_restore_state: Optional[PowerRestoreStates] = None
         self._buffer = b""
         self.loop = asyncio.get_running_loop()
+
+    @property
+    def power_restore_states(self) -> Optional[PowerRestoreStates]:
+        """Returns the power restore states for all channels."""
+        return self._power_restore_state
 
     async def async_setup(self, updated_callback: Callable[[], None]) -> None:
         """Setup the connection and fetch initial state."""
