@@ -486,7 +486,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.error("Error while calling callback: %s", ex)
 
-    def process_power_restore_state_response(self, msg: bytes) -> bool:
+    def process_power_restore_state_response(self, msg: bytes) -> None:
         """Process a power restore state response.
         Power on state always off
         f0 32 ff f0 f0 f0 f1

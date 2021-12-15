@@ -120,7 +120,7 @@ MIN_WRAPPER_LENGTH = (
 CHECKSUM_LEN = 1
 
 
-def _message_type_from_start_of_msg(data: bytes) -> str:
+def _message_type_from_start_of_msg(data: bytes) -> Optional[str]:
     if len(data) > 1:
         return MSG_UNIQUE_START.get(
             (data[0], data[1]), MSG_UNIQUE_START.get((data[0],))
@@ -265,14 +265,19 @@ class ProtocolBase:
         if data[0] == OUTER_MESSAGE_FIRST_BYTE:  # This is a wrapper message
             if len(data) < MIN_WRAPPER_LENGTH:
                 return MIN_WRAPPER_LENGTH
-            inner_msg_length = MSG_LENGTHS.get(
-                _message_type_from_start_of_msg((data[10], data[11]))
-            )
-            if inner_msg_length:
-                return OUTER_MESSAGE_WRAPPER_START_LEN + inner_msg_length + CHECKSUM_LEN
+            msg_type = _message_type_from_start_of_msg(bytearray([data[10], data[11]]))
+            if msg_type is not None:
+                return (
+                    OUTER_MESSAGE_WRAPPER_START_LEN
+                    + MSG_LENGTHS[msg_type]
+                    + CHECKSUM_LEN
+                )
             return len(data)
 
-        return MSG_LENGTHS.get(_message_type_from_start_of_msg(data), len(data))
+        msg_type = _message_type_from_start_of_msg(data)
+        if msg_type is None:
+            return len(data)
+        return MSG_LENGTHS[msg_type]
 
     @abstractmethod
     def construct_state_query(self) -> bytearray:
