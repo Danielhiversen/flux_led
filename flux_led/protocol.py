@@ -393,6 +393,22 @@ class ProtocolBase:
     def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
 
+    def construct_wrapped_message(self, msg: bytes) -> bytes:
+        """Construct a wrapped message."""
+        inner_msg = self.construct_message(msg)
+        inner_msg_len = len(inner_msg)
+        return self.construct_message(
+            bytearray(
+                [
+                    *OUTER_MESSAGE_WRAPPER,
+                    self._increment_counter(),
+                    inner_msg_len >> 8,
+                    inner_msg_len & 0xFF,
+                    *inner_msg,
+                ]
+            )
+        )
+
     @abstractmethod
     def named_raw_state(
         self, raw_state: bytes
@@ -981,13 +997,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         self, pattern: int, speed: int, brightness: int
     ) -> bytearray:
         """The bytes to send for a preset pattern."""
-        return self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
-                    *OUTER_MESSAGE_WRAPPER,
-                    self._increment_counter(),
-                    0x00,
-                    0x05,
                     0x42,
                     pattern,
                     speed,
@@ -1036,20 +1048,15 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
                                                                        ^^
                                                                        Likely brightness from 0-100 (0x64)
         """
-        inner_message = super().construct_music_mode(
-            sensitivity, brightness, mode, effect, foreground_colors, background_colors
-        )
         return [
-            self.construct_message(
-                bytearray(
-                    [
-                        *OUTER_MESSAGE_WRAPPER,
-                        self._increment_counter(),
-                        0x00,
-                        0x0D,
-                        *inner_message[0],
-                    ]
-                )
+            self.construct_wrapped_message(msg)
+            for msg in super().construct_music_mode(
+                sensitivity,
+                brightness,
+                mode,
+                effect,
+                foreground_colors,
+                background_colors,
             )
         ]
 
@@ -1105,7 +1112,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         b0b1b2b30001010d0034a0000600010000ff0000ff0002ff00000000ff00030000ff0000ff0004ff00000000ff00050000ff0000ff0006ff00000000ffaf67
         """
         preset_number = 0x01  # aka fixed color
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0x41,
@@ -1120,18 +1127,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
                     0x01,
                     0x00,
                     0x00,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *OUTER_MESSAGE_WRAPPER,
-                    self._increment_counter(),
-                    0x00,
-                    0x0D,
-                    *inner_message,
                 ]
             )
         )
@@ -1189,18 +1184,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         msg.extend(bytearray([0x00, 0x1E]))
         msg.extend(bytearray([effect.value, speed]))
         msg.append(0x00)
-        inner_message = self.construct_message(msg)
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *OUTER_MESSAGE_WRAPPER,
-                    self._increment_counter(),
-                    *pixels,
-                    *inner_message,
-                ]
-            )
-        )
+        return self.construct_wrapped_message(msg)
 
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
@@ -1251,7 +1235,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0x35,
@@ -1264,18 +1248,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
                     0x00,
                     0x00,
                     0x03,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *OUTER_MESSAGE_WRAPPER,
-                    self._increment_counter(),
-                    0x00,
-                    0x09,
-                    *inner_message,
                 ]
             )
         )
@@ -1318,7 +1290,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
 
           inner = a3 01 10 00 00 00 b4
         """
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0xA3,
@@ -1327,18 +1299,6 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                     0x00,
                     0x00,
                     0x00,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *OUTER_MESSAGE_WRAPPER,
-                    self._increment_counter(),
-                    0x00,
-                    0x07,
-                    *inner_message,
                 ]
             )
         )
@@ -1404,7 +1364,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         3b a1 78 64 32 00 00 00 00 00 00 00 ea
         """
         h, s, v = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
-        inner_message = self.construct_message(
+        return self.construct_wrapped_message(
             bytearray(
                 [
                     0x3B,
@@ -1419,18 +1379,6 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                     0x00,
                     0x00,
                     0x00,
-                ]
-            )
-        )
-
-        return self.construct_message(
-            bytearray(
-                [
-                    *OUTER_MESSAGE_WRAPPER,
-                    self._increment_counter(),
-                    0x00,
-                    0x0D,
-                    *inner_message,
                 ]
             )
         )
@@ -1474,4 +1422,4 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             msg.extend(
                 bytearray([0x00, points - remaining, *rgb_list[-1], 0x00, 0x00, 0xFF])
             )
-        return self.construct_message(msg)
+        return self.construct_wrapped_message(msg)
