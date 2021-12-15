@@ -1915,7 +1915,9 @@ class TestLight(unittest.TestCase):
         self.assertEqual(
             mock_send.call_args,
             mock.call(
-                bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\x00\xa7")
+                bytearray(
+                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x06B\x012d\x00\xd9\x81"
+                )
             ),
         )
         light._transition_complete_time = 0
