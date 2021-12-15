@@ -459,7 +459,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Process a full message (maybe reassembled)."""
         assert self._protocol is not None
         self.set_available()
-        assert self._updated_callback is not None
         prev_state = self.raw_state
         if self._protocol.is_valid_outer_message(msg):
             msg = self._protocol.extract_inner_message(msg)
@@ -478,13 +477,14 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         self._process_futures_and_callbacks()
 
-    def _process_futures_and_callbacks(self):
+    def _process_futures_and_callbacks(self) -> None:
         """Called when state changes."""
         futures = self._on_futures if self.is_on else self._off_futures
         for future in futures:
             if not future.done():
                 future.set_result(True)
         futures.clear()
+        assert self._updated_callback is not None
         try:
             self._updated_callback()
         except Exception as ex:  # pylint: disable=broad-except

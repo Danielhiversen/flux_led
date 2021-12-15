@@ -384,7 +384,7 @@ class ProtocolBase:
     def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
 
-    def construct_wrapped_message(self, msg: bytes) -> bytes:
+    def construct_wrapped_message(self, msg: bytearray) -> bytearray:
         """Construct a wrapped message."""
         inner_msg = self.construct_message(msg)
         inner_msg_len = len(inner_msg)
