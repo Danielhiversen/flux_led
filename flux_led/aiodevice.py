@@ -439,9 +439,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         self.set_available()
         assert self._updated_callback is not None
         prev_state = self.raw_state
-        if self._protocol.is_valid_addressable_response(msg):
-            self.process_addressable_response(msg)
-        elif self._protocol.is_valid_state_response(msg):
+        if self._protocol.is_valid_outer_message(msg):
+            msg = self._protocol.extract_inner_message(msg)
+
+        if self._protocol.is_valid_state_response(msg):
             self._async_process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
@@ -481,16 +482,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self._ic_future.done():
             self._ic_future.set_result(True)
         return True
-
-    def process_addressable_response(self, msg: bytes) -> bool:
-        assert self._aio_protocol is not None
-        _LOGGER.debug(
-            "%s <= Extracted response (%s) (%d)",
-            self._aio_protocol.peername,
-            " ".join(f"0x{x:02X}" for x in msg[10:-1]),
-            len(msg[10:-1]),
-        )
-        return self._async_process_state_response(msg[10:-1])
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""

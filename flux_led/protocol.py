@@ -226,9 +226,21 @@ class ProtocolBase:
             self._counter = 0
         return self._counter
 
-    def is_valid_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is a valid addressable state response."""
-        return False
+    def is_valid_outer_message(self, data: bytes) -> bool:
+        """Check if a message is a valid outer message."""
+        if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER)):
+            return False
+        return self.is_checksum_correct(data)
+
+    def extract_inner_message(self, msg: bytes) -> bytes:
+        """Extract the inner message from a wrapped message."""
+        _LOGGER.debug(
+            "%s <= Extracted response (%s) (%d)",
+            self._aio_protocol.peername,
+            " ".join(f"0x{x:02X}" for x in msg[10:-1]),
+            len(msg[10:-1]),
+        )
+        return msg[10:-1]
 
     def is_valid_ic_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
@@ -442,8 +454,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 class ProtocolLEDENET8Byte(ProtocolBase):
     """The newer LEDENET protocol with checksums that uses 8 bytes to set state."""
 
-    addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
-
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -602,14 +612,6 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
             self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
         ]
-
-    def is_valid_addressable_response(self, data: bytes) -> bool:
-        """Check if a message is a valid addressable state response."""
-        if len(data) != self.addressable_response_length:
-            return False
-        if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER)):
-            return False
-        return self.is_checksum_correct(data)
 
 
 class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
