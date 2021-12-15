@@ -989,15 +989,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
     ) -> bytearray:
         """The bytes to send for a preset pattern."""
         return self.construct_wrapped_message(
-            bytearray(
-                [
-                    0x42,
-                    pattern,
-                    speed,
-                    brightness,
-                    0x00,
-                ]
-            )
+            super().construct_preset_pattern(pattern, speed, brightness)
         )
 
     # To query music mode
