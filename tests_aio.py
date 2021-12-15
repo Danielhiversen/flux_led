@@ -579,6 +579,11 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
         b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19N"
     )
 
+    with pytest.raises(ValueError):
+        await light.async_set_zones(
+            [(255, 0, 0) for _ in range(30)],
+        )
+
 
 @pytest.mark.asyncio
 async def test_async_set_zones_unsupported_device(
@@ -1190,6 +1195,28 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][1][0] == (
         b"\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\xff\x00\x00\x00\x00\xff\x00\x03\xff\x00\x00\x00\x00\xff\x00\x04\x00\x00\xff\x00\x00\xff\x00\x05\x00\x00\xff\x00\x00\xff\x00\x06\x00\x00\xff\x00\x00\xff\t"
     )
+
+    transport.reset_mock()
+    await light.async_set_zones(
+        [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 255, 255)]
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == (
+        b"\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\x00\x00\xff\x00\x00\xff\x00\x03\x00\xff\x00\x00\x00\xff\x00\x04\xff\xff\xff\x00\x00\xff\x00\x05\xff\xff\xff\x00\x00\xff\x00\x06\xff\xff\xff\x00\x00\xff\x03"
+    )
+
+    with pytest.raises(ValueError):
+        await light.async_set_zones(
+            [
+                (255, 0, 0),
+                (0, 0, 255),
+                (0, 255, 0),
+                (255, 255, 255),
+                (255, 255, 255),
+                (255, 255, 255),
+                (255, 255, 255),
+            ]
+        )
 
 
 @pytest.mark.asyncio
