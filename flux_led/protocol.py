@@ -1112,6 +1112,8 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         590063ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000001e05640025
         """
         sent_zones = len(rgb_list)
+        if sent_zones > points:
+            raise ValueError(f"Device supports a maximum of {points} zones")
         pixel_bits = 9 + (points * 3)
         pixels = bytearray([pixel_bits >> 8, pixel_bits & 0xFF])
         msg = bytearray([0x59])
@@ -1120,13 +1122,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         remaining = points
         for rgb in rgb_list:
             for _ in range(zone_size):
-                r, g, b = rgb
-                msg.extend(bytearray([r, g, b]))
                 remaining -= 1
+                msg.extend(bytearray([*rgb]))
         while remaining:
             remaining -= 1
-            r, g, b = rgb_list[-1]
-            msg.extend(bytearray([r, g, b]))
+            msg.extend(bytearray([*rgb]))
         msg.extend(bytearray([0x00, 0x1E]))
         msg.extend(bytearray([effect.value, speed]))
         msg.append(0x00)
@@ -1227,6 +1227,11 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+
+    @property
+    def zones(self) -> bool:
+        """If the protocol supports zones."""
+        return True
 
     @property
     def power_push_updates(self) -> bool:
@@ -1370,3 +1375,44 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                 ]
             )
         )
+
+    def construct_zone_change(
+        self,
+        points: int,  # the number of points on the strip
+        rgb_list: List[Tuple[int, int, int]],
+        speed: int,
+        effect: MultiColorEffects,
+    ) -> bytearray:
+        """The bytes to send for multiple zones.
+
+        6 Zone All red
+        a000060001ff00000000ff0002ff00000000ff0003ff00000000ff0004ff00000000ff0005ff00000000ff0006ff00000000ffaf
+        6 Zone All Yellow
+        a000060001ffff000000ff0002ffff000000ff0003ffff000000ff0004ffff000000ff0005ffff000000ff0006ffff000000ffa9
+        6 Zone All Green
+        a00006000100ff000000ff000200ff000000ff000300ff000000ff000400ff000000ff000500ff000000ff000600ff000000ffaf
+        6 Zone All Green
+        a00006000100ff000000ff000200ff000000ff000300ff000000ff000400ff000000ff000500ff000000ff000600ff000000ffaf
+        6 Zone All Cyan
+        a00006000100ffff0000ff000200ffff0000ff000300ffff0000ff000400ffff0000ff000500ffff0000ff000600ffff0000ffa9
+        6 Zone All White
+        a000060001ffffff0000ff0002ffffff0000ff0003ffffff0000ff0004ffffff0000ff0005ffffff0000ff0006ffffff0000ffa3
+        """
+        sent_zones = len(rgb_list)
+        if sent_zones > points:
+            raise ValueError(f"Device supports a maximum of {points} zones")
+        msg = bytearray([0xA0, 0x00, 0x60])
+        zone_size = points // sent_zones
+        remaining = points
+        for rgb in rgb_list:
+            for _ in range(zone_size):
+                remaining -= 1
+                msg.extend(
+                    bytearray([0x00, points - remaining, *rgb, 0x00, 0x00, 0xFF])
+                )
+        while remaining:
+            remaining -= 1
+            msg.extend(
+                bytearray([0x00, points - remaining, *rgb_list[-1], 0x00, 0x00, 0xFF])
+            )
+        return self.construct_message(msg)

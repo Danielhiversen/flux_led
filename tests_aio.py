@@ -1185,6 +1185,15 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert light.speed == 100
 
 
+    transport.reset_mock()
+    await light.async_set_zones(
+        [(255, 0, 0), (0, 0, 255)]
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == (
+        b'\xa0\x00`\x00\x01\xff\x00\x00\x00\x00\xff\x00\x02\xff\x00\x00\x00\x00\xff\x00\x03\xff\x00\x00\x00\x00\xff\x00\x04\x00\x00\xff\x00\x00\xff\x00\x05\x00\x00\xff\x00\x00\xff\x00\x06\x00\x00\xff\x00\x00\xff\t'
+    )
+
 @pytest.mark.asyncio
 async def test_async_enable_remote_access(mock_aio_protocol):
     """Test we can enable remote access."""
