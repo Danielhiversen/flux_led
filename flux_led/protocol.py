@@ -385,10 +385,10 @@ class ProtocolBase:
         """Original protocol uses no checksum."""
 
     def construct_wrapped_message(
-        self, msg: bytearray, checksumed: bool = False
+        self, msg: bytearray, inner_pre_constructed: bool = False
     ) -> bytearray:
         """Construct a wrapped message."""
-        if checksumed:  # msg has already been checksumed
+        if inner_pre_constructed:  # msg has already been inner_pre_constructed
             inner_msg = msg
         else:
             inner_msg = self.construct_message(msg)
@@ -995,7 +995,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         """The bytes to send for a preset pattern."""
         return self.construct_wrapped_message(
             super().construct_preset_pattern(pattern, speed, brightness),
-            checksumed=True,
+            inner_pre_constructed=True,
         )
 
     # To query music mode
@@ -1038,7 +1038,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
                                                                        Likely brightness from 0-100 (0x64)
         """
         return [
-            self.construct_wrapped_message(msg, checksumed=True)
+            self.construct_wrapped_message(msg, inner_pre_constructed=True)
             for msg in super().construct_music_mode(
                 sensitivity,
                 brightness,
@@ -1104,7 +1104,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
             super().construct_levels_change(
                 persist, red, green, blue, warm_white, cool_white, write_mode
             ),
-            checksumed=True,
+            inner_pre_constructed=True,
         )
 
     def construct_zone_change(
