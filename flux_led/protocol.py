@@ -263,7 +263,11 @@ class ProtocolBase:
             if len(data) < OUTER_MESSAGE_WRAPPER_START_LEN:
                 return OUTER_MESSAGE_WRAPPER_START_LEN
             inner_msg_len = (data[8] << 8) + data[9]
-            return OUTER_MESSAGE_WRAPPER_START_LEN + inner_msg_len + CHECKSUM_LEN
+            return (
+                OUTER_MESSAGE_WRAPPER_START_LEN  # Includes the two bytes that are the size of the inner message
+                + inner_msg_len  # The inner message itself (with checksum)
+                + CHECKSUM_LEN  # The checksum of the full message
+            )
 
         msg_type = _message_type_from_start_of_msg(data)
         if msg_type is None:
