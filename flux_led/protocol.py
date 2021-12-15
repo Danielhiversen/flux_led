@@ -114,9 +114,6 @@ MSG_LENGTHS = {
 
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
 OUTER_MESSAGE_WRAPPER_START_LEN = 10
-MIN_WRAPPER_LENGTH = (
-    12  # minimum bytes needed to determine the contents of a wrapped message
-)
 CHECKSUM_LEN = 1
 
 
@@ -263,16 +260,10 @@ class ProtocolBase:
         a complete message since we have no way of knowing otherwise.
         """
         if data[0] == OUTER_MESSAGE_FIRST_BYTE:  # This is a wrapper message
-            if len(data) < MIN_WRAPPER_LENGTH:
-                return MIN_WRAPPER_LENGTH
-            msg_type = _message_type_from_start_of_msg(bytearray([data[10], data[11]]))
-            if msg_type is not None:
-                return (
-                    OUTER_MESSAGE_WRAPPER_START_LEN
-                    + MSG_LENGTHS[msg_type]
-                    + CHECKSUM_LEN
-                )
-            return len(data)
+            if len(data) < OUTER_MESSAGE_WRAPPER_START_LEN:
+                return OUTER_MESSAGE_WRAPPER_START_LEN
+            inner_msg_len = (data[8] << 8) + data[9]
+            return OUTER_MESSAGE_WRAPPER_START_LEN + inner_msg_len + CHECKSUM_LEN
 
         msg_type = _message_type_from_start_of_msg(data)
         if msg_type is None:
@@ -1284,7 +1275,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     ) -> bytearray:
         """The bytes to send for a preset pattern.
 
-            OUTER_MESSAGE_WRAPPER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+        OUTER_MESSAGE_WRAPPER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
 
         b0 b1 b2 b3 00 01 01 2b 00 07 a3 01 10 00 00 00 b4 62
 
