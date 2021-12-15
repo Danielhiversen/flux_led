@@ -234,12 +234,6 @@ class ProtocolBase:
 
     def extract_inner_message(self, msg: bytes) -> bytes:
         """Extract the inner message from a wrapped message."""
-        _LOGGER.debug(
-            "%s <= Extracted response (%s) (%d)",
-            self._aio_protocol.peername,
-            " ".join(f"0x{x:02X}" for x in msg[10:-1]),
-            len(msg[10:-1]),
-        )
         return msg[10:-1]
 
     def is_valid_ic_response(self, data: bytes) -> bool:
