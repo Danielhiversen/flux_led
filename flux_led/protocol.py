@@ -1094,23 +1094,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         Set Red
         b0b1b2b30001010d0034a0000600010000ff0000ff0002ff00000000ff00030000ff0000ff0004ff00000000ff00050000ff0000ff0006ff00000000ffaf67
         """
-        preset_number = 0x01  # aka fixed color
         return self.construct_wrapped_message(
-            bytearray(
-                [
-                    0x41,
-                    preset_number,
-                    red,
-                    green,
-                    blue,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x06,
-                    0x01,
-                    0x00,
-                    0x00,
-                ]
+            super().construct_levels_change(
+                persist, red, green, blue, warm_white, cool_white, write_mode
             )
         )
 
