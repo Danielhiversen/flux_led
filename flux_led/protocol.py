@@ -36,6 +36,7 @@ TRANSITION_BYTES = {
     TRANSITION_GRADUAL: 0x3A,
 }
 
+LEDENET_POWER_RESTORE_RESPONSE_LEN = 7
 LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
@@ -58,6 +59,7 @@ LEDENET_IC_STATE_RESPONSE_LEN = 11
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
 
+MSG_POWER_RESTORE_STATE = "power_restore_state"
 MSG_POWER_STATE = "power_state"
 MSG_STATE = "state"
 
@@ -65,23 +67,56 @@ MSG_ADDRESSABLE_STATE = "addressable_state"
 
 MSG_IC_CONFIG = "ic_config"
 
-MSG_FIRST_BYTE = {
-    0xF0: MSG_POWER_STATE,
-    0x0F: MSG_POWER_STATE,
-    0x78: MSG_ORIGINAL_POWER_STATE,
-    0x66: MSG_ORIGINAL_STATE,
-    0x81: MSG_STATE,
-    0xB0: MSG_ADDRESSABLE_STATE,
-    0x00: MSG_IC_CONFIG,
+
+# Set power on state to keep last state
+# 31f0f0f0f0f0e1
+# Set power on state to always on
+# 310ff0f0f0f000
+# Set power on state to always off
+# 31fff0f0f0f0f0
+
+# Query power on state
+# f032ffffffff1e
+
+# Power on state always off
+# f032fff0f0f0f1
+# Power on state always on
+# f0320ff0f0f001
+# Power on state keep last state
+# f032f0f0f0f0e2
+
+
+MSG_UNIQUE_START = {
+    (0xF0, 0x71): MSG_POWER_STATE,
+    (0x0F, 0x71): MSG_POWER_STATE,
+    (0x00, 0x71): MSG_POWER_STATE,
+    (0xF0, 0x32): MSG_POWER_RESTORE_STATE,
+    (0x78,): MSG_ORIGINAL_POWER_STATE,
+    (0x66,): MSG_ORIGINAL_STATE,
+    (0x81,): MSG_STATE,
+    (0xB0,): MSG_ADDRESSABLE_STATE,  # Special case since this is the outer message
+    (0x00, 0x63): MSG_IC_CONFIG,
 }
 MSG_LENGTHS = {
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
+    MSG_POWER_RESTORE_STATE: LEDENET_POWER_RESTORE_RESPONSE_LEN,
     MSG_ORIGINAL_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
     MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
     MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
 }
+
+OUTER_MESSAGE_WRAPPER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+MIN_WRAPPER_LENGTH = 11
+
+
+def _message_type_from_start_of_msg(data: bytes) -> str:
+    if len(data) > 1:
+        return MSG_UNIQUE_START.get(
+            (data[0], data[1]), MSG_UNIQUE_START.get((data[0],))
+        )
+    return MSG_UNIQUE_START.get((data[0],))
 
 
 class LEDENETOriginalRawState(NamedTuple):
@@ -204,10 +239,14 @@ class ProtocolBase:
         If the response is unknown, we assume the response is
         a complete message since we have no way of knowing otherwise.
         """
-        msg_type = MSG_FIRST_BYTE.get(data[0])
-        if msg_type is None:
-            return len(data)
-        return MSG_LENGTHS.get(msg_type, len(data))
+        if data[0] == 0xB0:  # This is a wrapper message
+            if len(data) < MIN_WRAPPER_LENGTH:
+                return MIN_WRAPPER_LENGTH
+            inner_msg_start_bytes = bytearray(data[10], data[11])
+            MSG_LENGTHS.get(_message_type_from_start_of_msg(inner_msg_start_bytes))
+            data[10], data[11]
+
+        return MSG_LENGTHS.get(_message_type_from_start_of_msg(data), len(data))
 
     @abstractmethod
     def construct_state_query(self) -> bytearray:
@@ -399,7 +438,6 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 class ProtocolLEDENET8Byte(ProtocolBase):
     """The newer LEDENET protocol with checksums that uses 8 bytes to set state."""
 
-    ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
     addressable_response_length = MSG_LENGTHS[MSG_ADDRESSABLE_STATE]
 
     @property
@@ -425,7 +463,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
 
     def _is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
-        return len(data) >= 1 and MSG_FIRST_BYTE[data[0]] == MSG_POWER_STATE
+        return _message_type_from_start_of_msg(data) == MSG_POWER_STATE
 
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
@@ -565,7 +603,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         """Check if a message is a valid addressable state response."""
         if len(data) != self.addressable_response_length:
             return False
-        if not data.startswith(bytearray(self.ADDRESSABLE_HEADER)):
+        if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER)):
             return False
         return self.is_checksum_correct(data)
 
@@ -925,7 +963,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         return self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
+                    *OUTER_MESSAGE_WRAPPER,
                     self._increment_counter(),
                     0x00,
                     0x05,
@@ -984,7 +1022,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
             self.construct_message(
                 bytearray(
                     [
-                        *self.ADDRESSABLE_HEADER,
+                        *OUTER_MESSAGE_WRAPPER,
                         self._increment_counter(),
                         0x00,
                         0x0D,
@@ -1068,7 +1106,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         return self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
+                    *OUTER_MESSAGE_WRAPPER,
                     self._increment_counter(),
                     0x00,
                     0x0D,
@@ -1135,7 +1173,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         return self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
+                    *OUTER_MESSAGE_WRAPPER,
                     self._increment_counter(),
                     *pixels,
                     *inner_message,
@@ -1212,7 +1250,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         return self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
+                    *OUTER_MESSAGE_WRAPPER,
                     self._increment_counter(),
                     0x00,
                     0x09,
@@ -1253,7 +1291,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     ) -> bytearray:
         """The bytes to send for a preset pattern.
 
-            ADDRESSABLE_HEADER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+            OUTER_MESSAGE_WRAPPER = [0xB0, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
 
         b0 b1 b2 b3 00 01 01 2b 00 07 a3 01 10 00 00 00 b4 62
 
@@ -1275,7 +1313,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         return self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
+                    *OUTER_MESSAGE_WRAPPER,
                     self._increment_counter(),
                     0x00,
                     0x07,
@@ -1367,7 +1405,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         return self.construct_message(
             bytearray(
                 [
-                    *self.ADDRESSABLE_HEADER,
+                    *OUTER_MESSAGE_WRAPPER,
                     self._increment_counter(),
                     0x00,
                     0x0D,
