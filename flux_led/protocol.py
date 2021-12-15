@@ -234,6 +234,14 @@ class ProtocolBase:
             self._counter = 0
         return self._counter
 
+    def is_valid_power_restore_state_response(self, msg: bytes) -> bool:
+        """Check if a power state response is valid."""
+        return (
+            _message_type_from_start_of_msg(msg) == MSG_POWER_RESTORE_STATE
+            and len(msg) == LEDENET_POWER_RESTORE_RESPONSE_LEN
+            and self.is_checksum_correct(msg)
+        )
+
     def is_valid_outer_message(self, data: bytes) -> bool:
         """Check if a message is a valid outer message."""
         if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER)):

@@ -1,5 +1,7 @@
 import asyncio
 import contextlib
+from dataclasses import dataclass
+from enum import Enum
 import logging
 import time
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
@@ -33,6 +35,7 @@ from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
 
+
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
@@ -49,6 +52,25 @@ POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 PUSH_UPDATE_INTERVAL = 90  # seconds
 
 NEVER_TIME = -PUSH_UPDATE_INTERVAL
+
+
+class PowerRestoreState(Enum):
+    ALWAYS_OFF = 0xFF
+    ALWAYS_ON = 0x0F
+    LAST_STATE = 0xF0
+
+
+POWER_RESTORE_BYTES_TO_POWER_RESTORE = {
+    restore_state.value: restore_state for restore_state in PowerRestoreState
+}
+
+
+@dataclass
+class PowerRestoreStates:
+    channel1: PowerRestoreState
+    channel2: PowerRestoreState
+    channel3: PowerRestoreState
+    channel4: PowerRestoreState
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -448,6 +470,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_power_state_response(msg)
         elif self._protocol.is_valid_ic_response(msg):
             self.process_ic_response(msg)
+        elif self._protocol.is_valid_power_restore_state_response(msg):
+            self.process_power_restore_state_response(msg)
         else:
             return
         if self.raw_state == prev_state:
@@ -461,6 +485,22 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._updated_callback()
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.error("Error while calling callback: %s", ex)
+
+    def process_power_restore_state_response(self, msg: bytes) -> bool:
+        """Process a power restore state response.
+        Power on state always off
+        f0 32 ff f0 f0 f0 f1
+        Power on state always on
+        f0 32 0f f0 f0 f0 01
+        Power on state keep last state
+        f0 32 f0 f0 f0 f0 e2
+        """
+        self._power_restore_state = PowerRestoreStates(
+            channel1=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[2]],
+            channel2=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[3]],
+            channel3=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[4]],
+            channel4=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[5]],
+        )
 
     def process_ic_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
