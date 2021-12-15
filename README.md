@@ -161,7 +161,6 @@ The following models have been tested with library.
 | 0x06  | Controller RGBW             |                                 |
 | 0x07  | Controller RGBCW            |                                 |
 | 0x08  | Controller RGB with MIC     |                                 |
-| 0x09  | Switch 1c                   |                                 |
 | 0x0E  | Floor Lamp RGBCW            |                                 |
 | 0x10  | Christmas Light             |                                 |
 | 0x1A  | Christmas Light             |                                 |
