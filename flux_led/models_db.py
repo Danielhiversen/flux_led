@@ -526,8 +526,15 @@ MODELS = [
         # 'AK001-ZJ2101' and 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2145' is v8
         # 'AK001-ZJ2146' is v9
+        # 'AK001-ZJ2147' is v9.7
         # 'AK001-ZJ2146' 40w flood light, newer smart bulbs (with RF remote control support)
-        models=["AK001-ZJ2101", "AK001-ZJ2104", "AK001-ZJ2145", "AK001-ZJ2146"],
+        models=[
+            "AK001-ZJ2101",
+            "AK001-ZJ2104",
+            "AK001-ZJ2145",
+            "AK001-ZJ2146",
+            "AK001-ZJ2147",
+        ],
         description="Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[

@@ -23,6 +23,7 @@ EFFECT_CYAN_STROBE = "cyan_strobe"
 EFFECT_PURPLE_STROBE = "purple_strobe"
 EFFECT_WHITE_STROBE = "white_strobe"
 EFFECT_CYCLE_RGB = "cycle_rgb"
+EFFECT_CYCLE_SEVEN_COLORS = "cycle_seven_colors"
 EFFECT_COLORJUMP = "colorjump"
 EFFECT_CUSTOM = "custom"
 
@@ -51,6 +52,10 @@ EFFECT_MAP = {
 EFFECT_MAP_DIMMABLE = {
     **EFFECT_MAP,
     EFFECT_CYCLE_RGB: 0x39,
+    EFFECT_CYCLE_SEVEN_COLORS: 0x3A,
+    # cycle_seven_colors Doesn't work on the bulbs, but no way to tell ahead of time
+    # since the firmware version is v9 for both but it seems like only the AK001-ZJ2147
+    # model actually has support for it
 }
 
 EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_DIMMABLE.items()}
@@ -619,6 +624,7 @@ class PresetPattern:
     white_strobe_flash = EFFECT_MAP[EFFECT_WHITE_STROBE]
     seven_color_jumping = EFFECT_MAP[EFFECT_COLORJUMP]
     cycle_rgb = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_RGB]
+    cycle_seven_colors = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_SEVEN_COLORS]
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
@@ -636,7 +642,7 @@ class PresetPattern:
 
     @staticmethod
     def valid(pattern: int) -> bool:
-        if pattern >= 0x25 and pattern <= 0x39 or pattern >= 0x61 and pattern <= 0x63:
+        if pattern >= 0x25 and pattern <= 0x3A or pattern >= 0x61 and pattern <= 0x63:
             return True
         return False
 
