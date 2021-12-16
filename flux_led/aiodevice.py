@@ -7,7 +7,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import PROTOCOL_PROBES, LEDENETDevice
+from .base_device import PROTOCOL_PROBES, DeviceType, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -63,6 +63,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
+        self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._ic_future: "asyncio.Future[bool]" = asyncio.Future()
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
@@ -86,12 +87,29 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         assert self._protocol is not None
-        await self._async_send_msg(self._protocol.construct_power_restore_state_query())
-        if not self._protocol.zones:
-            return
+        if self._protocol.zones:
+            await self._async_addressable_setup()
+            return        
+        if self.device_type == DeviceType.Switch:
+            await self._async_switch_setup()
+
+    async def _async_switch_setup(self):
+        """"Setup a switch."""
+        await self._async_send_msg(
+            self._protocol.construct_power_restore_state_query()
+        )
+        try:
+            await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
+        except asyncio.TimeoutError:
+            self.set_unavailable()
+            raise RuntimeError("Could not determine power restore state")
+
+    async def _async_addressable_setup(self):
+        """Setup an addressable light."""
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
             self._pixels_per_segment = 6  # currently hard coded
             return
+
         assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
@@ -514,6 +532,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             channel3=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[4]],
             channel4=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[5]],
         )
+        if not self._power_restore_future.done():
+            self._power_restore_future.set_result(True)
 
     def process_ic_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None
