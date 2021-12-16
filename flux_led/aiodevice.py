@@ -528,10 +528,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         f0 32 f0 f0 f0 f0 e2
         """
         self._power_restore_state = PowerRestoreStates(
-            channel1=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[2]],
-            channel2=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[3]],
-            channel3=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[4]],
-            channel4=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[5]],
+            channel1=POWER_RESTORE_BYTES_TO_POWER_RESTORE.get(msg[2]),
+            channel2=POWER_RESTORE_BYTES_TO_POWER_RESTORE.get(msg[3]),
+            channel3=POWER_RESTORE_BYTES_TO_POWER_RESTORE.get(msg[4]),
+            channel4=POWER_RESTORE_BYTES_TO_POWER_RESTORE.get(msg[5]),
         )
         if not self._power_restore_future.done():
             self._power_restore_future.set_result(True)

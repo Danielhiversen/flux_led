@@ -275,10 +275,16 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x06,
-        # "AK001-ZJ2145" == v2
-        # "AK001-ZJ2147" == v3
-        # AK001-ZJ2147 has RF remote support
-        models=["AK001-ZJ100", "AK001-ZJ200", "AK001-ZJ2145", "AK001-ZJ2147"],
+        # "AK001-ZJ2104" == v1 has RF remote support
+        # "AK001-ZJ2145" == v2 has IR remote support
+        # "AK001-ZJ2147" == v3 has RF remote support
+        models=[
+            "AK001-ZJ100",
+            "AK001-ZJ200",
+            "AK001-ZJ2104",
+            "AK001-ZJ2145",
+            "AK001-ZJ2147",
+        ],
         description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
@@ -292,8 +298,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x07,
-        # "AK001-ZJ2146" == v2
-        # AK001-ZJ2146 has RF remote support
+        # "AK001-ZJ2146" == v2 has RF remote support
         models=["AK001-ZJ2146"],
         description="Controller RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -478,6 +483,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x25,
+        # 'AK001-ZJ200' == v2 - some devices have RF remote support (the mini ones)
         models=["HF-LPB100-ZJ200", "AK001-ZJ200"],
         description="Controller RGB/WW/CW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -489,6 +495,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x33,
+        # 'AK001-ZJ100' == v3 - WIFI370 version
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8
         # "AK001-ZJ2145" == v9 # no rf support!
@@ -627,7 +634,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x93,
-        models=[],
+        # AK001-ZJ2146 == v3
+        models=["AK001-ZJ2146"],
         description="Switch",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
@@ -671,7 +679,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x97,  # 0x97
-        models=["AK001-ZJ2134"],
+        # AK001-ZJ2146 = v3 (has BLE)
+        models=["AK001-ZJ2134", "AK001-ZJ2146"],
         description="Socket",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
