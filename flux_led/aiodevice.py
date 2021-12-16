@@ -391,7 +391,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
         self._async_stop()
 
-    async def async_set_power_restore_state(
+    async def async_set_power_restore(
         self,
         channel1: Optional[PowerRestoreState] = None,
         channel2: Optional[PowerRestoreState] = None,
@@ -407,8 +407,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             new_power_restore_state.channel3 = channel3
         if channel4:
             new_power_restore_state.channel4 = channel4
-        await self._protocol.construct_power_restore_state_change(
-            new_power_restore_state
+        await self._async_send_msg(
+            self._protocol.construct_power_restore_state_change(new_power_restore_state)
         )
 
     async def _async_connect(self) -> None:

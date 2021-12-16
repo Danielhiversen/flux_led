@@ -88,9 +88,6 @@ MSG_ADDRESSABLE_STATE = "addressable_state"
 MSG_IC_CONFIG = "ic_config"
 
 
-# Query power on state
-# f032ffffffff1e
-
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
 
 MSG_UNIQUE_START = {
@@ -98,6 +95,8 @@ MSG_UNIQUE_START = {
     (0x0F, 0x71): MSG_POWER_STATE,
     (0x00, 0x71): MSG_POWER_STATE,
     (0xF0, 0x32): MSG_POWER_RESTORE_STATE,
+    (0x0F, 0x32): MSG_POWER_RESTORE_STATE,
+    (0x00, 0x32): MSG_POWER_RESTORE_STATE,
     (0x78,): MSG_ORIGINAL_POWER_STATE,
     (0x66,): MSG_ORIGINAL_STATE,
     (0x81,): MSG_STATE,
@@ -326,7 +325,7 @@ class ProtocolBase:
 
     def construct_power_restore_state_query(self) -> bytearray:
         """The bytes to send for a query power restore state."""
-        return self.construct_message(bytearray([0xF0, 0x32, 0xFF, 0xFF, 0xFF, 0xFF]))
+        return self.construct_message(bytearray([0x32, 0x3A, 0x3B, 0x0F]))
 
     def construct_power_restore_state_change(
         self, restore_state: PowerRestoreStates
