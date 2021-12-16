@@ -935,7 +935,7 @@ class LEDENETDevice:
         else:
             PresetPattern.valtostr(pattern)
             if not PresetPattern.valid(pattern):
-                raise ValueError("Pattern must be between 0x25 and 0x39")
+                raise ValueError("Pattern must be between 0x25 and 0x3a")
         if not (1 <= brightness <= 100):
             raise ValueError("Brightness must be between 1 and 100")
         self._last_effect_brightness = brightness
