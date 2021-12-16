@@ -277,8 +277,7 @@ MODELS = [
         model_num=0x06,
         # "AK001-ZJ2104" == v1 has RF remote support
         # "AK001-ZJ2145" == v2
-        # "AK001-ZJ2147" == v3
-        # AK001-ZJ2147 has RF remote support
+        # "AK001-ZJ2147" == v3 has RF remote support
         models=[
             "AK001-ZJ100",
             "AK001-ZJ200",
