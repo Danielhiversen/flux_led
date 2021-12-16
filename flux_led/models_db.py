@@ -674,7 +674,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x97,  # 0x97
-        models=["AK001-ZJ2134"],
+        # AK001-ZJ2146 = v3 (has BLE)
+        models=["AK001-ZJ2134", "AK001-ZJ2146"],
         description="Socket",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
