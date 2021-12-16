@@ -302,10 +302,12 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x08,
-        models=["AK001-ZJ2147"],
+        # AK001-ZJ2101 is v1
+        # AK001-ZJ2145 is v2
+        models=["AK001-ZJ2101", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGB with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
+        protocols=[MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},
