@@ -52,7 +52,7 @@ EFFECT_MAP = {
 EFFECT_MAP_DIMMABLE = {
     **EFFECT_MAP,
     EFFECT_CYCLE_RGB: 0x39,
-    EFFECT_CYCLE_SEVEN_COLORS: 0x3A,  
+    EFFECT_CYCLE_SEVEN_COLORS: 0x3A,
     # cycle_seven_colors Doesn't work on the bulbs, but no way to tell ahead of time
     # since the firmware version is v9 for both but it seems like only the AK001-ZJ2147
     # model actually has support for it
