@@ -95,6 +95,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_switch_setup(self) -> None:
         """Setup a switch."""
+        assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_power_restore_state_query())
         try:
             await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
@@ -104,6 +105,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_addressable_setup(self) -> None:
         """Setup an addressable light."""
+        assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
             self._pixels_per_segment = 6  # currently hard coded
             return
@@ -415,14 +417,16 @@ class AIOWifiLedBulb(LEDENETDevice):
         channel4: Optional[PowerRestoreState] = None,
     ) -> None:
         new_power_restore_state = self._power_restore_state
-        if channel1:
+        assert new_power_restore_state is not None
+        if channel1 is not None:
             new_power_restore_state.channel1 = channel1
-        if channel2:
+        if channel2 is not None:
             new_power_restore_state.channel2 = channel2
-        if channel3:
+        if channel3 is not None:
             new_power_restore_state.channel3 = channel3
-        if channel4:
+        if channel4 is not None:
             new_power_restore_state.channel4 = channel4
+        assert self._protocol is not None
         await self._async_send_msg(
             self._protocol.construct_power_restore_state_change(new_power_restore_state)
         )
