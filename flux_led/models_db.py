@@ -281,7 +281,10 @@ MODELS = [
         models=["AK001-ZJ100", "AK001-ZJ200", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
+        protocols=[
+            MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+        ],
         mode_to_color_mode=GENERIC_RGBW_MAP,
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
@@ -294,7 +297,10 @@ MODELS = [
         models=["AK001-ZJ2146"],
         description="Controller RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS)],
+        protocols=[
+            MinVersionProtocol(2, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE),
+        ],
         mode_to_color_mode=GENERIC_RGBWW_MAP,
         color_modes={COLOR_MODE_RGBWW},  # Formerly rgbwcapable
         channel_map={},
@@ -307,7 +313,10 @@ MODELS = [
         models=["AK001-ZJ2101", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGB with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS)],
+        protocols=[
+            MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+        ],
         mode_to_color_mode=GENERIC_RGB_MAP,
         color_modes={COLOR_MODE_RGB},
         channel_map={},

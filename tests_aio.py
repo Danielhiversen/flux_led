@@ -18,6 +18,8 @@ from flux_led.const import (
     MultiColorEffects,
 )
 from flux_led.protocol import (
+    PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_ORIGINAL,
@@ -677,8 +679,72 @@ async def test_async_set_music_mode_0x08(
         )
         await task
         assert light.model_num == 0x08
+        assert light.version_num == 4
         assert light.effect == EFFECT_MUSIC
         assert light.microphone is True
+        assert light.protocol == PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
+
+        transport.reset_mock()
+        await light.async_set_music_mode()
+        assert transport.mock_calls[0][0] == "write"
+        assert transport.mock_calls[0][1][0] == b"s\x01d\x0f\xe7"
+        assert transport.mock_calls[1][0] == "write"
+        assert transport.mock_calls[1][1][0] == b"7\x00\x007"
+
+
+@pytest.mark.asyncio
+async def test_async_set_music_mode_0x08_v1_firmware(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set music mode on an 0x08 with v1 firmware."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        transport, protocol = await mock_aio_protocol()
+        light._aio_protocol.data_received(
+            b"\x81\x08\x23\x62\x23\x01\x80\x00\xFF\x00\x01\x00\x00\xB2"
+        )
+        await task
+        assert light.model_num == 0x08
+        assert light.version_num == 1
+        assert light.effect == EFFECT_MUSIC
+        assert light.microphone is True
+        assert light.protocol == PROTOCOL_LEDENET_8BYTE
+
+        transport.reset_mock()
+        await light.async_set_music_mode()
+        assert transport.mock_calls[0][0] == "write"
+        assert transport.mock_calls[0][1][0] == b"s\x01d\x0f\xe7"
+        assert transport.mock_calls[1][0] == "write"
+        assert transport.mock_calls[1][1][0] == b"7\x00\x007"
+
+
+@pytest.mark.asyncio
+async def test_async_set_music_mode_0x08_v2_firmware(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set music mode on an 0x08 with v2 firmware."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        transport, protocol = await mock_aio_protocol()
+        light._aio_protocol.data_received(
+            b"\x81\x08\x23\x62\x23\x01\x80\x00\xFF\x00\x02\x00\x00\xB3"
+        )
+        await task
+        assert light.model_num == 0x08
+        assert light.version_num == 2
+        assert light.effect == EFFECT_MUSIC
+        assert light.microphone is True
+        assert light.protocol == PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
 
         transport.reset_mock()
         await light.async_set_music_mode()
