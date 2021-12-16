@@ -1,21 +1,12 @@
 import asyncio
 import contextlib
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import time
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
-from flux_led.protocol import (
-    ProtocolLEDENET8Byte,
-    ProtocolLEDENETAddressableA3,
-    ProtocolLEDENETAddressableChristmas,
-    ProtocolLEDENETOriginal,
-)
-
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import PROTOCOL_PROBES, LEDENETDevice
+from .base_device import PROTOCOL_PROBES, DeviceType, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -30,6 +21,15 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
     MultiColorEffects,
+)
+from .protocol import (
+    POWER_RESTORE_BYTES_TO_POWER_RESTORE,
+    PowerRestoreState,
+    PowerRestoreStates,
+    ProtocolLEDENET8Byte,
+    ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETAddressableChristmas,
+    ProtocolLEDENETOriginal,
 )
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
@@ -54,25 +54,6 @@ PUSH_UPDATE_INTERVAL = 90  # seconds
 NEVER_TIME = -PUSH_UPDATE_INTERVAL
 
 
-class PowerRestoreState(Enum):
-    ALWAYS_OFF = 0xFF
-    ALWAYS_ON = 0x0F
-    LAST_STATE = 0xF0
-
-
-POWER_RESTORE_BYTES_TO_POWER_RESTORE = {
-    restore_state.value: restore_state for restore_state in PowerRestoreState
-}
-
-
-@dataclass
-class PowerRestoreStates:
-    channel1: PowerRestoreState
-    channel2: PowerRestoreState
-    channel3: PowerRestoreState
-    channel4: PowerRestoreState
-
-
 class AIOWifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
 
@@ -81,6 +62,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
+        self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._ic_future: "asyncio.Future[bool]" = asyncio.Future()
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
@@ -104,11 +86,29 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         assert self._protocol is not None
-        if not self._protocol.zones:
+        if self._protocol.zones:
+            await self._async_addressable_setup()
             return
+        if self.device_type == DeviceType.Switch:
+            await self._async_switch_setup()
+
+    async def _async_switch_setup(self) -> None:
+        """Setup a switch."""
+        assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_power_restore_state_query())
+        try:
+            await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
+        except asyncio.TimeoutError:
+            self.set_unavailable()
+            raise RuntimeError("Could not determine power restore state")
+
+    async def _async_addressable_setup(self) -> None:
+        """Setup an addressable light."""
+        assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
             self._pixels_per_segment = 6  # currently hard coded
             return
+
         assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
@@ -408,6 +408,28 @@ class AIOWifiLedBulb(LEDENETDevice):
         await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
         self._async_stop()
 
+    async def async_set_power_restore(
+        self,
+        channel1: Optional[PowerRestoreState] = None,
+        channel2: Optional[PowerRestoreState] = None,
+        channel3: Optional[PowerRestoreState] = None,
+        channel4: Optional[PowerRestoreState] = None,
+    ) -> None:
+        new_power_restore_state = self._power_restore_state
+        assert new_power_restore_state is not None
+        if channel1 is not None:
+            new_power_restore_state.channel1 = channel1
+        if channel2 is not None:
+            new_power_restore_state.channel2 = channel2
+        if channel3 is not None:
+            new_power_restore_state.channel3 = channel3
+        if channel4 is not None:
+            new_power_restore_state.channel4 = channel4
+        assert self._protocol is not None
+        await self._async_send_msg(
+            self._protocol.construct_power_restore_state_change(new_power_restore_state)
+        )
+
     async def _async_connect(self) -> None:
         """Create connection."""
         _, self._aio_protocol = await asyncio.wait_for(
@@ -511,6 +533,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             channel3=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[4]],
             channel4=POWER_RESTORE_BYTES_TO_POWER_RESTORE[msg[5]],
         )
+        if not self._power_restore_future.done():
+            self._power_restore_future.set_result(True)
 
     def process_ic_response(self, msg: bytes) -> bool:
         assert self._aio_protocol is not None

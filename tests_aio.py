@@ -23,6 +23,8 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_ORIGINAL,
+    PowerRestoreState,
+    PowerRestoreStates,
 )
 from flux_led.scanner import FluxLEDDiscovery, merge_discoveries
 
@@ -115,7 +117,7 @@ async def mock_aio_protocol():
 @pytest.mark.asyncio
 async def test_no_initial_response(mock_aio_protocol):
     """Test we try switching protocol if we get no initial response."""
-    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
     assert light.protocol is None
 
     def _updated_callback(*args, **kwargs):
@@ -139,7 +141,7 @@ async def test_no_initial_response(mock_aio_protocol):
 @pytest.mark.asyncio
 async def test_invalid_initial_response(mock_aio_protocol):
     """Test we try switching protocol if we an unexpected response."""
-    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -162,7 +164,7 @@ async def test_invalid_initial_response(mock_aio_protocol):
 @pytest.mark.asyncio
 async def test_cannot_determine_strip_type(mock_aio_protocol):
     """Test we raise RuntimeError when we cannot determine the strip type."""
-    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -1401,26 +1403,83 @@ async def test_power_state_response_processing(
     )
     await task
     light._aio_protocol.data_received(b"\xf0\x32\xf0\xf0\xf0\xf0\xe2")
-    assert light.power_restore_states == aiodevice.PowerRestoreStates(
-        channel1=aiodevice.PowerRestoreState.LAST_STATE,
-        channel2=aiodevice.PowerRestoreState.LAST_STATE,
-        channel3=aiodevice.PowerRestoreState.LAST_STATE,
-        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    assert light.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.LAST_STATE,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
     )
     light._aio_protocol.data_received(b"\xf0\x32\x0f\xf0\xf0\xf0\x01")
-    assert light.power_restore_states == aiodevice.PowerRestoreStates(
-        channel1=aiodevice.PowerRestoreState.ALWAYS_ON,
-        channel2=aiodevice.PowerRestoreState.LAST_STATE,
-        channel3=aiodevice.PowerRestoreState.LAST_STATE,
-        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    assert light.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.ALWAYS_ON,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
     )
     light._aio_protocol.data_received(b"\xf0\x32\xff\xf0\xf0\xf0\xf1")
-    assert light.power_restore_states == aiodevice.PowerRestoreStates(
-        channel1=aiodevice.PowerRestoreState.ALWAYS_OFF,
-        channel2=aiodevice.PowerRestoreState.LAST_STATE,
-        channel3=aiodevice.PowerRestoreState.LAST_STATE,
-        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    assert light.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.ALWAYS_OFF,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
     )
+
+
+@pytest.mark.asyncio
+async def test_async_set_power_restore_state(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set power restore state and report it."""
+    socket = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(socket.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    socket._aio_protocol.data_received(
+        b"\x81\x97\x24\x24\x00\x00\x00\x00\x00\x00\x02\x00\x00\x62"
+    )
+    # power restore state
+    socket._aio_protocol.data_received(b"\x0F\x32\xF0\xF0\xF0\xF0\x01")
+    await task
+    assert socket.model_num == 0x97
+    assert socket.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.LAST_STATE,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
+    )
+
+    transport.reset_mock()
+    await socket.async_set_power_restore(
+        channel1=PowerRestoreState.ALWAYS_ON,
+        channel2=PowerRestoreState.ALWAYS_ON,
+        channel3=PowerRestoreState.ALWAYS_ON,
+        channel4=PowerRestoreState.ALWAYS_ON,
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x0f\x0f\x0f\x0f\xf0]"
+
+
+@pytest.mark.asyncio
+async def test_async_set_power_restore_state_fails(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we raise if we do not get a power restore state."""
+    socket = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(socket.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    socket._aio_protocol.data_received(
+        b"\x81\x97\x24\x24\x00\x00\x00\x00\x00\x00\x02\x00\x00\x62"
+    )
+    # power restore state not sent
+    with pytest.raises(RuntimeError):
+        await task
 
 
 @pytest.mark.asyncio
