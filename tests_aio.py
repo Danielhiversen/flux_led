@@ -117,7 +117,7 @@ async def mock_aio_protocol():
 @pytest.mark.asyncio
 async def test_no_initial_response(mock_aio_protocol):
     """Test we try switching protocol if we get no initial response."""
-    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
     assert light.protocol is None
 
     def _updated_callback(*args, **kwargs):
@@ -141,7 +141,7 @@ async def test_no_initial_response(mock_aio_protocol):
 @pytest.mark.asyncio
 async def test_invalid_initial_response(mock_aio_protocol):
     """Test we try switching protocol if we an unexpected response."""
-    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -164,7 +164,7 @@ async def test_invalid_initial_response(mock_aio_protocol):
 @pytest.mark.asyncio
 async def test_cannot_determine_strip_type(mock_aio_protocol):
     """Test we raise RuntimeError when we cannot determine the strip type."""
-    light = AIOWifiLedBulb("192.168.1.166", timeout=0.1)
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -1429,7 +1429,7 @@ async def test_power_state_response_processing(
 async def test_async_set_power_restore_state(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
-    """Test we can set music mode on an 0xA3."""
+    """Test we can set power restore state and report it."""
     socket = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
@@ -1460,6 +1460,26 @@ async def test_async_set_power_restore_state(
     )
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b"1\x0f\x0f\x0f\x0f\xf0]"
+
+
+@pytest.mark.asyncio
+async def test_async_set_power_restore_state(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we raise if we do not get a power restore state."""
+    socket = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(socket.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    socket._aio_protocol.data_received(
+        b"\x81\x97\x24\x24\x00\x00\x00\x00\x00\x00\x02\x00\x00\x62"
+    )
+    # power restore state not sent
+    with pytest.raises(RuntimeError):
+        await task
 
 
 @pytest.mark.asyncio
