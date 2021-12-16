@@ -1463,7 +1463,7 @@ async def test_async_set_power_restore_state(
 
 
 @pytest.mark.asyncio
-async def test_async_set_power_restore_state(
+async def test_async_set_power_restore_state_fails(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
     """Test we raise if we do not get a power restore state."""

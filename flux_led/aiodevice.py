@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-from copy import copy
 import logging
 import time
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
