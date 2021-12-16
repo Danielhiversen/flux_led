@@ -89,15 +89,13 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if self._protocol.zones:
             await self._async_addressable_setup()
-            return        
+            return
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
 
     async def _async_switch_setup(self):
-        """"Setup a switch."""
-        await self._async_send_msg(
-            self._protocol.construct_power_restore_state_query()
-        )
+        """ "Setup a switch."""
+        await self._async_send_msg(self._protocol.construct_power_restore_state_query())
         try:
             await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
         except asyncio.TimeoutError:

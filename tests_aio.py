@@ -1426,6 +1426,43 @@ async def test_power_state_response_processing(
 
 
 @pytest.mark.asyncio
+async def test_async_set_power_restore_state(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set music mode on an 0xA3."""
+    socket = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(socket.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    socket._aio_protocol.data_received(
+        b"\x81\x97\x24\x24\x00\x00\x00\x00\x00\x00\x02\x00\x00\x62"
+    )
+    # power restore state
+    socket._aio_protocol.data_received(b"\x0F\x32\xF0\xF0\xF0\xF0\x01")
+    await task
+    assert socket.model_num == 0x97
+    assert socket.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.LAST_STATE,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
+    )
+
+    transport.reset_mock()
+    await socket.async_set_power_restore(
+        channel1=PowerRestoreState.ALWAYS_ON,
+        channel2=PowerRestoreState.ALWAYS_ON,
+        channel3=PowerRestoreState.ALWAYS_ON,
+        channel4=PowerRestoreState.ALWAYS_ON,
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x0f\x0f\x0f\x0f\xf0]"
+
+
+@pytest.mark.asyncio
 async def test_async_scanner(mock_discovery_aio_protocol):
     """Test scanner."""
     scanner = AIOBulbScanner()
