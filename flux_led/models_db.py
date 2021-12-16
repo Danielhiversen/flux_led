@@ -478,6 +478,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x25,
+        # 'AK001-ZJ200' ==  v2
         models=["HF-LPB100-ZJ200", "AK001-ZJ200"],
         description="Controller RGB/WW/CW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -489,6 +490,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x33,
+        # 'AK001-ZJ100' == v3 - WIFI370 version
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8
         # "AK001-ZJ2145" == v9 # no rf support!
@@ -627,7 +629,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x93,
-        models=[],
+        # AK001-ZJ2146 == v3
+        models=["AK001-ZJ2146"],
         description="Switch",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],

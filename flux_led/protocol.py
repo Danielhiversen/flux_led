@@ -25,10 +25,10 @@ class PowerRestoreState(Enum):
 
 @dataclass
 class PowerRestoreStates:
-    channel1: PowerRestoreState
-    channel2: PowerRestoreState
-    channel3: PowerRestoreState
-    channel4: PowerRestoreState
+    channel1: Optional[PowerRestoreState]
+    channel2: Optional[PowerRestoreState]
+    channel3: Optional[PowerRestoreState]
+    channel4: Optional[PowerRestoreState]
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -343,10 +343,10 @@ class ProtocolBase:
             bytearray(
                 [
                     0x31,
-                    restore_state.channel1.value,
-                    restore_state.channel2.value,
-                    restore_state.channel3.value,
-                    restore_state.channel4.value,
+                    restore_state.channel1.value if restore_state.channel1 else 0x00,
+                    restore_state.channel2.value if restore_state.channel2 else 0x00,
+                    restore_state.channel3.value if restore_state.channel3 else 0x00,
+                    restore_state.channel4.value if restore_state.channel4 else 0x00,
                     0xF0,
                 ]
             )
