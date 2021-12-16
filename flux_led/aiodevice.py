@@ -1,8 +1,8 @@
 import asyncio
 import contextlib
+from copy import copy
 import logging
 import time
-from copy import copy
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
@@ -93,8 +93,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
 
-    async def _async_switch_setup(self):
-        """ "Setup a switch."""
+    async def _async_switch_setup(self) -> None:
+        """Setup a switch."""
         await self._async_send_msg(self._protocol.construct_power_restore_state_query())
         try:
             await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
@@ -102,7 +102,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.set_unavailable()
             raise RuntimeError("Could not determine power restore state")
 
-    async def _async_addressable_setup(self):
+    async def _async_addressable_setup(self) -> None:
         """Setup an addressable light."""
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
             self._pixels_per_segment = 6  # currently hard coded
