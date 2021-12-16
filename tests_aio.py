@@ -23,6 +23,8 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_ORIGINAL,
+    PowerRestoreState,
+    PowerRestoreStates,
 )
 from flux_led.scanner import FluxLEDDiscovery, merge_discoveries
 
@@ -1401,25 +1403,25 @@ async def test_power_state_response_processing(
     )
     await task
     light._aio_protocol.data_received(b"\xf0\x32\xf0\xf0\xf0\xf0\xe2")
-    assert light.power_restore_states == aiodevice.PowerRestoreStates(
-        channel1=aiodevice.PowerRestoreState.LAST_STATE,
-        channel2=aiodevice.PowerRestoreState.LAST_STATE,
-        channel3=aiodevice.PowerRestoreState.LAST_STATE,
-        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    assert light.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.LAST_STATE,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
     )
     light._aio_protocol.data_received(b"\xf0\x32\x0f\xf0\xf0\xf0\x01")
-    assert light.power_restore_states == aiodevice.PowerRestoreStates(
-        channel1=aiodevice.PowerRestoreState.ALWAYS_ON,
-        channel2=aiodevice.PowerRestoreState.LAST_STATE,
-        channel3=aiodevice.PowerRestoreState.LAST_STATE,
-        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    assert light.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.ALWAYS_ON,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
     )
     light._aio_protocol.data_received(b"\xf0\x32\xff\xf0\xf0\xf0\xf1")
-    assert light.power_restore_states == aiodevice.PowerRestoreStates(
-        channel1=aiodevice.PowerRestoreState.ALWAYS_OFF,
-        channel2=aiodevice.PowerRestoreState.LAST_STATE,
-        channel3=aiodevice.PowerRestoreState.LAST_STATE,
-        channel4=aiodevice.PowerRestoreState.LAST_STATE,
+    assert light.power_restore_states == PowerRestoreStates(
+        channel1=PowerRestoreState.ALWAYS_OFF,
+        channel2=PowerRestoreState.LAST_STATE,
+        channel3=PowerRestoreState.LAST_STATE,
+        channel4=PowerRestoreState.LAST_STATE,
     )
 
 

@@ -2,6 +2,8 @@
 
 from abc import abstractmethod
 import colorsys
+from dataclasses import dataclass
+from enum import Enum
 import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
 
@@ -13,6 +15,21 @@ from .const import (
     MultiColorEffects,
 )
 from .utils import utils, white_levels_to_scaled_color_temp
+
+
+class PowerRestoreState(Enum):
+    ALWAYS_OFF = 0xFF
+    ALWAYS_ON = 0x0F
+    LAST_STATE = 0xF0
+
+
+@dataclass
+class PowerRestoreStates:
+    channel1: PowerRestoreState
+    channel2: PowerRestoreState
+    channel3: PowerRestoreState
+    channel4: PowerRestoreState
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,22 +88,9 @@ MSG_ADDRESSABLE_STATE = "addressable_state"
 MSG_IC_CONFIG = "ic_config"
 
 
-# Set power on state to keep last state
-# 31f0f0f0f0f0e1
-# Set power on state to always on
-# 310ff0f0f0f000
-# Set power on state to always off
-# 31fff0f0f0f0f0
-
 # Query power on state
 # f032ffffffff1e
 
-# Power on state always off
-# f032fff0f0f0f1
-# Power on state always on
-# f0320ff0f0f001
-# Power on state keep last state
-# f032f0f0f0f0e2
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
 
 MSG_UNIQUE_START = {
@@ -115,6 +119,11 @@ MSG_LENGTHS = {
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
 OUTER_MESSAGE_WRAPPER_START_LEN = 10
 CHECKSUM_LEN = 1
+
+
+POWER_RESTORE_BYTES_TO_POWER_RESTORE = {
+    restore_state.value: restore_state for restore_state in PowerRestoreState
+}
 
 
 def _message_type_from_start_of_msg(data: bytes) -> Optional[str]:
@@ -314,6 +323,35 @@ class ProtocolBase:
     @abstractmethod
     def construct_state_change(self, turn_on: int) -> bytearray:
         """The bytes to send for a state change request."""
+
+    def construct_power_restore_state_query(self) -> bytearray:
+        """The bytes to send for a query power restore state."""
+        return self.construct_message(bytearray([0xF0, 0x32, 0xFF, 0xFF, 0xFF, 0xFF]))
+
+    def construct_power_restore_state_change(
+        self, restore_state: PowerRestoreStates
+    ) -> bytearray:
+        """The bytes to send for a power restore state change.
+
+        Set power on state to keep last state
+        31f0f0f0f0f0e1
+        Set power on state to always on
+        310ff0f0f0f000
+        Set power on state to always off
+        31fff0f0f0f0f0
+        """
+        return self.construct_message(
+            bytearray(
+                [
+                    0x31,
+                    restore_state.channel1.value,
+                    restore_state.channel2.value,
+                    restore_state.channel3.value,
+                    restore_state.channel4.value,
+                    0xF0,
+                ]
+            )
+        )
 
     @abstractmethod
     def construct_music_mode(

@@ -1,17 +1,9 @@
 import asyncio
 import contextlib
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import time
+from copy import copy
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
-
-from flux_led.protocol import (
-    ProtocolLEDENET8Byte,
-    ProtocolLEDENETAddressableA3,
-    ProtocolLEDENETAddressableChristmas,
-    ProtocolLEDENETOriginal,
-)
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
@@ -30,6 +22,15 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
     MultiColorEffects,
+)
+from .protocol import (
+    POWER_RESTORE_BYTES_TO_POWER_RESTORE,
+    PowerRestoreState,
+    PowerRestoreStates,
+    ProtocolLEDENET8Byte,
+    ProtocolLEDENETAddressableA3,
+    ProtocolLEDENETAddressableChristmas,
+    ProtocolLEDENETOriginal,
 )
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
@@ -52,25 +53,6 @@ POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 PUSH_UPDATE_INTERVAL = 90  # seconds
 
 NEVER_TIME = -PUSH_UPDATE_INTERVAL
-
-
-class PowerRestoreState(Enum):
-    ALWAYS_OFF = 0xFF
-    ALWAYS_ON = 0x0F
-    LAST_STATE = 0xF0
-
-
-POWER_RESTORE_BYTES_TO_POWER_RESTORE = {
-    restore_state.value: restore_state for restore_state in PowerRestoreState
-}
-
-
-@dataclass
-class PowerRestoreStates:
-    channel1: PowerRestoreState
-    channel2: PowerRestoreState
-    channel3: PowerRestoreState
-    channel4: PowerRestoreState
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -104,6 +86,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_power_restore_state_query())
         if not self._protocol.zones:
             return
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
@@ -407,6 +390,26 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Disable remote access."""
         await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
         self._async_stop()
+
+    async def async_set_power_restore_state(
+        self,
+        channel1: Optional[PowerRestoreState] = None,
+        channel2: Optional[PowerRestoreState] = None,
+        channel3: Optional[PowerRestoreState] = None,
+        channel4: Optional[PowerRestoreState] = None,
+    ) -> None:
+        new_power_restore_state = self._power_restore_state
+        if channel1:
+            new_power_restore_state.channel1 = channel1
+        if channel2:
+            new_power_restore_state.channel2 = channel2
+        if channel3:
+            new_power_restore_state.channel3 = channel3
+        if channel4:
+            new_power_restore_state.channel4 = channel4
+        await self._protocol.construct_power_restore_state_change(
+            new_power_restore_state
+        )
 
     async def _async_connect(self) -> None:
         """Create connection."""
