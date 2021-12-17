@@ -719,10 +719,9 @@ async def test_async_set_music_mode_0x08_v1_firmware(
 
         transport.reset_mock()
         await light.async_set_music_mode()
+        assert len(transport.mock_calls) == 1
         assert transport.mock_calls[0][0] == "write"
         assert transport.mock_calls[0][1][0] == b"s\x01d\x0f\xe7"
-        assert transport.mock_calls[1][0] == "write"
-        assert transport.mock_calls[1][1][0] == b"7\x00\x007"
 
 
 @pytest.mark.asyncio

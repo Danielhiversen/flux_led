@@ -671,15 +671,9 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         37 02 00 39  Jump
         37 03 00 3a  Strobe
         """
-        # Valid modes
-        # 0x00 - Fade In
+        # Valid modes for old protocol
         # 0x01 - Gradual
-        # 0x02 - Jump
-        # 0x03 - Strobe
-        return [
-            self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
-            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
-        ]
+        return [self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))]
 
 
 class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
@@ -726,6 +720,57 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         """The bytes to send for a preset pattern."""
         delay = utils.speedToDelay(speed)
         return self.construct_message(bytearray([0x38, pattern, delay, brightness]))
+
+    def construct_music_mode(
+        self,
+        sensitivity: int,
+        brightness: int,
+        mode: Optional[int],
+        effect: Optional[int],
+        foreground_colors: Optional[Tuple[int, int, int]] = None,
+        background_colors: Optional[Tuple[int, int, int]] = None,
+    ) -> List[bytearray]:
+        """The bytes to send for music mode.
+
+        Known messages
+        73 01 4d 0f d0
+              ^^
+              Likely sensitivity from 0-100 (0x64)
+        73 01 64 0f e7
+        73 01 4a 0f cd
+        73 01 4b 0f ce
+        73 01 00 0f 83
+        73 01 1b 0f 9e
+        73 01 05 0f 88
+        73 01 02 0f 85
+        73 01 06 0f 89
+        73 01 05 0f 88
+        73 01 10 0f 93
+        73 01 4d 0f d0
+        73 01 64 0f e7
+
+        Pause music mode
+        73 00 59 0f db
+           ^^
+           On/off byte
+
+        Mic
+        37 00 00 37  Fade In
+           ^^
+           Mic effect
+        37 01 00 38  Gradual
+        37 02 00 39  Jump
+        37 03 00 3a  Strobe
+        """
+        # Valid modes
+        # 0x00 - Fade In
+        # 0x01 - Gradual
+        # 0x02 - Jump
+        # 0x03 - Strobe
+        return [
+            self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
+            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
+        ]
 
 
 class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
