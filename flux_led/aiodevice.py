@@ -342,12 +342,12 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_music_mode(
         self,
-        sensitivity: int = 100,
-        brightness: int = 100,
+        sensitivity: Optional[int] = 100,
+        brightness: Optional[int] = 100,
         mode: Optional[int] = None,
         effect: Optional[int] = None,
-        foreground_colors: Optional[Tuple[int, int, int]] = None,
-        background_colors: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[Tuple[int, int, int]] = None,
+        background_color: Optional[Tuple[int, int, int]] = None,
     ) -> None:
         """Set music mode."""
         assert self._protocol is not None
@@ -355,12 +355,12 @@ class AIOWifiLedBulb(LEDENETDevice):
             raise ValueError("{self.model} does not have a built-in microphone")
         for idx, bytes_send in enumerate(
             self._protocol.construct_music_mode(
-                sensitivity,
-                brightness,
+                sensitivity or 100,
+                brightness or 100,
                 mode,
                 effect,
-                foreground_colors or self.rgb,
-                background_colors,
+                foreground_color or self.rgb,
+                background_color,
             )
         ):
             if idx > 0:

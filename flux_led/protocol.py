@@ -359,8 +359,8 @@ class ProtocolBase:
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_colors: Optional[Tuple[int, int, int]] = None,
-        background_colors: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[Tuple[int, int, int]] = None,
+        background_color: Optional[Tuple[int, int, int]] = None,
     ) -> List[bytearray]:
         """The bytes to send to set music mode."""
 
@@ -636,8 +636,8 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_colors: Optional[Tuple[int, int, int]] = None,
-        background_colors: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[Tuple[int, int, int]] = None,
+        background_color: Optional[Tuple[int, int, int]] = None,
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -727,8 +727,8 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_colors: Optional[Tuple[int, int, int]] = None,
-        background_colors: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[Tuple[int, int, int]] = None,
+        background_color: Optional[Tuple[int, int, int]] = None,
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -975,8 +975,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_colors: Optional[Tuple[int, int, int]] = None,
-        background_colors: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[Tuple[int, int, int]] = None,
+        background_color: Optional[Tuple[int, int, int]] = None,
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -1015,10 +1015,10 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                                          ^brightness <-- led strip mode color
 
         """
-        if foreground_colors is None:
-            foreground_colors = (0xFF, 0x00, 0x00)
-        if background_colors is None:
-            background_colors = (0x00, 0x00, 0x00)
+        if foreground_color is None:
+            foreground_color = (0xFF, 0x00, 0x00)
+        if background_color is None:
+            background_color = (0x00, 0x00, 0x00)
         return [
             self.construct_message(
                 bytearray(
@@ -1027,8 +1027,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                         0x01,
                         mode or 0x26,  # strip mode 0x26, light bar mode 0x27
                         effect or 0x01,
-                        *foreground_colors,
-                        *background_colors,
+                        *foreground_color,
+                        *background_color,
                         sensitivity,
                         brightness,
                     ]
@@ -1094,8 +1094,8 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_colors: Optional[Tuple[int, int, int]] = None,
-        background_colors: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[Tuple[int, int, int]] = None,
+        background_color: Optional[Tuple[int, int, int]] = None,
     ) -> List[bytearray]:
         """The bytes to send for music mode.
 
@@ -1130,8 +1130,8 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
                 brightness,
                 mode,
                 effect,
-                foreground_colors,
-                background_colors,
+                foreground_color,
+                background_color,
             )
         ]
 
