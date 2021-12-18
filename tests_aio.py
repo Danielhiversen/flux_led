@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from flux_led import aiodevice
+from flux_led import aiodevice, aioscanner
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
@@ -86,7 +86,9 @@ async def mock_discovery_aio_protocol():
             future.set_result((transport, protocol))
         return transport, protocol
 
-    with patch.object(loop, "create_datagram_endpoint", _mock_create_datagram_endpoint):
+    with patch.object(
+        loop, "create_datagram_endpoint", _mock_create_datagram_endpoint
+    ), patch.object(aioscanner, "MESSAGE_SEND_INTERLEAVE_DELAY", 0):
         yield _wait_for_connection
 
 
@@ -1557,6 +1559,15 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
+        b"192.168.198.198,B4E842E10522,AK001-ZJ2149", ("192.168.198.198", 48899)
+    )
+    protocol.datagram_received(
+        b"192.168.198.197,B4E842E10521,AK001-ZJ2146", ("192.168.198.197", 48899)
+    )
+    protocol.datagram_received(
+        b"192.168.198.196,B4E842E10520,AK001-ZJ2144", ("192.168.198.196", 48899)
+    )
+    protocol.datagram_received(
         b"+ok=TCP,GARBAGE,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
@@ -1569,6 +1580,10 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     protocol.datagram_received(
         b"+ok=08_15_20210204_ZG-BL\r", ("192.168.213.252", 48899)
     )
+    protocol.datagram_received(b"+ok=52_3_20210204\r", ("192.168.198.198", 48899))
+    protocol.datagram_received(b"+ok=62_3\r", ("192.168.198.197", 48899))
+    protocol.datagram_received(b"+ok=41_3_202\r", ("192.168.198.196", 48899))
+
     protocol.datagram_received(
         b"+ok=35_62_20210109_ZG-BL-PWM\r", ("192.168.213.259", 48899)
     )
@@ -1578,7 +1593,9 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     protocol.datagram_received(b"+ok=", ("192.168.213.65", 48899))
     protocol.datagram_received(b"+ok=A2_33_20200428_ZG-LX\r", ("192.168.213.65", 48899))
     protocol.datagram_received(b"+ok=", ("192.168.213.259", 48899))
-
+    protocol.datagram_received(
+        b"+ok=TCP,8816,ra8816us02.magichue.net\r", ("192.168.198.196", 48899)
+    )
     data = await task
     assert data == [
         {
@@ -1589,10 +1606,49 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "model_description": "Controller RGB with MIC",
             "model_info": "ZG-BL",
             "model_num": 8,
-            "version_num": 21,
             "remote_access_enabled": True,
             "remote_access_host": "ra8816us02.magichue.net",
             "remote_access_port": 8816,
+            "version_num": 21,
+        },
+        {
+            "firmware_date": datetime.date(2021, 2, 4),
+            "id": "B4E842E10522",
+            "ipaddr": "192.168.198.198",
+            "model": "AK001-ZJ2149",
+            "model_description": "Bulb CCT",
+            "model_info": None,
+            "model_num": 82,
+            "remote_access_enabled": None,
+            "remote_access_host": None,
+            "remote_access_port": None,
+            "version_num": 3,
+        },
+        {
+            "firmware_date": None,
+            "id": "B4E842E10521",
+            "ipaddr": "192.168.198.197",
+            "model": "AK001-ZJ2146",
+            "model_description": "Controller CCT",
+            "model_info": None,
+            "model_num": 98,
+            "remote_access_enabled": None,
+            "remote_access_host": None,
+            "remote_access_port": None,
+            "version_num": 3,
+        },
+        {
+            "firmware_date": None,
+            "id": "B4E842E10520",
+            "ipaddr": "192.168.198.196",
+            "model": "AK001-ZJ2144",
+            "model_description": "Controller Dimmable",
+            "model_info": None,
+            "model_num": 65,
+            "remote_access_enabled": True,
+            "remote_access_host": "ra8816us02.magichue.net",
+            "remote_access_port": 8816,
+            "version_num": 3,
         },
         {
             "firmware_date": datetime.date(2021, 1, 9),
@@ -1615,10 +1671,10 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "model_description": "Addressable v2",
             "model_info": "ZG-LX",
             "model_num": 162,
-            "version_num": 51,
             "remote_access_enabled": False,
             "remote_access_host": None,
             "remote_access_port": None,
+            "version_num": 51,
         },
     ]
 

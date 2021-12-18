@@ -688,7 +688,7 @@ def main() -> None:  # noqa: C901
 
     if options.scan:
         scanner = BulbScanner()
-        scanner.scan(timeout=2)
+        scanner.scan(timeout=6)
         bulb_info_list = scanner.getBulbInfo()
         # we have a list of buld info dicts
         addrs = []
