@@ -30,7 +30,7 @@ from .models_db import get_model_description
 
 _LOGGER = logging.getLogger(__name__)
 
-MESSAGE_SEND_INTERLEAVE_DELAY = 0.25
+MESSAGE_SEND_INTERLEAVE_DELAY = 0.5
 
 
 class FluxLEDDiscovery(TypedDict):
