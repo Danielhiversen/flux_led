@@ -408,6 +408,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         await AIOBulbScanner().async_disable_remote_access(self.ipaddr)
         self._async_stop()
 
+    async def async_reboot(self) -> None:
+        """Reboot a device."""
+        await AIOBulbScanner().async_reboot(self.ipaddr)
+        self._async_stop()
+
     async def async_set_power_restore(
         self,
         channel1: Optional[PowerRestoreState] = None,
