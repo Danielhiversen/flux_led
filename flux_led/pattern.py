@@ -11,6 +11,7 @@ EFFECT_YELLOW_FADE = "yellow_fade"
 EFFECT_CYAN_FADE = "cyan_fade"
 EFFECT_PURPLE_FADE = "purple_fade"
 EFFECT_WHITE_FADE = "white_fade"
+EFFECT_SEVEN_COLOR_CROSS_FADE = "seven_color_cross_fade"
 EFFECT_RED_GREEN_CROSS_FADE = "rg_cross_fade"
 EFFECT_RED_BLUE_CROSS_FADE = "rb_cross_fade"
 EFFECT_GREEN_BLUE_CROSS_FADE = "gb_cross_fade"
@@ -49,7 +50,8 @@ EFFECT_MAP = {
     EFFECT_WHITE_STROBE: 0x37,
     EFFECT_COLORJUMP: 0x38,
 }
-EFFECT_MAP_DIMMABLE = {
+EFFECT_MAP_AUTO_ON = {
+    EFFECT_SEVEN_COLOR_CROSS_FADE: 0x24,
     **EFFECT_MAP,
     EFFECT_CYCLE_RGB: 0x39,
     EFFECT_CYCLE_SEVEN_COLORS: 0x3A,
@@ -58,11 +60,11 @@ EFFECT_MAP_DIMMABLE = {
     # model actually has support for it
 }
 
-EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_DIMMABLE.items()}
+EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_AUTO_ON.items()}
 EFFECT_CUSTOM_CODE = 0x60
 
 EFFECT_LIST = sorted(EFFECT_MAP)
-EFFECT_LIST_DIMMABLE = sorted(EFFECT_MAP_DIMMABLE)
+EFFECT_LIST_AUTO_ON = sorted(EFFECT_MAP_AUTO_ON)
 
 ADDRESSABLE_EFFECT_ID_NAME = {
     1: "RBM 1",
@@ -623,8 +625,9 @@ class PresetPattern:
     purple_strobe_flash = EFFECT_MAP[EFFECT_PURPLE_STROBE]
     white_strobe_flash = EFFECT_MAP[EFFECT_WHITE_STROBE]
     seven_color_jumping = EFFECT_MAP[EFFECT_COLORJUMP]
-    cycle_rgb = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_RGB]
-    cycle_seven_colors = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_SEVEN_COLORS]
+    cycle_rgb = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_RGB]
+    cycle_seven_colors = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_SEVEN_COLORS]
+    seven_color_cross_fade = EFFECT_MAP_AUTO_ON[EFFECT_SEVEN_COLOR_CROSS_FADE]
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
@@ -642,7 +645,7 @@ class PresetPattern:
 
     @staticmethod
     def valid(pattern: int) -> bool:
-        if pattern >= 0x25 and pattern <= 0x3A or pattern >= 0x61 and pattern <= 0x63:
+        if pattern >= 0x24 and pattern <= 0x3A or pattern >= 0x61 and pattern <= 0x63:
             return True
         return False
 
