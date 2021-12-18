@@ -841,7 +841,11 @@ def _unknown_ledenet_model(model_num: int, fallback_protocol: str) -> LEDENETMod
 
 def get_model_description(model_num: int, model_info: Optional[str]) -> str:
     """Return the description for a model."""
-    description = get_model(model_num).description
+    return format_model_description(get_model(model_num).description, model_info)
+
+
+def format_model_description(description: str, model_info: Optional[str]) -> str:
+    """Format the description for a model."""
     if model_info:
         extra = MODEL_INFO_NAMES.get(model_info)
         if extra:
