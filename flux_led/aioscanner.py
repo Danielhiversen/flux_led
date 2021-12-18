@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Callable, Dict, List, Optional, Tuple, cast
 
-from .scanner import BulbScanner, FluxLEDDiscovery, MESSAGE_SEND_INTERLEAVE_DELAY
+from .scanner import MESSAGE_SEND_INTERLEAVE_DELAY, BulbScanner, FluxLEDDiscovery
 
 _LOGGER = logging.getLogger(__name__)
 
