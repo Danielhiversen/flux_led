@@ -181,6 +181,44 @@ async def test_cannot_determine_strip_type(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_setting_discovery(mock_aio_protocol):
+    """Test we can pass discovery to AIOWifiLedBulb."""
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.01)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    await mock_aio_protocol()
+    # protocol state
+    light._aio_protocol.data_received(
+        b"\x81\x35\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xee"
+    )
+    discovery = FluxLEDDiscovery(
+        {
+            "firmware_date": datetime.date(2021, 1, 9),
+            "id": "B4E842E10586",
+            "ipaddr": "192.168.213.259",
+            "model": "AK001-ZJ2145",
+            "model_description": "Bulb RGBCW Flood",
+            "model_info": "ZG-BL-PWM",
+            "model_num": 53,
+            "remote_access_enabled": False,
+            "remote_access_host": None,
+            "remote_access_port": None,
+            "version_num": 98,
+        }
+    )
+
+    await task
+    assert light.available
+    assert light.model == "Bulb RGBCW (0x35)"
+    light.discovery = discovery
+    assert light.model == "Bulb RGBCW Flood (0x35)"
+    assert light.discovery == discovery
+
+
+@pytest.mark.asyncio
 async def test_reassemble(mock_aio_protocol):
     """Test we can reassemble."""
     light = AIOWifiLedBulb("192.168.1.166")

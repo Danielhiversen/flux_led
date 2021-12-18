@@ -715,6 +715,8 @@ def main() -> None:  # noqa: C901
             print("Unable to connect to bulb at [{}]: {}".format(info["ipaddr"], e))
             continue
 
+        bulb.discovery = info
+
         if options.getclock:
             print("{} [{}] {}".format(info["id"], info["ipaddr"], bulb.getClock()))
 
@@ -816,8 +818,9 @@ def main() -> None:  # noqa: C901
             bulb.turnOff()
 
         if options.info:
-            bulb.update_state()
-            print("{} [{}] {}".format(info["id"], info["ipaddr"], bulb))
+            print(
+                "{} [{}] {} ({})".format(info["id"], info["ipaddr"], bulb, bulb.model)
+            )
 
         if options.settimer:
             timers = bulb.getTimers()

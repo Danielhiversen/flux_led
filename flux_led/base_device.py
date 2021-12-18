@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
+    ATTR_MODEL_DESCRIPTION,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -41,7 +42,12 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     WRITE_ALL_WHITES,
     LevelWriteMode,
 )
-from .models_db import BASE_MODE_MAP, LEDENETModel, get_model, is_known_model
+from .models_db import (
+    BASE_MODE_MAP,
+    LEDENETModel,
+    get_model,
+    is_known_model,
+)
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
     ADDRESSABLE_EFFECT_NAME_ID,
@@ -85,6 +91,7 @@ from .protocol import (
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
 )
+from .scanner import FluxLEDDiscovery
 from .timer import BuiltInTimer
 from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_color_temp
 
@@ -166,6 +173,7 @@ class LEDENETDevice:
         self.available: Optional[bool] = None
         self._model_num: Optional[int] = None
         self._model_data: Optional[LEDENETModel] = None
+        self._discovery: Optional[FluxLEDDiscovery] = None
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
@@ -184,6 +192,16 @@ class LEDENETDevice:
         return self._model_data
 
     @property
+    def discovery(self) -> Optional[FluxLEDDiscovery]:
+        """Return the discovery data."""
+        return self._discovery
+
+    @discovery.setter
+    def discovery(self, value: FluxLEDDiscovery) -> None:
+        """Set the discovery data."""
+        self._discovery = value
+
+    @property
     def speed_adjust_off(self) -> int:
         """Return true if the speed of an effect can be adjusted while off."""
         return self.protocol not in SPEED_ADJUST_WILL_TURN_ON
@@ -196,6 +214,8 @@ class LEDENETDevice:
     @property
     def model(self) -> str:
         """Return the human readable model description."""
+        if self._discovery and self._discovery[ATTR_MODEL_DESCRIPTION]:
+            return f"{self._discovery[ATTR_MODEL_DESCRIPTION]} (0x{self.model_num:02X})"
         return f"{self.model_data.description} (0x{self.model_num:02X})"
 
     @property
