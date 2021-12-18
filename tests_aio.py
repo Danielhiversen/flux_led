@@ -1498,6 +1498,9 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         b"+ok=TCP,GARBAGE,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
+        b"192.168.213.259,B4E842E10586,AK001-ZJ2145", ("192.168.213.259", 48899)
+    )
+    protocol.datagram_received(
         b"+ok=TCP,8816,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(b"AT+LVER\r", ("127.0.0.1", 48899))
@@ -1505,10 +1508,14 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         b"+ok=08_15_20210204_ZG-BL\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
+        b"+ok=35_62_20210109_ZG-BL-PWM\r", ("192.168.213.259", 48899)
+    )
+    protocol.datagram_received(
         b"192.168.213.65,F4CFA23E1AAF,AK001-ZJ2104", ("192.168.213.65", 48899)
     )
     protocol.datagram_received(b"+ok=", ("192.168.213.65", 48899))
     protocol.datagram_received(b"+ok=A2_33_20200428_ZG-LX\r", ("192.168.213.65", 48899))
+    protocol.datagram_received(b"+ok=", ("192.168.213.259", 48899))
 
     data = await task
     assert data == [
@@ -1524,6 +1531,19 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "remote_access_enabled": True,
             "remote_access_host": "ra8816us02.magichue.net",
             "remote_access_port": 8816,
+        },
+        {
+            "firmware_date": datetime.date(2021, 1, 9),
+            "id": "B4E842E10586",
+            "ipaddr": "192.168.213.259",
+            "model": "AK001-ZJ2145",
+            "model_description": "Bulb RGBCW Flood Light",
+            "model_info": "ZG-BL-PWM",
+            "model_num": 53,
+            "remote_access_enabled": False,
+            "remote_access_host": None,
+            "remote_access_port": None,
+            "version_num": 98,
         },
         {
             "firmware_date": datetime.date(2020, 4, 28),
