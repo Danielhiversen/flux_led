@@ -144,7 +144,7 @@ class AIOBulbScanner(BulbScanner):
         def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
             _LOGGER.debug("udp: %s <= %s", addr, data)
             if data.startswith(b"+ok"):
-                events.pop().set()
+                events.pop(0).set()
 
         transport_proto = await self.loop.create_datagram_endpoint(
             lambda: LEDENETDiscovery(

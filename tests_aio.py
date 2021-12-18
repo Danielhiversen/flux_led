@@ -1813,6 +1813,7 @@ async def test_async_scanner_disable_remote_access_timeout(mock_discovery_aio_pr
     assert transport.mock_calls == [
         call.sendto(b"HF-A11ASSISTHREAD", ("192.168.213.252", 48899)),
         call.sendto(b"AT+SOCKB=NONE\r", ("192.168.213.252", 48899)),
+        call.sendto(b"AT+Z\r", ("192.168.213.252", 48899)),
         call.close(),
     ]
 
