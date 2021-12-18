@@ -33,9 +33,11 @@ from .protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 
+# BL likely means BL602 chips
 MODEL_INFO_NAMES = {
     "ZG-LX-FL": "Flood",  # Seen on 24w Flood light
     "ZG-BL": "",  # unknown
+    "CL-BL": "",  # Send on the 0x1C table lamp
     "ZG-BL-IR": "IR",
     "IR": "IR",
     "ZG-BL-EH7W": "7w",
