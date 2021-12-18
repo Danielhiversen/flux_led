@@ -8,7 +8,6 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     ATTR_MODEL_DESCRIPTION,
-    ATTR_MODEL_INFO,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -46,7 +45,6 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
 from .models_db import (
     BASE_MODE_MAP,
     LEDENETModel,
-    format_model_description,
     get_model,
     is_known_model,
 )
