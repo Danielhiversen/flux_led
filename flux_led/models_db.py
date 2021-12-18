@@ -497,7 +497,7 @@ MODELS = [
         model_num=0x33,
         # 'AK001-ZJ100' == v3 - WIFI370 version
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
-        # 'AK001-ZJ2101' == v8
+        # 'AK001-ZJ2101' == v8 - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
         # "AK001-ZJ2146" == v10 # rf support
         # "AK001-ZJ2148" == v10.63 # rf support

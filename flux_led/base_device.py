@@ -52,7 +52,7 @@ from .pattern import (
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
     EFFECT_LIST,
-    EFFECT_LIST_DIMMABLE,
+    EFFECT_LIST_AUTO_ON,
     ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME,
     ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID,
     PresetPattern,
@@ -368,7 +368,7 @@ class LEDENETDevice:
         elif protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
             effects = CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
-            effects = EFFECT_LIST_DIMMABLE if self.dimmable_effects else EFFECT_LIST
+            effects = EFFECT_LIST if self.requires_turn_on else EFFECT_LIST_AUTO_ON
         if self.microphone:
             return [*effects, EFFECT_RANDOM, EFFECT_MUSIC]
         return [*effects, EFFECT_RANDOM]
