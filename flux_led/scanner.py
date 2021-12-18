@@ -101,7 +101,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     assert data[ATTR_MODEL_NUM] is not None
     if len(data_split) >= 3:
         firmware_date = data_split[2]
-        with contextlib.suppress((TypeError, ValueError)):
+        with contextlib.suppress(TypeError, ValueError):
             data[ATTR_FIRMWARE_DATE] = date(
                 int(firmware_date[:4]),
                 int(firmware_date[4:6]),
