@@ -96,9 +96,6 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     except ValueError:
         return
     assert data[ATTR_MODEL_NUM] is not None
-    data[ATTR_MODEL_DESCRIPTION] = get_model_description(
-        cast(int, data[ATTR_MODEL_NUM])
-    )
     if len(data_split) < 3:
         return
     firmware_date = data_split[2]
@@ -113,6 +110,9 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     if len(data_split) < 4:
         return
     data[ATTR_MODEL_INFO] = data_split[3]
+    data[ATTR_MODEL_DESCRIPTION] = get_model_description(
+        cast(int, data[ATTR_MODEL_NUM]), data[ATTR_MODEL_INFO]
+    )
 
 
 def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) -> None:

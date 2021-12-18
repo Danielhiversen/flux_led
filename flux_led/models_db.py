@@ -33,6 +33,28 @@ from .protocol import (
     PROTOCOL_LEDENET_ORIGINAL,
 )
 
+MODEL_INFO_NAMES = {
+    "ZG-LX-FL": "Flood Light",  # Seen on 24w Flood light
+    "ZG-BL": "",  # unknown
+    "ZG-BL-IR": "Infrared Remote",
+    "IR": "Infrared Remote",
+    "ZG-BL-EH7W": "Bulb 7w",
+    "ZG-BL-IH9WL": "Bulb 9w RF Remote",
+    "ZG-BL-IH9W": "Bulb 9w RF Remote",
+    "ZG-LX-EJ9W": "Bulb 9w",
+    "RF": "RF Remote",
+    "LWS-BL": "Ceiling Light",
+    "LWS-LX-IR": "Ceiling Light IR Remote",
+    "ZG-BL-611HZ": "",  # unknown
+    "ZG-BL-5V": "5v",
+    "ZG-LX": "",  # Seen on floor lamp, v2 addressable, and Single channel controller
+    "ZG-LX-UART": "",  # Seen on UK xmas lights 0x33, fairy controller, and lytworx
+    "ZG-BL-PWM": "Flood Light",  # Seen on 40w Flood Light
+    "ZG-ZW2": "",  # seen on 0x97 socket
+    "ZGIR44": "44 Key IR Remote",
+    "IR_ZG": "IR Remote",
+}
+
 
 @dataclass
 class MinVersionProtocol:
@@ -816,6 +838,10 @@ def _unknown_ledenet_model(model_num: int, fallback_protocol: str) -> LEDENETMod
     )
 
 
-def get_model_description(model_num: int) -> str:
+def get_model_description(model_num: int, model_info: Optional[str]) -> str:
     """Return the description for a model."""
-    return get_model(model_num).description
+    description = get_model(model_num).description
+    extra = MODEL_INFO_NAMES.get(model_info)
+    if extra:
+        return f"{description} {extra}"
+    return description
