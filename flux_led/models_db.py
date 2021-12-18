@@ -34,26 +34,26 @@ from .protocol import (
 )
 
 MODEL_INFO_NAMES = {
-    "ZG-LX-FL": "Flood Light",  # Seen on 24w Flood light
+    "ZG-LX-FL": "Flood",  # Seen on 24w Flood light
     "ZG-BL": "",  # unknown
-    "ZG-BL-IR": "Infrared Remote",
-    "IR": "Infrared Remote",
-    "ZG-BL-EH7W": "Bulb 7w",
-    "ZG-BL-IH9WL": "Bulb 9w RF Remote",
-    "ZG-BL-IH9W": "Bulb 9w RF Remote",
-    "ZG-BL-CB1": "Ceiling Light",
-    "ZG-LX-EJ9W": "Bulb 9w",
-    "RF": "RF Remote",
-    "LWS-BL": "Ceiling Light",
-    "LWS-LX-IR": "Ceiling Light IR Remote",
+    "ZG-BL-IR": "IR",
+    "IR": "IR",
+    "ZG-BL-EH7W": "7w",
+    "ZG-BL-IH9WL": "9w RF",
+    "ZG-BL-IH9W": "9w RF",
+    "ZG-BL-CB1": "Ceiling",
+    "ZG-LX-EJ9W": "9w",  # This might be a ceiling light
+    "RF": "RF",
+    "LWS-BL": "Ceiling",
+    "LWS-LX-IR": "Ceiling IR",
     "ZG-BL-611HZ": "",  # unknown
     "ZG-BL-5V": "5v",
     "ZG-LX": "",  # Seen on floor lamp, v2 addressable, and Single channel controller
     "ZG-LX-UART": "",  # Seen on UK xmas lights 0x33, fairy controller, and lytworx
-    "ZG-BL-PWM": "Flood Light",  # Seen on 40w Flood Light
+    "ZG-BL-PWM": "Flood",  # Seen on 40w Flood Light
     "ZG-ZW2": "",  # seen on 0x97 socket
-    "ZGIR44": "44 Key IR Remote",
-    "IR_ZG": "IR Remote",
+    "ZGIR44": "44 Key IR",
+    "IR_ZG": "IR",
 }
 
 
