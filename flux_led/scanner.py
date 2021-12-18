@@ -30,7 +30,7 @@ from .models_db import get_model_description
 
 _LOGGER = logging.getLogger(__name__)
 
-MESSAGE_SEND_INTERLEAVE_DELAY = 0.1
+MESSAGE_SEND_INTERLEAVE_DELAY = 0.25
 
 
 class FluxLEDDiscovery(TypedDict):
@@ -89,7 +89,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     b'+ok=07_06_20210106_ZG-BL\r'
     """
     version_data = decoded_data[4:].replace("\r", "")
-    data_split = version_data.split("_")
+    data_split = version_data.split("_", 4)
     if len(data_split) < 2:
         return
     try:
@@ -109,9 +109,8 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
         )
     except (TypeError, ValueError):
         return
-    if len(data_split) < 4:
-        return
-    data[ATTR_MODEL_INFO] = data_split[3]
+    if len(data_split) == 4:
+        data[ATTR_MODEL_INFO] = data_split[3]
     data[ATTR_MODEL_DESCRIPTION] = get_model_description(
         cast(int, data[ATTR_MODEL_NUM]), data[ATTR_MODEL_INFO]
     )
