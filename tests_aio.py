@@ -1557,6 +1557,12 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
+        b"192.168.198.198,B4E842E10522,AK001-ZJ2149", ("192.168.198.198", 48899)
+    )
+    protocol.datagram_received(
+        b"192.168.198.197,B4E842E10521,AK001-ZJ2146", ("192.168.198.197", 48899)
+    )    
+    protocol.datagram_received(
         b"+ok=TCP,GARBAGE,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
@@ -1570,6 +1576,12 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         b"+ok=08_15_20210204_ZG-BL\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
+        b"+ok=52_3_20210204\r", ("192.168.198.198", 48899)
+    )    
+    protocol.datagram_received(
+        b"+ok=62_3\r", ("192.168.198.197", 48899)
+    )        
+    protocol.datagram_received(
         b"+ok=35_62_20210109_ZG-BL-PWM\r", ("192.168.213.259", 48899)
     )
     protocol.datagram_received(
@@ -1580,47 +1592,61 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     protocol.datagram_received(b"+ok=", ("192.168.213.259", 48899))
 
     data = await task
-    assert data == [
-        {
-            "firmware_date": datetime.date(2021, 2, 4),
-            "id": "B4E842E10588",
-            "ipaddr": "192.168.213.252",
-            "model": "AK001-ZJ2145",
-            "model_description": "Controller RGB with MIC",
-            "model_info": "ZG-BL",
-            "model_num": 8,
-            "version_num": 21,
-            "remote_access_enabled": True,
-            "remote_access_host": "ra8816us02.magichue.net",
-            "remote_access_port": 8816,
-        },
-        {
-            "firmware_date": datetime.date(2021, 1, 9),
-            "id": "B4E842E10586",
-            "ipaddr": "192.168.213.259",
-            "model": "AK001-ZJ2145",
-            "model_description": "Bulb RGBCW Flood",
-            "model_info": "ZG-BL-PWM",
-            "model_num": 53,
-            "remote_access_enabled": False,
-            "remote_access_host": None,
-            "remote_access_port": None,
-            "version_num": 98,
-        },
-        {
-            "firmware_date": datetime.date(2020, 4, 28),
-            "id": "F4CFA23E1AAF",
-            "ipaddr": "192.168.213.65",
-            "model": "AK001-ZJ2104",
-            "model_description": "Addressable v2",
-            "model_info": "ZG-LX",
-            "model_num": 162,
-            "version_num": 51,
-            "remote_access_enabled": False,
-            "remote_access_host": None,
-            "remote_access_port": None,
-        },
-    ]
+    assert data == [{'firmware_date': datetime.date(2021, 2, 4),
+        'id': 'B4E842E10588',
+        'ipaddr': '192.168.213.252',
+        'model': 'AK001-ZJ2145',
+        'model_description': 'Controller RGB with MIC',
+        'model_info': 'ZG-BL',
+        'model_num': 8,
+        'remote_access_enabled': True,
+        'remote_access_host': 'ra8816us02.magichue.net',
+        'remote_access_port': 8816,
+        'version_num': 21},
+        {'firmware_date': datetime.date(2021, 2, 4),
+        'id': 'B4E842E10522',
+        'ipaddr': '192.168.198.198',
+        'model': 'AK001-ZJ2149',
+        'model_description': 'Bulb CCT',
+        'model_info': None,
+        'model_num': 82,
+        'remote_access_enabled': None,
+        'remote_access_host': None,
+        'remote_access_port': None,
+        'version_num': 3},
+        {'firmware_date': None,
+        'id': 'B4E842E10521',
+        'ipaddr': '192.168.198.197',
+        'model': 'AK001-ZJ2146',
+        'model_description': 'Controller CCT',
+        'model_info': None,
+        'model_num': 98,
+        'remote_access_enabled': None,
+        'remote_access_host': None,
+        'remote_access_port': None,
+        'version_num': 3},
+        {'firmware_date': datetime.date(2021, 1, 9),
+        'id': 'B4E842E10586',
+        'ipaddr': '192.168.213.259',
+        'model': 'AK001-ZJ2145',
+        'model_description': 'Bulb RGBCW Flood',
+        'model_info': 'ZG-BL-PWM',
+        'model_num': 53,
+        'remote_access_enabled': False,
+        'remote_access_host': None,
+        'remote_access_port': None,
+        'version_num': 98},
+        {'firmware_date': datetime.date(2020, 4, 28),
+        'id': 'F4CFA23E1AAF',
+        'ipaddr': '192.168.213.65',
+        'model': 'AK001-ZJ2104',
+        'model_description': 'Addressable v2',
+        'model_info': 'ZG-LX',
+        'model_num': 162,
+        'remote_access_enabled': False,
+        'remote_access_host': None,
+        'remote_access_port': None,
+        'version_num': 51}]
 
 
 @pytest.mark.asyncio

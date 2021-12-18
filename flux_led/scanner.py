@@ -87,7 +87,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     b'+ok=07_06_20210106_ZG-BL\r'
     """
     version_data = decoded_data[4:].replace("\r", "")
-    data_split = version_data.split("_")
+    data_split = version_data.split("_", 4)
     if len(data_split) < 2:
         return
     try:
@@ -96,24 +96,21 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     except ValueError:
         return
     assert data[ATTR_MODEL_NUM] is not None
-    if len(data_split) < 3:
-        return
-    firmware_date = data_split[2]
-    try:
-        data[ATTR_FIRMWARE_DATE] = date(
-            int(firmware_date[:4]),
-            int(firmware_date[4:6]),
-            int(firmware_date[6:8]),
-        )
-    except (TypeError, ValueError):
-        return
-    if len(data_split) < 4:
-        return
-    data[ATTR_MODEL_INFO] = data_split[3]
+    if len(data_split) >= 3:
+        firmware_date = data_split[2]
+        try:
+            data[ATTR_FIRMWARE_DATE] = date(
+                int(firmware_date[:4]),
+                int(firmware_date[4:6]),
+                int(firmware_date[6:8]),
+            )
+        except (TypeError, ValueError):
+            return
+    if len(data_split) == 4:
+        data[ATTR_MODEL_INFO] = data_split[3]
     data[ATTR_MODEL_DESCRIPTION] = get_model_description(
         cast(int, data[ATTR_MODEL_NUM]), data[ATTR_MODEL_INFO]
     )
-
 
 def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     """Process response from b'AT+SOCKB\r'
