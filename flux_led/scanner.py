@@ -5,7 +5,7 @@ import select
 import socket
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from .const import (
     ATTR_FIRMWARE_DATE,
@@ -29,6 +29,8 @@ else:
 from .models_db import get_model_description
 
 _LOGGER = logging.getLogger(__name__)
+
+MESSAGE_SEND_INTERLEAVE_DELAY = 0.1
 
 
 class FluxLEDDiscovery(TypedDict):
@@ -235,36 +237,28 @@ class BulbScanner:
         elif "," in decoded_data:
             _process_discovery_message(data, decoded_data)
 
-    def send_start_message(
+    def get_start_messages(
         self,
-        sender: Union[socket.socket, asyncio.DatagramTransport],
-        destination: Tuple[str, int],
-    ) -> None:
-        self._send_message(sender, destination, self.DISCOVER_MESSAGE)
+    ) -> List[bytes]:
+        return [self.DISCOVER_MESSAGE]
 
-    def send_enable_remote_access_message(
+    def get_enable_remote_access_messages(
         self,
-        sender: Union[socket.socket, asyncio.DatagramTransport],
-        destination: Tuple[str, int],
         remote_access_host: str,
         remote_access_port: int,
     ) -> None:
         enable_message = f"AT+SOCKB=TCP,{remote_access_port},{remote_access_host}\r"
-        self._send_message(sender, destination, enable_message.encode())
+        return [enable_message.encode()]
 
-    def send_disable_remote_access_message(
+    def get_disable_remote_access_messages(
         self,
-        sender: Union[socket.socket, asyncio.DatagramTransport],
-        destination: Tuple[str, int],
-    ) -> None:
-        self._send_message(sender, destination, self.DISABLE_REMOTE_ACCESS_MESSAGE)
+    ) -> List[bytes]:
+        return [self.DISABLE_REMOTE_ACCESS_MESSAGE]
 
-    def send_reboot_message(
+    def get_reboot_messages(
         self,
-        sender: Union[socket.socket, asyncio.DatagramTransport],
-        destination: Tuple[str, int],
     ) -> None:
-        self._send_message(sender, destination, self.REBOOT_MESSAGE)
+        return [self.REBOOT_MESSAGE]
 
     def _send_message(
         self,
@@ -275,14 +269,22 @@ class BulbScanner:
         _LOGGER.debug("udp: %s => %s", destination, message)
         sender.sendto(message, destination)
 
-    def send_discovery_messages(
+    def _send_messages(
         self,
+        messages: list[bytes],
         sender: Union[socket.socket, asyncio.DatagramTransport],
         destination: Tuple[str, int],
-    ) -> None:
-        self.send_start_message(sender, destination)
-        self._send_message(sender, destination, self.VERSION_MESSAGE)
-        self._send_message(sender, destination, self.REMOTE_ACCESS_MESSAGE)
+    ):
+        """Send messages with a short delay between them."""
+        for idx, message in enumerate(messages):
+            self._send_message(sender, destination, message)
+            if idx != len(messages):
+                time.sleep(MESSAGE_SEND_INTERLEAVE_DELAY)
+
+    def get_discovery_messages(
+        self,
+    ) -> List[bytes]:
+        return [self.DISCOVER_MESSAGE, self.VERSION_MESSAGE, self.REMOTE_ACCESS_MESSAGE]
 
     def scan(
         self, timeout: int = 10, address: Optional[str] = None
@@ -292,6 +294,7 @@ class BulbScanner:
         If an address is provided, the scan will return
         as soon as it gets a response from that address
         """
+        discovery_messages = self.get_discovery_messages()
         sock = self._create_socket()
         destination = self._destination_from_address(address)
         # set the time at which we will quit the search
@@ -302,7 +305,7 @@ class BulbScanner:
             if time.monotonic() > quit_time:
                 break
             # send out a broadcast query
-            self.send_discovery_messages(sock, destination)
+            self._send_messages(discovery_messages, sock, destination)
             # inner loop waiting for responses
             while True:
                 sock.settimeout(1)
@@ -314,7 +317,7 @@ class BulbScanner:
                 if not read_ready:
                     if time.monotonic() < quit_time:
                         # No response, send broadcast again in cast it got lost
-                        self.send_discovery_messages(sock, destination)
+                        self._send_messages(discovery_messages, sock, destination)
                     continue
 
                 try:

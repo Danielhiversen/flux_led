@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Callable, Dict, List, Optional, Tuple, cast
 
-from .scanner import BulbScanner, FluxLEDDiscovery
+from .scanner import BulbScanner, FluxLEDDiscovery, MESSAGE_SEND_INTERLEAVE_DELAY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +39,75 @@ class AIOBulbScanner(BulbScanner):
         self.loop = asyncio.get_running_loop()
         super().__init__()
 
+    async def _async_send_messages(
+        self,
+        messages: list[bytes],
+        sender: asyncio.DatagramTransport,
+        destination: Tuple[str, int],
+    ):
+        """Send messages with a short delay between them."""
+        last_idx = len(messages) - 1
+        for idx, message in enumerate(messages):
+            self._send_message(sender, destination, message)
+            if idx != last_idx:
+                await asyncio.sleep(MESSAGE_SEND_INTERLEAVE_DELAY)
+
+    async def _async_send_and_wait(
+        self,
+        events: List[asyncio.Event],
+        commands: List[bytes],
+        transport: asyncio.DatagramTransport,
+        destination: Tuple[str, int],
+        timeout: int,
+    ) -> None:
+        """Send a message and wait for a response."""
+        event_map: Dict[int, asyncio.Event] = {}
+        for idx, _ in enumerate(commands):
+            event = asyncio.Event()
+            event_map[idx] = event
+            events.append(event)
+        for idx, command in enumerate(commands):
+            self._send_message(transport, destination, command)
+            await asyncio.wait_for(event_map[idx].wait(), timeout=timeout)
+
+    async def _async_send_commands_and_reboot(
+        self,
+        messages: Optional[list[bytes]],
+        address: str,
+        timeout: int = 5,
+    ) -> None:
+        """Send a command and reboot."""
+        sock = self._create_socket()
+        destination = self._destination_from_address(address)
+        events: List[asyncio.Event] = []
+
+        def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
+            _LOGGER.debug("udp: %s <= %s", addr, data)
+            if data.startswith(b"+ok"):
+                events.pop(0).set()
+
+        transport_proto = await self.loop.create_datagram_endpoint(
+            lambda: LEDENETDiscovery(
+                destination=destination,
+                on_response=_on_response,
+            ),
+            sock=sock,
+        )
+        transport = cast(asyncio.DatagramTransport, transport_proto[0])
+        commands: Optional[list[bytes]] = []
+        if messages:
+            commands.extend(messages)
+        commands.extend(self.get_reboot_messages())
+        try:
+            await self._async_send_messages(
+                self.get_start_messages(), transport, destination
+            )
+            await self._async_send_and_wait(
+                events, commands, transport, destination, timeout
+            )
+        finally:
+            transport.close()
+
     async def _async_run_scan(
         self,
         transport: asyncio.DatagramTransport,
@@ -47,7 +116,8 @@ class AIOBulbScanner(BulbScanner):
         found_all_future: "asyncio.Future[bool]",
     ) -> None:
         """Send the scans."""
-        self.send_discovery_messages(transport, destination)
+        discovery_messages = self.get_discovery_messages()
+        await self._async_send_messages(discovery_messages, transport, destination)
         quit_time = time.monotonic() + timeout
         time_out = timeout / self.BROADCAST_FREQUENCY
         while True:
@@ -65,7 +135,7 @@ class AIOBulbScanner(BulbScanner):
             if time_out <= 0:
                 return
             # No response, send broadcast again in cast it got lost
-            self.send_discovery_messages(transport, destination)
+            await self._async_send_messages(discovery_messages, transport, destination)
 
     async def async_scan(
         self, timeout: int = 10, address: Optional[str] = None
@@ -100,8 +170,8 @@ class AIOBulbScanner(BulbScanner):
 
     async def async_disable_remote_access(self, address: str, timeout: int = 5) -> None:
         """Disable remote access."""
-        await self._send_command_and_reboot(
-            self.send_disable_remote_access_message, address, timeout
+        await self._async_send_commands_and_reboot(
+            self.get_disable_remote_access_messages(), address, timeout
         )
 
     async def async_enable_remote_access(
@@ -112,77 +182,14 @@ class AIOBulbScanner(BulbScanner):
         timeout: int = 5,
     ) -> None:
         """Enable remote access."""
-
-        def _enable_remote_access_message(
-            sender: asyncio.DatagramTransport, destination: Tuple[str, int]
-        ) -> None:
-            self.send_enable_remote_access_message(
-                sender, destination, remote_access_host, remote_access_port
-            )
-
-        await self._send_command_and_reboot(
-            _enable_remote_access_message, address, timeout
+        await self._async_send_commands_and_reboot(
+            self.get_enable_remote_access_messages(
+                remote_access_host, remote_access_port
+            ),
+            address,
+            timeout,
         )
 
     async def async_reboot(self, address: str, timeout: int = 5) -> None:
         """Disable remote access."""
-        await self._send_command_and_reboot(None, address, timeout)
-
-    async def _send_command_and_reboot(
-        self,
-        msg_sender: Optional[
-            Callable[[asyncio.DatagramTransport, Tuple[str, int]], None]
-        ],
-        address: str,
-        timeout: int = 5,
-    ) -> None:
-        """Send a command and reboot."""
-        sock = self._create_socket()
-        destination = self._destination_from_address(address)
-        events: List[asyncio.Event] = []
-
-        def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
-            _LOGGER.debug("udp: %s <= %s", addr, data)
-            if data.startswith(b"+ok"):
-                events.pop(0).set()
-
-        transport_proto = await self.loop.create_datagram_endpoint(
-            lambda: LEDENETDiscovery(
-                destination=destination,
-                on_response=_on_response,
-            ),
-            sock=sock,
-        )
-        transport = cast(asyncio.DatagramTransport, transport_proto[0])
-        commands: List[
-            Callable[[asyncio.DatagramTransport, Tuple[str, int]], None]
-        ] = []
-        if msg_sender:
-            commands.append(msg_sender)
-        commands.append(self.send_reboot_message)
-
-        try:
-            self.send_start_message(transport, destination)
-            await self._async_send_and_wait(
-                events, commands, transport, destination, timeout
-            )
-        finally:
-            transport.close()
-
-    async def _async_send_and_wait(
-        self,
-        events: List[asyncio.Event],
-        commands: List[Callable[[asyncio.DatagramTransport, Tuple[str, int]], None]],
-        transport: asyncio.DatagramTransport,
-        destination: Tuple[str, int],
-        timeout: int,
-    ) -> None:
-        """Send a message and wait for a response."""
-        event_map: Dict[int, asyncio.Event] = {}
-        for idx, _ in enumerate(commands):
-            event = asyncio.Event()
-            event_map[idx] = event
-            events.append(event)
-        for idx, command in enumerate(commands):
-            command(transport, destination)
-            await asyncio.wait_for(event_map[idx].wait(), timeout=timeout)
+        await self._async_send_commands_and_reboot(None, address, timeout)

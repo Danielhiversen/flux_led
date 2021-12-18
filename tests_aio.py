@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from flux_led import aiodevice
+from flux_led import aioscanner
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
@@ -86,7 +87,7 @@ async def mock_discovery_aio_protocol():
             future.set_result((transport, protocol))
         return transport, protocol
 
-    with patch.object(loop, "create_datagram_endpoint", _mock_create_datagram_endpoint):
+    with patch.object(loop, "create_datagram_endpoint", _mock_create_datagram_endpoint), patch.object(aioscanner, "MESSAGE_SEND_INTERLEAVE_DELAY", 0):
         yield _wait_for_connection
 
 
