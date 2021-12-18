@@ -41,10 +41,10 @@ class AIOBulbScanner(BulbScanner):
 
     async def _async_send_messages(
         self,
-        messages: list[bytes],
+        messages: List[bytes],
         sender: asyncio.DatagramTransport,
         destination: Tuple[str, int],
-    ):
+    ) -> None:
         """Send messages with a short delay between them."""
         last_idx = len(messages) - 1
         for idx, message in enumerate(messages):
@@ -72,7 +72,7 @@ class AIOBulbScanner(BulbScanner):
 
     async def _async_send_commands_and_reboot(
         self,
-        messages: Optional[list[bytes]],
+        messages: Optional[List[bytes]],
         address: str,
         timeout: int = 5,
     ) -> None:
@@ -94,7 +94,7 @@ class AIOBulbScanner(BulbScanner):
             sock=sock,
         )
         transport = cast(asyncio.DatagramTransport, transport_proto[0])
-        commands: Optional[list[bytes]] = []
+        commands: List[bytes] = []
         if messages:
             commands.extend(messages)
         commands.extend(self.get_reboot_messages())

@@ -244,7 +244,7 @@ class BulbScanner:
         self,
         remote_access_host: str,
         remote_access_port: int,
-    ) -> None:
+    ) -> List[bytes]:
         enable_message = f"AT+SOCKB=TCP,{remote_access_port},{remote_access_host}\r"
         return [enable_message.encode()]
 
@@ -255,7 +255,7 @@ class BulbScanner:
 
     def get_reboot_messages(
         self,
-    ) -> None:
+    ) -> List[bytes]:
         return [self.REBOOT_MESSAGE]
 
     def _send_message(
@@ -269,10 +269,10 @@ class BulbScanner:
 
     def _send_messages(
         self,
-        messages: list[bytes],
+        messages: List[bytes],
         sender: Union[socket.socket, asyncio.DatagramTransport],
         destination: Tuple[str, int],
-    ):
+    ) -> None:
         """Send messages with a short delay between them."""
         for idx, message in enumerate(messages):
             self._send_message(sender, destination, message)
