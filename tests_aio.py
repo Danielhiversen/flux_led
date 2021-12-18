@@ -1537,7 +1537,7 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "id": "B4E842E10586",
             "ipaddr": "192.168.213.259",
             "model": "AK001-ZJ2145",
-            "model_description": "Bulb RGBCW Flood Light",
+            "model_description": "Bulb RGBCW Flood",
             "model_info": "ZG-BL-PWM",
             "model_num": 53,
             "remote_access_enabled": False,
