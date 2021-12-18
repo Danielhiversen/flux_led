@@ -191,5 +191,5 @@ class AIOBulbScanner(BulbScanner):
         )
 
     async def async_reboot(self, address: str, timeout: int = 5) -> None:
-        """Disable remote access."""
+        """Reboot the device."""
         await self._async_send_commands_and_reboot(None, address, timeout)
