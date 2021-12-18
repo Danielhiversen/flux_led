@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from datetime import date
 import logging
 import select
@@ -100,14 +101,12 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     assert data[ATTR_MODEL_NUM] is not None
     if len(data_split) >= 3:
         firmware_date = data_split[2]
-        try:
+        with contextlib.suppress((TypeError, ValueError)):
             data[ATTR_FIRMWARE_DATE] = date(
                 int(firmware_date[:4]),
                 int(firmware_date[4:6]),
                 int(firmware_date[6:8]),
             )
-        except (TypeError, ValueError):
-            return
     if len(data_split) == 4:
         data[ATTR_MODEL_INFO] = data_split[3]
     data[ATTR_MODEL_DESCRIPTION] = get_model_description(
