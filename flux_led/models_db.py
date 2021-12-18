@@ -41,6 +41,7 @@ MODEL_INFO_NAMES = {
     "ZG-BL-EH7W": "Bulb 7w",
     "ZG-BL-IH9WL": "Bulb 9w RF Remote",
     "ZG-BL-IH9W": "Bulb 9w RF Remote",
+    "ZG-BL-CB1": "Ceiling Light",
     "ZG-LX-EJ9W": "Bulb 9w",
     "RF": "RF Remote",
     "LWS-BL": "Ceiling Light",
