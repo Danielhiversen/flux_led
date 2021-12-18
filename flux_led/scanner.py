@@ -5,7 +5,7 @@ import select
 import socket
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 from .const import (
     ATTR_FIRMWARE_DATE,
@@ -235,12 +235,12 @@ class BulbScanner:
         elif "," in decoded_data:
             _process_discovery_message(data, decoded_data)
 
-    def get_start_messages(
+    def _get_start_messages(
         self,
     ) -> List[bytes]:
         return [self.DISCOVER_MESSAGE]
 
-    def get_enable_remote_access_messages(
+    def _get_enable_remote_access_messages(
         self,
         remote_access_host: str,
         remote_access_port: int,
@@ -248,12 +248,12 @@ class BulbScanner:
         enable_message = f"AT+SOCKB=TCP,{remote_access_port},{remote_access_host}\r"
         return [enable_message.encode()]
 
-    def get_disable_remote_access_messages(
+    def _get_disable_remote_access_messages(
         self,
     ) -> List[bytes]:
         return [self.DISABLE_REMOTE_ACCESS_MESSAGE]
 
-    def get_reboot_messages(
+    def _get_reboot_messages(
         self,
     ) -> List[bytes]:
         return [self.REBOOT_MESSAGE]

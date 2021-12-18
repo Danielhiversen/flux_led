@@ -97,10 +97,10 @@ class AIOBulbScanner(BulbScanner):
         commands: List[bytes] = []
         if messages:
             commands.extend(messages)
-        commands.extend(self.get_reboot_messages())
+        commands.extend(self._get_reboot_messages())
         try:
             await self._async_send_messages(
-                self.get_start_messages(), transport, destination
+                self._get_start_messages(), transport, destination
             )
             await self._async_send_and_wait(
                 events, commands, transport, destination, timeout
@@ -171,7 +171,7 @@ class AIOBulbScanner(BulbScanner):
     async def async_disable_remote_access(self, address: str, timeout: int = 5) -> None:
         """Disable remote access."""
         await self._async_send_commands_and_reboot(
-            self.get_disable_remote_access_messages(), address, timeout
+            self._get_disable_remote_access_messages(), address, timeout
         )
 
     async def async_enable_remote_access(
@@ -183,7 +183,7 @@ class AIOBulbScanner(BulbScanner):
     ) -> None:
         """Enable remote access."""
         await self._async_send_commands_and_reboot(
-            self.get_enable_remote_access_messages(
+            self._get_enable_remote_access_messages(
                 remote_access_host, remote_access_port
             ),
             address,
