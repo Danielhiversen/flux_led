@@ -733,6 +733,9 @@ async def test_async_set_music_mode_0x08(
         assert transport.mock_calls[1][0] == "write"
         assert transport.mock_calls[1][1][0] == b"7\x00\x007"
 
+        with pytest.raises(ValueError):
+            await light.async_set_music_mode(mode=0x08)
+
 
 @pytest.mark.asyncio
 async def test_async_set_music_mode_0x08_v1_firmware(
@@ -880,6 +883,12 @@ async def test_async_set_music_mode_a3(
     await light.async_set_music_mode()
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3")
+
+    with pytest.raises(ValueError):
+        await light.async_set_music_mode(mode=0x08)
+
+    with pytest.raises(ValueError):
+        await light.async_set_music_mode(effect=0x99)
 
 
 @pytest.mark.asyncio
