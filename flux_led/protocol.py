@@ -772,7 +772,7 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         # 0x01 - Gradual
         # 0x02 - Jump
         # 0x03 - Strobe
-        if not (0x00 <= mode <= 0x03):
+        if mode and not (0x00 <= mode <= 0x03):
             raise ValueError(
                 "Mode must be one of (0x00 - Fade In, 0x01 - Gradual, 0x02 - Jump, 0x03 - Strobe)"
             )
@@ -1028,9 +1028,9 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             foreground_color = (0xFF, 0x00, 0x00)
         if background_color is None:
             background_color = (0x00, 0x00, 0x00)
-        if not (1 <= effect <= 30):
+        if effect and not (1 <= effect <= 30):
             raise ValueError("Effect must be between 1 and 30")
-        if not (0x26 <= mode <= 0x27):
+        if mode and not (0x26 <= mode <= 0x27):
             raise ValueError("Mode must be between 0x26 and 0x27")
 
         return [
