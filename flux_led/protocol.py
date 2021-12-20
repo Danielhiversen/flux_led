@@ -25,7 +25,7 @@ class PowerRestoreState(Enum):
 
 class MusicMode(Enum):
     STRIP = 0x26
-    LIGHT_BAR = 0x27
+    LIGHT_SCREEN = 0x27
 
 
 @dataclass
@@ -1028,8 +1028,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             foreground_color = (0xFF, 0x00, 0x00)
         if background_color is None:
             background_color = (0x00, 0x00, 0x00)
-        if effect and not (1 <= effect <= 30):
-            raise ValueError("Effect must be between 1 and 30")
+        if effect and not (1 <= effect <= 16):
+            raise ValueError("Effect must be between 1 and 16")
         if mode and not (0x26 <= mode <= 0x27):
             raise ValueError("Mode must be between 0x26 and 0x27")
 
@@ -1039,7 +1039,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                     [
                         0x73,
                         0x01,
-                        mode or 0x26,  # strip mode 0x26, light bar mode 0x27
+                        mode
+                        or MusicMode.STRIP.value,  # strip mode 0x26, light screen mode 0x27
                         effect or 0x01,
                         *foreground_color,
                         *background_color,
