@@ -23,6 +23,11 @@ class PowerRestoreState(Enum):
     LAST_STATE = 0xF0
 
 
+class MusicMode(Enum):
+    STRIP = 0x26
+    LIGHT_BAR = 0x27
+
+
 @dataclass
 class PowerRestoreStates:
     channel1: Optional[PowerRestoreState]
@@ -767,6 +772,10 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         # 0x01 - Gradual
         # 0x02 - Jump
         # 0x03 - Strobe
+        if mode and not (0x00 <= mode <= 0x03):
+            raise ValueError(
+                "Mode must be one of (0x00 - Fade In, 0x01 - Gradual, 0x02 - Jump, 0x03 - Strobe)"
+            )
         return [
             self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
             self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
@@ -1019,6 +1028,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             foreground_color = (0xFF, 0x00, 0x00)
         if background_color is None:
             background_color = (0x00, 0x00, 0x00)
+        if effect and not (1 <= effect <= 30):
+            raise ValueError("Effect must be between 1 and 30")
+        if mode and not (0x26 <= mode <= 0x27):
+            raise ValueError("Mode must be between 0x26 and 0x27")
+
         return [
             self.construct_message(
                 bytearray(
