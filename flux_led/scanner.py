@@ -50,6 +50,13 @@ class FluxLEDDiscovery(TypedDict):
     remote_access_port: Optional[int]  # the remote access port
 
 
+def is_legacy_device(discovery: Optional[FluxLEDDiscovery]) -> bool:
+    """Check if a discovery is a legacy device."""
+    if not discovery:
+        return False
+    return bool(discovery.get(ATTR_VERSION_NUM) and not discovery.get(ATTR_MODEL_NUM))
+
+
 def create_udp_socket(discovery_port: int) -> socket.socket:
     """Create a udp socket used for communicating with the device."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -96,13 +103,16 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     """
     version_data = decoded_data[4:].replace("\r", "")
     data_split = version_data.split("_", 4)
-    if len(data_split) < 2:
+    if len(data_split) == 1:
+        with contextlib.suppress(ValueError):
+            data[ATTR_VERSION_NUM] = int(data_split[0], 16)
         return
-    try:
-        data[ATTR_MODEL_NUM] = int(data_split[0], 16)
-        data[ATTR_VERSION_NUM] = int(data_split[1], 16)
-    except ValueError:
-        return
+    if len(data_split) >= 2:
+        try:
+            data[ATTR_MODEL_NUM] = int(data_split[0], 16)
+            data[ATTR_VERSION_NUM] = int(data_split[1], 16)
+        except ValueError:
+            return
     assert data[ATTR_MODEL_NUM] is not None
     if len(data_split) >= 3:
         firmware_date = data_split[2]

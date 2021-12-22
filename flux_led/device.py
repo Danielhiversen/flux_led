@@ -16,6 +16,7 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
+from .scanner import FluxLEDDiscovery
 from .sock import _socket_retry
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, utils
@@ -26,9 +27,15 @@ _LOGGER = logging.getLogger(__name__)
 class WifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
 
-    def __init__(self, ipaddr: str, port: int = 5577, timeout: int = 5) -> None:
+    def __init__(
+        self,
+        ipaddr: str,
+        port: int = 5577,
+        timeout: float = 5,
+        discovery: Optional[FluxLEDDiscovery] = None,
+    ) -> None:
         """Init and setup the bulb."""
-        super().__init__(ipaddr, port, timeout)
+        super().__init__(ipaddr, port, timeout, discovery)
         self._socket: Optional[socket.socket] = None
         self._lock = threading.Lock()
         self.setup()
