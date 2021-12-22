@@ -239,17 +239,42 @@ HARDWARE = [
         rf_remote=True,  # verified
     ),
     LEDENETHardware(
+        model="HF-A11",  # reported older large box controllers (may be original proto)
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
         model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
-        model="HF-A11-ZJ002",
+        model="HF-A11-ZJ004",  # reported older large box controllers (may be original proto)
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-A11-ZJ2",  # reported older large box controllers (may be original proto)
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-A11-ZJ201",  # reported older large box controllers (may be original proto)
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-ZJ2001",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-",
         chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
@@ -260,6 +285,16 @@ HARDWARE = [
     ),
     LEDENETHardware(
         model="HF-LPB100-1",  # reported on older UFO
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-ZJ001",
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
+        model="HF-LPB100-ZJ011",
         chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
     ),
