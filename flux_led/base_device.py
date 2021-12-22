@@ -280,7 +280,6 @@ class LEDENETDevice:
         assert self.raw_state is not None
         raw_state = self.raw_state
         if hasattr(raw_state, "cool_white"):
-            assert isinstance(raw_state, LEDENETRawState)
             return bool(raw_state.warm_white or raw_state.cool_white)
         return bool(raw_state.warm_white)
 
@@ -419,7 +418,6 @@ class LEDENETDevice:
     def cool_white(self) -> int:
         assert self.raw_state is not None
         if self._rgbwwprotocol:
-            assert isinstance(self.raw_state, LEDENETRawState)
             return self.raw_state.cool_white
         return 0
 
@@ -463,7 +461,6 @@ class LEDENETDevice:
         if color_mode == COLOR_MODE_RGBW:
             return round((v_255 + raw_state.warm_white) / 2)
         if color_mode == COLOR_MODE_RGBWW:
-            assert isinstance(raw_state, LEDENETRawState)
             return round((v_255 + raw_state.warm_white + raw_state.cool_white) / 3)
 
         # Default color mode (RGB)
@@ -692,7 +689,6 @@ class LEDENETDevice:
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
         assert self.raw_state is not None
-        assert isinstance(self.raw_state, LEDENETRawState)
         raw_state = self.raw_state
         temp, brightness = white_levels_to_color_temp(
             raw_state.warm_white, raw_state.cool_white
@@ -726,8 +722,8 @@ class LEDENETDevice:
     @property
     def rgbww(self) -> Tuple[int, int, int, int, int]:
         """Returns red,green,blue,warm,cool."""
-        assert isinstance(self.raw_state, LEDENETRawState)
         raw_state = self.raw_state
+        assert raw_state is not None
         return (
             raw_state.red,
             raw_state.green,
@@ -745,8 +741,8 @@ class LEDENETDevice:
     @property
     def rgbcw(self) -> Tuple[int, int, int, int, int]:
         """Returns red,green,blue,cool,warm."""
-        assert isinstance(self.raw_state, LEDENETRawState)
         raw_state = self.raw_state
+        assert raw_state is not None
         return (
             raw_state.red,
             raw_state.green,
@@ -758,8 +754,8 @@ class LEDENETDevice:
     def getCCT(self) -> Tuple[int, int]:
         if self.color_mode != COLOR_MODE_CCT:
             return (255, 255)
-        assert isinstance(self.raw_state, LEDENETRawState)
         raw_state = self.raw_state
+        assert raw_state is not None
         return (raw_state.warm_white, raw_state.cool_white)
 
     @property
