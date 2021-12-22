@@ -71,6 +71,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
+    PROTOCOL_LEDENET_ORIGINAL_CCT,
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
@@ -85,6 +86,7 @@ from .protocol import (
     ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
+    ProtocolLEDENETOriginalCCT,
 )
 from .scanner import FluxLEDDiscovery
 from .timer import BuiltInTimer
@@ -109,6 +111,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
+    ProtocolLEDENETOriginalCCT,
     ProtocolLEDENETCCT,
     ProtocolLEDENETAddressableChristmas,
 ]
@@ -130,6 +133,7 @@ SPEED_ADJUST_WILL_TURN_ON = {
 }
 PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ORIGINAL: ProtocolLEDENETOriginal,
+    PROTOCOL_LEDENET_ORIGINAL_CCT: ProtocolLEDENETOriginalCCT,
     PROTOCOL_LEDENET_8BYTE: ProtocolLEDENET8Byte,
     PROTOCOL_LEDENET_8BYTE_AUTO_ON: ProtocolLEDENET8ByteAutoOn,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS: ProtocolLEDENET8ByteDimmableEffects,

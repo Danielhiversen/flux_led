@@ -31,6 +31,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
+    PROTOCOL_LEDENET_ORIGINAL_CCT,
 )
 
 # BL likely means BL602 chips
@@ -291,7 +292,7 @@ MODELS = [
         models=["HF-A11-ZJ002"],
         description="Legacy Controller CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ORIGINAL)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ORIGINAL_CCT)],
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
         channel_map={
