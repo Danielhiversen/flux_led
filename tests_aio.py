@@ -1592,6 +1592,9 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     )
     protocol.datagram_received(b"AT+LVER\r", ("127.0.0.1", 48899))
     protocol.datagram_received(
+        b"+ok=GARBAGE_GARBAGE_GARBAGE_ZG-BL\r", ("192.168.213.252", 48899)
+    )    
+    protocol.datagram_received(
         b"+ok=08_15_20210204_ZG-BL\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(b"+ok=52_3_20210204\r", ("192.168.198.198", 48899))
