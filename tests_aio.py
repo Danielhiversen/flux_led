@@ -26,7 +26,12 @@ from flux_led.protocol import (
     PowerRestoreState,
     PowerRestoreStates,
 )
-from flux_led.scanner import FluxLEDDiscovery, create_udp_socket, merge_discoveries
+from flux_led.scanner import (
+    FluxLEDDiscovery,
+    create_udp_socket,
+    is_legacy_device,
+    merge_discoveries,
+)
 
 IP_ADDRESS = "127.0.0.1"
 MODEL_NUM_HEX = "0x35"
@@ -1750,6 +1755,41 @@ async def test_async_scanner_specific_address(mock_discovery_aio_protocol):
             "remote_access_port": 8816,
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_specific_address_legacy_device(
+    mock_discovery_aio_protocol,
+):
+    """Test scanner with a specific address of a legacy device."""
+    scanner = AIOBulbScanner()
+
+    task = asyncio.ensure_future(
+        scanner.async_scan(timeout=10, address="192.168.213.252")
+    )
+    transport, protocol = await mock_discovery_aio_protocol()
+    protocol.datagram_received(
+        b"192.168.213.252,ACCF232E5124,HF-A11-ZJ002", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(b"+ok=15\r\n\r\n", ("192.168.213.252", 48899))
+    protocol.datagram_received(b"+ERR=-2\r\n\r\n", ("192.168.213.252", 48899))
+    data = await task
+    assert data == [
+        {
+            "firmware_date": None,
+            "id": "ACCF232E5124",
+            "ipaddr": "192.168.213.252",
+            "model": "HF-A11-ZJ002",
+            "model_description": None,
+            "model_info": None,
+            "model_num": None,
+            "remote_access_enabled": None,
+            "remote_access_host": None,
+            "remote_access_port": None,
+            "version_num": 21,
+        }
+    ]
+    assert is_legacy_device(data[0]) is True
 
 
 @pytest.mark.asyncio
