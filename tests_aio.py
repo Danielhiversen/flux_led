@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from flux_led import aiodevice, aioscanner
-from flux_led.scanner import create_udp_socket
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
@@ -27,7 +26,7 @@ from flux_led.protocol import (
     PowerRestoreState,
     PowerRestoreStates,
 )
-from flux_led.scanner import FluxLEDDiscovery, merge_discoveries
+from flux_led.scanner import FluxLEDDiscovery, create_udp_socket, merge_discoveries
 
 IP_ADDRESS = "127.0.0.1"
 MODEL_NUM_HEX = "0x35"

@@ -28,6 +28,7 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
+    PROTOCOL_LEDENET_ORIGINAL_CCT,
 )
 from flux_led.utils import (
     color_temp_to_white_levels,
@@ -1466,9 +1467,7 @@ class TestLight(unittest.TestCase):
         light.setWhiteTemperature(2700, 255)
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 3)
-        self.assertEqual(
-            mock_send.call_args, mock.call(bytearray((b"V\xff\x00\x00\xaa")))
-        )
+        self.assertEqual(mock_send.call_args, mock.call(bytearray((b"V\xff\x00\xaa"))))
 
         light._transition_complete_time = 0
         light.update_state()
@@ -1480,7 +1479,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [CCT: 6354K Brightness: 10% raw state: 102,3,35,65,33,8,1,0,80,1,153,25,]",
         )
-        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL_CCT)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "ww")
         self.assertEqual(light.warm_white, 0)
@@ -1501,7 +1500,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "OFF  [CCT: 6354K Brightness: 10% raw state: 102,3,36,65,33,8,1,0,80,1,153,25,]",
         )
-        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL_CCT)
         self.assertEqual(light.is_on, False)
         self.assertEqual(light.mode, "ww")
         self.assertEqual(light.cool_white, 0)
@@ -1523,7 +1522,7 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [CCT: 6354K Brightness: 10% raw state: 102,3,35,65,33,8,1,0,80,1,153,25,]",
         )
-        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL)
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_ORIGINAL_CCT)
         self.assertEqual(light.is_on, True)
         self.assertEqual(light.mode, "ww")
         self.assertEqual(light.warm_white, 0)

@@ -40,6 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
+PROTOCOL_LEDENET_ORIGINAL_CCT = "LEDENET_ORIGINAL_CCT"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_9BYTE_AUTO_ON = "LEDENET_AUTO_ON"
 PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS = "LEDENET_DIMMABLE_EFFECTS"
@@ -520,6 +521,35 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         raw_bytearray = bytearray([*raw_state, 0])
         return LEDENETOriginalRawState(*raw_bytearray)
+
+
+class ProtocolLEDENETOriginalCCT(ProtocolLEDENETOriginal):
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_ORIGINAL_CCT
+
+    def construct_levels_change(
+        self,
+        persist: int,
+        red: int,
+        green: int,
+        blue: int,
+        warm_white: int,
+        cool_white: int,
+        write_mode: LevelWriteMode,
+    ) -> bytearray:
+        """The bytes to send for a level change request."""
+        # sample message for original LEDENET protocol (w/o checksum at end)
+        #  0  1  2  3  4
+        # 56 90 fa 77 aa
+        #  |  |  |  |  |
+        #  |  |  |  |  terminator
+        #  |  |  |  blue
+        #  |  |  green
+        #  |  red
+        #  head
+        return self.construct_message(bytearray([0x56, red, green, 0xAA]))
 
 
 class ProtocolLEDENET8Byte(ProtocolBase):
