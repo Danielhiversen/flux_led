@@ -6,7 +6,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import PROTOCOL_PROBES, DeviceType, LEDENETDevice
+from .base_device import DeviceType, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -31,6 +31,7 @@ from .protocol import (
     ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETOriginal,
 )
+from .scanner import FluxLEDDiscovery
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,9 +58,15 @@ NEVER_TIME = -PUSH_UPDATE_INTERVAL
 class AIOWifiLedBulb(LEDENETDevice):
     """A LEDENET Wifi bulb device."""
 
-    def __init__(self, ipaddr: str, port: int = 5577, timeout: int = 5) -> None:
+    def __init__(
+        self,
+        ipaddr: str,
+        port: int = 5577,
+        timeout: float = 5,
+        discovery: Optional[FluxLEDDiscovery] = None,
+    ) -> None:
         """Init and setup the bulb."""
-        super().__init__(ipaddr, port, timeout)
+        super().__init__(ipaddr, port, timeout, discovery)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
@@ -572,7 +579,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_determine_protocol(self) -> None:
         # determine the type of protocol based of first 2 bytes.
-        for protocol_cls in PROTOCOL_PROBES:
+        for protocol_cls in self._protocol_probes():
             protocol = protocol_cls()
             assert isinstance(protocol, (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal))
             self._protocol = protocol

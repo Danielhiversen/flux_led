@@ -88,7 +88,7 @@ from .protocol import (
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
 )
-from .scanner import FluxLEDDiscovery
+from .scanner import FluxLEDDiscovery, is_legacy_device
 from .timer import BuiltInTimer
 from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_color_temp
 
@@ -99,6 +99,9 @@ PROTOCOL_PROBES: Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]
     ProtocolLEDENET8Byte,
     ProtocolLEDENETOriginal,
 )
+PROTOCOL_PROBES_LEGACY: Tuple[
+    Type[ProtocolLEDENETOriginal], Type[ProtocolLEDENET8Byte]
+] = (ProtocolLEDENETOriginal, ProtocolLEDENET8Byte)
 
 PROTOCOL_TYPES = Union[
     ProtocolLEDENET8Byte,
@@ -163,7 +166,13 @@ class DeviceType(Enum):
 class LEDENETDevice:
     """An LEDENET Device."""
 
-    def __init__(self, ipaddr: str, port: int = 5577, timeout: float = 5) -> None:
+    def __init__(
+        self,
+        ipaddr: str,
+        port: int = 5577,
+        timeout: float = 5,
+        discovery: Optional[FluxLEDDiscovery] = None,
+    ) -> None:
         """Init the LEDENEt Device."""
         self.ipaddr: str = ipaddr
         self.port: int = port
@@ -172,11 +181,23 @@ class LEDENETDevice:
         self.available: Optional[bool] = None
         self._model_num: Optional[int] = None
         self._model_data: Optional[LEDENETModel] = None
-        self._discovery: Optional[FluxLEDDiscovery] = None
+        self._discovery = discovery
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
+
+    def _protocol_probes(
+        self,
+    ) -> Union[
+        Tuple[Type[ProtocolLEDENETOriginal], Type[ProtocolLEDENET8Byte]],
+        Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]],
+    ]:
+        """Determine the probe order based on device type."""
+        discovery = self.discovery
+        return (
+            PROTOCOL_PROBES_LEGACY if is_legacy_device(discovery) else PROTOCOL_PROBES
+        )
 
     @property
     def model_num(self) -> int:

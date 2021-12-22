@@ -49,6 +49,7 @@ from .pattern import PresetPattern
 from .scanner import BulbScanner, FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import utils
+from .const import ATTR_IPADDR, ATTR_ID
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -695,9 +696,9 @@ def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
 def main() -> None:  # noqa: C901
 
     (options, args) = parseArgs()
+    scanner = BulbScanner()
 
     if options.scan:
-        scanner = BulbScanner()
         scanner.scan(timeout=6)
         bulb_info_list = scanner.getBulbInfo()
         # we have a list of buld info dicts
@@ -711,21 +712,23 @@ def main() -> None:  # noqa: C901
                 print("  {} {}".format(b["id"], b["ipaddr"]))
             sys.exit(0)
 
-    else:
-        addrs = args
-        bulb_info_list = []
+    elif options.info:
         for addr in args:
-            bulb_info_list.append(FluxLEDDiscovery({"ipaddr": addr, "id": "Unknown ID"}))  # type: ignore
+            scanner.scan(timeout=6, address=addr)
+        bulb_info_list = scanner.getBulbInfo()
+        found_addrs = {discovery[ATTR_IPADDR] for discovery in bulb_info_list}
+        for addr in args:
+            if addr in found_addrs:
+                continue
+            bulb_info_list.append(FluxLEDDiscovery({ATTR_IPADDR: addr, ATTR_ID: "Unknown ID"}))  # type: ignore
 
     # now we have our bulb list, perform same operation on all of them
     for info in bulb_info_list:
         try:
-            bulb = WifiLedBulb(info["ipaddr"])
+            bulb = WifiLedBulb(info["ipaddr"], discovery=info)
         except Exception as e:
             print("Unable to connect to bulb at [{}]: {}".format(info["ipaddr"], e))
             continue
-
-        bulb.discovery = info
 
         if options.getclock:
             print("{} [{}] {}".format(info["id"], info["ipaddr"], bulb.getClock()))
