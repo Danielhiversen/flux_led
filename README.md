@@ -157,6 +157,7 @@ The following models have been tested with library.
 
 | Model | Description                 | Notes                           |
 | ----- | --------------------------- | ------------------------------- |
+| 0x03  | Legacy CCT Controller       | Original protocol               |
 | 0x04  | UFO Controller RGBW         |                                 |
 | 0x06  | Controller RGBW             |                                 |
 | 0x07  | Controller RGBCW            |                                 |

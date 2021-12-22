@@ -290,8 +290,10 @@ class WifiLedBulb(LEDENETDevice):
                 full_msg = rx + self._read_msg(
                     protocol.state_response_length - read_bytes
                 )
-                if protocol.is_valid_state_response(full_msg):
-                    self._set_protocol_from_msg(full_msg, protocol.name)
+                if not protocol.is_valid_state_response(full_msg):
+                    self.close()
+                    continue
+                self._set_protocol_from_msg(full_msg, protocol.name)
                 return full_msg
         raise Exception("Cannot determine protocol")
 

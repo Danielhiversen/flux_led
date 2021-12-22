@@ -150,6 +150,7 @@ class LEDENETOriginalRawState(NamedTuple):
     blue: int
     warm_white: int
     check_sum: int
+    cool_white: int
 
 
 # typical response:
@@ -477,11 +478,7 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
-        return (
-            len(raw_state) == self.state_response_length
-            and raw_state[0] == 0x66
-            and raw_state[1] == 0x01
-        )
+        return len(raw_state) == self.state_response_length and raw_state[0] == 0x66
 
     def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
@@ -521,7 +518,8 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 
     def named_raw_state(self, raw_state: bytes) -> LEDENETOriginalRawState:
         """Convert raw_state to a namedtuple."""
-        return LEDENETOriginalRawState(*raw_state)
+        raw_bytearray = bytearray([*raw_state, 0])
+        return LEDENETOriginalRawState(*raw_bytearray)
 
 
 class ProtocolLEDENET8Byte(ProtocolBase):
