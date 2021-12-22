@@ -611,7 +611,9 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x44,
-        models=["AK001-ZJ200"],
+        # v8 - AK001-ZJ200 aka old flux
+        # v9 - AK001-ZJ210
+        models=["AK001-ZJ200", "AK001-ZJ210"],
         description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
