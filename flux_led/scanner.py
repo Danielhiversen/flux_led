@@ -50,11 +50,15 @@ class FluxLEDDiscovery(TypedDict):
     remote_access_port: Optional[int]  # the remote access port
 
 
-def create_udp_socket() -> socket.socket:
+def create_udp_socket(discovery_port: int) -> socket.socket:
     """Create a udp socket used for communicating with the device."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.bind(("", 0))
+    try:
+        sock.bind(("", discovery_port))
+    except OSError:
+        _LOGGER.debug("Port %s is not available: %s", discovery_port)
+        sock.bind(("", 0))
     sock.setblocking(False)
     return sock
 
@@ -167,7 +171,7 @@ class BulbScanner:
         return self.found_bulbs
 
     def _create_socket(self) -> socket.socket:
-        return create_udp_socket()
+        return create_udp_socket(self.DISCOVERY_PORT)
 
     def _destination_from_address(self, address: Optional[str]) -> Tuple[str, int]:
         if address is None:
