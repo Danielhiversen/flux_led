@@ -209,7 +209,7 @@ class LEDENETDevice:
     @property
     def model(self) -> str:
         """Return the human readable model description."""
-        if self._discovery and self._discovery[ATTR_MODEL_DESCRIPTION]:
+        if self._discovery and self._discovery.get(ATTR_MODEL_DESCRIPTION):
             return f"{self._discovery[ATTR_MODEL_DESCRIPTION]} (0x{self.model_num:02X})"
         return f"{self.model_data.description} (0x{self.model_num:02X})"
 

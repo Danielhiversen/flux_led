@@ -243,6 +243,11 @@ HARDWARE = [
         rf_remote=False,  # unverified
     ),
     LEDENETHardware(
+        model="HF-A11-ZJ002",
+        chip=LEDENETChip.HFLPB100,
+        rf_remote=False,  # unverified
+    ),
+    LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
         chip=LEDENETChip.HFLPB100,
         rf_remote=False,  # unverified
@@ -283,7 +288,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x03,
-        models=[],
+        models=["HF-A11-ZJ002"],
         description="Legacy Controller CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ORIGINAL)],

@@ -395,6 +395,13 @@ def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
 
     parser.add_option_group(info_group)
     info_group.add_option(
+        "--debug",
+        action="store_true",
+        dest="debug",
+        default=False,
+        help="Enable debug logging",
+    )
+    info_group.add_option(
         "-e",
         "--examples",
         action="store_true",
@@ -587,6 +594,9 @@ def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
 
     parser.usage = "usage: %prog [-sS10cwdkpCiltThe] [addr1 [addr2 [addr3] ...]."
     (options, args) = parser.parse_args()
+
+    if options.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     if options.showexamples:
         showUsageExamples()
