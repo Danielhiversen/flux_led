@@ -194,9 +194,10 @@ class LEDENETDevice:
         Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]],
     ]:
         """Determine the probe order based on device type."""
-        if is_legacy_device(self.discovery):
-            return PROTOCOL_PROBES_LEGACY
-        return PROTOCOL_PROBES
+        discovery = self.discovery
+        return (
+            PROTOCOL_PROBES_LEGACY if is_legacy_device(discovery) else PROTOCOL_PROBES
+        )
 
     @property
     def model_num(self) -> int:
