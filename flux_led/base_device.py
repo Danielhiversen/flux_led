@@ -279,9 +279,7 @@ class LEDENETDevice:
         """Any white channel is active."""
         assert self.raw_state is not None
         raw_state = self.raw_state
-        if hasattr(raw_state, "cool_white"):
-            return bool(raw_state.warm_white or raw_state.cool_white)
-        return bool(raw_state.warm_white)
+        return bool(raw_state.warm_white or raw_state.cool_white)
 
     @property
     def color_active(self) -> bool:
