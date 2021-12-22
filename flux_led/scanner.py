@@ -64,8 +64,8 @@ def create_udp_socket(discovery_port: int) -> socket.socket:
     try:
         # Legacy devices require source port to be the discovery port
         sock.bind(("", discovery_port))
-    except OSError:
-        _LOGGER.debug("Port %s is not available: %s", discovery_port)
+    except OSError as err:
+        _LOGGER.debug("Port %s is not available: %s", discovery_port, err)
         sock.bind(("", 0))
     sock.setblocking(False)
     return sock
@@ -209,7 +209,7 @@ class BulbScanner:
         if address is None or address not in response_list:
             return False
         response = response_list[address]
-        return (
+        return is_legacy_device(response) or (
             response[ATTR_MODEL_NUM] is not None
             and response[ATTR_REMOTE_ACCESS_ENABLED] is not None
         )

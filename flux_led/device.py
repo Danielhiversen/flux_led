@@ -6,7 +6,8 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
-from .base_device import PROTOCOL_PROBES, LEDENETDevice
+from .scanner import FluxLEDDiscovery
+from .base_device import LEDENETDevice
 from .const import (
     DEFAULT_RETRIES,
     EFFECT_RANDOM,
@@ -16,7 +17,6 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
-from .scanner import FluxLEDDiscovery
 from .sock import _socket_retry
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, utils
@@ -282,7 +282,7 @@ class WifiLedBulb(LEDENETDevice):
     def _determine_protocol(self) -> bytearray:
         """Determine the type of protocol based of first 2 bytes."""
         read_bytes = 2
-        for protocol_cls in PROTOCOL_PROBES:
+        for protocol_cls in self._protocol_probes():
             protocol = protocol_cls()
             with self._lock:
                 self._connect_if_disconnected()

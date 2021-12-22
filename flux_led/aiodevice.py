@@ -6,7 +6,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import PROTOCOL_PROBES, DeviceType, LEDENETDevice
+from .base_device import DeviceType, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
