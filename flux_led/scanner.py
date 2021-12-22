@@ -55,6 +55,7 @@ def create_udp_socket(discovery_port: int) -> socket.socket:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     try:
+        # Legacy devices require source port to be the discovery port
         sock.bind(("", discovery_port))
     except OSError:
         _LOGGER.debug("Port %s is not available: %s", discovery_port)
