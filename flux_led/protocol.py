@@ -518,7 +518,7 @@ class ProtocolLEDENETOriginal(ProtocolBase):
 
     def named_raw_state(self, raw_state: bytes) -> LEDENETOriginalRawState:
         """Convert raw_state to a namedtuple."""
-        return LEDENETOriginalRawState(*raw_state, None)
+        return LEDENETOriginalRawState(*raw_state, 0)
 
 
 class ProtocolLEDENET8Byte(ProtocolBase):
