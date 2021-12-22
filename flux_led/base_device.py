@@ -221,7 +221,7 @@ class LEDENETDevice:
         if hasattr(raw_state, "version_number"):
             assert isinstance(raw_state, LEDENETRawState)
             return raw_state.version_number
-        return 1
+        return 0  # old devices report as 0
 
     @property
     def preset_pattern_num(self) -> int:
