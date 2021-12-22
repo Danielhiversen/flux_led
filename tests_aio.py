@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from flux_led import aiodevice, aioscanner
+from flux_led.scanner import create_udp_socket
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
@@ -1776,6 +1777,15 @@ async def test_async_scanner_times_out_with_nothing_specific_address(
     transport, protocol = await mock_discovery_aio_protocol()
     data = await task
     assert data == []
+
+
+@pytest.mark.asyncio
+async def test_async_scanner_falls_back_to_any_source_port_if_socket_in_use():
+    """Test port fallback."""
+    hold_socket = create_udp_socket(AIOBulbScanner.DISCOVERY_PORT)
+    assert hold_socket.getsockname() == ("0.0.0.0", 48899)
+    random_socket = create_udp_socket(AIOBulbScanner.DISCOVERY_PORT)
+    assert random_socket.getsockname() != ("0.0.0.0", 48899)
 
 
 @pytest.mark.asyncio
