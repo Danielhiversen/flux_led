@@ -6,7 +6,6 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
-from .scanner import FluxLEDDiscovery
 from .base_device import LEDENETDevice
 from .const import (
     DEFAULT_RETRIES,
@@ -17,6 +16,7 @@ from .const import (
     STATE_RED,
     STATE_WARM_WHITE,
 )
+from .scanner import FluxLEDDiscovery
 from .sock import _socket_retry
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, utils

@@ -186,6 +186,8 @@ The following models have not been tested with library but may work.
 
 | Model | Description                 | Notes                           |
 | ----- | --------------------------- | ------------------------------- |
+| 0x01  | Legacy RGB Controller       | Original protocol               |
+| 0x02  | Legacy Dimmable Controller  | Original protocol               |
 | 0x09  | Ceiling Light CCT           |                                 |
 | 0x16  | Magnetic Light CCT          |                                 |
 | 0x17  | Magnetic Light Dimmable     |                                 |
