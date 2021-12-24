@@ -44,12 +44,12 @@ from optparse import OptionGroup, OptionParser, Values
 import sys
 from typing import Any, List, Optional, Tuple
 
+from .const import ATTR_ID, ATTR_IPADDR
 from .device import WifiLedBulb
 from .pattern import PresetPattern
 from .scanner import BulbScanner, FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import utils
-from .const import ATTR_IPADDR, ATTR_ID
 
 _LOGGER = logging.getLogger(__name__)
 
