@@ -211,7 +211,7 @@ class LEDENETDeviceConfiguration:
     order_to_num: Dict[str, int]
     modes: bool  # has color modes ie RGB&W or RGB/W
     num_to_mode: Dict[int, str]
-    mode_to_num: Dict[int, str]
+    mode_to_num: Dict[str, int]
     pixels: bool
     segments: bool
     music_pixels: bool
