@@ -72,6 +72,7 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    LEDENETAddressableDeviceConfiguration,
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
@@ -124,6 +125,12 @@ ADDRESSABLE_PROTOCOLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2,
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
 }
+ALL_ADDRESSABLE_PROTOCOLS = (
+    ProtocolLEDENETAddressableA1,
+    ProtocolLEDENETAddressableA2,
+    ProtocolLEDENETAddressableA3,
+)
+ALL_IC_PROTOCOLS = (ProtocolLEDENETAddressableChristmas, *ALL_ADDRESSABLE_PROTOCOLS)
 CHRISTMAS_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS}
 OLD_EFFECTS_PROTOCOLS = {PROTOCOL_LEDENET_ADDRESSABLE_A1}
 NEW_EFFECTS_PROTOCOLS = {
@@ -186,6 +193,7 @@ class LEDENETDevice:
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
+        self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
 
     def _protocol_probes(
         self,
@@ -341,6 +349,89 @@ class LEDENETDevice:
         return model_data.mode_to_color_mode.get(
             self.raw_state.mode, model_data.color_modes
         )
+
+    @property
+    def pixels_per_segment(self) -> Optional[int]:
+        """Return the pixels per segment."""
+        if self._device_config is None:
+            return None
+        return self._device_config.pixels_per_segment
+
+    @property
+    def segments(self) -> Optional[int]:
+        """Return the number of segments."""
+        if self._device_config is None:
+            return None
+        return self._device_config.segments
+
+    @property
+    def music_pixels_per_segment(self) -> Optional[int]:
+        """Return the music pixels per segment."""
+        if self._device_config is None:
+            return None
+        return self._device_config.music_pixels_per_segment
+
+    @property
+    def music_segments(self) -> Optional[int]:
+        """Return the number of music segments."""
+        if self._device_config is None:
+            return None
+        return self._device_config.music_segments
+
+    @property
+    def wiring(self) -> Optional[str]:
+        """Return the sort order as a string."""
+        if not self.model_data.device_config.wiring:
+            return None
+        if self._device_config:
+            return self._device_config.wiring
+        assert self.raw_state is not None
+        return self.model_data.device_config.num_to_wiring.get(
+            int((self.raw_state.mode & 0xF0) / 16)
+        )
+
+    @property
+    def wirings(self) -> Optional[List[str]]:
+        """Return available wirings for the device."""
+        if not self.model_data.device_config.wiring:
+            return None
+        if self._device_config:
+            return list(self._device_config.wirings)
+        return list(self.model_data.device_config.wiring_to_num)
+
+    @property
+    def operating_mode(self) -> Optional[str]:
+        """Return the strip mode as a string."""
+        if not self.model_data.device_config.operating_modes:
+            return None
+        if self._device_config:
+            return self._device_config.operating_mode
+        assert self.raw_state is not None
+        return self.model_data.device_config.num_to_operating_mode.get(
+            self.raw_state.mode & 0x0F
+        )
+
+    @property
+    def operating_modes(self) -> Optional[List[str]]:
+        """Return available operating modes for the device."""
+        if not self.model_data.device_config.operating_modes:
+            return None
+        return list(self.model_data.device_config.operating_mode_to_num)
+
+    @property
+    def strip_protocol(self) -> Optional[str]:
+        """Return the strip protocol as a string."""
+        if not self.model_data.device_config.protocols:
+            return None
+        assert self._device_config is not None
+        return self._device_config.protocol
+
+    @property
+    def strip_protocols(self) -> Optional[List[str]]:
+        """Return the strip protocols."""
+        if not self.model_data.device_config.protocols:
+            return None
+        return list(self.model_data.device_config.protocol_to_num)
 
     @property
     def color_mode(self) -> Optional[str]:
@@ -519,6 +610,20 @@ class LEDENETDevice:
 
     def set_available(self) -> None:
         self.available = True
+
+    def process_ic_response(self, msg: bytes) -> None:
+        """Process an IC (strip config) response."""
+        assert isinstance(
+            self._protocol,
+            (
+                ProtocolLEDENETAddressableChristmas,
+                ProtocolLEDENETAddressableA1,
+                ProtocolLEDENETAddressableA2,
+                ProtocolLEDENETAddressableA3,
+            ),
+        )
+        self._device_config = self._protocol.parse_strip_setting(msg)
+        _LOGGER.debug("%s: device_config: %s", self.ipaddr, self._device_config)
 
     def process_state_response(self, rx: bytes) -> bool:
         assert self._protocol is not None

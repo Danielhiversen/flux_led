@@ -8,6 +8,8 @@ import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
+    COLOR_MODE_RGB,
+    COLOR_MODE_RGBW,
     TRANSITION_GRADUAL,
     TRANSITION_JUMP,
     TRANSITION_STROBE,
@@ -26,6 +28,18 @@ class PowerRestoreState(Enum):
 class MusicMode(Enum):
     STRIP = 0x26
     LIGHT_SCREEN = 0x27
+
+
+@dataclass
+class LEDENETAddressableDeviceConfiguration:
+    pixels_per_segment: int  # pixels per segment
+    segments: int  # number of segments
+    music_pixels_per_segment: int  # music pixels per segment
+    music_segments: int  # number of music segments
+    wirings: List[str]  # available wirings in the current mode
+    wiring: Optional[str]  # RGB/BRG/GBR etc
+    protocol: Optional[str]  # WS2812B UCS.. etc
+    operating_mode: Optional[str]  # RGB, RGBW
 
 
 @dataclass
@@ -66,20 +80,8 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
+LEDENET_A1_IC_STATE_RESPONSE_LEN = 12
 LEDENET_IC_STATE_RESPONSE_LEN = 11
-# pos  0  1  2  3  4  5  6  7  8  9 10
-#    00 63 00 3c 04 00 00 00 00 00 02
-#     |  |  |  |  |  |  |  |  |  |  checksum
-#     |  |  |  |  |  |  |  |  |  ??
-#     |  |  |  |  |  |  |  |  ??
-#     |  |  |  |  |  |  |  ??
-#     |  |  |  |  |  |  ??
-#     |  |  |  |  |  ???
-#     |  |  |  |  ????
-#     |  |  |  ic
-#     |  |  num pixels (16 bit, low byte)
-#     |  num pixels (16 bit, high byte)
-#     msg head
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -92,6 +94,7 @@ MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
 MSG_IC_CONFIG = "ic_config"
+MSG_A1_IC_CONFIG = "a1_ic_config"
 
 
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
@@ -107,6 +110,9 @@ MSG_UNIQUE_START = {
     (0x66,): MSG_ORIGINAL_STATE,
     (0x81,): MSG_STATE,
     (0x00, 0x63): MSG_IC_CONFIG,
+    (0xF0, 0x63): MSG_IC_CONFIG,
+    (0x0F, 0x63): MSG_IC_CONFIG,
+    (0x63,): MSG_A1_IC_CONFIG,
     (0x72,): MSG_MUSIC_MODE_STATE,
 }
 
@@ -119,6 +125,7 @@ MSG_LENGTHS = {
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
     MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
+    MSG_A1_IC_CONFIG: LEDENET_A1_IC_STATE_RESPONSE_LEN,
 }
 
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
@@ -208,6 +215,114 @@ class LEDENETRawState(NamedTuple):
 #     |  model_num (type)
 #     msg head
 #
+RGB_NUM_TO_WIRING = {1: "RGB", 2: "GRB", 3: "BRG"}
+RGB_WIRING_TO_NUM = {v: k for k, v in RGB_NUM_TO_WIRING.items()}
+RGBW_NUM_TO_WIRING = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
+RGBW_WIRING_TO_NUM = {v: k for k, v in RGBW_NUM_TO_WIRING.items()}
+RGBW_NUM_TO_MODE = {4: "RGB&W", 6: "RGB/W"}
+RGBW_MODE_TO_NUM = {v: k for k, v in RGBW_NUM_TO_MODE.items()}
+RGBWW_NUM_TO_WIRING = {
+    1: "RGBCW",
+    2: "GRBCW",
+    3: "BRGCW",
+    4: "RGBWC",
+    5: "GRBWC",
+    6: "BRGWC",
+    7: "WRGBC",
+    8: "WGRBC",
+    9: "WBRGC",
+    10: "CRGBW",
+    11: "CBRBW",
+    12: "CBRGW",
+    13: "WCRGB",
+    14: "WCGRB",
+    15: "WCBRG",
+}
+RGBWW_WIRING_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_WIRING.items()}
+RGBWW_NUM_TO_MODE = {5: "RGB&CCT", 7: "RGB/CCT"}
+RGBWW_MODE_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_MODE.items()}
+
+ADDRESSABLE_RGB_NUM_TO_WIRING = {
+    0: "RGB",
+    1: "RBG",
+    2: "GRB",
+    3: "GBR",
+    4: "BRG",
+    5: "BGR",
+}
+ADDRESSABLE_RGB_WIRING_TO_NUM = {v: k for k, v in ADDRESSABLE_RGB_NUM_TO_WIRING.items()}
+ADDRESSABLE_RGBW_NUM_TO_WIRING = {
+    0: "RGBW",
+    1: "RBGW",
+    2: "GRBW",
+    3: "GBRW",
+    4: "BRGW",
+    5: "BGRW",
+    6: "WRGB",
+    7: "WRBG",
+    8: "WGRB",
+    9: "WGBR",
+    10: "WBRG",
+    11: "WBGR",
+}
+ADDRESSABLE_RGBW_WIRING_TO_NUM = {
+    v: k for k, v in ADDRESSABLE_RGBW_NUM_TO_WIRING.items()
+}
+
+
+A1_NUM_TO_PROTOCOL = {
+    1: "UCS1903",
+    2: "SM16703",
+    3: "WS2811",
+    4: "WS2812B",
+    5: "SK6812",
+    6: "INK1003",
+    7: "WS2801",
+    8: "LB1914",
+}
+A1_PROTOCOL_TO_NUM = {v: k for k, v in A1_NUM_TO_PROTOCOL.items()}
+
+A1_NUM_TO_OPERATING_MODE = {
+    1: COLOR_MODE_RGB,
+    2: COLOR_MODE_RGB,
+    3: COLOR_MODE_RGB,
+    4: COLOR_MODE_RGB,
+    5: COLOR_MODE_RGB,
+    6: COLOR_MODE_RGB,
+    7: COLOR_MODE_RGB,
+    8: COLOR_MODE_RGB,
+}
+A1_OPERATING_MODE_TO_NUM = {v: k for k, v in A1_NUM_TO_OPERATING_MODE.items()}
+
+NEW_ADDRESSABLE_NUM_TO_PROTOCOL = {
+    1: "WS2812B",
+    2: "SM16703",
+    3: "SM16704",
+    4: "WS2811",
+    5: "UCS1903",
+    6: "SK6812",
+    7: "SK6812RGBW",
+    8: "INK1003",
+    9: "UCS2904B",
+}
+NEW_ADDRESSABLE_PROTOCOL_TO_NUM = {
+    v: k for k, v in NEW_ADDRESSABLE_NUM_TO_PROTOCOL.items()
+}
+
+NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE = {
+    1: COLOR_MODE_RGB,
+    2: COLOR_MODE_RGB,
+    3: COLOR_MODE_RGB,
+    4: COLOR_MODE_RGB,
+    5: COLOR_MODE_RGB,
+    6: COLOR_MODE_RGB,
+    7: COLOR_MODE_RGBW,
+    8: COLOR_MODE_RGB,
+    9: COLOR_MODE_RGB,
+}
+NEW_ADDRESSABLE_OPERATING_MODE_TO_NUM = {
+    v: k for k, v in NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.items()
+}
 
 
 class ProtocolBase:
@@ -905,15 +1020,25 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
 
 
 class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
-    def construct_request_strip_setting(self) -> bytearray:
-        return self.construct_message(bytearray([0x63, 0x12, 0x21]))
+    """Base class for addressable protocols."""
 
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
+    def construct_request_strip_setting(self) -> bytearray:
+        return bytearray([0x63, 0x12, 0x21, 0x36])
+
     @property
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
+        return (
+            len(data) == LEDENET_A1_IC_STATE_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_A1_IC_CONFIG
+            and self.is_checksum_correct(data)
+        )
 
     @property
     def power_push_updates(self) -> bool:
@@ -939,11 +1064,57 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             bytearray([0x61, effect >> 8, effect & 0xFF, speed, 0x0F])
         )
 
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        # pos  0  1  2  3  4  5  6  7  8  9 10 11
+        #    63 00 32 05 00 00 00 00 00 00 02 9c
+        #     |  |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+        #     |  |  |  |  |  |  |  |  |  ?? always 00
+        #     |  |  |  |  |  |  |  |  ?? always 00
+        #     |  |  |  |  |  |  |  n?? always 00
+        #     |  |  |  |  |  |  ?? always 00
+        #     |  |  |  |  |  ?? always 00
+        #     |  |  |  |  ?? always 00
+        #     |  |  |  ic type (01=UCS1903, 02=SM16703, 03=WS2811, 04=WS2812B, 05=SK6812, 06=INK1003, 07=WS2801, 08=LB1914)
+        #     |  |  num pixels (16 bit, low byte)
+        #     |  num pixels (16 bit, high byte)
+        #     msg head
+        #
+        high_byte = msg[1]
+        low_byte = msg[2]
+        pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug(
+            "Pixel count (high: %s, low: %s) is: %s",
+            hex(high_byte),
+            hex(low_byte),
+            pixels_per_segment,
+        )
+        segments = msg[5]
+        _LOGGER.debug(
+            "Segment count (%s) is: %s",
+            hex(segments),
+            segments,
+        )
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=pixels_per_segment,
+            segments=segments,
+            music_pixels_per_segment=0,
+            music_segments=0,
+            wirings=list(ADDRESSABLE_RGB_WIRING_TO_NUM),
+            wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[10]),
+            protocol=A1_NUM_TO_PROTOCOL.get(msg[3]),
+            operating_mode=A1_NUM_TO_OPERATING_MODE.get(msg[3]),
+        )
+
 
 class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
     # ic response
     # 0x96 0x63 0x00 0x32 0x00 0x01 0x01 0x04 0x32 0x01 0x64 (11)
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_message(bytearray([0x63, 0x12, 0x21, 0x0F]))
 
     @property
     def name(self) -> str:
@@ -965,6 +1136,14 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
     def requires_turn_on(self) -> bool:
         """If True the device must be turned on before setting level/patterns/modes."""
         return False
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
+        return (
+            len(data) == LEDENET_IC_STATE_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_IC_CONFIG
+            and self.is_checksum_correct(data)
+        )
 
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
@@ -1079,8 +1258,62 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             )
         ]
 
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        # pos  0  1  2  3  4  5  6  7  8  9 10
+        #    00 63 01 2c 00 01 07 08 96 01 45
+        #     |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  segments (music mode)
+        #     |  |  |  |  |  |  |  |  num pixels (music mode)
+        #     |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+        #     |  |  |  |  |  |  ic type (01=WS2812B, 02=SM16703, 03=SM16704, 04=WS2811, 05=UCS1903, 06=SK6812, 07=SK6812RGBW, 08=INK1003, 09=UCS2904B)
+        #     |  |  |  |  |  segments
+        #     |  |  |  |  ?? (always 0x00)
+        #     |  |  |  num pixels (16 bit, low byte)
+        #     |  |  num pixels (16 bit, high byte)
+        #     |  msg head
+        #     msg head
+        #
+        high_byte = msg[2]
+        low_byte = msg[3]
+        pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug("bytes: %s", msg)
+        _LOGGER.debug(
+            "Pixel count (high: %s, low: %s) is: %s",
+            hex(high_byte),
+            hex(low_byte),
+            pixels_per_segment,
+        )
+        segments = msg[5]
+        _LOGGER.debug(
+            "Segment count (%s) is: %s",
+            hex(segments),
+            segments,
+        )
+        if NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]) == COLOR_MODE_RGBW:
+            wirings = ADDRESSABLE_RGBW_NUM_TO_WIRING
+        else:
+            wirings = ADDRESSABLE_RGB_NUM_TO_WIRING
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=pixels_per_segment,
+            segments=segments,
+            music_pixels_per_segment=msg[8],
+            music_segments=msg[9],
+            wirings=list(wirings.values()),
+            wiring=wirings.get(msg[7]),
+            protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
+        )
+
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_wrapped_message(
+            super().construct_request_strip_setting(),
+            inner_pre_constructed=True,
+        )
 
     # ic response
     # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
@@ -1094,14 +1327,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
     def zones(self) -> bool:
         """If the protocol supports zones."""
         return True
-
-    def is_valid_ic_response(self, data: bytes) -> bool:
-        """Check if a message is a valid ic state response."""
-        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
-            return False
-        if not data.startswith(bytearray([0x00, 0x63])):
-            return False
-        return self.is_checksum_correct(data)
 
     @property
     def name(self) -> str:
@@ -1528,3 +1753,16 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                 bytearray([0x00, points - remaining, *rgb_list[-1], 0x00, 0x00, 0xFF])
             )
         return self.construct_wrapped_message(msg)
+
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=6,
+            segments=1,
+            music_pixels_per_segment=0,
+            music_segments=0,
+            wirings=[],
+            wiring=None,
+            protocol=None,
+            operating_mode=COLOR_MODE_RGB,
+        )

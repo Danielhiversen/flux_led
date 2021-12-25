@@ -6,7 +6,12 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import DeviceType, LEDENETDevice
+from .base_device import (
+    ALL_ADDRESSABLE_PROTOCOLS,
+    ALL_IC_PROTOCOLS,
+    DeviceType,
+    LEDENETDevice,
+)
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -76,8 +81,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
-        self._pixels_per_segment: Optional[int] = None
-        self._segments: Optional[int] = None
         self._last_update_time: float = NEVER_TIME
         self._power_restore_state: Optional[PowerRestoreStates] = None
         self._buffer = b""
@@ -93,11 +96,18 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         assert self._protocol is not None
-        if self._protocol.zones:
+        if isinstance(self._protocol, ALL_IC_PROTOCOLS):
             await self._async_addressable_setup()
             return
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
+            return
+        _LOGGER.debug(
+            "%s: device_config: wiring=%s operating_mode=%s",
+            self.ipaddr,
+            self.wiring,
+            self.operating_mode,
+        )
 
     async def _async_switch_setup(self) -> None:
         """Setup a switch."""
@@ -113,10 +123,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Setup an addressable light."""
         assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
-            self._pixels_per_segment = 6  # currently hard coded
+            self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
-        assert isinstance(self._protocol, ProtocolLEDENETAddressableA3)
+        assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
             await asyncio.wait_for(self._ic_future, timeout=self.timeout)
@@ -336,14 +346,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if not self._protocol.zones:
             raise ValueError("{self.model} does not support zones")
-        assert self._pixels_per_segment is not None
+        assert self._device_config is not None
         assert isinstance(
             self._protocol,
             (ProtocolLEDENETAddressableA3, ProtocolLEDENETAddressableChristmas),
         )
         await self._async_send_msg(
             self._protocol.construct_zone_change(
-                self._pixels_per_segment, rgb_list, speed, effect
+                self._device_config.pixels_per_segment, rgb_list, speed, effect
             )
         )
 
@@ -548,26 +558,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self._power_restore_future.done():
             self._power_restore_future.set_result(True)
 
-    def process_ic_response(self, msg: bytes) -> bool:
-        assert self._aio_protocol is not None
-        high_byte = msg[2]
-        low_byte = msg[3]
-        self._pixels_per_segment = (high_byte << 8) + low_byte
-        _LOGGER.debug(
-            "Pixel count (high: %s, low: %s) is: %s",
-            hex(high_byte),
-            hex(low_byte),
-            self._pixels_per_segment,
-        )
-        self._segments = msg[5]
-        _LOGGER.debug(
-            "Segment count (%s) is: %s",
-            hex(msg[5]),
-            self._segments,
-        )
+    def process_ic_response(self, msg: bytes) -> None:
+        """Process an IC (strip config) response."""
+        super().process_ic_response(msg)
         if not self._ic_future.done():
             self._ic_future.set_result(True)
-        return True
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""
