@@ -5,7 +5,7 @@ import colorsys
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
     COLOR_MODE_RGB,
