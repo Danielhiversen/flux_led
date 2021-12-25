@@ -250,6 +250,22 @@ ADDRESSABLE_RGB_NUM_TO_ORDER = {
     5: "BGR",
 }
 ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
+ADDRESSABLE_RGBW_NUM_TO_ORDER = {
+    0: "RGBW",
+    1: "RBGW",
+    2: "GRBW",
+    3: "GBRW",
+    4: "BRGW",
+    5: "BGRW",
+    6: "WRGB",
+    7: "WRBG",
+    8: "WGRB",
+    9: "WGBR",
+    10: "WBRG",
+    11: "WBGR",
+}
+ADDRESSABLE_RGBW_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
+
 
 A1_NUM_TO_PROTOCOL = {
     1: "UCS1903",
@@ -1272,12 +1288,16 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             hex(segments),
             segments,
         )
+        if NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]) == COLOR_MODE_RGBW:
+            wiring = ADDRESSABLE_RGBW_NUM_TO_ORDER.get(msg[7])
+        else:
+            wiring = ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[7])
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=pixels_per_segment,
             segments=segments,
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
-            wiring=ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[7]),
+            wiring=wiring,
             protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
             operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
