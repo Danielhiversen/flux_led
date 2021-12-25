@@ -1031,11 +1031,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
 
     def is_valid_ic_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
-        if len(data) != LEDENET_A1_IC_STATE_RESPONSE_LEN:
-            return False
-        if not data.startswith(bytearray([0x63])):
-            return False
-        return self.is_checksum_correct(data)
+        return (
+            len(data) == LEDENET_IC_STATE_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_A1_IC_CONFIG
+            and self.is_checksum_correct(data)
+        )
 
     @property
     def power_push_updates(self) -> bool:
@@ -1135,11 +1135,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
     def is_valid_ic_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
-        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
-            return False
-        if not data.startswith(bytearray([0x00, 0x63])):
-            return False
-        return self.is_checksum_correct(data)
+        return (
+            len(data) == LEDENET_IC_STATE_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_IC_CONFIG
+            and self.is_checksum_correct(data)
+        )
 
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
