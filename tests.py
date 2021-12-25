@@ -492,8 +492,8 @@ class TestLight(unittest.TestCase):
         assert light.segments is None
         assert light.music_pixels_per_segment is None
         assert light.music_segments is None
-        assert light.strip_protocols is None
-        assert light.strip_protocol is None
+        assert light.ic_types is None
+        assert light.ic_type is None
         assert light.operating_mode == "RGBWW"
         assert light.operating_modes == ["DIM", "CCT", "RGB", "RGBW", "RGBWW"]
         assert light.wiring is None
@@ -790,8 +790,8 @@ class TestLight(unittest.TestCase):
         assert light.segments is None
         assert light.music_pixels_per_segment is None
         assert light.music_segments is None
-        assert light.strip_protocols is None
-        assert light.strip_protocol is None
+        assert light.ic_types is None
+        assert light.ic_type is None
         assert light.operating_mode is None
         assert light.operating_modes is None
         assert light.wiring is None
@@ -1082,8 +1082,8 @@ class TestLight(unittest.TestCase):
         assert light.segments is None
         assert light.music_pixels_per_segment is None
         assert light.music_segments is None
-        assert light.strip_protocols is None
-        assert light.strip_protocol is None
+        assert light.ic_types is None
+        assert light.ic_type is None
         assert light.operating_mode is None
         assert light.operating_modes is None
         assert light.wiring is None
@@ -1159,8 +1159,8 @@ class TestLight(unittest.TestCase):
         assert light.segments is None
         assert light.music_pixels_per_segment is None
         assert light.music_segments is None
-        assert light.strip_protocols is None
-        assert light.strip_protocol is None
+        assert light.ic_types is None
+        assert light.ic_type is None
         assert light.operating_mode is None
         assert light.operating_modes is None
         assert light.wiring is None

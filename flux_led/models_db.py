@@ -182,9 +182,9 @@ class LEDENETDeviceConfigurationOptions:
     segments: bool
     music_pixels: bool
     music_segments: bool
-    protocols: bool
-    num_to_protocol: Dict[int, str]
-    protocol_to_num: Dict[str, int]
+    ic_type: bool
+    num_to_ic_type: Dict[int, str]
+    ic_type_to_num: Dict[str, int]
 
 
 IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
@@ -198,11 +198,10 @@ IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
     segments=False,
     music_pixels=False,
     music_segments=False,
-    protocols=False,
-    num_to_protocol={},
-    protocol_to_num={},
+    ic_type=False,
+    num_to_ic_type={},
+    ic_type_to_num={},
 )
-
 MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
     wiring=False,
     num_to_wiring={},
@@ -214,9 +213,9 @@ MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
     segments=False,
     music_pixels=False,
     music_segments=False,
-    protocols=False,
-    num_to_protocol={},
-    protocol_to_num={},
+    ic_type=False,
+    num_to_ic_type={},
+    ic_type_to_num={},
 )
 RGB_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     wiring=True,
@@ -229,9 +228,9 @@ RGB_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     segments=False,
     music_pixels=False,
     music_segments=False,
-    protocols=False,
-    num_to_protocol={},
-    protocol_to_num={},
+    ic_type=False,
+    num_to_ic_type={},
+    ic_type_to_num={},
 )
 RGBW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     wiring=True,
@@ -244,9 +243,9 @@ RGBW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     segments=False,
     music_pixels=False,
     music_segments=False,
-    protocols=False,
-    num_to_protocol={},
-    protocol_to_num={},
+    ic_type=False,
+    num_to_ic_type={},
+    ic_type_to_num={},
 )
 RGBWW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     wiring=True,
@@ -259,9 +258,9 @@ RGBWW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     segments=False,
     music_pixels=False,
     music_segments=False,
-    protocols=False,
-    num_to_protocol={},
-    protocol_to_num={},
+    ic_type=False,
+    num_to_ic_type={},
+    ic_type_to_num={},
 )
 A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     wiring=True,
@@ -274,9 +273,9 @@ A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     segments=False,
     music_pixels=False,
     music_segments=False,
-    protocols=True,
-    num_to_protocol=A1_NUM_TO_PROTOCOL,
-    protocol_to_num=A1_PROTOCOL_TO_NUM,
+    ic_type=True,
+    num_to_ic_type=A1_NUM_TO_PROTOCOL,
+    ic_type_to_num=A1_PROTOCOL_TO_NUM,
 )
 NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     wiring=True,
@@ -289,9 +288,9 @@ NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     segments=True,
     music_pixels=True,
     music_segments=True,
-    protocols=True,
-    num_to_protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL,
-    protocol_to_num=NEW_ADDRESSABLE_PROTOCOL_TO_NUM,
+    ic_type=True,
+    num_to_ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL,
+    ic_type_to_num=NEW_ADDRESSABLE_PROTOCOL_TO_NUM,
 )
 
 

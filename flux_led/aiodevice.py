@@ -44,6 +44,9 @@ _LOGGER = logging.getLogger(__name__)
 
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
+DEVICE_CONFIG_WAIT_SECONDS = (
+    3.5  # time it takes for the device to respond after a config change
+)
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
 #
@@ -75,7 +78,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
-        self._ic_future: "asyncio.Future[bool]" = asyncio.Future()
+        self._device_config_lock: asyncio.Lock = asyncio.Lock()
+        self._device_config_future: asyncio.Future[bool] = asyncio.Future()
+        self._device_config_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
@@ -97,7 +102,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_determine_protocol()
         assert self._protocol is not None
         if isinstance(self._protocol, ALL_IC_PROTOCOLS):
-            await self._async_addressable_setup()
+            await self._async_device_config_setup()
             return
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
@@ -119,17 +124,21 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.set_unavailable()
             raise RuntimeError("Could not determine power restore state")
 
-    async def _async_addressable_setup(self) -> None:
+    async def _async_device_config_setup(self) -> None:
         """Setup an addressable light."""
         assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
             self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
+        if self._device_config_setup:
+            self._device_config_future = asyncio.Future()
+        self._device_config_setup = True
+
         assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
-            await asyncio.wait_for(self._ic_future, timeout=self.timeout)
+            await asyncio.wait_for(self._device_config_future, timeout=self.timeout)
         except asyncio.TimeoutError:
             self.set_unavailable()
             raise RuntimeError("Could not determine number pixels")
@@ -452,6 +461,58 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._protocol.construct_power_restore_state_change(new_power_restore_state)
         )
 
+    async def async_set_device_config(
+        self,
+        operating_mode: Optional[str] = None,
+        wiring: Optional[str] = None,
+        ic_type: Optional[str] = None,  # ic type
+        pixels_per_segment: Optional[int] = None,  # pixels per segment
+        segments: Optional[int] = None,  # number of segments
+        music_pixels_per_segment: Optional[int] = None,  # music pixels per segment
+        music_segments: Optional[int] = None,  # number of music segments
+    ) -> None:
+        """Set device configuration."""
+        # Since Home Assistant will modify one value at a time,
+        # we need to lock, and then update so the previous value
+        # modification does not get trampled in the event they
+        # change two values before the first one has been updated
+        async with self._device_config_lock:
+            device_config = self.model_data.device_config
+            operating_mode_num = (
+                self.operating_mode_num
+                if operating_mode is None
+                else device_config.operating_mode_to_num[operating_mode]
+            )
+            wiring_num = (
+                self.wiring_num
+                if wiring is None
+                else device_config.wiring_to_num[wiring]
+            )
+            ic_type_num = (
+                self.ic_type_num
+                if ic_type is None
+                else device_config.ic_type_to_num[ic_type]
+            )
+            assert self._protocol is not None
+            assert not isinstance(self._protocol, ProtocolLEDENETOriginal)
+            await self._async_send_msg(
+                self._protocol.construct_device_config(
+                    operating_mode_num,
+                    wiring_num,
+                    ic_type_num,
+                    pixels_per_segment or self.pixels_per_segment,
+                    segments or self.segments,
+                    music_pixels_per_segment or self.music_pixels_per_segment,
+                    music_segments or self.music_segments,
+                )
+            )
+            if isinstance(self._protocol, ALL_IC_PROTOCOLS):
+                await self._async_device_config_resync()
+
+    async def _async_device_config_resync(self) -> None:
+        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
+        await self._async_device_config_setup()
+
     async def _async_connect(self) -> None:
         """Create connection."""
         _, self._aio_protocol = await asyncio.wait_for(
@@ -510,6 +571,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         self.set_available()
         prev_state = self.raw_state
+        changed_state = False
         if self._protocol.is_valid_outer_message(msg):
             msg = self._protocol.extract_inner_message(msg)
 
@@ -517,13 +579,14 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._async_process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
-        elif self._protocol.is_valid_ic_response(msg):
-            self.process_ic_response(msg)
+        elif self._protocol.is_valid_device_config_response(msg):
+            self.process_device_config_response(msg)
+            changed_state = True
         elif self._protocol.is_valid_power_restore_state_response(msg):
             self.process_power_restore_state_response(msg)
         else:
             return
-        if self.raw_state == prev_state:
+        if not changed_state and self.raw_state == prev_state:
             return
         self._process_futures_and_callbacks()
 
@@ -558,11 +621,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self._power_restore_future.done():
             self._power_restore_future.set_result(True)
 
-    def process_ic_response(self, msg: bytes) -> None:
+    def process_device_config_response(self, msg: bytes) -> None:
         """Process an IC (strip config) response."""
-        super().process_ic_response(msg)
-        if not self._ic_future.done():
-            self._ic_future.set_result(True)
+        super().process_device_config_response(msg)
+        if not self._device_config_future.done():
+            self._device_config_future.set_result(True)
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""

@@ -10,6 +10,12 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 from .const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
+    MUSIC_PIXELS_MAX,
+    MUSIC_PIXELS_PER_SEGMENT_MAX,
+    MUSIC_SEGMENTS_MAX,
+    PIXELS_MAX,
+    PIXELS_PER_SEGMENT_MAX,
+    SEGMENTS_MAX,
     TRANSITION_GRADUAL,
     TRANSITION_JUMP,
     TRANSITION_STROBE,
@@ -38,7 +44,9 @@ class LEDENETAddressableDeviceConfiguration:
     music_segments: int  # number of music segments
     wirings: List[str]  # available wirings in the current mode
     wiring: Optional[str]  # RGB/BRG/GBR etc
-    protocol: Optional[str]  # WS2812B UCS.. etc
+    wiring_num: Optional[int]  # RGB/BRG/GBR number
+    ic_type: Optional[str]  # WS2812B UCS.. etc
+    ic_type_num: Optional[int]  # WS2812B UCS.. number etc
     operating_mode: Optional[str]  # RGB, RGBW
 
 
@@ -80,8 +88,8 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
-LEDENET_A1_IC_STATE_RESPONSE_LEN = 12
-LEDENET_IC_STATE_RESPONSE_LEN = 11
+LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
+LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -93,8 +101,8 @@ MSG_STATE = "state"
 MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
-MSG_IC_CONFIG = "ic_config"
-MSG_A1_IC_CONFIG = "a1_ic_config"
+MSG_DEVICE_CONFIG = "device_config"
+MSG_A1_DEVICE_CONFIG = "a1_device_config"
 
 
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
@@ -109,10 +117,10 @@ MSG_UNIQUE_START = {
     (0x78,): MSG_ORIGINAL_POWER_STATE,
     (0x66,): MSG_ORIGINAL_STATE,
     (0x81,): MSG_STATE,
-    (0x00, 0x63): MSG_IC_CONFIG,
-    (0xF0, 0x63): MSG_IC_CONFIG,
-    (0x0F, 0x63): MSG_IC_CONFIG,
-    (0x63,): MSG_A1_IC_CONFIG,
+    (0x00, 0x63): MSG_DEVICE_CONFIG,
+    (0xF0, 0x63): MSG_DEVICE_CONFIG,
+    (0x0F, 0x63): MSG_DEVICE_CONFIG,
+    (0x63,): MSG_A1_DEVICE_CONFIG,
     (0x72,): MSG_MUSIC_MODE_STATE,
 }
 
@@ -124,8 +132,8 @@ MSG_LENGTHS = {
     MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
-    MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
-    MSG_A1_IC_CONFIG: LEDENET_A1_IC_STATE_RESPONSE_LEN,
+    MSG_DEVICE_CONFIG: LEDENET_DEVICE_CONFIG_RESPONSE_LEN,
+    MSG_A1_DEVICE_CONFIG: LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN,
 }
 
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
@@ -379,7 +387,7 @@ class ProtocolBase:
         """Extract the inner message from a wrapped message."""
         return msg[10:-1]
 
-    def is_valid_ic_response(self, data: bytes) -> bool:
+    def is_valid_device_config_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return False
 
@@ -823,6 +831,51 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         # 0x01 - Gradual
         return [self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F]))]
 
+    def construct_device_config(
+        self,
+        operating_mode: Optional[int],
+        wiring: Optional[int],
+        ic_type: Optional[int],  # ic type
+        pixels_per_segment: Optional[int],  # pixels per segment
+        segments: Optional[int],  # number of segments
+        music_pixels_per_segment: Optional[int],  # music pixels per segment
+        music_segments: Optional[int],  # number of music segments
+    ) -> bytearray:
+        """The bytes to send to change device config.
+
+        RGBW 0x06
+        62 06 02 0f 79 - RGB/W GRB W
+        62 04 02 0f 77 - RGB&W GRB W
+        62 04 01 0f 77 - RGB&W RGB W
+        62 04 03 0f 77 - RGB&W BRG W
+
+        RGBCW 0x07
+
+        62 05 0f 0f 85 - RGB&CCT / WCBRG
+        62 07 0f 0f 87 - RGB/CCT / WCBRG
+        62 07 01 0f 79 - RGB/CCT / RGBCW
+        62 07 02 0f 7a - RGB/CCT / GRBCW
+        62 07 0c 0f 84 - RGB/CCT / CBRGW
+
+        RGB 0x33 / 0x08
+
+        62 00 01 0f 73 - RGB
+        62 00 02 0f 73 - GRB
+        62 00 03 0f 73 - BRG
+
+        0x25
+        62 01 0f 72 - DIM
+        62 02 0f 73 - CCT
+        62 03 0f 74 - RGB
+        62 04 0f 74 - RGB&W
+        62 05 0f 74 - RGB&CCT
+        """
+        msg = bytearray([0x62, operating_mode or 0x00])
+        if wiring:
+            msg.append(wiring)
+        msg.append(0x0F)
+        return self.construct_message(msg)
+
 
 class ProtocolLEDENET8ByteAutoOn(ProtocolLEDENET8Byte):
     """Protocol that uses 8 bytes, and turns on by changing levels or effects."""
@@ -1032,11 +1085,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
 
-    def is_valid_ic_response(self, data: bytes) -> bool:
+    def is_valid_device_config_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return (
-            len(data) == LEDENET_A1_IC_STATE_RESPONSE_LEN
-            and _message_type_from_start_of_msg(data) == MSG_A1_IC_CONFIG
+            len(data) == LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_A1_DEVICE_CONFIG
             and self.is_checksum_correct(data)
         )
 
@@ -1103,9 +1156,61 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=0,
             music_segments=0,
             wirings=list(ADDRESSABLE_RGB_WIRING_TO_NUM),
+            wiring_num=msg[10],
             wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[10]),
-            protocol=A1_NUM_TO_PROTOCOL.get(msg[3]),
+            ic_type=A1_NUM_TO_PROTOCOL.get(msg[3]),
+            ic_type_num=msg[3],
             operating_mode=A1_NUM_TO_OPERATING_MODE.get(msg[3]),
+        )
+
+    def construct_device_config(
+        self,
+        operating_mode: Optional[int],
+        wiring: Optional[int],
+        ic_type: Optional[int],  # ic type
+        pixels_per_segment: Optional[int],  # pixels per segment
+        segments: Optional[int],  # number of segments
+        music_pixels_per_segment: Optional[int],  # music pixels per segment
+        music_segments: Optional[int],  # number of music segments
+    ) -> bytearray:
+        """The bytes to send to change device config.
+        pos  0  1  2  3  4  5  6  7  8  9 10 11 12
+            62 04 00 04 00 00 00 00 00 00 02 f0 5c <- checksum
+             |  |  |  |  |  |  |  |  |  |  |  |
+             |  |  |  |  |  |  |  |  |  |  |  always 0xf0
+             |  |  |  |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+             |  |  |  |  |  |  |  |  |  ?? always 00
+             |  |  |  |  |  |  |  |  ?? always 00
+             |  |  |  |  |  |  |  n?? always 00
+             |  |  |  |  |  |  ?? always 00
+             |  |  |  |  |  ?? always 00
+             |  |  |  |  ?? always 00
+             |  |  |  ic type (01=UCS1903, 02=SM16703, 03=WS2811, 04=WS2812B, 05=SK6812, 06=INK1003, 07=WS2801, 08=LB1914)
+             |  |  num pixels (16 bit, low byte)
+             |  num pixels (16 bit, high byte)
+             msg head
+
+        """
+        assert ic_type is not None
+        assert pixels_per_segment is not None
+        assert wiring is not None
+        return self.construct_message(
+            bytearray(
+                [
+                    0x62,
+                    pixels_per_segment >> 8,
+                    pixels_per_segment & 0xFF,
+                    ic_type,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    wiring,
+                    0xF0,
+                ]
+            )
         )
 
 
@@ -1137,11 +1242,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         """If True the device must be turned on before setting level/patterns/modes."""
         return False
 
-    def is_valid_ic_response(self, data: bytes) -> bool:
+    def is_valid_device_config_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return (
-            len(data) == LEDENET_IC_STATE_RESPONSE_LEN
-            and _message_type_from_start_of_msg(data) == MSG_IC_CONFIG
+            len(data) == LEDENET_DEVICE_CONFIG_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_DEVICE_CONFIG
             and self.is_checksum_correct(data)
         )
 
@@ -1302,9 +1407,82 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
             wirings=list(wirings.values()),
+            wiring_num=msg[7],
             wiring=wirings.get(msg[7]),
-            protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            ic_type_num=msg[6],
             operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
+        )
+
+    def construct_device_config(
+        self,
+        operating_mode: Optional[int],
+        wiring: Optional[int],
+        ic_type: Optional[int],  # ic type
+        pixels_per_segment: Optional[int],  # pixels per segment
+        segments: Optional[int],  # number of segments
+        music_pixels_per_segment: Optional[int],  # music pixels per segment
+        music_segments: Optional[int],  # number of music segments
+    ) -> bytearray:
+        """The bytes to send to change device config.
+        pos  0  1  2  3  4  5  6  7  8  9 10
+            62 01 2c 00 06 01 04 32 01 0f dc
+             |  |  |  |  |  |  |  |  |  |  |
+             |  |  |  |  |  |  |  |  |  |  |
+             |  |  |  |  |  |  |  |  |  |  checksum
+             |  |  |  |  |  |  |  |  |  ?? always 0x0f
+             |  |  |  |  |  |  |  |  segments (music mode)
+             |  |  |  |  |  |  |  num pixels (music mode)
+             |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+             |  |  |  |  |  ic type (01=WS2812B, 02=SM16703, 03=SM16704, 04=WS2811, 05=UCS1903, 06=SK6812, 07=SK6812RGBW, 08=INK1003, 09=UCS2904B)
+             |  |  |  |  segments
+             |  |  |  ?? always 00
+             |  |  num pixels (16 bit, low byte)
+             |  num pixels (16 bit, high byte)
+             msg head
+
+
+        """
+        assert ic_type is not None
+        assert pixels_per_segment is not None
+        assert segments is not None
+        assert music_pixels_per_segment is not None
+        assert music_segments is not None
+        assert wiring is not None
+        pixels_per_segment = max(1, min(pixels_per_segment, PIXELS_PER_SEGMENT_MAX))
+        segments = max(1, min(segments, SEGMENTS_MAX))
+        if pixels_per_segment * segments > PIXELS_MAX:
+            segments = int(PIXELS_MAX / pixels_per_segment)
+        music_pixels_per_segment = max(
+            1, min(music_pixels_per_segment, MUSIC_PIXELS_PER_SEGMENT_MAX)
+        )
+        music_segments = max(1, min(music_segments, MUSIC_SEGMENTS_MAX))
+        if music_pixels_per_segment * music_segments > MUSIC_PIXELS_MAX:
+            music_segments = int(MUSIC_PIXELS_MAX / music_pixels_per_segment)
+        if (
+            pixels_per_segment <= MUSIC_PIXELS_PER_SEGMENT_MAX
+            and segments <= MUSIC_SEGMENTS_MAX
+            and pixels_per_segment * segments <= MUSIC_PIXELS_MAX
+        ):
+            # If the pixels_per_segment and segments can accomate music
+            # mode then we sync them
+            music_pixels_per_segment = pixels_per_segment
+            music_segments = segments
+        return self.construct_message(
+            bytearray(
+                [
+                    0x62,
+                    pixels_per_segment >> 8,
+                    pixels_per_segment & 0xFF,
+                    0x00,
+                    segments,
+                    ic_type,
+                    wiring,
+                    music_pixels_per_segment,
+                    music_segments,
+                    0xF0,
+                ]
+            )
         )
 
 
@@ -1515,6 +1693,30 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         msg.extend(bytearray([effect.value, speed]))
         msg.append(0x00)
         return self.construct_wrapped_message(msg)
+
+    def construct_device_config(
+        self,
+        operating_mode: Optional[int],
+        wiring: Optional[int],
+        ic_type: Optional[int],  # ic type
+        pixels_per_segment: Optional[int],  # pixels per segment
+        segments: Optional[int],  # number of segments
+        music_pixels_per_segment: Optional[int],  # music pixels per segment
+        music_segments: Optional[int],  # number of music segments
+    ) -> bytearray:
+        """The bytes to send to change device config."""
+        return self.construct_wrapped_message(
+            super().construct_device_config(
+                operating_mode,
+                wiring,
+                ic_type,
+                pixels_per_segment,
+                segments,
+                music_pixels_per_segment,
+                segments,
+            ),
+            inner_pre_constructed=True,
+        )
 
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
@@ -1762,7 +1964,9 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=0,
             music_segments=0,
             wirings=[],
+            wiring_num=None,
             wiring=None,
-            protocol=None,
+            ic_type=None,
+            ic_type_num=None,
             operating_mode=COLOR_MODE_RGB,
         )
