@@ -11,7 +11,7 @@
 
 ### Magic Home / flux_led
 
-This is a utility for controlling stand-alone Magic Home devices.
+This is a utility for controlling stand-alone Magic Home devices manufactured by [Zengge](http://www.zengge.com/sy).
 The protocol was reverse-engineered by studying packet captures between a 
 bulb and the controlling "Magic Home" mobile app.  The code here dealing 
 with the network protocol is littered with magic numbers, and ain't so pretty.
@@ -281,8 +281,7 @@ protocol.py -> contains communication protocol to communicate with differnt devi
 scanner.py -> contins scanner to scan network and identify devices on network.\
 sock.py -> contains code to communicate on network.\
 timer.py -> contains code to support setting timers on devices and getting timer information from devices.\
-utils.py -> contains helpers to calculate differnt parameters such as color, cct, brightness etc.\
-
+utils.py -> contains helpers to calculate differnt parameters such as color, cct, brightness etc.
 
 [code-coverage]: https://codecov.io/gh/Danielhiversen/flux_led
 [code-cover-shield]: https://codecov.io/gh/Danielhiversen/flux_led/branch/master/graph/badge.svg
