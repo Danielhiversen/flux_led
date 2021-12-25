@@ -545,10 +545,23 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await task
     assert light.model_num == 0x33
     assert light.version_num == 4
+    assert light.operating_mode is None
     assert light.dimmable_effects is False
     assert light.requires_turn_on is True
     assert light._protocol.power_push_updates is False
     assert light._protocol.state_push_updates is False
+
+    transport.reset_mock()
+    await light.async_set_device_config()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"b\x01\x0fr"
+
+    transport.reset_mock()
+    await light.async_set_device_config(wiring="BRG")
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"b\x01\x03\x0fu"
 
     transport.reset_mock()
     with pytest.raises(ValueError):
@@ -661,7 +674,7 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.segments == 1
     assert light.music_pixels_per_segment == 144
     assert light.music_segments == 1
-    assert light.strip_protocols == [
+    assert light.ic_types == [
         "WS2812B",
         "SM16703",
         "SM16704",
@@ -672,7 +685,7 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         "INK1003",
         "UCS2904B",
     ]
-    assert light.strip_protocol == "SK6812RGBW"
+    assert light.ic_type == "SK6812RGBW"
     assert light.operating_mode is None
     assert light.operating_modes is None
     assert light.wiring == "WGRB"
@@ -718,7 +731,7 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.segments == 0
     assert light.music_pixels_per_segment == 0
     assert light.music_segments == 0
-    assert light.strip_protocols == [
+    assert light.ic_types == [
         "UCS1903",
         "SM16703",
         "WS2811",
@@ -728,7 +741,7 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         "WS2801",
         "LB1914",
     ]
-    assert light.strip_protocol == "WS2812B"
+    assert light.ic_type == "WS2812B"
     assert light.operating_mode is None
     assert light.operating_modes is None
     assert light.wiring == "GRB"
@@ -736,6 +749,26 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.model_num == 0xA1
     assert light.dimmable_effects is False
     assert light.requires_turn_on is False
+
+    transport.reset_mock()
+    await light.async_set_device_config()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"b\x002\x04\x00\x00\x00\x00\x00\x00\x02\xf0\x8a"
+    )
+
+    transport.reset_mock()
+    await light.async_set_device_config(
+        ic_type="SK6812", wiring="GRB", pixels_per_segment=300
+    )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"b\x01,\x05\x00\x00\x00\x00\x00\x00\x02\xf0\x86"
+    )
 
 
 @pytest.mark.asyncio
@@ -759,7 +792,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.segments == 2
     assert light.music_pixels_per_segment == 25
     assert light.music_segments == 2
-    assert light.strip_protocol == "WS2811"
+    assert light.ic_type == "WS2811"
     assert light.operating_mode is None
     assert light.operating_modes is None
     assert light.wiring == "GBR"
@@ -767,6 +800,24 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.model_num == 0xA2
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
+
+    transport.reset_mock()
+    await light.async_set_device_config()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0] == b"b\x00\x19\x00\x02\x04\xa0\x00\x19\x02\xf0,"
+    )
+
+    transport.reset_mock()
+    await light.async_set_device_config(
+        ic_type="SK6812", wiring="GRB", pixels_per_segment=300
+    )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0] == b"b\x01,\x00\x02\x06\x02\x00\x19\x02\xf0\xa4"
+    )
 
 
 @pytest.mark.asyncio
@@ -792,7 +843,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert light.segments == 2
     assert light.music_pixels_per_segment == 25
     assert light.music_segments == 2
-    assert light.strip_protocols == [
+    assert light.ic_types == [
         "WS2812B",
         "SM16703",
         "SM16704",
@@ -803,7 +854,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
         "INK1003",
         "UCS2904B",
     ]
-    assert light.strip_protocol == "WS2811"
+    assert light.ic_type == "WS2811"
     assert light.operating_mode is None
     assert light.operating_modes is None
     assert light.wiring == "GBR"
@@ -813,17 +864,42 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert light.requires_turn_on is False
 
     transport.reset_mock()
+    await light.async_set_device_config()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0cb\x00\x19\x00\x02\x04\xa0\x00\x19\x02\xf0,-"
+    )
+
+    transport.reset_mock()
+    await light.async_set_device_config(
+        ic_type="SK6812",
+        wiring="GRB",
+        pixels_per_segment=300,
+        segments=2,
+        music_pixels_per_segment=300,
+        music_segments=2,
+    )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0cb\x01,\x00\x02\x06\x02\x01,\x02\xf0\xb8F"
+    )
+
+    transport.reset_mock()
     await light.async_set_zones(
         [(255, 0, 0), (0, 0, 255)], 100, MultiColorEffects.STROBE
     )
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == bytearray(
-        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00TY\x00T\xff\x00\x00"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00TY\x00T\xff\x00\x00"
         b"\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
         b"\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
-        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O"
+        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19Q"
     )
 
     with pytest.raises(ValueError):
@@ -876,8 +952,8 @@ async def test_0x06_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.segments is None
     assert light.music_pixels_per_segment is None
     assert light.music_segments is None
-    assert light.strip_protocols is None
-    assert light.strip_protocol is None
+    assert light.ic_types is None
+    assert light.ic_type is None
     assert light.operating_mode == "RGB&W"
     assert light.operating_modes == ["RGB&W", "RGB/W"]
     assert light.wiring == "GRBW"
@@ -903,8 +979,8 @@ async def test_0x07_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.segments is None
     assert light.music_pixels_per_segment is None
     assert light.music_segments is None
-    assert light.strip_protocols is None
-    assert light.strip_protocol is None
+    assert light.ic_types is None
+    assert light.ic_type is None
     assert light.operating_mode == "RGB/CCT"
     assert light.operating_modes == ["RGB&CCT", "RGB/CCT"]
     assert light.wiring == "CBRGW"
@@ -953,10 +1029,10 @@ async def test_async_set_music_mode_0x08(
         assert light.segments is None
         assert light.music_pixels_per_segment is None
         assert light.music_segments is None
-        assert light.strip_protocols is None
-        assert light.strip_protocol is None
+        assert light.ic_types is None
+        assert light.ic_type is None
         assert light.operating_mode is None
-        assert light.operating_modes is None
+        assert light.operating_modes == ["RGB"]
         assert light.wiring is None  # How can we get this in music mode?
         assert light.wirings == ["RGB", "GRB", "BRG"]
 

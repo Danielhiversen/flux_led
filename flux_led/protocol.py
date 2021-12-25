@@ -38,7 +38,9 @@ class LEDENETAddressableDeviceConfiguration:
     music_segments: int  # number of music segments
     wirings: List[str]  # available wirings in the current mode
     wiring: Optional[str]  # RGB/BRG/GBR etc
-    protocol: Optional[str]  # WS2812B UCS.. etc
+    wiring_num: Optional[int]  # RGB/BRG/GBR number
+    ic_type: Optional[str]  # WS2812B UCS.. etc
+    ic_type_num: Optional[int]  # WS2812B UCS.. number etc
     operating_mode: Optional[str]  # RGB, RGBW
 
 
@@ -217,6 +219,8 @@ class LEDENETRawState(NamedTuple):
 #
 RGB_NUM_TO_WIRING = {1: "RGB", 2: "GRB", 3: "BRG"}
 RGB_WIRING_TO_NUM = {v: k for k, v in RGB_NUM_TO_WIRING.items()}
+RGB_NUM_TO_MODE = {0: "RGB"}
+RGB_MODE_TO_NUM = {v: k for k, v in RGB_NUM_TO_MODE.items()}
 RGBW_NUM_TO_WIRING = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
 RGBW_WIRING_TO_NUM = {v: k for k, v in RGBW_NUM_TO_WIRING.items()}
 RGBW_NUM_TO_MODE = {4: "RGB&W", 6: "RGB/W"}
@@ -1149,8 +1153,10 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=0,
             music_segments=0,
             wirings=list(ADDRESSABLE_RGB_WIRING_TO_NUM),
+            wiring_num=msg[10],
             wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[10]),
-            protocol=A1_NUM_TO_PROTOCOL.get(msg[3]),
+            ic_type=A1_NUM_TO_PROTOCOL.get(msg[3]),
+            ic_type_num=msg[3],
             operating_mode=A1_NUM_TO_OPERATING_MODE.get(msg[3]),
         )
 
@@ -1398,8 +1404,10 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
             wirings=list(wirings.values()),
+            wiring_num=msg[10],
             wiring=wirings.get(msg[7]),
-            protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            ic_type_num=msg[6],
             operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
 
@@ -1935,7 +1943,9 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=0,
             music_segments=0,
             wirings=[],
+            wiring_num=None,
             wiring=None,
-            protocol=None,
+            ic_type=None,
+            ic_type_num=None,
             operating_mode=COLOR_MODE_RGB,
         )

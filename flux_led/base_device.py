@@ -381,35 +381,51 @@ class LEDENETDevice:
     @property
     def wiring(self) -> Optional[str]:
         """Return the sort order as a string."""
-        if not self.model_data.device_config.wiring:
+        device_config = self.model_data.device_config
+        if not device_config.wiring:
             return None
         if self._device_config:
             return self._device_config.wiring
         assert self.raw_state is not None
-        return self.model_data.device_config.num_to_wiring.get(
-            int((self.raw_state.mode & 0xF0) / 16)
-        )
+        return device_config.num_to_wiring.get(int((self.raw_state.mode & 0xF0) / 16))
+
+    @property
+    def wiring_num(self) -> Optional[int]:
+        """Return the wiring number."""
+        if not self.model_data.device_config.wiring:
+            return None
+        if self._device_config:
+            return self._device_config.wiring_num
+        assert self.raw_state is not None
+        return int((self.raw_state.mode & 0xF0) / 16)
 
     @property
     def wirings(self) -> Optional[List[str]]:
         """Return available wirings for the device."""
-        if not self.model_data.device_config.wiring:
+        device_config = self.model_data.device_config
+        if not device_config.wiring:
             return None
         if self._device_config:
             return list(self._device_config.wirings)
-        return list(self.model_data.device_config.wiring_to_num)
+        return list(device_config.wiring_to_num)
 
     @property
     def operating_mode(self) -> Optional[str]:
         """Return the strip mode as a string."""
-        if not self.model_data.device_config.operating_modes:
+        device_config = self.model_data.device_config
+        if not device_config.operating_modes:
             return None
         if self._device_config:
             return self._device_config.operating_mode
         assert self.raw_state is not None
-        return self.model_data.device_config.num_to_operating_mode.get(
-            self.raw_state.mode & 0x0F
-        )
+        return device_config.num_to_operating_mode.get(self.operating_mode_num)
+
+    @property
+    def operating_mode_num(self) -> Optional[int]:
+        """Return the strip mode as a string."""
+        if not self.model_data.device_config.operating_modes:
+            return None
+        return self.raw_state.mode & 0x0F
 
     @property
     def operating_modes(self) -> Optional[List[str]]:
@@ -419,19 +435,27 @@ class LEDENETDevice:
         return list(self.model_data.device_config.operating_mode_to_num)
 
     @property
-    def strip_protocol(self) -> Optional[str]:
-        """Return the strip protocol as a string."""
-        if not self.model_data.device_config.protocols:
+    def ic_type(self) -> Optional[str]:
+        """Return the strip ictype as a string."""
+        if not self.model_data.device_config.ic_type:
             return None
         assert self._device_config is not None
-        return self._device_config.protocol
+        return self._device_config.ic_type
 
     @property
-    def strip_protocols(self) -> Optional[List[str]]:
-        """Return the strip protocols."""
-        if not self.model_data.device_config.protocols:
+    def ic_type_num(self) -> Optional[str]:
+        """Return the strip ictype as an int."""
+        if not self.model_data.device_config.ic_type:
             return None
-        return list(self.model_data.device_config.protocol_to_num)
+        assert self._device_config is not None
+        return self._device_config.ic_type_num
+
+    @property
+    def ic_types(self) -> Optional[List[str]]:
+        """Return the ic types."""
+        if not self.model_data.device_config.ic_type:
+            return None
+        return list(self.model_data.device_config.ic_type_to_num)
 
     @property
     def color_mode(self) -> Optional[str]:

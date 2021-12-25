@@ -452,6 +452,42 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._protocol.construct_power_restore_state_change(new_power_restore_state)
         )
 
+    async def async_set_device_config(
+        self,
+        operating_mode: Optional[str] = None,
+        wiring: Optional[str] = None,
+        ic_type: Optional[str] = None,  # ic type
+        pixels_per_segment: Optional[int] = None,  # pixels per segment
+        segments: Optional[int] = None,  # number of segments
+        music_pixels_per_segment: Optional[int] = None,  # music pixels per segment
+        music_segments: Optional[int] = None,  # number of music segments
+    ) -> None:
+        device_config = self.model_data.device_config
+        if operating_mode is None:
+            operating_mode_num = self.operating_mode_num
+        else:
+            operating_mode_num = device_config.operating_mode_to_num[operating_mode]
+        if wiring is None:
+            wiring_num = self.wiring_num
+        else:
+            wiring_num = device_config.wiring_to_num[wiring]
+        if ic_type is None:
+            ic_type_num = self.ic_type_num
+        else:
+            ic_type_num = device_config.ic_type_to_num[ic_type]
+        assert self._protocol is not None
+        await self._async_send_msg(
+            self._protocol.construct_device_config(
+                operating_mode_num,
+                wiring_num,
+                ic_type_num,
+                pixels_per_segment or self.pixels_per_segment,
+                segments or self.segments,
+                music_pixels_per_segment or self.music_pixels_per_segment,
+                music_segments or self.music_segments,
+            )
+        )
+
     async def _async_connect(self) -> None:
         """Create connection."""
         _, self._aio_protocol = await asyncio.wait_for(
