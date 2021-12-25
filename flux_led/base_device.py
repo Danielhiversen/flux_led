@@ -353,7 +353,7 @@ class LEDENETDevice:
             return self._device_config.wiring
         assert self.raw_state is not None
         return self.model_data.device_config.num_to_order.get(
-            (self.raw_state.mode & 0xF0) / 16
+            int((self.raw_state.mode & 0xF0) / 16)
         )
 
     @property
