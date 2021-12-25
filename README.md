@@ -9,9 +9,9 @@
 
 
 
-### led_flux.py
+### Magic Home / flux_led
 
-This is a utility for controlling stand-alone Flux WiFi LED light bulbs.
+This is a utility for controlling stand-alone Magic Home devices.
 The protocol was reverse-engineered by studying packet captures between a 
 bulb and the controlling "Magic Home" mobile app.  The code here dealing 
 with the network protocol is littered with magic numbers, and ain't so pretty.
@@ -40,6 +40,7 @@ in PyQt, Kivy, or some other framework.
 * Sync clock (sync version only)
 * Music Mode for devices with a built-in microphone (asyncio version only)
 * Remote access administration (asyncio version only)
+* Device configuration including wiring order, ic type, pixels, etc (asyncio version only)
 	
 ##### Some missing pieces:
 * Initial administration to set up WiFi SSID and passphrase/key.
@@ -202,6 +203,74 @@ The following models have not been tested with library but may work.
 | 0xE1  | Ceiling Light               |                                 |
 | 0xE2  | Ceiling Light Assist        |                                 |
 | 0xA4  | Addressable v4              |                                 |
+
+### Known Vendors
+
+- Aislan
+- [Allkeys](http://allkeystech.com/)
+- Apobob
+- [Arilux](https://www.ariluxworldwide.com/)
+- Aubric
+- BERENNIS
+- BHGY
+- [Brizled](https://www.brizled.com/)
+- Bunpeon
+- [Chichin](https://chichinlighting.com/)
+- Comoyda
+- dalattin
+- [DALS RGBW / Armacost Lighting / MyLED](https://www.armacostlighting.com/)
+- DARKPROOF
+- [Daybetter](https://www.daybetter.com/)
+- deerdance
+- DIAMOND
+- [Diode Dynamics](https://www.diodedynamics.com/)
+- [Flux LED](https://www.fluxsmartlighting.com/)
+- [FVTLED](https://fvtled.com/)
+- [GEV LIG](https://www.gev.de/)
+- GEYUEYA Home
+- GIDEALED
+- [GIDERWEL](https://giderwel.com/)
+- GMK
+- Goldwin
+- Hakkatronics
+- [HaoDeng](http://www.zengge.com/appkzd)
+- [Heissner](https://www.heissner.de/)
+- HDDFL
+- [illume RGBW](https://dals.com/illume/)
+- [Illumination FX](https://www.illumination-fx.com/)
+- INDARUN
+- iNextStation
+- [Koopower](https://www.koopower.com/)
+- [Lallumer](https://www.lapuretes.cn/)
+- LEDENET
+- [LiteWRX](https://litewrx.com/)
+- Lytworx
+- Magic Ambient
+- [Magic Home](http://www.zengge.com/appkzd)
+- [Magic Hue](http://www.magichue.com/)
+- [Magic Light](https://www.magiclightbulbs.com/)
+- Miheal
+- Mowelai
+- Nexlux
+- OBSESS
+- [Offdarks](http://offdarks.net)
+- PH LED
+- PHOPOLLO
+- [Pin Stadium Pinball Lights](https://pinstadium.com/)
+- POV Lamp
+- [PROTEAM Europe Pool Lights](https://proteam-me.com/)
+- [Rimikon](https://www.rimikon.com/)
+- SMFX
+- [Sumaote](https://fvtled.com/)
+- [Superhome](https://superhome.com.cy/)
+- [SuperlightingLED](https://www.superlightingled.com/)
+- Svipear
+- Tommox
+- Vanance
+- Yetaida
+- YHW
+- [Zengge](http://www.zengge.com/sy)
+- Zombber
 
 ### File Structure 
 
