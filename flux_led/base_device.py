@@ -638,15 +638,7 @@ class LEDENETDevice:
 
     def process_device_config_response(self, msg: bytes) -> None:
         """Process an IC (strip config) response."""
-        assert isinstance(
-            self._protocol,
-            (
-                ProtocolLEDENETAddressableChristmas,
-                ProtocolLEDENETAddressableA1,
-                ProtocolLEDENETAddressableA2,
-                ProtocolLEDENETAddressableA3,
-            ),
-        )
+        assert isinstance(self._protocol, ALL_IC_PROTOCOLS)
         self._device_config = self._protocol.parse_strip_setting(msg)
         _LOGGER.debug("%s: device_config: %s", self.ipaddr, self._device_config)
 
