@@ -251,16 +251,6 @@ ADDRESSABLE_RGB_NUM_TO_ORDER = {
 }
 ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
 
-ADDRESSABLE_RGBW_NUM_TO_ORDER = {
-    0: "RGBW",
-    1: "RBGW",
-    2: "GRBW",
-    4: "GBRW",
-    5: "BRGW",
-    6: "BGRW",
-}
-ADDRESSABLE_RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
-
 A1_NUM_TO_PROTOCOL = {
     1: "UCS1903",
     2: "SM16703",
