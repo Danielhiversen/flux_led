@@ -102,7 +102,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_determine_protocol()
         assert self._protocol is not None
         if isinstance(self._protocol, ALL_IC_PROTOCOLS):
-            await self._async_addressable_setup()
+            await self._async_device_config_setup()
             return
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
@@ -124,7 +124,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.set_unavailable()
             raise RuntimeError("Could not determine power restore state")
 
-    async def _async_addressable_setup(self) -> None:
+    async def _async_device_config_setup(self) -> None:
         """Setup an addressable light."""
         assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETAddressableChristmas):
@@ -502,11 +502,11 @@ class AIOWifiLedBulb(LEDENETDevice):
                 )
             )
             if isinstance(self._protocol, ALL_IC_PROTOCOLS):
-                await self._async_addressable_resync()
+                await self._async_device_config_resync()
 
-    async def _async_addressable_resync(self) -> None:
+    async def _async_device_config_resync(self) -> None:
         await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
-        await self._async_addressable_setup()
+        await self._async_device_config_setup()
 
     async def _async_connect(self) -> None:
         """Create connection."""
