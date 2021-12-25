@@ -858,6 +858,76 @@ async def test_async_set_zones_unsupported_device(
 
 
 @pytest.mark.asyncio
+async def test_0x06_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can get wiring for an 0x06."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x06\x24\x61\x24\x01\x00\xFF\x00\x00\x03\x00\xF0\x23"
+    )
+    await task
+    assert light.model_num == 0x06
+    assert light.pixels_per_segment is None
+    assert light.segments is None
+    assert light.music_pixels_per_segment is None
+    assert light.music_segments is None
+    assert light.strip_protocols is None
+    assert light.strip_protocol is None
+    assert light.operating_mode == "RGB&W"
+    assert light.operating_modes == ["RGB&W", "RGB/W"]
+    assert light.wiring == "GRBW"
+    assert light.wirings == ["RGBW", "GRBW", "BRGW"]
+
+
+@pytest.mark.asyncio
+async def test_0x07_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can get wiring for an 0x07."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x07\x24\x61\xC7\x01\x00\x00\x00\x00\x02\xFF\x0F\xE5"
+    )
+    await task
+    assert light.model_num == 0x07
+    assert light.pixels_per_segment is None
+    assert light.segments is None
+    assert light.music_pixels_per_segment is None
+    assert light.music_segments is None
+    assert light.strip_protocols is None
+    assert light.strip_protocol is None
+    assert light.operating_mode == "RGB/CCT"
+    assert light.operating_modes == ["RGB&CCT", "RGB/CCT"]
+    assert light.wiring == "CBRGW"
+    assert light.wirings == [
+        "RGBCW",
+        "GRBCW",
+        "BRGCW",
+        "RGBWC",
+        "GRBWC",
+        "BRGWC",
+        "WRGBC",
+        "WGRBC",
+        "WBRGC",
+        "CRGBW",
+        "CBRBW",
+        "CBRGW",
+        "WCRGB",
+        "WCGRB",
+        "WCBRG",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_async_set_music_mode_0x08(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
@@ -879,6 +949,16 @@ async def test_async_set_music_mode_0x08(
         assert light.effect == EFFECT_MUSIC
         assert light.microphone is True
         assert light.protocol == PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS
+        assert light.pixels_per_segment is None
+        assert light.segments is None
+        assert light.music_pixels_per_segment is None
+        assert light.music_segments is None
+        assert light.strip_protocols is None
+        assert light.strip_protocol is None
+        assert light.operating_mode is None
+        assert light.operating_modes is None
+        assert light.wiring is None  # How can we get this in music mode?
+        assert light.wirings == ["RGB", "GRB", "BRG"]
 
         transport.reset_mock()
         await light.async_set_music_mode()

@@ -488,6 +488,16 @@ class TestLight(unittest.TestCase):
                 "random",
             ],
         )
+        assert light.pixels_per_segment is None
+        assert light.segments is None
+        assert light.music_pixels_per_segment is None
+        assert light.music_segments is None
+        assert light.strip_protocols is None
+        assert light.strip_protocol is None
+        assert light.operating_mode == "RGBWW"
+        assert light.operating_modes == ["DIM", "CCT", "RGB", "RGBW", "RGBWW"]
+        assert light.wiring is None
+        assert light.wirings is None
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
@@ -776,6 +786,16 @@ class TestLight(unittest.TestCase):
                 "random",
             ],
         )
+        assert light.pixels_per_segment is None
+        assert light.segments is None
+        assert light.music_pixels_per_segment is None
+        assert light.music_segments is None
+        assert light.strip_protocols is None
+        assert light.strip_protocol is None
+        assert light.operating_mode is None
+        assert light.operating_modes is None
+        assert light.wiring is None
+        assert light.wirings is None
 
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
@@ -1019,6 +1039,7 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_RGB}
+        self.assertEqual(light.mode, "color")
         self.assertEqual(light.version_num, 0x07)
         self.assertEqual(light.protocol, PROTOCOL_LEDENET_8BYTE_AUTO_ON)
         self.assertEqual(light.model_num, 0x33)
@@ -1057,7 +1078,16 @@ class TestLight(unittest.TestCase):
                 "random",
             ],
         )
-
+        assert light.pixels_per_segment is None
+        assert light.segments is None
+        assert light.music_pixels_per_segment is None
+        assert light.music_segments is None
+        assert light.strip_protocols is None
+        assert light.strip_protocol is None
+        assert light.operating_mode is None
+        assert light.operating_modes is None
+        assert light.wiring is None
+        assert light.wirings == ["RGB", "GRB", "BRG"]
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
@@ -1125,7 +1155,16 @@ class TestLight(unittest.TestCase):
                 "random",
             ],
         )
-
+        assert light.pixels_per_segment is None
+        assert light.segments is None
+        assert light.music_pixels_per_segment is None
+        assert light.music_segments is None
+        assert light.strip_protocols is None
+        assert light.strip_protocol is None
+        assert light.operating_mode is None
+        assert light.operating_modes is None
+        assert light.wiring is None
+        assert light.wirings == ["RGB", "GRB", "BRG"]
         self.assertEqual(mock_read.call_count, 2)
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
