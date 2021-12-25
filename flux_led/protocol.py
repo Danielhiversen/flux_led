@@ -241,10 +241,24 @@ RGBWW_ORDER_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_ORDER.items()}
 RGBWW_NUM_TO_MODE = {5: "RGB&CCT", 7: "RGB/CCT"}
 RGBWW_MODE_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_MODE.items()}
 
-ADDRESSABLE_RGB_NUM_TO_ORDER = {0: "RGB", 1: "GRB", 2: "BRG"}
+ADDRESSABLE_RGB_NUM_TO_ORDER = {
+    0: "RGB",
+    1: "RBG",
+    2: "GRB",
+    4: "GBR",
+    5: "BRG",
+    6: "BGR",
+}
 ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
 
-ADDRESSABLE_RGBW_NUM_TO_ORDER = {0: "RGBW", 1: "GRBW", 2: "BRGW"}
+ADDRESSABLE_RGBW_NUM_TO_ORDER = {
+    0: "RGBW",
+    1: "RBGW",
+    2: "GRBW",
+    4: "GBRW",
+    5: "BRGW",
+    6: "BGRW",
+}
 ADDRESSABLE_RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
 
 A1_NUM_TO_PROTOCOL = {
@@ -1269,7 +1283,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             segments=segments,
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
-            wiring=ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[7] - 1),  # probably not right
+            wiring=ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[7]),
             protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
             operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
