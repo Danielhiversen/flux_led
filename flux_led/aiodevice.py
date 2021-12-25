@@ -42,13 +42,13 @@ _LOGGER = logging.getLogger(__name__)
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
+
 PROBE_IC_PROTOCOLS = (
-    ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
 )
-
+ALL_IC_PROTOCOLS = (ProtocolLEDENETAddressableChristmas, *PROBE_IC_PROTOCOLS)
 #
 # PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
 # since we do not care about the state when its off. When it turns on
@@ -99,10 +99,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         assert self._protocol is not None
-        if isinstance(
-            self._protocol,
-            PROBE_IC_PROTOCOLS,
-        ):
+        if isinstance(self._protocol, ALL_IC_PROTOCOLS):
             await self._async_addressable_setup()
             return
         if self.device_type == DeviceType.Switch:
@@ -132,10 +129,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
-        assert isinstance(
-            self._protocol,
-            PROBE_IC_PROTOCOLS,
-        )
+        assert isinstance(self._protocol, PROBE_IC_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
             await asyncio.wait_for(self._ic_future, timeout=self.timeout)

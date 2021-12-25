@@ -37,9 +37,9 @@ class LEDENETAddressableDeviceConfiguration:
     music_pixels_per_segment: int  # music pixels per segment
     music_segments: int  # number of music segments
     wirings: List[str]  # available wirings in the current mode
-    wiring: str  # RGB/BRG/GBR etc
-    protocol: str  # WS2812B UCS.. etc
-    operating_mode: str  # RGB, RGBW
+    wiring: Optional[str]  # RGB/BRG/GBR etc
+    protocol: Optional[str]  # WS2812B UCS.. etc
+    operating_mode: Optional[str]  # RGB, RGBW
 
 
 @dataclass
@@ -1762,7 +1762,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=0,
             music_segments=0,
             wirings=[],
-            wiring=0,
-            protocol=0,
+            wiring=None,
+            protocol=None,
             operating_mode=COLOR_MODE_RGB,
         )
