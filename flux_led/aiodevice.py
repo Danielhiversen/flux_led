@@ -80,7 +80,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._config_lock: asyncio.Lock = asyncio.Lock()
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
-        self._ic_setup = False
+        self._device_config_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
@@ -131,9 +131,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
-        if self._ic_setup:
+        if self._device_config_setup:
             self._device_config_future = asyncio.Future()
-        self._ic_setup = True
+        self._device_config_setup = True
 
         assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
