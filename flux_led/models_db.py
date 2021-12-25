@@ -211,7 +211,7 @@ NEW_ADDRESSABLE_PROTOCOL_TO_NUM = {v: k for k, v in A1_NUM_TO_PROTOCOL.items()}
 
 
 @dataclass
-class LEDENETDeviceConfiguration:
+class LEDENETDeviceConfigurationOptions:
     order: bool  # supports changing strip order
     num_to_order: Dict[int, str]
     order_to_num: Dict[str, int]
@@ -227,7 +227,7 @@ class LEDENETDeviceConfiguration:
     protocol_to_num: Dict[str, int]
 
 
-IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfiguration(  # aka fixed models
+IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
     order=False,
     num_to_order={},
     order_to_num={},
@@ -243,7 +243,7 @@ IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfiguration(  # aka fixed models
     protocol_to_num={},
 )
 
-MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfiguration(  # aka 0x25
+MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
     order=False,
     num_to_order={},
     order_to_num={},
@@ -259,7 +259,7 @@ MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfiguration(  # aka 0x25
     protocol_to_num={},
 )
 
-RGB_DEVICE_CONFIG = LEDENETDeviceConfiguration(
+RGB_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=RGB_NUM_TO_ORDER,
     order_to_num=RGB_ORDER_TO_NUM,
@@ -274,7 +274,7 @@ RGB_DEVICE_CONFIG = LEDENETDeviceConfiguration(
     num_to_protocol={},
     protocol_to_num={},
 )
-RGBW_DEVICE_CONFIG = LEDENETDeviceConfiguration(
+RGBW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=RGBW_NUM_TO_ORDER,
     order_to_num=RGBW_ORDER_TO_NUM,
@@ -289,7 +289,7 @@ RGBW_DEVICE_CONFIG = LEDENETDeviceConfiguration(
     num_to_protocol={},
     protocol_to_num={},
 )
-RGBWW_DEVICE_CONFIG = LEDENETDeviceConfiguration(
+RGBWW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=RGBWW_NUM_TO_ORDER,
     order_to_num=RGBWW_ORDER_TO_NUM,
@@ -304,7 +304,7 @@ RGBWW_DEVICE_CONFIG = LEDENETDeviceConfiguration(
     num_to_protocol={},
     protocol_to_num={},
 )
-A1_DEVICE_CONFIG = LEDENETDeviceConfiguration(
+A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=ADDRESSABLE_RGB_NUM_TO_ORDER,
     order_to_num=ADDRESSABLE_RGB_ORDER_TO_NUM,
@@ -319,7 +319,7 @@ A1_DEVICE_CONFIG = LEDENETDeviceConfiguration(
     num_to_protocol=A1_NUM_TO_PROTOCOL,
     protocol_to_num=A1_PROTOCOL_TO_NUM,
 )
-NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfiguration(
+NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=ADDRESSABLE_RGB_NUM_TO_ORDER,
     order_to_num=ADDRESSABLE_RGB_ORDER_TO_NUM,
@@ -353,7 +353,7 @@ class LEDENETModel:
     ]  # The color modes to use if there is no mode_to_color_mode_mapping
     channel_map: Dict[str, str]  # Used to remap channels
     microphone: bool
-    device_config: LEDENETDeviceConfiguration
+    device_config: LEDENETDeviceConfigurationOptions
 
     def protocol_for_version_num(self, version_num: int) -> str:
         protocol = self.protocols[-1].protocol

@@ -4,6 +4,7 @@ import logging
 import random
 import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
+from .protocol import LEDENETAddressableDeviceConfiguration
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -186,6 +187,7 @@ class LEDENETDevice:
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
+        self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
 
     def _protocol_probes(
         self,
@@ -340,6 +342,26 @@ class LEDENETDevice:
         model_data = self.model_data
         return model_data.mode_to_color_mode.get(
             self.raw_state.mode, model_data.color_modes
+        )
+
+    @property
+    def sort_order(self) -> Optional[str]:
+        """Return the sort order as a string."""
+        assert self.raw_state is not None
+        return self.model_data.device_config.num_to_mode.get(self.raw_state.mode & 0xF0)
+
+    @property
+    def mode(self) -> Optional[str]:
+        """Return the strip mode as a string."""
+        assert self.raw_state is not None
+        return self.model_data.device_config.num_to_mode.get(self.raw_state.mode & 0x0F)
+
+    @property
+    def strip_protocol(self) -> Optional[str]:
+        """Return the strip protocol as a string."""
+        assert self._device_config is not None
+        return self.model_data.device_config.num_to_mode.get(
+            self._device_config.protocol
         )
 
     @property
@@ -519,6 +541,19 @@ class LEDENETDevice:
 
     def set_available(self) -> None:
         self.available = True
+
+    def process_ic_response(self, msg: bytes) -> None:
+        """Process an IC (strip config) response."""
+        assert isinstance(
+            self._protocol,
+            (
+                ProtocolLEDENETAddressableChristmas,
+                ProtocolLEDENETAddressableA1,
+                ProtocolLEDENETAddressableA2,
+                ProtocolLEDENETAddressableA3,
+            ),
+        )
+        self._device_config = self._protocol.parse_strip_setting(msg)
 
     def process_state_response(self, rx: bytes) -> bool:
         assert self._protocol is not None

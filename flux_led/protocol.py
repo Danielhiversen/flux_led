@@ -29,6 +29,16 @@ class MusicMode(Enum):
 
 
 @dataclass
+class LEDENETAddressableDeviceConfiguration:
+    pixels_per_segment: int  # pixels per segment
+    segments: int  # number of segments
+    music_pixels_per_segment: int  # music pixels per segment
+    music_segments: int  # number of music segments
+    wiring: int  # RGB/BRG/GBR etc
+    protocol: int  # WS2812B UCS.. etc
+
+
+@dataclass
 class PowerRestoreStates:
     channel1: Optional[PowerRestoreState]
     channel2: Optional[PowerRestoreState]
@@ -939,6 +949,48 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             bytearray([0x61, effect >> 8, effect & 0xFF, speed, 0x0F])
         )
 
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        # pos  0  1  2  3  4  5  6  7  8  9 10 11
+        #    63 00 32 05 00 00 00 00 00 00 02 9c
+        #     |  |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+        #     |  |  |  |  |  |  |  |  |  ?? always 00
+        #     |  |  |  |  |  |  |  |  ?? always 00
+        #     |  |  |  |  |  |  |  n?? always 00
+        #     |  |  |  |  |  |  ?? always 00
+        #     |  |  |  |  |  ?? always 00
+        #     |  |  |  |  ?? always 00
+        #     |  |  |  ic type (01=UCS1903, 02=SM16703, 03=WS2811, 04=WS2812B, 05=SK6812, 06=INK1003, 07=WS2801, 08=LB1914)
+        #     |  |  num pixels (16 bit, low byte)
+        #     |  num pixels (16 bit, high byte)
+        #     msg head
+        #
+        high_byte = msg[1]
+        low_byte = msg[2]
+        pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug(
+            "Pixel count (high: %s, low: %s) is: %s",
+            hex(high_byte),
+            hex(low_byte),
+            pixels_per_segment,
+        )
+        segments = msg[5]
+        _LOGGER.debug(
+            "Segment count (%s) is: %s",
+            hex(segments),
+            segments,
+        )
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=pixels_per_segment,
+            segments=segments,
+            music_pixels_per_segment=0,
+            wiring=msg[10],
+            music_segments=0,
+            protocol=msg[3],
+        )
+
 
 class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
@@ -1078,6 +1130,48 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                 )
             )
         ]
+
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        # pos  0  1  2  3  4  5  6  7  8  9 10
+        #    00 63 01 2c 00 01 07 08 96 01 45
+        #     |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  segments (music mode)
+        #     |  |  |  |  |  |  |  |  num pixels (music mode)
+        #     |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+        #     |  |  |  |  |  |  ic type (01=WS2812B, 02=SM16703, 03=SM16704, 04=WS2811, 05=UCS1903, 06=SK6812, 07=SK6812RGBW, 08=INK1003, 09=UCS2904B)
+        #     |  |  |  |  |  segments
+        #     |  |  |  |  ?? (always 0x00)
+        #     |  |  |  num pixels (16 bit, low byte)
+        #     |  |  num pixels (16 bit, high byte)
+        #     |  msg head
+        #     msg head
+        #
+        high_byte = msg[2]
+        low_byte = msg[3]
+        pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug(
+            "Pixel count (high: %s, low: %s) is: %s",
+            hex(high_byte),
+            hex(low_byte),
+            pixels_per_segment,
+        )
+        segments = msg[5]
+        _LOGGER.debug(
+            "Segment count (%s) is: %s",
+            hex(segments),
+            segments,
+        )
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=pixels_per_segment,
+            segments=segments,
+            music_pixels_per_segment=msg[8],
+            music_segments=msg[9],
+            wiring=msg[7],
+            protocol=msg[6],
+        )
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
@@ -1528,3 +1622,14 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                 bytearray([0x00, points - remaining, *rgb_list[-1], 0x00, 0x00, 0xFF])
             )
         return self.construct_wrapped_message(msg)
+
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=6,
+            segments=1,
+            music_pixels_per_segment=0,
+            music_segments=0,
+            wiring=0,
+            protocol=0,
+        )
