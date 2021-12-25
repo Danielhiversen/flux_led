@@ -52,8 +52,10 @@ from .pattern import (
     EFFECT_CUSTOM,
     EFFECT_CUSTOM_CODE,
     EFFECT_ID_NAME,
+    EFFECT_ID_NAME_LEGACY_CCT,
     EFFECT_LIST,
     EFFECT_LIST_AUTO_ON,
+    EFFECT_LIST_LEGACY_CCT,
     ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME,
     ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID,
     PresetPattern,
@@ -522,6 +524,8 @@ class LEDENETDevice:
             effects = CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
             effects = EFFECT_LIST if self.requires_turn_on else EFFECT_LIST_AUTO_ON
+        elif protocol == PROTOCOL_LEDENET_ORIGINAL_CCT:
+            effects = EFFECT_LIST_LEGACY_CCT
         if self.microphone:
             return [*effects, EFFECT_RANDOM, EFFECT_MUSIC]
         return [*effects, EFFECT_RANDOM]
@@ -551,6 +555,8 @@ class LEDENETDevice:
         if protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
             if pattern_code == 0x60:
                 return CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.get(mode)
+        if protocol == PROTOCOL_LEDENET_ORIGINAL_CCT:
+            return EFFECT_ID_NAME_LEGACY_CCT.get(pattern_code)
         return EFFECT_ID_NAME.get(pattern_code)
 
     @property
