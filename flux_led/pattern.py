@@ -680,6 +680,7 @@ class PresetPattern:
     def str_to_val(effect: str) -> int:
         if effect in EFFECT_MAP:
             return EFFECT_MAP[effect]
-        if hasattr(PresetPattern, effect):
-            return cast(int, getattr(PresetPattern, effect))
+        mapped_effect = effect.replace(" ", "_").lower()
+        if hasattr(PresetPattern, mapped_effect):
+            return cast(int, getattr(PresetPattern, mapped_effect))
         raise ValueError(f"{effect} is not a known effect name.")
