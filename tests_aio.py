@@ -908,6 +908,23 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
             wiring="GRB",
             pixels_per_segment=300,
             segments=2,
+            music_pixels_per_segment=150,
+            music_segments=2,
+        )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0cb\x01,\x00\x02\x06\x02\x00\x96\x02\xf0!\x18"
+    )
+
+    transport.reset_mock()
+    with patch.object(light, "_async_addressable_resync", mock_coro):
+        await light.async_set_device_config(
+            ic_type="SK6812",
+            wiring="GRB",
+            pixels_per_segment=300,
+            segments=2,
             music_pixels_per_segment=300,
             music_segments=2,
         )
@@ -915,21 +932,22 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0cb\x01,\x00\x02\x06\x02\x01,\x02\xf0\xb8F"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x0cb\x01,\x00\x02\x06\x02\x00\x96\x02\xf0!\x19"
     )
 
     transport.reset_mock()
+
     await light.async_set_zones(
         [(255, 0, 0), (0, 0, 255)], 100, MultiColorEffects.STROBE
     )
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == bytearray(
-        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00TY\x00T\xff\x00\x00"
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00TY\x00T\xff\x00\x00"
         b"\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
         b"\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
-        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19Q"
+        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19R"
     )
 
     with pytest.raises(ValueError):
