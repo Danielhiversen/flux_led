@@ -1497,7 +1497,13 @@ class TestLight(unittest.TestCase):
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_CCT}
         assert light.effect is None
-        assert light.effect_list == ['Cool Flash', 'Cool Gradual', 'Warm Flash', 'Warm Gradual', 'random']
+        assert light.effect_list == [
+            "Cool Flash",
+            "Cool Gradual",
+            "Warm Flash",
+            "Warm Gradual",
+            "random",
+        ]
         self.assertEqual(light.model_num, 0x03)
         self.assertEqual(light.model, "Legacy Controller CCT (0x03)")
         self.assertEqual(light.dimmable_effects, False)
@@ -1579,8 +1585,7 @@ class TestLight(unittest.TestCase):
         light.set_effect("Warm Flash", 50, 100)
         self.assertEqual(mock_read.call_count, 8)
         self.assertEqual(mock_send.call_count, 9)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b'\xbb:\x10D')))
-
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xbb:\x10D")))
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
