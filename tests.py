@@ -1454,6 +1454,11 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgb(), (1, 25, 80))
         self.assertEqual(light.version_num, 0)
 
+        light.set_effect("colorjump", 50, 100)
+        self.assertEqual(mock_read.call_count, 8)
+        self.assertEqual(mock_send.call_count, 9)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xbb8\x10D")))
+
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
