@@ -473,18 +473,21 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         async with self._config_lock:
             device_config = self.model_data.device_config
-            if operating_mode is None:
-                operating_mode_num = self.operating_mode_num
-            else:
-                operating_mode_num = device_config.operating_mode_to_num[operating_mode]
-            if wiring is None:
-                wiring_num = self.wiring_num
-            else:
-                wiring_num = device_config.wiring_to_num[wiring]
-            if ic_type is None:
-                ic_type_num = self.ic_type_num
-            else:
-                ic_type_num = device_config.ic_type_to_num[ic_type]
+            operating_mode_num = (
+                self.operating_mode_num
+                if operating_mode is None
+                else device_config.operating_mode_to_num[operating_mode]
+            )
+            wiring_num = (
+                self.wiring_num
+                if wiring is None
+                else device_config.wiring_to_num[wiring]
+            )
+            ic_type_num = (
+                self.ic_type_num
+                if ic_type is None
+                else device_config.ic_type_to_num[ic_type]
+            )
             assert self._protocol is not None
             assert not isinstance(self._protocol, ProtocolLEDENETOriginal)
             await self._async_send_msg(
