@@ -44,7 +44,9 @@ _LOGGER = logging.getLogger(__name__)
 
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
-DEVICE_CONFIG_WAIT_SECONDS = 2
+DEVICE_CONFIG_WAIT_SECONDS = (
+    3  # time it takes for the device to respond after a config change
+)
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
 #
