@@ -566,6 +566,7 @@ class LEDENETDevice:
             ),
         )
         self._device_config = self._protocol.parse_strip_setting(msg)
+        _LOGGER.debug("%s: device_config: %s", self.ipaddr, self._device_config)
 
     def process_state_response(self, rx: bytes) -> bool:
         assert self._protocol is not None
