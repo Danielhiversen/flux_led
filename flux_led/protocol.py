@@ -1464,6 +1464,15 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             music_segments = MUSIC_SEGMENTS_MAX
         if music_pixels_per_segment * music_segments > MUSIC_PIXELS_MAX:
             music_segments = int(MUSIC_PIXELS_MAX / music_pixels_per_segment)
+        if (
+            pixels_per_segment <= MUSIC_PIXELS_PER_SEGMENT_MAX
+            and segments <= MUSIC_SEGMENTS_MAX
+            and pixels_per_segment * segments <= MUSIC_PIXELS_MAX
+        ):
+            # If the pixels_per_segment and segments can accomate music
+            # mode then we sync them
+            music_pixels_per_segment = pixels_per_segment
+            music_segments = segments
         return self.construct_message(
             bytearray(
                 [
