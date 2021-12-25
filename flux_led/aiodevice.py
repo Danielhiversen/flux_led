@@ -482,6 +482,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         else:
             ic_type_num = device_config.ic_type_to_num[ic_type]
         assert self._protocol is not None
+        assert not isinstance(self._protocol, ProtocolLEDENETOriginal)
         await self._async_send_msg(
             self._protocol.construct_device_config(
                 operating_mode_num,

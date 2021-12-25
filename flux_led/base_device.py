@@ -418,13 +418,14 @@ class LEDENETDevice:
         if self._device_config:
             return self._device_config.operating_mode
         assert self.raw_state is not None
-        return device_config.num_to_operating_mode.get(self.operating_mode_num)
+        return device_config.num_to_operating_mode.get(self.raw_state.mode & 0x0F)
 
     @property
     def operating_mode_num(self) -> Optional[int]:
         """Return the strip mode as a string."""
         if not self.model_data.device_config.operating_modes:
             return None
+        assert self.raw_state is not None
         return self.raw_state.mode & 0x0F
 
     @property
@@ -443,7 +444,7 @@ class LEDENETDevice:
         return self._device_config.ic_type
 
     @property
-    def ic_type_num(self) -> Optional[str]:
+    def ic_type_num(self) -> Optional[int]:
         """Return the strip ictype as an int."""
         if not self.model_data.device_config.ic_type:
             return None
