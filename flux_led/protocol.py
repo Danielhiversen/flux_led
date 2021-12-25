@@ -44,6 +44,15 @@ class LEDENETAddressableDeviceConfiguration:
     operating_mode: Optional[str]  # RGB, RGBW
 
 
+SEGMENTS_MAX = 2048
+PIXELS_MAX = 2048
+PIXELS_PER_SEGMENT_MAX = 300
+
+MUSIC_SEGMENTS_MAX = 64
+MUSIC_PIXELS_MAX = 960
+MUSIC_PIXELS_PER_SEGMENT_MAX = 150
+
+
 @dataclass
 class PowerRestoreStates:
     channel1: Optional[PowerRestoreState]
@@ -1443,6 +1452,18 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         assert music_pixels_per_segment is not None
         assert music_segments is not None
         assert wiring is not None
+        if pixels_per_segment > PIXELS_PER_SEGMENT_MAX:
+            pixels_per_segment = PIXELS_PER_SEGMENT_MAX
+        if segments > SEGMENTS_MAX:
+            segments = SEGMENTS_MAX
+        if pixels_per_segment * segments > PIXELS_MAX:
+            segments = int(PIXELS_MAX / pixels_per_segment)
+        if music_pixels_per_segment > MUSIC_PIXELS_PER_SEGMENT_MAX:
+            music_pixels_per_segment = MUSIC_PIXELS_PER_SEGMENT_MAX
+        if music_segments > MUSIC_SEGMENTS_MAX:
+            music_segments = MUSIC_SEGMENTS_MAX
+        if music_pixels_per_segment * music_segments > MUSIC_PIXELS_MAX:
+            music_segments = int(MUSIC_PIXELS_MAX / music_pixels_per_segment)
         return self.construct_message(
             bytearray(
                 [
