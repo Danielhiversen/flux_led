@@ -245,9 +245,9 @@ ADDRESSABLE_RGB_NUM_TO_ORDER = {
     0: "RGB",
     1: "RBG",
     2: "GRB",
-    4: "GBR",
-    5: "BRG",
-    6: "BGR",
+    3: "GBR",
+    4: "BRG",
+    5: "BGR",
 }
 ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
 

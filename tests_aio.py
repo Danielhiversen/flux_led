@@ -661,7 +661,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert light._device_config.segments == 2
     assert light.strip_protocol == 'WS2811'
     assert light.operating_mode == 'RGB'
-    assert light.wiring == 'BRG'
+    assert light.wiring == 'GBR'
     assert light.model_num == 0xA3
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
