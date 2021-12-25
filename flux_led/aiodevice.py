@@ -109,7 +109,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             await self._async_switch_setup()
             return
         _LOGGER.debug(
-            "%s: wiring=%s operating_mode=%s",
+            "%s: device_config: wiring=%s operating_mode=%s",
             self.ipaddr,
             self.wiring,
             self.operating_mode,
