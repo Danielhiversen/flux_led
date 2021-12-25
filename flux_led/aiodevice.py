@@ -78,7 +78,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
-        self._config_lock: asyncio.Lock = asyncio.Lock()
+        self._device_config_lock: asyncio.Lock = asyncio.Lock()
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
         self._device_config_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
@@ -471,7 +471,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         music_pixels_per_segment: Optional[int] = None,  # music pixels per segment
         music_segments: Optional[int] = None,  # number of music segments
     ) -> None:
-        async with self._config_lock:
+        async with self._device_config_lock:
             device_config = self.model_data.device_config
             operating_mode_num = (
                 self.operating_mode_num
