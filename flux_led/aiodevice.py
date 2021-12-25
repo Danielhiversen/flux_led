@@ -44,7 +44,7 @@ _LOGGER = logging.getLogger(__name__)
 
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
-DEVICE_CONFIG_WAIT_SECONDS = 2
+DEVICE_CONFIG_WAIT_SECONDS = 1.2
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
 #
@@ -499,7 +499,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             if isinstance(self._protocol, ALL_IC_PROTOCOLS):
                 await self._async_addressable_resync()
 
-    async def _async_addressable_resync(self):
+    async def _async_addressable_resync(self) -> None:
         await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_addressable_setup()
 
