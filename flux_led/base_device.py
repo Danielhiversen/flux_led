@@ -345,16 +345,53 @@ class LEDENETDevice:
         )
 
     @property
+    def pixels_per_segment(self) -> Optional[int]:
+        """Return the pixels per segment."""
+        if self._device_config is None:
+            return None
+        return self._device_config.pixels_per_segment
+
+    @property
+    def segments(self) -> Optional[int]:
+        """Return the number of segments."""
+        if self._device_config is None:
+            return None
+        return self._device_config.segments
+
+    @property
+    def music_pixels_per_segment(self) -> Optional[int]:
+        """Return the music pixels per segment."""
+        if self._device_config is None:
+            return None
+        return self._device_config.music_pixels_per_segment
+
+    @property
+    def music_segments(self) -> Optional[int]:
+        """Return the number of music segments."""
+        if self._device_config is None:
+            return None
+        return self._device_config.music_segments
+
+    @property
     def wiring(self) -> Optional[str]:
         """Return the sort order as a string."""
-        if not self.model_data.device_config.order:
+        if not self.model_data.device_config.wiring:
             return None
         if self._device_config:
             return self._device_config.wiring
         assert self.raw_state is not None
-        return self.model_data.device_config.num_to_order.get(
+        return self.model_data.device_config.num_to_wiring.get(
             int((self.raw_state.mode & 0xF0) / 16)
         )
+
+    @property
+    def wirings(self) -> Optional[List[str]]:
+        """Return available wirings for the device."""
+        if not self.model_data.device_config.wiring:
+            return None
+        if self._device_config:
+            return list(self._device_config.wirings)
+        return list(self.model_data.device_config.wiring_to_num)
 
     @property
     def operating_mode(self) -> Optional[str]:
@@ -369,12 +406,26 @@ class LEDENETDevice:
         )
 
     @property
+    def operating_modes(self) -> Optional[List[str]]:
+        """Return available operating modes for the device."""
+        if not self.model_data.device_config.operating_modes:
+            return None
+        return list(self.model_data.device_config.operating_mode_to_num)
+
+    @property
     def strip_protocol(self) -> Optional[str]:
         """Return the strip protocol as a string."""
         if not self.model_data.device_config.protocols:
             return None
         assert self._device_config is not None
         return self._device_config.protocol
+
+    @property
+    def strip_protocols(self) -> Optional[List[str]]:
+        """Return the strip protocols."""
+        if not self.model_data.device_config.protocols:
+            return None
+        return list(self.model_data.device_config.protocol_to_num)
 
     @property
     def color_mode(self) -> Optional[str]:

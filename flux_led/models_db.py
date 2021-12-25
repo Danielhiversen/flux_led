@@ -23,8 +23,8 @@ from .protocol import (
     A1_NUM_TO_PROTOCOL,
     A1_OPERATING_MODE_TO_NUM,
     A1_PROTOCOL_TO_NUM,
-    ADDRESSABLE_RGB_NUM_TO_ORDER,
-    ADDRESSABLE_RGB_ORDER_TO_NUM,
+    ADDRESSABLE_RGB_NUM_TO_WIRING,
+    ADDRESSABLE_RGB_WIRING_TO_NUM,
     NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE,
     NEW_ADDRESSABLE_NUM_TO_PROTOCOL,
     NEW_ADDRESSABLE_OPERATING_MODE_TO_NUM,
@@ -42,16 +42,16 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
-    RGB_NUM_TO_ORDER,
-    RGB_ORDER_TO_NUM,
+    RGB_NUM_TO_WIRING,
+    RGB_WIRING_TO_NUM,
     RGBW_MODE_TO_NUM,
     RGBW_NUM_TO_MODE,
-    RGBW_NUM_TO_ORDER,
-    RGBW_ORDER_TO_NUM,
+    RGBW_NUM_TO_WIRING,
+    RGBW_WIRING_TO_NUM,
     RGBWW_MODE_TO_NUM,
     RGBWW_NUM_TO_MODE,
-    RGBWW_NUM_TO_ORDER,
-    RGBWW_ORDER_TO_NUM,
+    RGBWW_NUM_TO_WIRING,
+    RGBWW_WIRING_TO_NUM,
 )
 
 # BL likely means BL602 chips
@@ -172,9 +172,9 @@ GENERIC_RGBWW_MAP = {
 
 @dataclass
 class LEDENETDeviceConfigurationOptions:
-    order: bool  # supports changing strip order
-    num_to_order: Dict[int, str]
-    order_to_num: Dict[str, int]
+    wiring: bool  # supports changing strip order
+    num_to_wiring: Dict[int, str]
+    wiring_to_num: Dict[str, int]
     operating_modes: bool  # has color modes ie RGB&W or RGB/W
     num_to_operating_mode: Dict[int, str]
     operating_mode_to_num: Dict[str, int]
@@ -188,9 +188,9 @@ class LEDENETDeviceConfigurationOptions:
 
 
 IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
-    order=False,
-    num_to_order={},
-    order_to_num={},
+    wiring=False,
+    num_to_wiring={},
+    wiring_to_num={},
     operating_modes=False,
     num_to_operating_mode={},
     operating_mode_to_num={},
@@ -204,9 +204,9 @@ IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
 )
 
 MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
-    order=False,
-    num_to_order={},
-    order_to_num={},
+    wiring=False,
+    num_to_wiring={},
+    wiring_to_num={},
     operating_modes=True,
     num_to_operating_mode=MULTI_MODE_NUM_TO_MODE,
     operating_mode_to_num=MULTI_MODE_MODE_TO_NUM,
@@ -219,9 +219,9 @@ MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
     protocol_to_num={},
 )
 RGB_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
-    order=True,
-    num_to_order=RGB_NUM_TO_ORDER,
-    order_to_num=RGB_ORDER_TO_NUM,
+    wiring=True,
+    num_to_wiring=RGB_NUM_TO_WIRING,
+    wiring_to_num=RGB_WIRING_TO_NUM,
     operating_modes=False,
     num_to_operating_mode={},
     operating_mode_to_num={},
@@ -234,9 +234,9 @@ RGB_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     protocol_to_num={},
 )
 RGBW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
-    order=True,
-    num_to_order=RGBW_NUM_TO_ORDER,
-    order_to_num=RGBW_ORDER_TO_NUM,
+    wiring=True,
+    num_to_wiring=RGBW_NUM_TO_WIRING,
+    wiring_to_num=RGBW_WIRING_TO_NUM,
     operating_modes=True,
     num_to_operating_mode=RGBW_NUM_TO_MODE,
     operating_mode_to_num=RGBW_MODE_TO_NUM,
@@ -249,9 +249,9 @@ RGBW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     protocol_to_num={},
 )
 RGBWW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
-    order=True,
-    num_to_order=RGBWW_NUM_TO_ORDER,
-    order_to_num=RGBWW_ORDER_TO_NUM,
+    wiring=True,
+    num_to_wiring=RGBWW_NUM_TO_WIRING,
+    wiring_to_num=RGBWW_WIRING_TO_NUM,
     operating_modes=True,
     num_to_operating_mode=RGBWW_NUM_TO_MODE,
     operating_mode_to_num=RGBWW_MODE_TO_NUM,
@@ -264,9 +264,9 @@ RGBWW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     protocol_to_num={},
 )
 A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
-    order=True,
-    num_to_order=ADDRESSABLE_RGB_NUM_TO_ORDER,
-    order_to_num=ADDRESSABLE_RGB_ORDER_TO_NUM,
+    wiring=True,
+    num_to_wiring=ADDRESSABLE_RGB_NUM_TO_WIRING,
+    wiring_to_num=ADDRESSABLE_RGB_WIRING_TO_NUM,
     operating_modes=False,
     num_to_operating_mode=A1_NUM_TO_OPERATING_MODE,
     operating_mode_to_num=A1_OPERATING_MODE_TO_NUM,
@@ -279,10 +279,10 @@ A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     protocol_to_num=A1_PROTOCOL_TO_NUM,
 )
 NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
-    order=True,
-    num_to_order=ADDRESSABLE_RGB_NUM_TO_ORDER,
-    order_to_num=ADDRESSABLE_RGB_ORDER_TO_NUM,
-    operating_modes=True,
+    wiring=True,
+    num_to_wiring=ADDRESSABLE_RGB_NUM_TO_WIRING,
+    wiring_to_num=ADDRESSABLE_RGB_WIRING_TO_NUM,
+    operating_modes=False,  # can only be changed by changing protocol
     num_to_operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE,
     operating_mode_to_num=NEW_ADDRESSABLE_OPERATING_MODE_TO_NUM,
     pixels=True,

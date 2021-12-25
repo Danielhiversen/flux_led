@@ -5,7 +5,7 @@ import colorsys
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
     COLOR_MODE_RGB,
@@ -36,6 +36,7 @@ class LEDENETAddressableDeviceConfiguration:
     segments: int  # number of segments
     music_pixels_per_segment: int  # music pixels per segment
     music_segments: int  # number of music segments
+    wirings: List[str]  # available wirings in the current mode
     wiring: str  # RGB/BRG/GBR etc
     protocol: str  # WS2812B UCS.. etc
     operating_mode: str  # RGB, RGBW
@@ -214,13 +215,13 @@ class LEDENETRawState(NamedTuple):
 #     |  model_num (type)
 #     msg head
 #
-RGB_NUM_TO_ORDER = {1: "RGB", 2: "GRB", 3: "BRG"}
-RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
-RGBW_NUM_TO_ORDER = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
-RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
+RGB_NUM_TO_WIRING = {1: "RGB", 2: "GRB", 3: "BRG"}
+RGB_WIRING_TO_NUM = {v: k for k, v in RGB_NUM_TO_WIRING.items()}
+RGBW_NUM_TO_WIRING = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
+RGBW_WIRING_TO_NUM = {v: k for k, v in RGBW_NUM_TO_WIRING.items()}
 RGBW_NUM_TO_MODE = {4: "RGB&W", 6: "RGB/W"}
 RGBW_MODE_TO_NUM = {v: k for k, v in RGBW_NUM_TO_MODE.items()}
-RGBWW_NUM_TO_ORDER = {
+RGBWW_NUM_TO_WIRING = {
     1: "RGBCW",
     2: "GRBCW",
     3: "BRGCW",
@@ -237,11 +238,11 @@ RGBWW_NUM_TO_ORDER = {
     14: "WCGRB",
     15: "WCBRG",
 }
-RGBWW_ORDER_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_ORDER.items()}
+RGBWW_WIRING_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_WIRING.items()}
 RGBWW_NUM_TO_MODE = {5: "RGB&CCT", 7: "RGB/CCT"}
 RGBWW_MODE_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_MODE.items()}
 
-ADDRESSABLE_RGB_NUM_TO_ORDER = {
+ADDRESSABLE_RGB_NUM_TO_WIRING = {
     0: "RGB",
     1: "RBG",
     2: "GRB",
@@ -249,8 +250,8 @@ ADDRESSABLE_RGB_NUM_TO_ORDER = {
     4: "BRG",
     5: "BGR",
 }
-ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
-ADDRESSABLE_RGBW_NUM_TO_ORDER = {
+ADDRESSABLE_RGB_WIRING_TO_NUM = {v: k for k, v in ADDRESSABLE_RGB_NUM_TO_WIRING.items()}
+ADDRESSABLE_RGBW_NUM_TO_WIRING = {
     0: "RGBW",
     1: "RBGW",
     2: "GRBW",
@@ -264,7 +265,9 @@ ADDRESSABLE_RGBW_NUM_TO_ORDER = {
     10: "WBRG",
     11: "WBGR",
 }
-ADDRESSABLE_RGBW_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
+ADDRESSABLE_RGBW_WIRING_TO_NUM = {
+    v: k for k, v in ADDRESSABLE_RGBW_NUM_TO_WIRING.items()
+}
 
 
 A1_NUM_TO_PROTOCOL = {
@@ -1099,7 +1102,8 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             segments=segments,
             music_pixels_per_segment=0,
             music_segments=0,
-            wiring=ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[10]),
+            wirings=list(ADDRESSABLE_RGB_WIRING_TO_NUM),
+            wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[10]),
             protocol=A1_NUM_TO_PROTOCOL.get(msg[3]),
             operating_mode=A1_NUM_TO_OPERATING_MODE.get(msg[3]),
         )
@@ -1289,15 +1293,16 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             segments,
         )
         if NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]) == COLOR_MODE_RGBW:
-            wiring = ADDRESSABLE_RGBW_NUM_TO_ORDER.get(msg[7])
+            wirings = ADDRESSABLE_RGBW_NUM_TO_WIRING
         else:
-            wiring = ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[7])
+            wirings = ADDRESSABLE_RGB_NUM_TO_WIRING
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=pixels_per_segment,
             segments=segments,
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
-            wiring=wiring,
+            wirings=list(wirings.values()),
+            wiring=wirings.get(msg[7]),
             protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
             operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
@@ -1756,6 +1761,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             segments=1,
             music_pixels_per_segment=0,
             music_segments=0,
+            wirings=[],
             wiring=0,
             protocol=0,
             operating_mode=COLOR_MODE_RGB,

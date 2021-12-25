@@ -639,6 +639,137 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
 
 
 @pytest.mark.asyncio
+async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set set zone colors."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
+    # ic state
+    light._aio_protocol.data_received(
+        b"\xB0\xB1\xB2\xB3\x00\x01\x01\x00\x00\x0B\x00\x63\x00\x90\x00\x01\x07\x08\x90\x01\x94\xFB"
+    )
+
+    await task
+    assert light.pixels_per_segment == 144
+    assert light.segments == 1
+    assert light.music_pixels_per_segment == 144
+    assert light.music_segments == 1
+    assert light.strip_protocols == [
+        "WS2812B",
+        "SM16703",
+        "SM16704",
+        "WS2811",
+        "UCS1903",
+        "SK6812",
+        "SK6812RGBW",
+        "INK1003",
+        "UCS2904B",
+    ]
+    assert light.strip_protocol == "SK6812RGBW"
+    assert light.operating_mode is None
+    assert light.operating_modes is None
+    assert light.wiring == "WGRB"
+    assert light.wirings == [
+        "RGBW",
+        "RBGW",
+        "GRBW",
+        "GBRW",
+        "BRGW",
+        "BGRW",
+        "WRGB",
+        "WRBG",
+        "WGRB",
+        "WGBR",
+        "WBRG",
+        "WBGR",
+    ]
+    assert light.model_num == 0xA3
+    assert light.dimmable_effects is True
+    assert light.requires_turn_on is False
+
+
+@pytest.mark.asyncio
+async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can determine ws2812b configuration."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA1#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd3"
+    )
+    # ic state
+    light._aio_protocol.data_received(
+        b"\x63\x00\x32\x04\x00\x00\x00\x00\x00\x00\x02\x9B"
+    )
+
+    await task
+    assert light.pixels_per_segment == 50
+    assert light.segments == 0
+    assert light.music_pixels_per_segment == 0
+    assert light.music_segments == 0
+    assert light.strip_protocols == [
+        "UCS1903",
+        "SM16703",
+        "WS2811",
+        "WS2812B",
+        "SK6812",
+        "INK1003",
+        "WS2801",
+        "LB1914",
+    ]
+    assert light.strip_protocol == "WS2812B"
+    assert light.operating_mode is None
+    assert light.operating_modes is None
+    assert light.wiring == "GRB"
+    assert light.wirings == ["RGB", "RBG", "GRB", "GBR", "BRG", "BGR"]
+    assert light.model_num == 0xA1
+    assert light.dimmable_effects is False
+    assert light.requires_turn_on is False
+
+
+@pytest.mark.asyncio
+async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can determine ws2811 configuration."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
+    )
+    # ic state
+    light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
+
+    await task
+    assert light.pixels_per_segment == 25
+    assert light.segments == 2
+    assert light.music_pixels_per_segment == 25
+    assert light.music_segments == 2
+    assert light.strip_protocol == "WS2811"
+    assert light.operating_mode is None
+    assert light.operating_modes is None
+    assert light.wiring == "GBR"
+    assert light.wirings == ["RGB", "RBG", "GRB", "GBR", "BRG", "BGR"]
+    assert light.model_num == 0xA2
+    assert light.dimmable_effects is True
+    assert light.requires_turn_on is False
+
+
+@pytest.mark.asyncio
 async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can set set zone colors."""
     light = AIOWifiLedBulb("192.168.1.166")
@@ -657,11 +788,26 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
 
     await task
-    assert light._device_config.pixels_per_segment == 25
-    assert light._device_config.segments == 2
+    assert light.pixels_per_segment == 25
+    assert light.segments == 2
+    assert light.music_pixels_per_segment == 25
+    assert light.music_segments == 2
+    assert light.strip_protocols == [
+        "WS2812B",
+        "SM16703",
+        "SM16704",
+        "WS2811",
+        "UCS1903",
+        "SK6812",
+        "SK6812RGBW",
+        "INK1003",
+        "UCS2904B",
+    ]
     assert light.strip_protocol == "WS2811"
-    assert light.operating_mode == "RGB"
+    assert light.operating_mode is None
+    assert light.operating_modes is None
     assert light.wiring == "GBR"
+    assert light.wirings == ["RGB", "RBG", "GRB", "GBR", "BRG", "BGR"]
     assert light.model_num == 0xA3
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
