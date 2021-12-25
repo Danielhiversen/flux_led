@@ -5,7 +5,7 @@ import colorsys
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import Final, List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
     COLOR_MODE_RGB,
@@ -44,13 +44,13 @@ class LEDENETAddressableDeviceConfiguration:
     operating_mode: Optional[str]  # RGB, RGBW
 
 
-SEGMENTS_MAX = 2048
-PIXELS_MAX = 2048
-PIXELS_PER_SEGMENT_MAX = 300
+SEGMENTS_MAX: Final = 2048
+PIXELS_MAX: Final = 2048
+PIXELS_PER_SEGMENT_MAX: Final = 300
 
-MUSIC_SEGMENTS_MAX = 64
-MUSIC_PIXELS_MAX = 960
-MUSIC_PIXELS_PER_SEGMENT_MAX = 150
+MUSIC_SEGMENTS_MAX: Final = 64
+MUSIC_PIXELS_MAX: Final = 960
+MUSIC_PIXELS_PER_SEGMENT_MAX: Final = 150
 
 
 @dataclass
