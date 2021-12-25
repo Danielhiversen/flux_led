@@ -840,6 +840,18 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b"b\x01,\x00\x02\x06\x02\x19\x02\xf0\xa4"
 
+    transport.reset_mock()
+    with patch.object(light, "_async_addressable_resync", mock_coro):
+        await light.async_set_device_config(
+            pixels_per_segment=1000,
+            segments=1000,
+            music_pixels_per_segment=1000,
+            music_segments=1000,
+        )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"b\x01,\x00\x06\x04\x03\x96\x06\xf0("
+
 
 @pytest.mark.asyncio
 async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
