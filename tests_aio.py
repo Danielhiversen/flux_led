@@ -745,9 +745,9 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
 
     await task
     assert light.pixels_per_segment == 50
-    assert light.segments == 0
-    assert light.music_pixels_per_segment == 0
-    assert light.music_segments == 0
+    assert light.segments is None
+    assert light.music_pixels_per_segment is None
+    assert light.music_segments is None
     assert light.ic_types == [
         "UCS1903",
         "SM16703",
