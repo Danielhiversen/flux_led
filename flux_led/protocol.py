@@ -5,11 +5,17 @@ import colorsys
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from typing import Final, List, NamedTuple, Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
+    MUSIC_PIXELS_MAX,
+    MUSIC_PIXELS_PER_SEGMENT_MAX,
+    MUSIC_SEGMENTS_MAX,
+    PIXELS_MAX,
+    PIXELS_PER_SEGMENT_MAX,
+    SEGMENTS_MAX,
     TRANSITION_GRADUAL,
     TRANSITION_JUMP,
     TRANSITION_STROBE,
@@ -42,15 +48,6 @@ class LEDENETAddressableDeviceConfiguration:
     ic_type: Optional[str]  # WS2812B UCS.. etc
     ic_type_num: Optional[int]  # WS2812B UCS.. number etc
     operating_mode: Optional[str]  # RGB, RGBW
-
-
-SEGMENTS_MAX: Final = 2048
-PIXELS_MAX: Final = 2048
-PIXELS_PER_SEGMENT_MAX: Final = 300
-
-MUSIC_SEGMENTS_MAX: Final = 64
-MUSIC_PIXELS_MAX: Final = 960
-MUSIC_PIXELS_PER_SEGMENT_MAX: Final = 150
 
 
 @dataclass
