@@ -1478,8 +1478,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
                     segments,
                     ic_type,
                     wiring,
-                    music_pixels_per_segment >> 8,
-                    music_pixels_per_segment & 0xFF,
+                    music_pixels_per_segment,
                     music_segments,
                     0xF0,
                 ]
