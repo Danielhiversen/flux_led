@@ -1449,16 +1449,14 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         assert music_pixels_per_segment is not None
         assert music_segments is not None
         assert wiring is not None
-        if pixels_per_segment > PIXELS_PER_SEGMENT_MAX:
-            pixels_per_segment = PIXELS_PER_SEGMENT_MAX
-        if segments > SEGMENTS_MAX:
-            segments = SEGMENTS_MAX
+        pixels_per_segment = max(1, min(pixels_per_segment, PIXELS_PER_SEGMENT_MAX))
+        segments = max(1, min(segments, SEGMENTS_MAX))
         if pixels_per_segment * segments > PIXELS_MAX:
             segments = int(PIXELS_MAX / pixels_per_segment)
-        if music_pixels_per_segment > MUSIC_PIXELS_PER_SEGMENT_MAX:
-            music_pixels_per_segment = MUSIC_PIXELS_PER_SEGMENT_MAX
-        if music_segments > MUSIC_SEGMENTS_MAX:
-            music_segments = MUSIC_SEGMENTS_MAX
+        music_pixels_per_segment = max(
+            1, min(music_pixels_per_segment, MUSIC_PIXELS_PER_SEGMENT_MAX)
+        )
+        music_segments = max(1, min(music_segments, MUSIC_SEGMENTS_MAX))
         if music_pixels_per_segment * music_segments > MUSIC_PIXELS_MAX:
             music_segments = int(MUSIC_PIXELS_MAX / music_pixels_per_segment)
         if (
