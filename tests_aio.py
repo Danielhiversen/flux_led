@@ -234,7 +234,7 @@ async def test_reassemble(mock_aio_protocol):
         pass
 
     task = asyncio.create_task(light.async_setup(_updated_callback))
-    await mock_aio_protocol()
+    transport, protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
         b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
     )
@@ -260,6 +260,18 @@ async def test_reassemble(mock_aio_protocol):
     light._aio_protocol.data_received(b"\xde")
     await asyncio.sleep(0)
     assert light.is_on is True
+
+    transport.reset_mock()
+    await light.async_set_device_config()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"b\x05\x0fv"
+
+    transport.reset_mock()
+    await light.async_set_device_config(operating_mode="CCT")
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"b\x02\x0fs"
 
 
 @pytest.mark.asyncio
