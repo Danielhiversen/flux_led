@@ -561,6 +561,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         self.set_available()
         prev_state = self.raw_state
+        changed_state = False
         if self._protocol.is_valid_outer_message(msg):
             msg = self._protocol.extract_inner_message(msg)
 
@@ -570,11 +571,12 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_power_state_response(msg)
         elif self._protocol.is_valid_ic_response(msg):
             self.process_ic_response(msg)
+            changed_state = True
         elif self._protocol.is_valid_power_restore_state_response(msg):
             self.process_power_restore_state_response(msg)
         else:
             return
-        if self.raw_state == prev_state:
+        if not changed_state and self.raw_state == prev_state:
             return
         self._process_futures_and_callbacks()
 
