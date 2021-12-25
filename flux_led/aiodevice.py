@@ -6,7 +6,12 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import ADDRESSABLE_PROTOCOLS, DeviceType, LEDENETDevice
+from .base_device import (
+    ALL_ADDRESSABLE_PROTOCOLS,
+    ALL_IC_PROTOCOLS,
+    DeviceType,
+    LEDENETDevice,
+)
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -27,8 +32,6 @@ from .protocol import (
     PowerRestoreState,
     PowerRestoreStates,
     ProtocolLEDENET8Byte,
-    ProtocolLEDENETAddressableA1,
-    ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETOriginal,
@@ -43,12 +46,6 @@ COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
-PROBE_IC_PROTOCOLS = (
-    ProtocolLEDENETAddressableA1,
-    ProtocolLEDENETAddressableA2,
-    ProtocolLEDENETAddressableA3,
-)
-ALL_IC_PROTOCOLS = (ProtocolLEDENETAddressableChristmas, *PROBE_IC_PROTOCOLS)
 #
 # PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
 # since we do not care about the state when its off. When it turns on
@@ -129,7 +126,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
-        assert isinstance(self._protocol, PROBE_IC_PROTOCOLS)
+        assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
             await asyncio.wait_for(self._ic_future, timeout=self.timeout)
