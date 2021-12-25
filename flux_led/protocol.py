@@ -1032,7 +1032,7 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     def is_valid_ic_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return (
-            len(data) == LEDENET_IC_STATE_RESPONSE_LEN
+            len(data) == LEDENET_A1_IC_STATE_RESPONSE_LEN
             and _message_type_from_start_of_msg(data) == MSG_A1_IC_CONFIG
             and self.is_checksum_correct(data)
         )
