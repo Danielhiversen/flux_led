@@ -88,8 +88,8 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
-LEDENET_A1_IC_STATE_RESPONSE_LEN = 12
-LEDENET_IC_STATE_RESPONSE_LEN = 11
+LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
+LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -101,8 +101,8 @@ MSG_STATE = "state"
 MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
-MSG_IC_CONFIG = "ic_config"
-MSG_A1_IC_CONFIG = "a1_ic_config"
+MSG_DEVICE_CONFIG = "device_config"
+MSG_A1_DEVICE_CONFIG = "a1_device_config"
 
 
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
@@ -117,10 +117,10 @@ MSG_UNIQUE_START = {
     (0x78,): MSG_ORIGINAL_POWER_STATE,
     (0x66,): MSG_ORIGINAL_STATE,
     (0x81,): MSG_STATE,
-    (0x00, 0x63): MSG_IC_CONFIG,
-    (0xF0, 0x63): MSG_IC_CONFIG,
-    (0x0F, 0x63): MSG_IC_CONFIG,
-    (0x63,): MSG_A1_IC_CONFIG,
+    (0x00, 0x63): MSG_DEVICE_CONFIG,
+    (0xF0, 0x63): MSG_DEVICE_CONFIG,
+    (0x0F, 0x63): MSG_DEVICE_CONFIG,
+    (0x63,): MSG_A1_DEVICE_CONFIG,
     (0x72,): MSG_MUSIC_MODE_STATE,
 }
 
@@ -132,8 +132,8 @@ MSG_LENGTHS = {
     MSG_ORIGINAL_STATE: LEDENET_ORIGINAL_STATE_RESPONSE_LEN,
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
-    MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
-    MSG_A1_IC_CONFIG: LEDENET_A1_IC_STATE_RESPONSE_LEN,
+    MSG_DEVICE_CONFIG: LEDENET_DEVICE_CONFIG_RESPONSE_LEN,
+    MSG_A1_DEVICE_CONFIG: LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN,
 }
 
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
@@ -387,7 +387,7 @@ class ProtocolBase:
         """Extract the inner message from a wrapped message."""
         return msg[10:-1]
 
-    def is_valid_ic_response(self, data: bytes) -> bool:
+    def is_valid_device_config_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return False
 
@@ -1085,11 +1085,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
 
-    def is_valid_ic_response(self, data: bytes) -> bool:
+    def is_valid_device_config_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return (
-            len(data) == LEDENET_A1_IC_STATE_RESPONSE_LEN
-            and _message_type_from_start_of_msg(data) == MSG_A1_IC_CONFIG
+            len(data) == LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_A1_DEVICE_CONFIG
             and self.is_checksum_correct(data)
         )
 
@@ -1242,11 +1242,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         """If True the device must be turned on before setting level/patterns/modes."""
         return False
 
-    def is_valid_ic_response(self, data: bytes) -> bool:
+    def is_valid_device_config_response(self, data: bytes) -> bool:
         """Check if a message is a valid ic state response."""
         return (
-            len(data) == LEDENET_IC_STATE_RESPONSE_LEN
-            and _message_type_from_start_of_msg(data) == MSG_IC_CONFIG
+            len(data) == LEDENET_DEVICE_CONFIG_RESPONSE_LEN
+            and _message_type_from_start_of_msg(data) == MSG_DEVICE_CONFIG
             and self.is_checksum_correct(data)
         )
 

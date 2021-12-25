@@ -79,7 +79,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._config_lock: asyncio.Lock = asyncio.Lock()
-        self._ic_future: asyncio.Future[bool] = asyncio.Future()
+        self._device_config_future: asyncio.Future[bool] = asyncio.Future()
         self._ic_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
@@ -132,13 +132,13 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
 
         if self._ic_setup:
-            self._ic_future = asyncio.Future()
+            self._device_config_future = asyncio.Future()
         self._ic_setup = True
 
         assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
-            await asyncio.wait_for(self._ic_future, timeout=self.timeout)
+            await asyncio.wait_for(self._device_config_future, timeout=self.timeout)
         except asyncio.TimeoutError:
             self.set_unavailable()
             raise RuntimeError("Could not determine number pixels")
@@ -571,8 +571,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._async_process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
-        elif self._protocol.is_valid_ic_response(msg):
-            self.process_ic_response(msg)
+        elif self._protocol.is_valid_device_config_response(msg):
+            self.process_device_config_response(msg)
             changed_state = True
         elif self._protocol.is_valid_power_restore_state_response(msg):
             self.process_power_restore_state_response(msg)
@@ -613,11 +613,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         if not self._power_restore_future.done():
             self._power_restore_future.set_result(True)
 
-    def process_ic_response(self, msg: bytes) -> None:
+    def process_device_config_response(self, msg: bytes) -> None:
         """Process an IC (strip config) response."""
-        super().process_ic_response(msg)
-        if not self._ic_future.done():
-            self._ic_future.set_result(True)
+        super().process_device_config_response(msg)
+        if not self._device_config_future.done():
+            self._device_config_future.set_result(True)
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""

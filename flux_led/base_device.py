@@ -636,7 +636,7 @@ class LEDENETDevice:
     def set_available(self) -> None:
         self.available = True
 
-    def process_ic_response(self, msg: bytes) -> None:
+    def process_device_config_response(self, msg: bytes) -> None:
         """Process an IC (strip config) response."""
         assert isinstance(
             self._protocol,
