@@ -39,9 +39,9 @@ class MusicMode(Enum):
 @dataclass
 class LEDENETAddressableDeviceConfiguration:
     pixels_per_segment: int  # pixels per segment
-    segments: int  # number of segments
-    music_pixels_per_segment: int  # music pixels per segment
-    music_segments: int  # number of music segments
+    segments: Optional[int]  # number of segments
+    music_pixels_per_segment: Optional[int]  # music pixels per segment
+    music_segments: Optional[int]  # number of music segments
     wirings: List[str]  # available wirings in the current mode
     wiring: Optional[str]  # RGB/BRG/GBR etc
     wiring_num: Optional[int]  # RGB/BRG/GBR number
@@ -1954,9 +1954,9 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         """Parse a strip settings message."""
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=6,
-            segments=1,
-            music_pixels_per_segment=0,
-            music_segments=0,
+            segments=None,
+            music_pixels_per_segment=None,
+            music_segments=None,
             wirings=[],
             wiring_num=None,
             wiring=None,
