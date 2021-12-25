@@ -6,7 +6,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import DeviceType, LEDENETDevice
+from .base_device import ADDRESSABLE_PROTOCOLS, DeviceType, LEDENETDevice
 from .const import (
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -42,7 +42,8 @@ _LOGGER = logging.getLogger(__name__)
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
-PROBE_IC_PROTOOCOLS = (
+PROBE_IC_PROTOCOLS = (
+    ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETAddressableA1,
     ProtocolLEDENETAddressableA2,
     ProtocolLEDENETAddressableA3,
@@ -100,7 +101,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if isinstance(
             self._protocol,
-            PROBE_IC_PROTOOCOLS,
+            PROBE_IC_PROTOCOLS,
         ):
             await self._async_addressable_setup()
             return
@@ -126,7 +127,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
         assert isinstance(
             self._protocol,
-            PROBE_IC_PROTOOCOLS,
+            PROBE_IC_PROTOCOLS,
         )
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
