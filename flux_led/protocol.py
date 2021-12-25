@@ -1144,17 +1144,11 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             hex(low_byte),
             pixels_per_segment,
         )
-        segments = msg[5]
-        _LOGGER.debug(
-            "Segment count (%s) is: %s",
-            hex(segments),
-            segments,
-        )
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=pixels_per_segment,
-            segments=segments,
-            music_pixels_per_segment=0,
-            music_segments=0,
+            segments=None,
+            music_pixels_per_segment=None,
+            music_segments=None,
             wirings=list(ADDRESSABLE_RGB_WIRING_TO_NUM),
             wiring_num=msg[10],
             wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[10]),
