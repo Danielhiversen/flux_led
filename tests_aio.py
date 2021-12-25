@@ -617,7 +617,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x05B\x012d\xd9\x80"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x012d\xd9\x81"
     )
     assert light.effect == "RBM 1"
 
@@ -626,7 +626,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x05B\x01\x10d\xb7="
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x10d\xb7>"
     )
 
     transport.reset_mock()
@@ -634,7 +634,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x05B\x01\x102\x85\xda"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x05B\x01\x102\x85\xdb"
     )
 
 
@@ -659,9 +659,9 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     await task
     assert light._device_config.pixels_per_segment == 25
     assert light._device_config.segments == 2
-    assert light.strip_protocol == 'WS2811'
-    assert light.operating_mode == 'RGB'
-    assert light.wiring == 'GBR'
+    assert light.strip_protocol == "WS2811"
+    assert light.operating_mode == "RGB"
+    assert light.wiring == "GBR"
     assert light.model_num == 0xA3
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
@@ -671,13 +671,13 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
         [(255, 0, 0), (0, 0, 255)], 100, MultiColorEffects.STROBE
     )
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == (
-        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00TY\x00T\xff\x00\x00"
+    assert transport.mock_calls[0][1][0] == bytearray(
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00TY\x00T\xff\x00\x00"
         b"\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
         b"\x00\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff"
         b"\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00"
-        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19N"
+        b"\x00\xff\x00\x00\xff\x00\x00\xff\x00\x1e\x03d\x00\x19O"
     )
 
     with pytest.raises(ValueError):

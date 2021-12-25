@@ -107,6 +107,13 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
+            return
+        _LOGGER.debug(
+            "%s: wiring=%s operating_mode=%s",
+            self.ipaddr,
+            self.wiring,
+            self.operating_mode,
+        )
 
     async def _async_switch_setup(self) -> None:
         """Setup a switch."""
