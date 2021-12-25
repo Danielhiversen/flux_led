@@ -471,6 +471,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         music_pixels_per_segment: Optional[int] = None,  # music pixels per segment
         music_segments: Optional[int] = None,  # number of music segments
     ) -> None:
+        """Set device configuration."""
+        # Since Home Assistant will modify one value at a time,
+        # we need to lock, and then update so the previous value
+        # modification does not get trampled in the event they
+        # change two values before the first one has been updated
         async with self._device_config_lock:
             device_config = self.model_data.device_config
             operating_mode_num = (
