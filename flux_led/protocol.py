@@ -1398,8 +1398,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=pixels_per_segment,
             segments=segments,
-            music_pixels_per_segment=msg[8] or pixels_per_segment,
-            music_segments=msg[9] or segments,
+            music_pixels_per_segment=msg[8],
+            music_segments=msg[9],
             wirings=list(wirings.values()),
             wiring_num=msg[7],
             wiring=wirings.get(msg[7]),
