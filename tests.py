@@ -1085,7 +1085,7 @@ class TestLight(unittest.TestCase):
         assert light.ic_types is None
         assert light.ic_type is None
         assert light.operating_mode is None
-        assert light.operating_modes == ["RGB"]
+        assert light.operating_modes is None
         assert light.wiring is None
         assert light.wirings == ["RGB", "GRB", "BRG"]
         self.assertEqual(mock_read.call_count, 2)
@@ -1162,7 +1162,7 @@ class TestLight(unittest.TestCase):
         assert light.ic_types is None
         assert light.ic_type is None
         assert light.operating_mode is None
-        assert light.operating_modes == ["RGB"]
+        assert light.operating_modes is None
         assert light.wiring is None
         assert light.wirings == ["RGB", "GRB", "BRG"]
         self.assertEqual(mock_read.call_count, 2)

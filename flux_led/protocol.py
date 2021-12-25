@@ -219,8 +219,6 @@ class LEDENETRawState(NamedTuple):
 #
 RGB_NUM_TO_WIRING = {1: "RGB", 2: "GRB", 3: "BRG"}
 RGB_WIRING_TO_NUM = {v: k for k, v in RGB_NUM_TO_WIRING.items()}
-RGB_NUM_TO_MODE = {0: "RGB"}
-RGB_MODE_TO_NUM = {v: k for k, v in RGB_NUM_TO_MODE.items()}
 RGBW_NUM_TO_WIRING = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
 RGBW_WIRING_TO_NUM = {v: k for k, v in RGBW_NUM_TO_WIRING.items()}
 RGBW_NUM_TO_MODE = {4: "RGB&W", 6: "RGB/W"}
@@ -866,8 +864,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         62 04 0f 74 - RGB&W
         62 05 0f 74 - RGB&CCT
         """
-        assert operating_mode is not None
-        msg = bytearray([0x62, operating_mode])
+        msg = bytearray([0x62, operating_mode or 0x00])
         if wiring:
             msg.append(wiring)
         msg.append(0x0F)

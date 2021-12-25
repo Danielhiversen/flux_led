@@ -540,11 +540,13 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     task = asyncio.create_task(light.async_setup(_updated_callback))
     transport, protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
-        b"\x81\x33#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\x65"
+        b"\x81\x33\x24\x61\x23\x01\x00\xFF\x00\x00\x04\x00\x0F\x6F"
     )
     await task
     assert light.model_num == 0x33
     assert light.version_num == 4
+    assert light.wiring == "GRB"
+    assert light.wirings == ["RGB", "GRB", "BRG"]
     assert light.operating_mode is None
     assert light.dimmable_effects is False
     assert light.requires_turn_on is True
@@ -555,13 +557,13 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"b\x01\x0fr"
+    assert transport.mock_calls[0][1][0] == b"b\x00\x02\x0fs"
 
     transport.reset_mock()
     await light.async_set_device_config(wiring="BRG")
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"b\x01\x03\x0fu"
+    assert transport.mock_calls[0][1][0] == b"b\x00\x03\x0ft"
 
     transport.reset_mock()
     with pytest.raises(ValueError):
@@ -1038,7 +1040,7 @@ async def test_async_set_music_mode_0x08(
         assert light.ic_types is None
         assert light.ic_type is None
         assert light.operating_mode is None
-        assert light.operating_modes == ["RGB"]
+        assert light.operating_modes is None
         assert light.wiring is None  # How can we get this in music mode?
         assert light.wirings == ["RGB", "GRB", "BRG"]
 
