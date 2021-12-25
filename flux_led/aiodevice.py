@@ -44,6 +44,7 @@ _LOGGER = logging.getLogger(__name__)
 
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
+DEVICE_CONFIG_WAIT_SECONDS = 2
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 
 #
@@ -75,7 +76,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
-        self._ic_lock: asyncio.Lock = asyncio.Lock()
+        self._config_lock: asyncio.Lock = asyncio.Lock()
         self._ic_future: asyncio.Future[bool] = asyncio.Future()
         self._ic_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
@@ -128,17 +129,17 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
-        async with self._ic_lock:
-            if self._ic_setup:
-                self._ic_future = asyncio.Future()
-            assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
-            await self._async_send_msg(self._protocol.construct_request_strip_setting())
-            try:
-                await asyncio.wait_for(self._ic_future, timeout=self.timeout)
-            except asyncio.TimeoutError:
-                self.set_unavailable()
-                raise RuntimeError("Could not determine number pixels")
-            self._ic_setup = True
+        if self._ic_setup:
+            self._ic_future = asyncio.Future()
+        self._ic_setup = True
+
+        assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
+        await self._async_send_msg(self._protocol.construct_request_strip_setting())
+        try:
+            await asyncio.wait_for(self._ic_future, timeout=self.timeout)
+        except asyncio.TimeoutError:
+            self.set_unavailable()
+            raise RuntimeError("Could not determine number pixels")
 
     async def async_stop(self) -> None:
         """Shutdown the connection."""
@@ -468,34 +469,39 @@ class AIOWifiLedBulb(LEDENETDevice):
         music_pixels_per_segment: Optional[int] = None,  # music pixels per segment
         music_segments: Optional[int] = None,  # number of music segments
     ) -> None:
-        device_config = self.model_data.device_config
-        if operating_mode is None:
-            operating_mode_num = self.operating_mode_num
-        else:
-            operating_mode_num = device_config.operating_mode_to_num[operating_mode]
-        if wiring is None:
-            wiring_num = self.wiring_num
-        else:
-            wiring_num = device_config.wiring_to_num[wiring]
-        if ic_type is None:
-            ic_type_num = self.ic_type_num
-        else:
-            ic_type_num = device_config.ic_type_to_num[ic_type]
-        assert self._protocol is not None
-        assert not isinstance(self._protocol, ProtocolLEDENETOriginal)
-        await self._async_send_msg(
-            self._protocol.construct_device_config(
-                operating_mode_num,
-                wiring_num,
-                ic_type_num,
-                pixels_per_segment or self.pixels_per_segment,
-                segments or self.segments,
-                music_pixels_per_segment or self.music_pixels_per_segment,
-                music_segments or self.music_segments,
+        async with self._config_lock:
+            device_config = self.model_data.device_config
+            if operating_mode is None:
+                operating_mode_num = self.operating_mode_num
+            else:
+                operating_mode_num = device_config.operating_mode_to_num[operating_mode]
+            if wiring is None:
+                wiring_num = self.wiring_num
+            else:
+                wiring_num = device_config.wiring_to_num[wiring]
+            if ic_type is None:
+                ic_type_num = self.ic_type_num
+            else:
+                ic_type_num = device_config.ic_type_to_num[ic_type]
+            assert self._protocol is not None
+            assert not isinstance(self._protocol, ProtocolLEDENETOriginal)
+            await self._async_send_msg(
+                self._protocol.construct_device_config(
+                    operating_mode_num,
+                    wiring_num,
+                    ic_type_num,
+                    pixels_per_segment or self.pixels_per_segment,
+                    segments or self.segments,
+                    music_pixels_per_segment or self.music_pixels_per_segment,
+                    music_segments or self.music_segments,
+                )
             )
-        )
-        if isinstance(self._protocol, ALL_IC_PROTOCOLS):
-            await self._async_addressable_setup()
+            if isinstance(self._protocol, ALL_IC_PROTOCOLS):
+                await self._async_addressable_resync()
+
+    async def _async_addressable_resync(self):
+        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
+        await self._async_addressable_setup()
 
     async def _async_connect(self) -> None:
         """Create connection."""

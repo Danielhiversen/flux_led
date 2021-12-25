@@ -765,7 +765,7 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.requires_turn_on is False
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup", mock_coro):
+    with patch.object(light, "_async_addressable_resync", mock_coro):
         await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
@@ -775,7 +775,7 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup", mock_coro):
+    with patch.object(light, "_async_addressable_resync", mock_coro):
         await light.async_set_device_config(
             ic_type="SK6812", wiring="GRB", pixels_per_segment=300
         )
@@ -818,7 +818,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.requires_turn_on is False
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup", mock_coro):
+    with patch.object(light, "_async_addressable_resync", mock_coro):
         await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
@@ -827,7 +827,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup", mock_coro):
+    with patch.object(light, "_async_addressable_resync", mock_coro):
         await light.async_set_device_config(
             ic_type="SK6812", wiring="GRB", pixels_per_segment=300
         )
@@ -882,7 +882,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert light.requires_turn_on is False
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup", mock_coro):
+    with patch.object(light, "_async_addressable_resync", mock_coro):
         await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
@@ -892,7 +892,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     )
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup", mock_coro):
+    with patch.object(light, "_async_addressable_resync", mock_coro):
         await light.async_set_device_config(
             ic_type="SK6812",
             wiring="GRB",
