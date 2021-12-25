@@ -28,6 +28,11 @@ EFFECT_CYCLE_SEVEN_COLORS = "cycle_seven_colors"
 EFFECT_COLORJUMP = "colorjump"
 EFFECT_CUSTOM = "custom"
 
+EFFECT_WARM_FLASH = "Warm Flash"
+EFFECT_COOL_FLASH = "Cool Flash"
+EFFECT_WARM_GRADUAL = "Warm Gradual"
+EFFECT_COOL_GRADUAL = "Cool Gradual"
+
 EFFECT_MAP = {
     EFFECT_COLORLOOP: 0x25,
     EFFECT_RED_FADE: 0x26,
@@ -60,11 +65,20 @@ EFFECT_MAP_AUTO_ON = {
     # model actually has support for it
 }
 
+EFFECT_MAP_LEGACY_CCT = {
+    EFFECT_WARM_GRADUAL: 0x3A,
+    EFFECT_WARM_FLASH: 0x3C,
+    EFFECT_COOL_GRADUAL: 0x4A,
+    EFFECT_COOL_FLASH: 0x4C,
+}
+
+EFFECT_ID_NAME_LEGACY_CCT = {v: k for k, v in EFFECT_MAP_LEGACY_CCT.items()}
 EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_AUTO_ON.items()}
 EFFECT_CUSTOM_CODE = 0x60
 
 EFFECT_LIST = sorted(EFFECT_MAP)
 EFFECT_LIST_AUTO_ON = sorted(EFFECT_MAP_AUTO_ON)
+EFFECT_LIST_LEGACY_CCT = sorted(EFFECT_MAP_LEGACY_CCT)
 
 ADDRESSABLE_EFFECT_ID_NAME = {
     1: "RBM 1",
@@ -605,6 +619,10 @@ CHRISTMAS_ADDRESSABLE_EFFECT_NAME_ID = {
 
 class PresetPattern:
     _instance = None
+    warm_flash = EFFECT_MAP_LEGACY_CCT[EFFECT_WARM_FLASH]
+    cool_flash = EFFECT_MAP_LEGACY_CCT[EFFECT_COOL_FLASH]
+    warm_gradual = EFFECT_MAP_LEGACY_CCT[EFFECT_WARM_GRADUAL]
+    cool_gradual = EFFECT_MAP_LEGACY_CCT[EFFECT_COOL_GRADUAL]
     seven_color_cross_fade = EFFECT_MAP[EFFECT_COLORLOOP]
     red_gradual_change = EFFECT_MAP[EFFECT_RED_FADE]
     green_gradual_change = EFFECT_MAP[EFFECT_GREEN_FADE]
@@ -645,7 +663,11 @@ class PresetPattern:
 
     @staticmethod
     def valid(pattern: int) -> bool:
-        if pattern >= 0x24 and pattern <= 0x3A or pattern >= 0x61 and pattern <= 0x63:
+        if (
+            (pattern >= 0x24 and pattern <= 0x3A)
+            or (pattern >= 0x61 and pattern <= 0x63)
+            or pattern in EFFECT_ID_NAME_LEGACY_CCT
+        ):
             return True
         return False
 
@@ -658,6 +680,7 @@ class PresetPattern:
     def str_to_val(effect: str) -> int:
         if effect in EFFECT_MAP:
             return EFFECT_MAP[effect]
-        if hasattr(PresetPattern, effect):
-            return cast(int, getattr(PresetPattern, effect))
+        mapped_effect = effect.replace(" ", "_").lower()
+        if hasattr(PresetPattern, mapped_effect):
+            return cast(int, getattr(PresetPattern, mapped_effect))
         raise ValueError(f"{effect} is not a known effect name.")

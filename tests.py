@@ -1454,6 +1454,11 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.getRgb(), (1, 25, 80))
         self.assertEqual(light.version_num, 0)
 
+        light.set_effect("colorjump", 50, 100)
+        self.assertEqual(mock_read.call_count, 8)
+        self.assertEqual(mock_send.call_count, 9)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xbb8\x10D")))
+
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
@@ -1491,6 +1496,14 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_CCT}
+        assert light.effect is None
+        assert light.effect_list == [
+            "Cool Flash",
+            "Cool Gradual",
+            "Warm Flash",
+            "Warm Gradual",
+            "random",
+        ]
         self.assertEqual(light.model_num, 0x03)
         self.assertEqual(light.model, "Legacy Controller CCT (0x03)")
         self.assertEqual(light.dimmable_effects, False)
@@ -1568,6 +1581,16 @@ class TestLight(unittest.TestCase):
         self.assertEqual(light.cool_white, 0)
         self.assertEqual(light.brightness, 26)
         self.assertEqual(light.version_num, 0)
+
+        light.set_effect("Warm Flash", 50, 100)
+        self.assertEqual(mock_read.call_count, 8)
+        self.assertEqual(mock_send.call_count, 9)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xbb<\x10D")))
+
+        light.set_effect("Cool Gradual", 50, 100)
+        self.assertEqual(mock_read.call_count, 8)
+        self.assertEqual(mock_send.call_count, 10)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"\xbbJ\x10D")))
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

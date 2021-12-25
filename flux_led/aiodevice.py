@@ -651,7 +651,8 @@ class AIOWifiLedBulb(LEDENETDevice):
                         self._determine_protocol_future, timeout=self.timeout
                     )
                 except asyncio.TimeoutError:
-                    self._aio_protocol.close()
+                    if self._aio_protocol:
+                        self._aio_protocol.close()
                     continue
                 else:
                     return

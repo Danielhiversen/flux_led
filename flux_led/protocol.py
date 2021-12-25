@@ -507,12 +507,11 @@ class ProtocolBase:
     ) -> bytearray:
         """The bytes to send for a level change request."""
 
+    @abstractmethod
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
     ) -> bytearray:
         """The bytes to send for a preset pattern."""
-        delay = utils.speedToDelay(speed)
-        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_custom_effect(
         self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
@@ -603,6 +602,13 @@ class ProtocolLEDENETOriginal(ProtocolBase):
     def is_valid_state_response(self, raw_state: bytes) -> bool:
         """Check if a state response is valid."""
         return len(raw_state) == self.state_response_length and raw_state[0] == 0x66
+
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0xBB, pattern, delay, 0x44]))
 
     def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
@@ -722,6 +728,13 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         return self.construct_message(
             bytearray([0x71, self.on_byte if turn_on else self.off_byte, 0x0F])
         )
+
+    def construct_preset_pattern(
+        self, pattern: int, speed: int, brightness: int
+    ) -> bytearray:
+        """The bytes to send for a preset pattern."""
+        delay = utils.speedToDelay(speed)
+        return self.construct_message(bytearray([0x61, pattern, delay, 0x0F]))
 
     def construct_levels_change(
         self,
