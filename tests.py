@@ -1496,6 +1496,8 @@ class TestLight(unittest.TestCase):
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
         assert light.color_modes == {COLOR_MODE_CCT}
+        assert light.effect is None
+        assert light.effect_list == ['Cool Flash', 'Cool Gradual', 'Warm Flash', 'Warm Gradual', 'random']
         self.assertEqual(light.model_num, 0x03)
         self.assertEqual(light.model, "Legacy Controller CCT (0x03)")
         self.assertEqual(light.dimmable_effects, False)
