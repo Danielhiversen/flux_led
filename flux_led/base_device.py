@@ -4,7 +4,6 @@ import logging
 import random
 import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
-from .protocol import LEDENETAddressableDeviceConfiguration
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -73,6 +72,7 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    LEDENETAddressableDeviceConfiguration,
     LEDENETOriginalRawState,
     LEDENETRawState,
     ProtocolLEDENET8Byte,
@@ -345,24 +345,36 @@ class LEDENETDevice:
         )
 
     @property
-    def sort_order(self) -> Optional[str]:
+    def wiring(self) -> Optional[str]:
         """Return the sort order as a string."""
+        if not self.model_data.device_config.order:
+            return None
+        if self._device_config:
+            return self._device_config.wiring
         assert self.raw_state is not None
-        return self.model_data.device_config.num_to_mode.get(self.raw_state.mode & 0xF0)
+        return self.model_data.device_config.num_to_order.get(
+            self.raw_state.mode & 0xF0
+        )
 
     @property
-    def mode(self) -> Optional[str]:
+    def operating_mode(self) -> Optional[str]:
         """Return the strip mode as a string."""
+        if not self.model_data.device_config.operating_modes:
+            return None
+        if self._device_config:
+            return self._device_config.operating_mode
         assert self.raw_state is not None
-        return self.model_data.device_config.num_to_mode.get(self.raw_state.mode & 0x0F)
+        return self.model_data.device_config.num_to_operating_mode.get(
+            self.raw_state.mode & 0x0F
+        )
 
     @property
     def strip_protocol(self) -> Optional[str]:
         """Return the strip protocol as a string."""
+        if not self.model_data.device_config.protocols:
+            return None
         assert self._device_config is not None
-        return self.model_data.device_config.num_to_mode.get(
-            self._device_config.protocol
-        )
+        return self._device_config.protocol
 
     @property
     def color_mode(self) -> Optional[str]:

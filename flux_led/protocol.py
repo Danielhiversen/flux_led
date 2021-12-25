@@ -8,6 +8,8 @@ import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
+    COLOR_MODE_RGB,
+    COLOR_MODE_RGBW,
     TRANSITION_GRADUAL,
     TRANSITION_JUMP,
     TRANSITION_STROBE,
@@ -34,8 +36,9 @@ class LEDENETAddressableDeviceConfiguration:
     segments: int  # number of segments
     music_pixels_per_segment: int  # music pixels per segment
     music_segments: int  # number of music segments
-    wiring: int  # RGB/BRG/GBR etc
-    protocol: int  # WS2812B UCS.. etc
+    wiring: str  # RGB/BRG/GBR etc
+    protocol: str  # WS2812B UCS.. etc
+    operating_mode: str  # RGB, RGBW
 
 
 @dataclass
@@ -218,6 +221,92 @@ class LEDENETRawState(NamedTuple):
 #     |  model_num (type)
 #     msg head
 #
+RGB_NUM_TO_ORDER = {1: "RGB", 2: "GRB", 3: "BRG"}
+RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
+RGBW_NUM_TO_ORDER = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
+RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
+RGBW_NUM_TO_MODE = {4: "RGB&W", 6: "RGB/W"}
+RGBW_MODE_TO_NUM = {v: k for k, v in RGBW_NUM_TO_MODE.items()}
+RGBWW_NUM_TO_ORDER = {
+    1: "RGBCW",
+    2: "GRBCW",
+    3: "BRGCW",
+    4: "RGBWC",
+    5: "GRBWC",
+    6: "BRGWC",
+    7: "WRGBC",
+    8: "WGRBC",
+    9: "WBRGC",
+    10: "CRGBW",
+    11: "CBRBW",
+    12: "CBRGW",
+    13: "WCRGB",
+    14: "WCGRB",
+    15: "WCBRG",
+}
+RGBWW_ORDER_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_ORDER.items()}
+RGBWW_NUM_TO_MODE = {5: "RGB&CCT", 7: "RGB/CCT"}
+RGBWW_MODE_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_MODE.items()}
+
+ADDRESSABLE_RGB_NUM_TO_ORDER = {0: "RGB", 1: "GRB", 2: "BRG"}
+ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
+
+ADDRESSABLE_RGBW_NUM_TO_ORDER = {0: "RGBW", 1: "GRBW", 2: "BRGW"}
+ADDRESSABLE_RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
+
+A1_NUM_TO_PROTOCOL = {
+    1: "UCS1903",
+    2: "SM16703",
+    3: "WS2811",
+    4: "WS2812B",
+    5: "SK6812",
+    6: "INK1003",
+    7: "WS2801",
+    8: "LB1914",
+}
+A1_PROTOCOL_TO_NUM = {v: k for k, v in A1_NUM_TO_PROTOCOL.items()}
+
+A1_NUM_TO_OPERATING_MODE = {
+    1: COLOR_MODE_RGB,
+    2: COLOR_MODE_RGB,
+    3: COLOR_MODE_RGB,
+    4: COLOR_MODE_RGB,
+    5: COLOR_MODE_RGB,
+    6: COLOR_MODE_RGB,
+    7: COLOR_MODE_RGB,
+    8: COLOR_MODE_RGB,
+}
+A1_OPERATING_MODE_TO_NUM = {v: k for k, v in A1_NUM_TO_OPERATING_MODE.items()}
+
+NEW_ADDRESSABLE_NUM_TO_PROTOCOL = {
+    1: "WS2812B",
+    2: "SM16703",
+    3: "SM16704",
+    4: "WS2811",
+    5: "UCS1903",
+    6: "SK6812",
+    7: "SK6812RGBW",
+    8: "INK1003",
+    9: "UCS2904B",
+}
+NEW_ADDRESSABLE_PROTOCOL_TO_NUM = {
+    v: k for k, v in NEW_ADDRESSABLE_NUM_TO_PROTOCOL.items()
+}
+
+NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE = {
+    1: COLOR_MODE_RGB,
+    2: COLOR_MODE_RGB,
+    3: COLOR_MODE_RGB,
+    4: COLOR_MODE_RGB,
+    5: COLOR_MODE_RGB,
+    6: COLOR_MODE_RGB,
+    7: COLOR_MODE_RGBW,
+    8: COLOR_MODE_RGB,
+    9: COLOR_MODE_RGB,
+}
+NEW_ADDRESSABLE_OPERATING_MODE_TO_NUM = {
+    v: k for k, v in NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.items()
+}
 
 
 class ProtocolBase:
@@ -986,9 +1075,10 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             pixels_per_segment=pixels_per_segment,
             segments=segments,
             music_pixels_per_segment=0,
-            wiring=msg[10],
             music_segments=0,
-            protocol=msg[3],
+            wiring=ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[10]),
+            protocol=A1_NUM_TO_PROTOCOL.get(msg[3]),
+            operating_mode=A1_NUM_TO_OPERATING_MODE.get(msg[3]),
         )
 
 
@@ -1152,6 +1242,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         high_byte = msg[2]
         low_byte = msg[3]
         pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug("bytes: %s", msg)
         _LOGGER.debug(
             "Pixel count (high: %s, low: %s) is: %s",
             hex(high_byte),
@@ -1169,8 +1260,9 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             segments=segments,
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
-            wiring=msg[7],
-            protocol=msg[6],
+            wiring=ADDRESSABLE_RGB_NUM_TO_ORDER.get(msg[7] - 1),  # probably not right
+            protocol=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
 
 
@@ -1632,4 +1724,5 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             music_segments=0,
             wiring=0,
             protocol=0,
+            operating_mode=COLOR_MODE_RGB,
         )

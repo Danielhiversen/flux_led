@@ -19,6 +19,16 @@ from .const import (
     STATE_WARM_WHITE,
 )
 from .protocol import (
+    A1_NUM_TO_OPERATING_MODE,
+    A1_NUM_TO_PROTOCOL,
+    A1_OPERATING_MODE_TO_NUM,
+    A1_PROTOCOL_TO_NUM,
+    ADDRESSABLE_RGB_NUM_TO_ORDER,
+    ADDRESSABLE_RGB_ORDER_TO_NUM,
+    NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE,
+    NEW_ADDRESSABLE_NUM_TO_PROTOCOL,
+    NEW_ADDRESSABLE_OPERATING_MODE_TO_NUM,
+    NEW_ADDRESSABLE_PROTOCOL_TO_NUM,
     PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_8BYTE_AUTO_ON,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
@@ -32,6 +42,16 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    RGB_NUM_TO_ORDER,
+    RGB_ORDER_TO_NUM,
+    RGBW_MODE_TO_NUM,
+    RGBW_NUM_TO_MODE,
+    RGBW_NUM_TO_ORDER,
+    RGBW_ORDER_TO_NUM,
+    RGBWW_MODE_TO_NUM,
+    RGBWW_NUM_TO_MODE,
+    RGBWW_NUM_TO_ORDER,
+    RGBWW_ORDER_TO_NUM,
 )
 
 # BL likely means BL602 chips
@@ -106,8 +126,6 @@ GENERIC_RGB_MAP = {
     0x33: {COLOR_MODE_RGB},  # RGB (BRG) verified on model 0x33
 }
 
-RGB_NUM_TO_ORDER = {1: "RGB", 2: "GRB", 3: "BRG"}
-RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
 
 GENERIC_RGBW_MAP = {
     0x14: {COLOR_MODE_RGBW},  # RGB&W (RGBW) verified on model 0x06
@@ -117,11 +135,6 @@ GENERIC_RGBW_MAP = {
     0x26: COLOR_MODES_RGB_W,  # RGB/W (GRBW) verified on model 0x06
     0x36: COLOR_MODES_RGB_W,  # RGB/W (BRGW) verified on model 0x06
 }
-
-RGBW_NUM_TO_ORDER = {1: "RGBW", 2: "GRBW", 3: "BRGW"}
-RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
-RGBW_NUM_TO_MODE = {4: "RGB&W", 6: "RGB/W"}
-RGBW_MODE_TO_NUM = {v: k for k, v in RGBW_NUM_TO_MODE.items()}
 
 GENERIC_RGBWW_MAP = {
     0x17: COLOR_MODES_RGB_CCT,  # RGB/CCT (RGBCW) verified on model 0x07
@@ -156,68 +169,15 @@ GENERIC_RGBWW_MAP = {
     0xF5: {COLOR_MODE_RGBWW},  # RGB&CCT (WCBRG) verified on model 0x07
 }
 
-RGBWW_NUM_TO_ORDER = {
-    1: "RGBCW",
-    2: "GRBCW",
-    3: "BRGCW",
-    4: "RGBWC",
-    5: "GRBWC",
-    6: "BRGWC",
-    7: "WRGBC",
-    8: "WGRBC",
-    9: "WBRGC",
-    10: "CRGBW",
-    11: "CBRBW",
-    12: "CBRGW",
-    13: "WCRGB",
-    14: "WCGRB",
-    15: "WCBRG",
-}
-RGBWW_ORDER_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_ORDER.items()}
-RGBWW_NUM_TO_MODE = {5: "RGB&CCT", 7: "RGB/CCT"}
-RGBWW_MODE_TO_NUM = {v: k for k, v in RGBWW_NUM_TO_MODE.items()}
-
-
-ADDRESSABLE_RGB_NUM_TO_ORDER = {0: "RGB", 1: "GRB", 2: "BRG"}
-ADDRESSABLE_RGB_ORDER_TO_NUM = {v: k for k, v in RGB_NUM_TO_ORDER.items()}
-
-ADDRESSABLE_RGBW_NUM_TO_ORDER = {0: "RGBW", 1: "GRBW", 2: "BRGW"}
-ADDRESSABLE_RGBW_ORDER_TO_NUM = {v: k for k, v in RGBW_NUM_TO_ORDER.items()}
-
-A1_NUM_TO_PROTOCOL = {
-    1: "UCS1903",
-    2: "SM16703",
-    3: "WS2811",
-    4: "WS2812B",
-    5: "SK6812",
-    6: "INK1003",
-    7: "WS2801",
-    8: "LB1914",
-}
-A1_PROTOCOL_TO_NUM = {v: k for k, v in A1_NUM_TO_PROTOCOL.items()}
-
-NEW_ADDRESSABLE_NUM_TO_PROTOCOL = {
-    1: "WS2812B",
-    2: "SM16703",
-    3: "SM16704",
-    4: "WS2811",
-    5: "UCS1903",
-    6: "SK6812",
-    7: "SK6812RGBW",
-    8: "INK1003",
-    9: "UCS2904B",
-}
-NEW_ADDRESSABLE_PROTOCOL_TO_NUM = {v: k for k, v in A1_NUM_TO_PROTOCOL.items()}
-
 
 @dataclass
 class LEDENETDeviceConfigurationOptions:
     order: bool  # supports changing strip order
     num_to_order: Dict[int, str]
     order_to_num: Dict[str, int]
-    modes: bool  # has color modes ie RGB&W or RGB/W
-    num_to_mode: Dict[int, str]
-    mode_to_num: Dict[str, int]
+    operating_modes: bool  # has color modes ie RGB&W or RGB/W
+    num_to_operating_mode: Dict[int, str]
+    operating_mode_to_num: Dict[str, int]
     pixels: bool
     segments: bool
     music_pixels: bool
@@ -231,9 +191,9 @@ IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
     order=False,
     num_to_order={},
     order_to_num={},
-    modes=False,
-    num_to_mode={},
-    mode_to_num={},
+    operating_modes=False,
+    num_to_operating_mode={},
+    operating_mode_to_num={},
     pixels=False,
     segments=False,
     music_pixels=False,
@@ -247,9 +207,9 @@ MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
     order=False,
     num_to_order={},
     order_to_num={},
-    modes=True,
-    num_to_mode=MULTI_MODE_NUM_TO_MODE,
-    mode_to_num=MULTI_MODE_MODE_TO_NUM,
+    operating_modes=True,
+    num_to_operating_mode=MULTI_MODE_NUM_TO_MODE,
+    operating_mode_to_num=MULTI_MODE_MODE_TO_NUM,
     pixels=False,
     segments=False,
     music_pixels=False,
@@ -258,14 +218,13 @@ MULTI_MODE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka 0x25
     num_to_protocol={},
     protocol_to_num={},
 )
-
 RGB_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=RGB_NUM_TO_ORDER,
     order_to_num=RGB_ORDER_TO_NUM,
-    modes=False,
-    num_to_mode={},
-    mode_to_num={},
+    operating_modes=False,
+    num_to_operating_mode={},
+    operating_mode_to_num={},
     pixels=False,
     segments=False,
     music_pixels=False,
@@ -278,9 +237,9 @@ RGBW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=RGBW_NUM_TO_ORDER,
     order_to_num=RGBW_ORDER_TO_NUM,
-    modes=True,
-    num_to_mode=RGBW_NUM_TO_MODE,
-    mode_to_num=RGBW_MODE_TO_NUM,
+    operating_modes=True,
+    num_to_operating_mode=RGBW_NUM_TO_MODE,
+    operating_mode_to_num=RGBW_MODE_TO_NUM,
     pixels=False,
     segments=False,
     music_pixels=False,
@@ -293,9 +252,9 @@ RGBWW_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=RGBWW_NUM_TO_ORDER,
     order_to_num=RGBWW_ORDER_TO_NUM,
-    modes=True,
-    num_to_mode=RGBWW_NUM_TO_MODE,
-    mode_to_num=RGBWW_MODE_TO_NUM,
+    operating_modes=True,
+    num_to_operating_mode=RGBWW_NUM_TO_MODE,
+    operating_mode_to_num=RGBWW_MODE_TO_NUM,
     pixels=False,
     segments=False,
     music_pixels=False,
@@ -308,9 +267,9 @@ A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=ADDRESSABLE_RGB_NUM_TO_ORDER,
     order_to_num=ADDRESSABLE_RGB_ORDER_TO_NUM,
-    modes=False,
-    num_to_mode={},
-    mode_to_num={},
+    operating_modes=False,
+    num_to_operating_mode=A1_NUM_TO_OPERATING_MODE,
+    operating_mode_to_num=A1_OPERATING_MODE_TO_NUM,
     pixels=True,
     segments=False,
     music_pixels=False,
@@ -323,9 +282,9 @@ NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     order=True,
     num_to_order=ADDRESSABLE_RGB_NUM_TO_ORDER,
     order_to_num=ADDRESSABLE_RGB_ORDER_TO_NUM,
-    modes=False,
-    num_to_mode={},
-    mode_to_num={},
+    operating_modes=True,
+    num_to_operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE,
+    operating_mode_to_num=NEW_ADDRESSABLE_OPERATING_MODE_TO_NUM,
     pixels=True,
     segments=True,
     music_pixels=True,
