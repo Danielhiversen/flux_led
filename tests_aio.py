@@ -763,7 +763,7 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
 
     transport.reset_mock()
-    with patch.object(light, "_async_addressable_setup"):
+    with patch.object(light, "_async_addressable_setup", mock_coro):
         await light.async_set_device_config(
             ic_type="SK6812", wiring="GRB", pixels_per_segment=300
         )
