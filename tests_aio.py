@@ -829,10 +829,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b"b\x00\x19\x00\x02\x04\x03\x00\x19\x02\xf0\x8f"
-    )
+    assert transport.mock_calls[0][1][0] == b"b\x00\x19\x00\x02\x04\x03\x19\x02\xf0\x8f"
 
     transport.reset_mock()
     with patch.object(light, "_async_addressable_resync", mock_coro):
@@ -841,9 +838,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         )
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0] == b"b\x01,\x00\x02\x06\x02\x00\x19\x02\xf0\xa4"
-    )
+    assert transport.mock_calls[0][1][0] == b"b\x01,\x00\x02\x06\x02\x19\x02\xf0\xa4"
 
 
 @pytest.mark.asyncio
@@ -898,7 +893,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0cb\x00\x19\x00\x02\x04\x03\x00\x19\x02\xf0\x8f\xf3"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0bb\x00\x19\x00\x02\x04\x03\x19\x02\xf0\x8f\xf2"
     )
 
     transport.reset_mock()
@@ -915,7 +910,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0cb\x01,\x00\x02\x06\x02\x00\x96\x02\xf0!\x18"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0bb\x01,\x00\x02\x06\x02\x96\x02\xf0!\x17"
     )
 
     transport.reset_mock()
@@ -932,7 +927,7 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x0cb\x01,\x00\x02\x06\x02\x00\x96\x02\xf0!\x19"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x0bb\x01,\x00\x02\x06\x02\x96\x02\xf0!\x18"
     )
 
     transport.reset_mock()
