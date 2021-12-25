@@ -42,6 +42,11 @@ _LOGGER = logging.getLogger(__name__)
 COMMAND_SPACING_DELAY = 1
 MAX_UPDATES_WITHOUT_RESPONSE = 4
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
+PROBE_IC_PROTOOCOLS = (
+    ProtocolLEDENETAddressableA1,
+    ProtocolLEDENETAddressableA2,
+    ProtocolLEDENETAddressableA3,
+)
 
 #
 # PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
@@ -93,7 +98,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         await self._async_determine_protocol()
         assert self._protocol is not None
-        if self._protocol.zones:
+        if isinstance(
+            self._protocol,
+            PROBE_IC_PROTOOCOLS,
+        ):
             await self._async_addressable_setup()
             return
         if self.device_type == DeviceType.Switch:
@@ -118,11 +126,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
         assert isinstance(
             self._protocol,
-            (
-                ProtocolLEDENETAddressableA1,
-                ProtocolLEDENETAddressableA2,
-                ProtocolLEDENETAddressableA3,
-            ),
+            PROBE_IC_PROTOOCOLS,
         )
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
