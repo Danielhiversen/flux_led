@@ -75,7 +75,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
-        self._ic_future: "asyncio.Future[bool]" = asyncio.Future()
+        self._ic_lock: asyncio.Lock = asyncio.Lock()
+        self._ic_future: asyncio.Future[bool] = asyncio.Future()
+        self._ic_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
@@ -126,13 +128,17 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._device_config = self._protocol.parse_strip_setting(b"")
             return
 
-        assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
-        await self._async_send_msg(self._protocol.construct_request_strip_setting())
-        try:
-            await asyncio.wait_for(self._ic_future, timeout=self.timeout)
-        except asyncio.TimeoutError:
-            self.set_unavailable()
-            raise RuntimeError("Could not determine number pixels")
+        async with self._ic_lock:
+            if self._ic_setup:
+                self._ic_future = asyncio.Future()
+            assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
+            await self._async_send_msg(self._protocol.construct_request_strip_setting())
+            try:
+                await asyncio.wait_for(self._ic_future, timeout=self.timeout)
+            except asyncio.TimeoutError:
+                self.set_unavailable()
+                raise RuntimeError("Could not determine number pixels")
+            self._ic_setup = True
 
     async def async_stop(self) -> None:
         """Shutdown the connection."""
@@ -487,6 +493,8 @@ class AIOWifiLedBulb(LEDENETDevice):
                 music_segments or self.music_segments,
             )
         )
+        if isinstance(self._protocol, ALL_IC_PROTOCOLS):
+            await self._async_addressable_setup()
 
     async def _async_connect(self) -> None:
         """Create connection."""

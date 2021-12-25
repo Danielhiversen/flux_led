@@ -751,7 +751,8 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.requires_turn_on is False
 
     transport.reset_mock()
-    await light.async_set_device_config()
+    with patch.object(light, "_async_addressable_setup"):
+        await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
     assert (
@@ -760,9 +761,10 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
 
     transport.reset_mock()
-    await light.async_set_device_config(
-        ic_type="SK6812", wiring="GRB", pixels_per_segment=300
-    )
+    with patch.object(light, "_async_addressable_setup"):
+        await light.async_set_device_config(
+            ic_type="SK6812", wiring="GRB", pixels_per_segment=300
+        )
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
     assert (
@@ -802,7 +804,8 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.requires_turn_on is False
 
     transport.reset_mock()
-    await light.async_set_device_config()
+    with patch.object(light, "_async_addressable_setup"):
+        await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
     assert (
@@ -810,9 +813,10 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
 
     transport.reset_mock()
-    await light.async_set_device_config(
-        ic_type="SK6812", wiring="GRB", pixels_per_segment=300
-    )
+    with patch.object(light, "_async_addressable_setup"):
+        await light.async_set_device_config(
+            ic_type="SK6812", wiring="GRB", pixels_per_segment=300
+        )
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
     assert (
@@ -864,7 +868,8 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     assert light.requires_turn_on is False
 
     transport.reset_mock()
-    await light.async_set_device_config()
+    with patch.object(light, "_async_addressable_setup"):
+        await light.async_set_device_config()
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
     assert (
@@ -873,14 +878,15 @@ async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixtu
     )
 
     transport.reset_mock()
-    await light.async_set_device_config(
-        ic_type="SK6812",
-        wiring="GRB",
-        pixels_per_segment=300,
-        segments=2,
-        music_pixels_per_segment=300,
-        music_segments=2,
-    )
+    with patch.object(light, "_async_addressable_setup"):
+        await light.async_set_device_config(
+            ic_type="SK6812",
+            wiring="GRB",
+            pixels_per_segment=300,
+            segments=2,
+            music_pixels_per_segment=300,
+            music_segments=2,
+        )
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
     assert (
