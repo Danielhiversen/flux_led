@@ -1001,11 +1001,13 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
 
 
 class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
-    def construct_request_strip_setting(self) -> bytearray:
-        return self.construct_message(bytearray([0x63, 0x12, 0x21]))
+    """Base class for addressable protocols."""
 
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_message(bytearray([0x63, 0x12, 0x21]))
+
     @property
     def name(self) -> str:
         """The name of the protocol."""
@@ -1091,6 +1093,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
     # ic response
     # 0x96 0x63 0x00 0x32 0x00 0x01 0x01 0x04 0x32 0x01 0x64 (11)
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_message(bytearray([0x63, 0x12, 0x21, 0x0F]))
 
     @property
     def name(self) -> str:
@@ -1280,6 +1284,11 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
 
 class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
+    def construct_request_strip_setting(self) -> bytearray:
+        return self.construct_wrapped_message(
+            super().construct_request_strip_setting(),
+            inner_pre_constructed=True,
+        )
 
     # ic response
     # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
