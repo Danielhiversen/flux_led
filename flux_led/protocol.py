@@ -79,20 +79,8 @@ LEDENET_ORIGINAL_STATE_RESPONSE_LEN = 11
 LEDENET_STATE_RESPONSE_LEN = 14
 LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
+LEDENET_A1_IC_STATE_RESPONSE_LEN = 12
 LEDENET_IC_STATE_RESPONSE_LEN = 11
-# pos  0  1  2  3  4  5  6  7  8  9 10
-#    00 63 00 3c 04 00 00 00 00 00 02
-#     |  |  |  |  |  |  |  |  |  |  checksum
-#     |  |  |  |  |  |  |  |  |  ??
-#     |  |  |  |  |  |  |  |  ??
-#     |  |  |  |  |  |  |  ??
-#     |  |  |  |  |  |  ??
-#     |  |  |  |  |  ???
-#     |  |  |  |  ????
-#     |  |  |  ic
-#     |  |  num pixels (16 bit, low byte)
-#     |  num pixels (16 bit, high byte)
-#     msg head
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -105,6 +93,7 @@ MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
 MSG_IC_CONFIG = "ic_config"
+MSG_A1_IC_CONFIG = "a1_ic_config"
 
 
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
@@ -120,6 +109,9 @@ MSG_UNIQUE_START = {
     (0x66,): MSG_ORIGINAL_STATE,
     (0x81,): MSG_STATE,
     (0x00, 0x63): MSG_IC_CONFIG,
+    (0xF0, 0x63): MSG_IC_CONFIG,
+    (0x0F, 0x63): MSG_IC_CONFIG,
+    (0x63,): MSG_A1_IC_CONFIG,
     (0x72,): MSG_MUSIC_MODE_STATE,
 }
 
@@ -132,6 +124,7 @@ MSG_LENGTHS = {
     MSG_STATE: LEDENET_STATE_RESPONSE_LEN,
     MSG_ADDRESSABLE_STATE: LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN,
     MSG_IC_CONFIG: LEDENET_IC_STATE_RESPONSE_LEN,
+    MSG_A1_IC_CONFIG: LEDENET_A1_IC_STATE_RESPONSE_LEN,
 }
 
 OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
@@ -1014,6 +1007,14 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
         """The name of the protocol."""
         return PROTOCOL_LEDENET_ADDRESSABLE_A1
 
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
+        if len(data) != LEDENET_A1_IC_STATE_RESPONSE_LEN:
+            return False
+        if not data.startswith(bytearray([0x63])):
+            return False
+        return self.is_checksum_correct(data)
+
     @property
     def power_push_updates(self) -> bool:
         """If True the protocol pushes power state updates when controlled via ir/rf/app."""
@@ -1107,6 +1108,14 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
     def requires_turn_on(self) -> bool:
         """If True the device must be turned on before setting level/patterns/modes."""
         return False
+
+    def is_valid_ic_response(self, data: bytes) -> bool:
+        """Check if a message is a valid ic state response."""
+        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
+            return False
+        if not data.startswith(bytearray([0x00, 0x63])):
+            return False
+        return self.is_checksum_correct(data)
 
     def construct_preset_pattern(
         self, pattern: int, speed: int, brightness: int
@@ -1280,14 +1289,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
     def zones(self) -> bool:
         """If the protocol supports zones."""
         return True
-
-    def is_valid_ic_response(self, data: bytes) -> bool:
-        """Check if a message is a valid ic state response."""
-        if len(data) != LEDENET_IC_STATE_RESPONSE_LEN:
-            return False
-        if not data.startswith(bytearray([0x00, 0x63])):
-            return False
-        return self.is_checksum_correct(data)
 
     @property
     def name(self) -> str:
