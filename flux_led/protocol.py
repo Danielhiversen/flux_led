@@ -1401,7 +1401,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             music_pixels_per_segment=msg[8] or pixels_per_segment,
             music_segments=msg[9] or segments,
             wirings=list(wirings.values()),
-            wiring_num=msg[10],
+            wiring_num=msg[7],
             wiring=wirings.get(msg[7]),
             ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
             ic_type_num=msg[6],
