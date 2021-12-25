@@ -1022,7 +1022,7 @@ class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     def construct_request_strip_setting(self) -> bytearray:
-        return self.construct_message(bytearray([0x63, 0x12, 0x21]))
+        return bytearray([0x63, 0x12, 0x21, 0x36])
 
     @property
     def name(self) -> str:
