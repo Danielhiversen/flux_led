@@ -56,7 +56,9 @@ def is_legacy_device(discovery: Optional[FluxLEDDiscovery]) -> bool:
     if not discovery:
         return False
     is_legacy_mac = (
-        discovery[ATTR_ID].startswith(LEGACY_OUI) if ATTR_ID in discovery else False
+        discovery[ATTR_ID].startswith(LEGACY_OUI)
+        if (ATTR_ID in discovery and discovery[ATTR_ID] is not None)
+        else False
     )
     return is_legacy_mac or bool(
         discovery.get(ATTR_VERSION_NUM) and not discovery.get(ATTR_MODEL_NUM)
