@@ -696,18 +696,6 @@ MODELS = [
         device_config=IMMUTABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
-        model_num=0x1B,
-        models=[],
-        description="Spray Light",
-        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
-        mode_to_color_mode={},
-        color_modes={COLOR_MODE_RGB},
-        channel_map={},
-        microphone=False,
-        device_config=IMMUTABLE_DEVICE_CONFIG,
-    ),
-    LEDENETModel(
         model_num=0x19,
         models=[],
         description="Socket 2 USB",
@@ -715,6 +703,18 @@ MODELS = [
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
+        channel_map={},
+        microphone=False,
+        device_config=IMMUTABLE_DEVICE_CONFIG,
+    ),
+    LEDENETModel(
+        model_num=0x1B,
+        models=[],
+        description="Spray Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_RGB},
         channel_map={},
         microphone=False,
         device_config=IMMUTABLE_DEVICE_CONFIG,
@@ -728,6 +728,22 @@ MODELS = [
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_CCT)],
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
+        channel_map={},
+        microphone=False,
+        device_config=IMMUTABLE_DEVICE_CONFIG,
+    ),
+    LEDENETModel(
+        model_num=0x1E,
+        models=[],
+        description="Ceiling Light RGBCW",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        protocols=[
+            MinVersionProtocol(9, PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(7, PROTOCOL_LEDENET_9BYTE_AUTO_ON),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE),
+        ],
+        mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
+        color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
         microphone=False,
         device_config=IMMUTABLE_DEVICE_CONFIG,
@@ -1023,7 +1039,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA4,
-        models=["AK001-ZJ2149"],
+        models=[],
         description="Addressable v4",
         always_writes_white_and_colors=False,
         protocols=[
@@ -1032,7 +1048,21 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
-        microphone=True,
+        microphone=True,  # may be false
+        device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
+    ),
+    LEDENETModel(
+        model_num=0xA6,
+        models=[],
+        description="Addressable v6",
+        always_writes_white_and_colors=False,
+        protocols=[
+            MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)
+        ],  # Currently no difference from v3 proto
+        mode_to_color_mode={},
+        color_modes=COLOR_MODES_ADDRESSABLE,
+        channel_map={},
+        microphone=True,  # may be false
         device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
