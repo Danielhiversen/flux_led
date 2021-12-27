@@ -32,6 +32,7 @@ from .models_db import get_model_description
 _LOGGER = logging.getLogger(__name__)
 
 MESSAGE_SEND_INTERLEAVE_DELAY = 0.4
+LEGACY_OUI = "ACCF23"
 
 
 class FluxLEDDiscovery(TypedDict):
@@ -54,7 +55,14 @@ def is_legacy_device(discovery: Optional[FluxLEDDiscovery]) -> bool:
     """Check if a discovery is a legacy device."""
     if not discovery:
         return False
-    return bool(discovery.get(ATTR_VERSION_NUM) and not discovery.get(ATTR_MODEL_NUM))
+    is_legacy_mac = False
+    if discovery.get(ATTR_ID):
+        mac = discovery[ATTR_ID]
+        assert mac is not None
+        is_legacy_mac = mac.startswith(LEGACY_OUI)
+    return is_legacy_mac or bool(
+        discovery.get(ATTR_VERSION_NUM) and not discovery.get(ATTR_MODEL_NUM)
+    )
 
 
 def create_udp_socket(discovery_port: int) -> socket.socket:
