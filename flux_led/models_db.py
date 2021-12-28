@@ -723,7 +723,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x1C,
-        # AK001-ZJ2149 has RF remote support
+        # AK001-ZJ2149 has RF remote support and can change 2.4G remote settings
         models=["AK001-ZJ2149"],
         description="Table Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -787,8 +787,8 @@ MODELS = [
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8 - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
-        # "AK001-ZJ2146" == v10 # rf support
-        # "AK001-ZJ2148" == v10.63 # rf support
+        # "AK001-ZJ2146" == v10.48 # rf support
+        # "AK001-ZJ2148" == v10.63 # rf support, confirmed to be able to change 2.4G remote settings
         models=[
             "AK001-ZJ210",
             "AK001-ZJ2104",
@@ -1028,7 +1028,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xA3,
         # AK001-ZJ2147 has RF remote support
-        # AK001-ZJ2148 has RF remote support
+        # AK001-ZJ2148 has RF remote support, confirmed to be able to change 2.4G remote settings
         models=["AK001-ZJ2147", "AK001-ZJ2148"],
         description="Addressable v3",
         always_writes_white_and_colors=False,
