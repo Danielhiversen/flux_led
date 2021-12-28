@@ -617,7 +617,7 @@ MODELS = [
         # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         # 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2148' is v9.75 with Remote and 2.4G remote settings
-        model_num=0x0E,
+        model_num=0x0E,  # Should be the same as 0x35
         models=["AK001-ZJ2104", "AK001-ZJ2148"],
         description="Floor Lamp RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -626,7 +626,7 @@ MODELS = [
             MinVersionProtocol(7, PROTOCOL_LEDENET_9BYTE_AUTO_ON),
             MinVersionProtocol(0, PROTOCOL_LEDENET_9BYTE),
         ],
-        mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT},
+        mode_to_color_mode={0x01: COLOR_MODES_RGB_CCT, 0x17: COLOR_MODES_RGB_CCT},
         color_modes=COLOR_MODES_RGB_CCT,
         channel_map={},
         microphone=False,
@@ -735,7 +735,7 @@ MODELS = [
         device_config=IMMUTABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
-        model_num=0x1E,
+        model_num=0x1E,  # Should be the same as 0x35
         models=[],
         description="Ceiling Light RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
