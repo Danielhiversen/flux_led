@@ -618,7 +618,7 @@ MODELS = [
         # 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2148' is v9.75 with Remote and 2.4G remote settings
         model_num=0x0E,
-        models=["AK001-ZJ2104", 'AK001-ZJ2148'],
+        models=["AK001-ZJ2104", "AK001-ZJ2148"],
         description="Floor Lamp RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
