@@ -207,7 +207,7 @@ async def test_setting_discovery(mock_aio_protocol):
             "id": "B4E842E10586",
             "ipaddr": "192.168.213.259",
             "model": "AK001-ZJ2145",
-            "model_description": "Bulb RGBCW Flood",
+            "model_description": "Bulb RGBCW",
             "model_info": "ZG-BL-PWM",
             "model_num": 53,
             "remote_access_enabled": False,
@@ -221,7 +221,7 @@ async def test_setting_discovery(mock_aio_protocol):
     assert light.available
     assert light.model == "Bulb RGBCW (0x35)"
     light.discovery = discovery
-    assert light.model == "Bulb RGBCW Flood (0x35)"
+    assert light.model == "Bulb RGBCW (0x35)"
     assert light.discovery == discovery
 
 
@@ -2034,7 +2034,7 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "id": "B4E842E10586",
             "ipaddr": "192.168.213.259",
             "model": "AK001-ZJ2145",
-            "model_description": "Bulb RGBCW Flood",
+            "model_description": "Bulb RGBCW",
             "model_info": "ZG-BL-PWM",
             "model_num": 53,
             "remote_access_enabled": False,
