@@ -158,6 +158,7 @@ The following models have been tested with library.
 
 | Model | Description                 | Notes                           |
 | ----- | --------------------------- | ------------------------------- |
+| 0x01  | Legacy RGB Controller       | Original protocol               |
 | 0x03  | Legacy CCT Controller       | Original protocol               |
 | 0x04  | UFO Controller RGBW         |                                 |
 | 0x06  | Controller RGBW             |                                 |
@@ -187,7 +188,6 @@ The following models have not been tested with library but may work.
 
 | Model | Description                 | Notes                           |
 | ----- | --------------------------- | ------------------------------- |
-| 0x01  | Legacy RGB Controller       | Original protocol               |
 | 0x02  | Legacy Dimmable Controller  | Original protocol               |
 | 0x09  | Ceiling Light CCT           |                                 |
 | 0x16  | Magnetic Light CCT          |                                 |
@@ -203,6 +203,7 @@ The following models have not been tested with library but may work.
 | 0xE1  | Ceiling Light               |                                 |
 | 0xE2  | Ceiling Light Assist        |                                 |
 | 0xA4  | Addressable v4              |                                 |
+| 0xA6  | Addressable v6              |                                 |
 
 ### Known Vendors
 
