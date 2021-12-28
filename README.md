@@ -174,6 +174,7 @@ The following models have been tested with library.
 | 0x35  | Bulb RGBCW                  |                                 |
 | 0x41  | Controller Dimmable         |                                 |
 | 0x44  | Bulb RGBW                   |                                 |
+| 0x52  | Bulb CCT                    |                                 |
 | 0x54  | Downlight RGBW              |                                 |
 | 0x93  | Switch 1c                   |                                 |
 | 0x94  | Switch 1c Watt              |                                 |
@@ -197,7 +198,6 @@ The following models have not been tested with library but may work.
 | 0x1B  | Spray Light                 |                                 |
 | 0x1E  | Ceiling Light RGBCW         | Probably works & same as 0x35   |
 | 0x62  | Controller CCT              | May be discontinued             |
-| 0x52  | Bulb CCT                    | May be discontinued             |
 | 0x95  | Switch 2c                   |                                 |
 | 0x96  | Switch 4c                   |                                 |
 | 0xD1  | Digital Light               |                                 |
