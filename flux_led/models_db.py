@@ -470,7 +470,7 @@ HARDWARE = [
 MODELS = [
     LEDENETModel(
         model_num=0x01,
-        models=[],
+        models=["HF-A11-ZJ002"],
         description="Legacy Controller RGB",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ORIGINAL)],
@@ -813,7 +813,7 @@ MODELS = [
         # 'AK001-ZJ2101' and 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2145' is v8
         # 'AK001-ZJ2146' is v9
-        # 'AK001-ZJ2147' is v9.7
+        # 'AK001-ZJ2147' is v9.7 (with RF remote control support)
         # 'AK001-ZJ2146' 40w flood light, newer smart bulbs (with RF remote control support)
         models=[
             "AK001-ZJ2101",
