@@ -614,6 +614,54 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
 
 
 @pytest.mark.asyncio
+async def test_async_set_levels_0x52(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set levels."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x52\x23\x61\x00\x00\xFF\x00\x00\x00\x01\x00\x00\x57"
+    )
+    await task
+    assert light.model_num == 0x52
+    assert light.version_num == 1
+    assert light.wiring is None
+    assert light.wiring_num is None
+    assert light.wirings is None
+    assert light.operating_mode is None
+    assert light.dimmable_effects is False
+    assert light.requires_turn_on is True
+    assert light._protocol.power_push_updates is False
+    assert light._protocol.state_push_updates is False
+
+    transport.reset_mock()
+    with pytest.raises(ValueError):
+        # ValueError: RGBW command sent to non-RGBW devic
+        await light.async_set_levels(255, 255, 255, 255, 255)
+
+    transport.reset_mock()
+    await light.async_set_levels(0, 0, 0, 255, 255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\xff\x00\x00\x00\x0f>"
+
+    transport.reset_mock()
+    await light.async_set_levels(0, 0, 0, 128, 255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x80\xff\x00\x00\x00\x0f\xbf"
+
+    transport.reset_mock()
+    await light.async_set_levels(0, 0, 0, 0, 128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x80\x00\x00\x00\x0f\xc0"
+
+
+@pytest.mark.asyncio
 async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can set an effect."""
     light = AIOWifiLedBulb("192.168.1.166")
