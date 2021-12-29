@@ -613,22 +613,25 @@ class ProtocolBase:
 
     def construct_remote_config(self, remote_config: RemoteConfig) -> bytearray:
         """Construct an remote config."""
+        # 2a 02 ff ff ff ff ff 00 00 00 00 00 00 00 0f
         return self.construct_wrapped_message(
             bytearray(
                 [
-                    0x2B,
+                    0x2A,
                     remote_config.value,
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0xFF,
                     0x00,
                     0x00,
                     0x00,
                     0x00,
-                    0x29,
                     0x00,
                     0x00,
                     0x00,
-                    0x00,
-                    0x00,
-                    0x00,
+                    0x0F,
                 ]
             )
         )
