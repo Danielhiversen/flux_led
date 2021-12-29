@@ -2076,7 +2076,6 @@ async def test_async_config_remotes(
         )
 
         await task
-        # power restore state
         light._aio_protocol.data_received(
             b"\xb0\xb1\xb2\xb3\x00\x01\x01\xe3\x00\x0e\x2b\x03\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x30\x19"
         )
@@ -2106,6 +2105,68 @@ async def test_async_config_remotes(
             transport.mock_calls[0][1][0]
             == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x0e+\x03\x00\x00\x00\x00)\x00\x00\x00\x00\x00\x00W\x89"
         )
+
+
+@pytest.mark.asyncio
+async def test_async_unpair_remotes(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can unpair remotes."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    light.discovery = FLUX_DISCOVERY_24G_REMOTE
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    with patch.object(aiodevice, "DEVICE_CONFIG_WAIT_SECONDS", 0):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        transport, protocol = await mock_aio_protocol()
+        light._aio_protocol.data_received(
+            b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+        )
+        light._aio_protocol.data_received(
+            b"\xb0\xb1\xb2\xb3\x00\x01\x01\x5e\x00\x0e\x2b\x01\x00\x00\x00\x00\x29\x00\x00\x00\x00\x00\x00\x55\xde"
+        )
+
+        await task
+        light._aio_protocol.data_received(
+            b"\xb0\xb1\xb2\xb3\x00\x01\x01\xe3\x00\x0e\x2b\x03\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x30\x19"
+        )
+        assert light.remote_config == RemoteConfig.PAIRED_ONLY
+        assert light.paired_remotes == 2
+
+        transport.reset_mock()
+        await light.async_unpair_remotes()
+        assert transport.mock_calls[0][0] == "write"
+        assert (
+            transport.mock_calls[0][1][0]
+            == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x10*\xff\xff\x01\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\xf0\x16\x05"
+        )
+
+
+@pytest.mark.asyncio
+async def test_async_config_remotes_unsupported_device(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can configure remotes."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+    assert light.paired_remotes is None
+
+    with pytest.raises(ValueError):
+        await light.async_config_remotes(RemoteConfig.PAIRED_ONLY)
+
+    with pytest.raises(ValueError):
+        await light.async_unpair_remotes()
 
 
 @pytest.mark.asyncio
