@@ -668,7 +668,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Process a 2.4ghz remote config response."""
         # 2b 03 00 02 00 00 00 00 00 00 00 00 00 30
         #  0  1  2  3
-        self._paired_remotes = msg[2]
+        self._paired_remotes = msg[3]
         self._remote_config = REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG.get(msg[1])
         _LOGGER.debug(
             "%s: remote_config: config=%s paired_remotes=%s",
