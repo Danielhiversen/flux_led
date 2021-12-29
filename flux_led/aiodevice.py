@@ -126,7 +126,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         try:
             await asyncio.wait_for(self._remote_config_future, timeout=self.timeout)
         except asyncio.TimeoutError:
-            _LOGGER.warning("%s: Could not determine 2.4ghz remote config")
+            _LOGGER.warning("%s: Could not determine 2.4ghz remote config", self.ipaddr)
 
     async def _async_switch_setup(self) -> None:
         """Setup a switch."""
