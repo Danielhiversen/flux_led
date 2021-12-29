@@ -79,9 +79,6 @@ MODEL_INFO_NAMES = {
     "IR_ZG": "IR",
 }
 
-# Models that support remote config
-REMOTE_CONFIG_MODELS = {"AK001-ZJ2148", "AK001-ZJ2149"}
-
 
 @dataclass
 class MinVersionProtocol:
