@@ -2170,6 +2170,27 @@ async def test_async_config_remotes_unsupported_device(
 
 
 @pytest.mark.asyncio
+async def test_async_config_remotes_no_response(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test device supports remote config but does not respond."""
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.0001)
+    light.discovery = FLUX_DISCOVERY_24G_REMOTE
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+    assert light.paired_remotes is None
+    assert "Could not determine 2.4ghz remote config" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_async_scanner(mock_discovery_aio_protocol):
     """Test scanner."""
     scanner = AIOBulbScanner()
