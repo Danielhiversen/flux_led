@@ -676,6 +676,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._remote_config,
             self._paired_remotes,
         )
+        if not self._remote_config_future.done():
+            self._remote_config_future.set_result(True)
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""
