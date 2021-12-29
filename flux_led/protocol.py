@@ -25,6 +25,12 @@ from .const import (
 from .utils import utils, white_levels_to_scaled_color_temp
 
 
+class RemoteConfig(Enum):
+    DISABLED = 0x01
+    OPEN = 0x02
+    PAIRED_ONLY = 0x03
+
+
 class PowerRestoreState(Enum):
     ALWAYS_OFF = 0xFF
     ALWAYS_ON = 0x0F
@@ -60,6 +66,11 @@ class PowerRestoreStates:
 
 _LOGGER = logging.getLogger(__name__)
 
+
+# Models that support remote config
+REMOTE_CONFIG_MODELS = {"AK001-ZJ2148", "AK001-ZJ2149"}
+
+
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_ORIGINAL_CCT = "LEDENET_ORIGINAL_CCT"
@@ -90,6 +101,7 @@ LEDENET_POWER_RESPONSE_LEN = 4
 LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
 LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
 LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
+LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 00 57
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -103,7 +115,7 @@ MSG_ADDRESSABLE_STATE = "addressable_state"
 
 MSG_DEVICE_CONFIG = "device_config"
 MSG_A1_DEVICE_CONFIG = "a1_device_config"
-
+MSG_REMOTE_CONFIG = "remote_config"
 
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
 
@@ -122,9 +134,11 @@ MSG_UNIQUE_START = {
     (0x0F, 0x63): MSG_DEVICE_CONFIG,
     (0x63,): MSG_A1_DEVICE_CONFIG,
     (0x72,): MSG_MUSIC_MODE_STATE,
+    (0x2B,): MSG_REMOTE_CONFIG,
 }
 
 MSG_LENGTHS = {
+    MSG_REMOTE_CONFIG: LEDENET_REMOTE_CONFIG_RESPONSE_LEN,
     MSG_MUSIC_MODE_STATE: LEDNET_MUSIC_MODE_RESPONSE_LEN,
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
     MSG_POWER_RESTORE_STATE: LEDENET_POWER_RESTORE_RESPONSE_LEN,
@@ -143,6 +157,11 @@ CHECKSUM_LEN = 1
 
 POWER_RESTORE_BYTES_TO_POWER_RESTORE = {
     restore_state.value: restore_state for restore_state in PowerRestoreState
+}
+
+
+REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG = {
+    remote_config.value: remote_config for remote_config in RemoteConfig
 }
 
 
@@ -580,6 +599,63 @@ class ProtocolBase:
         self, raw_state: bytes
     ) -> Union[LEDENETOriginalRawState, LEDENETRawState]:
         """Convert raw_state to a namedtuple."""
+
+    @abstractmethod
+    def is_valid_remote_config_response(self, msg: bytes) -> bool:
+        """Check if a remote config response is valid."""
+        return _message_type_from_start_of_msg(
+            msg
+        ) == MSG_REMOTE_CONFIG and self.is_checksum_correct(msg)
+
+    def construct_query_remote_config(self) -> bytearray:
+        """Construct a remote config query"""
+        return self.construct_wrapped_message(bytearray([0x2B, 0x2C, 0x2D]))
+
+    def construct_remote_config(self, remote_config: RemoteConfig) -> bytearray:
+        """Construct an remote config."""
+        return self.construct_wrapped_message(
+            bytearray(
+                [
+                    0x2B,
+                    remote_config.value,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x29,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                ]
+            )
+        )
+
+    def construct_unpair_remotes(self) -> bytearray:
+        """Construct an unpair remotes command."""
+        return self.construct_wrapped_message(
+            bytearray(
+                [
+                    0x2A,
+                    0xFF,
+                    0xFF,
+                    0x01,
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0xF0,
+                ]
+            )
+        )
 
 
 class ProtocolLEDENETOriginal(ProtocolBase):

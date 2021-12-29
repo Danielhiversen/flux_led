@@ -90,6 +90,7 @@ from .protocol import (
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
+    RemoteConfig,
 )
 from .scanner import FluxLEDDiscovery, is_legacy_device
 from .timer import BuiltInTimer
@@ -190,6 +191,8 @@ class LEDENETDevice:
         self.available: Optional[bool] = None
         self._model_num: Optional[int] = None
         self._model_data: Optional[LEDENETModel] = None
+        self._paired_remotes: Optional[int] = None
+        self._remote_config: Optional[RemoteConfig] = None
         self._discovery = discovery
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
@@ -230,6 +233,16 @@ class LEDENETDevice:
     def discovery(self, value: FluxLEDDiscovery) -> None:
         """Set the discovery data."""
         self._discovery = value
+
+    @property
+    def paired_remotes(self) -> Optional[int]:
+        """Return the number of paired remotes or None if not supported."""
+        return self._paired_remotes
+
+    @property
+    def remote_config(self) -> Optional[RemoteConfig]:
+        """Return the number of remote config or None if not supported."""
+        return self._remote_config
 
     @property
     def speed_adjust_off(self) -> int:

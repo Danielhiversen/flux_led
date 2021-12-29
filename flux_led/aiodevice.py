@@ -13,6 +13,7 @@ from .base_device import (
     LEDENETDevice,
 )
 from .const import (
+    ATTR_MODEL,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -29,12 +30,15 @@ from .const import (
 )
 from .protocol import (
     POWER_RESTORE_BYTES_TO_POWER_RESTORE,
+    REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
+    REMOTE_CONFIG_MODELS,
     PowerRestoreState,
     PowerRestoreStates,
     ProtocolLEDENET8Byte,
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETOriginal,
+    RemoteConfig,
 )
 from .scanner import FluxLEDDiscovery
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
@@ -80,6 +84,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._device_config_lock: asyncio.Lock = asyncio.Lock()
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
+        self._remote_config_future: asyncio.Future[bool] = asyncio.Future()
         self._device_config_setup = False
         self._on_futures: List["asyncio.Future[bool]"] = []
         self._off_futures: List["asyncio.Future[bool]"] = []
@@ -103,16 +108,25 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if isinstance(self._protocol, ALL_IC_PROTOCOLS):
             await self._async_device_config_setup()
-            return
+        if self._discovery and self._discovery[ATTR_MODEL] in REMOTE_CONFIG_MODELS:
+            await self._async_remote_config_setup()
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
-            return
         _LOGGER.debug(
             "%s: device_config: wiring=%s operating_mode=%s",
             self.ipaddr,
             self.wiring,
             self.operating_mode,
         )
+
+    async def _async_remote_config_setup(self) -> None:
+        """Setup remote config."""
+        assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_query_remote_config())
+        try:
+            await asyncio.wait_for(self._remote_config_future, timeout=self.timeout)
+        except asyncio.TimeoutError:
+            _LOGGER.warning("%s: Could not determine 2.4ghz remote config", self.ipaddr)
 
     async def _async_switch_setup(self) -> None:
         """Setup a switch."""
@@ -509,6 +523,26 @@ class AIOWifiLedBulb(LEDENETDevice):
             if isinstance(self._protocol, ALL_IC_PROTOCOLS):
                 await self._async_device_config_resync()
 
+    async def async_unpair_remotes(self) -> None:
+        """Unpair 2.4ghz remotes."""
+        assert self._protocol is not None
+        if self.paired_remotes is None:
+            raise ValueError("{self.model} does support unpairing remotes")
+        await self._async_send_msg(self._protocol.construct_unpair_remotes())
+        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
+        await self._async_send_msg(self._protocol.construct_query_remote_config())
+
+    async def async_config_remotes(self, remote_config: RemoteConfig) -> None:
+        """Change remote config."""
+        assert self._protocol is not None
+        if self.paired_remotes is None:
+            raise ValueError("{self.model} does support unpairing remotes")
+        await self._async_send_msg(
+            self._protocol.construct_remote_config(remote_config)
+        )
+        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
+        await self._async_send_msg(self._protocol.construct_query_remote_config())
+
     async def _async_device_config_resync(self) -> None:
         await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_device_config_setup()
@@ -584,6 +618,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             changed_state = True
         elif self._protocol.is_valid_power_restore_state_response(msg):
             self.process_power_restore_state_response(msg)
+        elif self._protocol.is_valid_remote_config_response(msg):
+            self.process_remote_config_response(msg)
+            changed_state = True
         else:
             return
         if not changed_state and self.raw_state == prev_state:
@@ -626,6 +663,21 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().process_device_config_response(msg)
         if not self._device_config_future.done():
             self._device_config_future.set_result(True)
+
+    def process_remote_config_response(self, msg: bytes) -> None:
+        """Process a 2.4ghz remote config response."""
+        # 2b 03 00 02 00 00 00 00 00 00 00 00 00 30
+        #  0  1  2  3
+        self._paired_remotes = msg[3]
+        self._remote_config = REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG.get(msg[1])
+        _LOGGER.debug(
+            "%s: remote_config: config=%s paired_remotes=%s",
+            self.ipaddr,
+            self._remote_config,
+            self._paired_remotes,
+        )
+        if not self._remote_config_future.done():
+            self._remote_config_future.set_result(True)
 
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""
