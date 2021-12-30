@@ -532,7 +532,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self.paired_remotes is None:
             raise ValueError("{self.model} does support unpairing remotes")
         await self._async_send_msg(self._protocol.construct_unpair_remotes())
-        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_send_msg(self._protocol.construct_query_remote_config())
 
     async def async_config_remotes(self, remote_config: RemoteConfig) -> None:
@@ -543,7 +542,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(
             self._protocol.construct_remote_config(remote_config)
         )
-        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_send_msg(self._protocol.construct_query_remote_config())
 
     async def _async_device_config_resync(self) -> None:
