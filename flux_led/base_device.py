@@ -247,7 +247,11 @@ class LEDENETDevice:
         """Retrurn the hardware mapping for the device."""
         if not self._discovery or ATTR_MODEL not in self._discovery:
             return None
-        return HARDWARE_MAP.get(self._discovery[ATTR_MODEL])
+        assert self._discovery is not None
+        assert self._discovery[ATTR_MODEL] is not None
+        model = self._discovery[ATTR_MODEL]
+        assert isinstance(model, str)
+        return HARDWARE_MAP.get(model)
 
     @property
     def paired_remotes(self) -> Optional[int]:
