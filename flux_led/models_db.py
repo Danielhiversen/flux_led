@@ -97,7 +97,9 @@ class LEDENETChip(Enum):
 class LEDENETHardware:
     model: str  # The model string
     chip: LEDENETChip
-    rf_remote: bool
+    remote_rf: bool  # legacy rf remote
+    remote_24g: bool  # 2.4ghz remote
+    remote_24g_controls: bool  # 2.4ghz remote controls (pair/unpair remotes)
 
 
 BASE_MODE_MAP = {
@@ -343,129 +345,182 @@ HARDWARE = [
     LEDENETHardware(
         model="AK001-ZJ100",
         chip=LEDENETChip.ESP8266,
-        rf_remote=False,  # verified
+        remote_rf=False,  # verified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ200",
         chip=LEDENETChip.ESP8266,
-        rf_remote=False,  # verified
+        remote_rf=False,  # verified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ210",  # might also be "AK001-ZJ2100"
         chip=LEDENETChip.ESP8266,  # verified
-        rf_remote=False,  # verified
+        remote_rf=False,  # verified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2101",
         chip=LEDENETChip.ESP8266,
-        rf_remote=False,
+        remote_rf=False,
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2104",
         chip=LEDENETChip.ESP8266,
-        rf_remote=False,  # verified
+        remote_rf=False,  # verified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2134",  # seen in smart plugs only?
         chip=LEDENETChip.S82GESNC,  # couldn't get the device appart
-        rf_remote=False,
+        remote_rf=False,
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2145",
         chip=LEDENETChip.BL602,
-        rf_remote=False,  # verified
+        remote_rf=False,  # verified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on plugs
         chip=LEDENETChip.BL602,  # verified
-        rf_remote=True,  # verified
+        remote_rf=False,  # verified
+        remote_24g=True,
+        remote_24g_controls=True,
     ),
     LEDENETHardware(
         model="AK001-ZJ2147",  # seen on Controller RGBW
         chip=LEDENETChip.BL602,
-        rf_remote=True,  # verified
+        remote_rf=False,  # verified
+        remote_24g=True,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2148",  # seen on older Addressable v3
         chip=LEDENETChip.BL602,
-        rf_remote=True,  # verified
+        remote_rf=True,  # verified
+        remote_24g=True,
+        remote_24g_controls=True,
     ),
     LEDENETHardware(
         model="AK001-ZJ2149",  # seen on newer Addressable v3
         chip=LEDENETChip.BL602,
-        rf_remote=True,  # verified
+        remote_rf=True,  # verified
+        remote_24g=True,
+        remote_24g_controls=True,
     ),
     LEDENETHardware(
         model="HF-A11",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ004",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ2",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ201",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ2001",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-",
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-0",  # reported on older UFO
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-1",  # reported on older UFO
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ001",
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ011",
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ002",  # seen on older UFO
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ200",  # seen on RGBW Downlight
         chip=LEDENETChip.HFLPB100,
-        rf_remote=False,  # unverified
+        remote_rf=False,  # unverified
+        remote_24g=False,
+        remote_24g_controls=False,
     ),
 ]
+
+HARDWARE_MAP: Dict[str, LEDENETHardware] = {model.model: model for model in HARDWARE}
+
 
 MODELS = [
     LEDENETModel(
@@ -531,7 +586,7 @@ MODELS = [
         model_num=0x06,
         # "AK001-ZJ2104" == v1 has RF remote support
         # "AK001-ZJ2145" == v2 has IR remote support
-        # "AK001-ZJ2147" == v3 has RF remote support
+        # "AK001-ZJ2147" == v3 has 2.4ghz remote support
         models=[
             "AK001-ZJ100",
             "AK001-ZJ200",
@@ -787,8 +842,8 @@ MODELS = [
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8 - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
-        # "AK001-ZJ2146" == v10.48 # rf support
-        # "AK001-ZJ2148" == v10.63 # rf support, confirmed to be able to change 2.4G remote settings
+        # "AK001-ZJ2146" == v10.48 # 2.4ghz support
+        # "AK001-ZJ2148" == v10.63 # 2.4ghz support, confirmed to be able to change 2.4G remote settings
         models=[
             "AK001-ZJ210",
             "AK001-ZJ2104",

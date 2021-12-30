@@ -67,10 +67,6 @@ class PowerRestoreStates:
 _LOGGER = logging.getLogger(__name__)
 
 
-# Models that support remote config
-REMOTE_CONFIG_MODELS = {"AK001-ZJ2148", "AK001-ZJ2149"}
-
-
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
 PROTOCOL_LEDENET_ORIGINAL_CCT = "LEDENET_ORIGINAL_CCT"

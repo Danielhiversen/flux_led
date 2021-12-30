@@ -13,7 +13,6 @@ from .base_device import (
     LEDENETDevice,
 )
 from .const import (
-    ATTR_MODEL,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -31,7 +30,6 @@ from .const import (
 from .protocol import (
     POWER_RESTORE_BYTES_TO_POWER_RESTORE,
     REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
-    REMOTE_CONFIG_MODELS,
     PowerRestoreState,
     PowerRestoreStates,
     ProtocolLEDENET8Byte,
@@ -108,7 +106,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if isinstance(self._protocol, ALL_IC_PROTOCOLS):
             await self._async_device_config_setup()
-        if self._discovery and self._discovery[ATTR_MODEL] in REMOTE_CONFIG_MODELS:
+        hardware = self.hardware
+        if hardware is not None and hardware.remote_24g_controls:
             await self._async_remote_config_setup()
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
@@ -529,7 +528,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self.paired_remotes is None:
             raise ValueError("{self.model} does support unpairing remotes")
         await self._async_send_msg(self._protocol.construct_unpair_remotes())
-        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_send_msg(self._protocol.construct_query_remote_config())
 
     async def async_config_remotes(self, remote_config: RemoteConfig) -> None:
@@ -540,7 +538,6 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(
             self._protocol.construct_remote_config(remote_config)
         )
-        await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_send_msg(self._protocol.construct_query_remote_config())
 
     async def _async_device_config_resync(self) -> None:
