@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
+    ATTR_MODEL,
     ATTR_MODEL_DESCRIPTION,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
@@ -42,7 +43,14 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     WRITE_ALL_WHITES,
     LevelWriteMode,
 )
-from .models_db import BASE_MODE_MAP, LEDENETModel, get_model, is_known_model
+from .models_db import (
+    BASE_MODE_MAP,
+    HARDWARE_MAP,
+    LEDENETHardware,
+    LEDENETModel,
+    get_model,
+    is_known_model,
+)
 from .pattern import (
     ADDRESSABLE_EFFECT_ID_NAME,
     ADDRESSABLE_EFFECT_NAME_ID,
@@ -233,6 +241,13 @@ class LEDENETDevice:
     def discovery(self, value: FluxLEDDiscovery) -> None:
         """Set the discovery data."""
         self._discovery = value
+
+    @property
+    def hardware(self) -> Optional[LEDENETHardware]:
+        """Retrurn the hardware mapping for the device."""
+        if not self._discovery or ATTR_MODEL not in self._discovery:
+            return None
+        return HARDWARE_MAP.get(self._discovery[ATTR_MODEL])
 
     @property
     def paired_remotes(self) -> Optional[int]:
