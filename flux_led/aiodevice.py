@@ -13,7 +13,6 @@ from .base_device import (
     LEDENETDevice,
 )
 from .const import (
-    ATTR_MODEL,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
     COLOR_MODE_RGB,
@@ -28,7 +27,6 @@ from .const import (
     STATE_WARM_WHITE,
     MultiColorEffects,
 )
-from .models_db import HARDWARE_MAP, LEDENETHardware
 from .protocol import (
     POWER_RESTORE_BYTES_TO_POWER_RESTORE,
     REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
@@ -109,10 +107,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         if isinstance(self._protocol, ALL_IC_PROTOCOLS):
             await self._async_device_config_setup()
         hardware = self.hardware
-        if hardware:
-            assert isinstance(hardware, LEDENETHardware)
-            if hardware.remote_24g_controls:
-                await self._async_remote_config_setup()
+        if hardware is not None and hardware.remote_24g_controls:
+            await self._async_remote_config_setup()
         if self.device_type == DeviceType.Switch:
             await self._async_switch_setup()
         _LOGGER.debug(
