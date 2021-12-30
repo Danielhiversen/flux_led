@@ -586,7 +586,7 @@ MODELS = [
         model_num=0x06,
         # "AK001-ZJ2104" == v1 has RF remote support
         # "AK001-ZJ2145" == v2 has IR remote support
-        # "AK001-ZJ2147" == v3 has RF remote support
+        # "AK001-ZJ2147" == v3 has 2.4ghz remote support
         models=[
             "AK001-ZJ100",
             "AK001-ZJ200",
@@ -842,8 +842,8 @@ MODELS = [
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
         # 'AK001-ZJ2101' == v8 - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
-        # "AK001-ZJ2146" == v10.48 # rf support
-        # "AK001-ZJ2148" == v10.63 # rf support, confirmed to be able to change 2.4G remote settings
+        # "AK001-ZJ2146" == v10.48 # 2.4ghz support
+        # "AK001-ZJ2148" == v10.63 # 2.4ghz support, confirmed to be able to change 2.4G remote settings
         models=[
             "AK001-ZJ210",
             "AK001-ZJ2104",
