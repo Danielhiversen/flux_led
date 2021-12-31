@@ -319,11 +319,12 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
 
     async def _async_process_levels_change(
-        self, msg: bytearray, updates: Dict[str, int]
+        self, msgs: List[bytearray], updates: Dict[str, int]
     ) -> None:
         """Process and send a levels change."""
         self._set_transition_complete_time()
-        await self._async_send_msg(msg)
+        for msg in msgs:
+            await self._async_send_msg(msg)
         if updates:
             self._replace_raw_state(updates)
 

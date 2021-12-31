@@ -513,13 +513,13 @@ class ProtocolBase:
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request."""
 
     @abstractmethod
@@ -698,13 +698,13 @@ class ProtocolLEDENETOriginal(ProtocolBase):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
@@ -715,7 +715,11 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         #  |  |  green
         #  |  red
         #  head
-        return self.construct_message(bytearray([0x56, red, green, blue, 0xAA]))
+        return [
+            self.construct_message(
+                bytearray([0x56, red or 0x00, green or 0x00, blue or 0x00, 0xAA])
+            )
+        ]
 
     def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Original protocol uses no checksum."""
@@ -736,13 +740,13 @@ class ProtocolLEDENETOriginalCCT(ProtocolLEDENETOriginal):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
@@ -753,7 +757,9 @@ class ProtocolLEDENETOriginalCCT(ProtocolLEDENETOriginal):
         #  |  |  green
         #  |  red
         #  head
-        return self.construct_message(bytearray([0x56, red, green, 0xAA]))
+        return [
+            self.construct_message(bytearray([0x56, red or 0x00, green or 0x00, 0xAA]))
+        ]
 
 
 class ProtocolLEDENET8Byte(ProtocolBase):
@@ -814,13 +820,13 @@ class ProtocolLEDENET8Byte(ProtocolBase):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for 8-byte protocols (w/ checksum at end)
         #  0  1  2  3  4  5  6
@@ -846,19 +852,21 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         # value (f0).
         #
         # For all other rgb and rgbw devices, the value is 00
-        return self.construct_message(
-            bytearray(
-                [
-                    0x31 if persist else 0x41,
-                    red,
-                    green,
-                    blue,
-                    warm_white,
-                    write_mode.value,
-                    0x0F,
-                ]
+        return [
+            self.construct_message(
+                bytearray(
+                    [
+                        0x31 if persist else 0x41,
+                        red or 0x00,
+                        green or 0x00,
+                        blue or 0x00,
+                        warm_white or 0x00,
+                        write_mode.value,
+                        0x0F,
+                    ]
+                )
             )
-        )
+        ]
 
     def construct_message(self, raw_bytes: bytearray) -> bytearray:
         """Calculate checksum of byte array and add to end."""
@@ -1077,13 +1085,13 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for 9-byte LEDENET protocol (w/ checksum at end)
         #  0  1  2  3  4  5  6  7
@@ -1098,20 +1106,22 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         #  |  red
         #  persistence (31 for true / 41 for false)
         #
-        return self.construct_message(
-            bytearray(
-                [
-                    0x31 if persist else 0x41,
-                    red,
-                    green,
-                    blue,
-                    warm_white,
-                    cool_white,
-                    write_mode.value,
-                    0x0F,
-                ]
+        return [
+            self.construct_message(
+                bytearray(
+                    [
+                        0x31 if persist else 0x41,
+                        red or 0x00,
+                        green or 0x00,
+                        blue or 0x00,
+                        warm_white or 0x00,
+                        cool_white or 0x00,
+                        write_mode.value,
+                        0x0F,
+                    ]
+                )
             )
-        )
+        ]
 
 
 class ProtocolLEDENET9ByteAutoOn(ProtocolLEDENET9Byte):
@@ -1341,36 +1351,43 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request.
 
         white  41 01 ff ff ff 00 00 00 60 ff 00 00 9e
         """
         preset_number = 0x01  # aka fixed color
-        return self.construct_message(
-            bytearray(
-                [
-                    0x41,
-                    preset_number,
-                    red,
-                    green,
-                    blue,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x60,
-                    0xFF,
-                    0x00,
-                    0x00,
-                ]
+        msgs = []
+        if red is not None or green is not None or blue is not None:
+            msgs.append(
+                self.construct_message(
+                    bytearray(
+                        [
+                            0x41,
+                            preset_number,
+                            red or 0x00,
+                            green or 0x00,
+                            blue or 0x00,
+                            0x00,
+                            0x00,
+                            0x00,
+                            0x60,
+                            0xFF,
+                            0x00,
+                            0x00,
+                        ]
+                    )
+                )
             )
-        )
+        if warm_white is not None:
+            msgs.append(self.construct_message(bytearray([0x47, warm_white or 0x00])))
+        return msgs
 
     def construct_music_mode(
         self,
@@ -1666,13 +1683,13 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request.
 
         b0 [unknown static?] b1 [unknown static?] b2 [unknown static?] b3 [unknown static?] 00 [unknown static?] 01 [unknown static?] 01 [unknown static?] 6a [incrementing sequence number] 00 [unknown static?] 0d [unknown, sometimes 0c] 41 [unknown static?] 02 [preset number] ff [foreground r] 00 [foreground g] 00 [foreground b] 00 [background red] ff [background green] 00 [background blue] 06 [speed or direction?] 00 [unknown static?] 00 [unknown static?] 00 [unknown static?] 47 [speed or direction?] cd [check sum]
@@ -1714,12 +1731,12 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         Set Red
         b0b1b2b30001010d0034a0000600010000ff0000ff0002ff00000000ff00030000ff0000ff0004ff00000000ff00050000ff0000ff0006ff00000000ffaf67
         """
-        return self.construct_wrapped_message(
-            super().construct_levels_change(
+        return [
+            self.construct_wrapped_message(msg, inner_pre_constructed=True)
+            for msg in super().construct_levels_change(
                 persist, red, green, blue, warm_white, cool_white, write_mode
-            ),
-            inner_pre_constructed=True,
-        )
+            )
+        ]
 
     def construct_zone_change(
         self,
@@ -1833,38 +1850,42 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request.
 
         b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
         b0 b1 b2 b3 00 01 01 72 00 09 35 b1 64 64 00 00 00 03 b1 a5 - 100% cool
         b0 b1 b2 b3 00 01 01 9f 00 09 35 b1 64 32 00 00 00 03 7f 6e - 100% cool - dim 50%
         """
+        assert warm_white is not None
+        assert cool_white is not None
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
-        return self.construct_wrapped_message(
-            bytearray(
-                [
-                    0x35,
-                    0xB1,
-                    scaled_temp,
-                    # If the brightness goes below the precision the device
-                    # will flip from cold to warm
-                    max(self.MIN_BRIGHTNESS, brightness),
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x03,
-                ]
+        return [
+            self.construct_wrapped_message(
+                bytearray(
+                    [
+                        0x35,
+                        0xB1,
+                        scaled_temp,
+                        # If the brightness goes below the precision the device
+                        # will flip from cold to warm
+                        max(self.MIN_BRIGHTNESS, brightness),
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x03,
+                    ]
+                )
             )
-        )
+        ]
 
 
 class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
@@ -1920,15 +1941,14 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     def construct_levels_change(
         self,
         persist: int,
-        red: int,
-        green: int,
-        blue: int,
-        warm_white: int,
-        cool_white: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> bytearray:
+    ) -> List[bytearray]:
         """The bytes to send for a level change request.
-
 
         Green 100%:
         b0b1b2b300010180000d3ba100646400000000000000a49d
@@ -1977,25 +1997,30 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         Single - Blue - Brightness 50%
         3b a1 78 64 32 00 00 00 00 00 00 00 ea
         """
+        assert red is not None
+        assert green is not None
+        assert blue is not None
         h, s, v = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
-        return self.construct_wrapped_message(
-            bytearray(
-                [
-                    0x3B,
-                    0xA1,
-                    int(h * 180),
-                    int(s * 100),
-                    int(v * 100),
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                ]
+        return [
+            self.construct_wrapped_message(
+                bytearray(
+                    [
+                        0x3B,
+                        0xA1,
+                        int(h * 180),
+                        int(s * 100),
+                        int(v * 100),
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                    ]
+                )
             )
-        )
+        ]
 
     def construct_zone_change(
         self,

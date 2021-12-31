@@ -181,12 +181,15 @@ class WifiLedBulb(LEDENETDevice):
         )
 
     @_socket_retry(attempts=2)  # type: ignore
-    def _process_levels_change(self, msg: bytearray, updates: Dict[str, int]) -> None:
+    def _process_levels_change(
+        self, msgs: List[bytearray], updates: Dict[str, int]
+    ) -> None:
         # send the message
         with self._lock:
             self._connect_if_disconnected()
             self._set_transition_complete_time()
-            self._send_msg(msg)
+            for msg in msgs:
+                self._send_msg(msg)
             if updates:
                 self._replace_raw_state(updates)
 
