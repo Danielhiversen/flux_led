@@ -208,6 +208,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Turn on the device."""
         calls = (
             self._async_turn_on,
+            self._async_turn_on,
             self._async_turn_off_on,
             self._async_turn_on,
             self._async_turn_on,
@@ -234,6 +235,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def async_turn_off(self) -> bool:
         """Turn off the device."""
         calls = (
+            self._async_turn_off,
             self._async_turn_off,
             self._async_turn_on_off,
             self._async_turn_off,
