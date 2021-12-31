@@ -1001,9 +1001,9 @@ class LEDENETDevice:
         if brightness is not None and r is not None and g is not None and b is not None:
             (r, g, b) = self._calculateBrightness((r, g, b), brightness)
 
-        r_value = 0 if r is None else int(r)
-        g_value = 0 if g is None else int(g)
-        b_value = 0 if b is None else int(b)
+        r_value = None if r is None else int(r)
+        g_value = None if g is None else int(g)
+        b_value = None if b is None else int(b)
         w_value = None if w is None else int(w)
         # ProtocolLEDENET9Byte devices support two white outputs for cold and warm.
         if w2 is None:
