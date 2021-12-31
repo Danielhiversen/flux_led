@@ -375,10 +375,11 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         await asyncio.create_task(light.async_turn_off())
         assert light.is_on is True
-        assert "Failed to turn off (1/4)" in caplog.text
-        assert "Failed to turn off (2/4)" in caplog.text
-        assert "Failed to turn off (3/4)" in caplog.text
-        assert "Failed to turn off (4/4)" in caplog.text
+        assert "Failed to turn off (1/5)" in caplog.text
+        assert "Failed to turn off (2/5)" in caplog.text
+        assert "Failed to turn off (3/5)" in caplog.text
+        assert "Failed to turn off (4/5)" in caplog.text
+        assert "Failed to turn off (5/5)" in caplog.text
 
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         task = asyncio.create_task(light.async_turn_off())
@@ -397,10 +398,11 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         await asyncio.create_task(light.async_turn_on())
         assert light.is_on is False
-        assert "Failed to turn on (1/4)" in caplog.text
-        assert "Failed to turn on (2/4)" in caplog.text
-        assert "Failed to turn on (3/4)" in caplog.text
-        assert "Failed to turn on (4/4)" in caplog.text
+        assert "Failed to turn on (1/5)" in caplog.text
+        assert "Failed to turn on (2/5)" in caplog.text
+        assert "Failed to turn on (3/5)" in caplog.text
+        assert "Failed to turn on (4/5)" in caplog.text
+        assert "Failed to turn on (5/5)" in caplog.text
 
 
 @pytest.mark.asyncio
