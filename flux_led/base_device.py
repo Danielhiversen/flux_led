@@ -1030,7 +1030,7 @@ class LEDENETDevice:
         updates = {}
         multi_mode = self.multi_color_mode
         if multi_mode or write_mode in WRITE_ALL_COLORS:
-            updates.update({"red": r_value, "green": g_value, "blue": b_value})
+            updates.update({"red": r_value or 0, "green": g_value or 0, "blue": b_value or 0})
         if multi_mode or write_mode in WRITE_ALL_WHITES:
             updates.update({"warm_white": w_value or 0, "cool_white": w2_value or 0})
         return msgs, updates
