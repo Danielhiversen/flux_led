@@ -13,6 +13,7 @@ from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import (
     COLOR_MODE_CCT,
     COLOR_MODE_RGB,
+    COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
     MultiColorEffects,
@@ -782,6 +783,25 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.model_num == 0xA3
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
+    assert light.color_mode == COLOR_MODE_RGBW
+    assert light.color_modes == {COLOR_MODE_RGBW}
+    transport.reset_mock()
+
+    await light.async_set_levels(r=255, g=255, b=255, w=255)
+    assert transport.mock_calls == [
+        call.write(
+            bytearray(
+                b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x12"
+            )
+        ),
+        call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x03G\xffFY")),
+    ]
+
+    transport.reset_mock()
+    await light.async_set_levels(w=255)
+    assert transport.mock_calls == [
+        call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x03G\xffFZ"))
+    ]
 
 
 @pytest.mark.asyncio
@@ -2087,7 +2107,7 @@ async def test_async_config_remotes(
         assert transport.mock_calls[0][0] == "write"
         assert (
             transport.mock_calls[0][1][0]
-            == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x10*\x01\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x0f5C'
+            == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x10*\x01\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x0f5C"
         )
 
         transport.reset_mock()
@@ -2095,7 +2115,7 @@ async def test_async_config_remotes(
         assert transport.mock_calls[0][0] == "write"
         assert (
             transport.mock_calls[0][1][0]
-            == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x10*\x02\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x0f6G'
+            == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x10*\x02\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x0f6G"
         )
 
         transport.reset_mock()
@@ -2103,7 +2123,7 @@ async def test_async_config_remotes(
         assert transport.mock_calls[0][0] == "write"
         assert (
             transport.mock_calls[0][1][0]
-            == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x10*\x03\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x0f7K'
+            == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x10*\x03\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x0f7K"
         )
 
 
