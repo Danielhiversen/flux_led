@@ -80,7 +80,7 @@ COLOR_MODES_RGB_CCT = {  # AKA Split RGB & CCT modes used for bulbs/lamps
     COLOR_MODE_RGB,
     COLOR_MODE_CCT,
 }
-COLOR_MODES_RGB_W = {  # AKA RGB/W in the Magic Home Pro app
+COLOR_MODES_RGB_W = {  # AKA RGB & W in the Magic Home Pro app
     COLOR_MODE_RGB,
     COLOR_MODE_DIM,
 }

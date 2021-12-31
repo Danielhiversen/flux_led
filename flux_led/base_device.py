@@ -376,6 +376,12 @@ class LEDENETDevice:
     def _internal_color_modes(self) -> Set[str]:
         """The internal available color modes."""
         assert self.raw_state is not None
+        if (
+            self._device_config is not None
+            # Currently this is only the SK6812RGBW strips on 0xA3
+            and self._device_config.operating_mode == COLOR_MODE_RGBW
+        ):
+            return {COLOR_MODE_RGBW}
         if not is_known_model(self.model_num):
             # Default mode is RGB
             return BASE_MODE_MAP.get(self.raw_state.mode & 0x0F, {DEFAULT_MODE})
@@ -953,7 +959,7 @@ class LEDENETDevice:
     def getSpeed(self) -> int:
         return self.speed
 
-    def _generate_random_levels_change(self) -> Tuple[bytearray, Dict[str, int]]:
+    def _generate_random_levels_change(self) -> Tuple[List[bytearray], Dict[str, int]]:
         """Generate a random levels change."""
         channels = {STATE_WARM_WHITE}
         if COLOR_MODES_RGB.intersection(self.color_modes):
@@ -972,7 +978,7 @@ class LEDENETDevice:
         channels: Dict[str, Optional[int]],
         persist: bool = True,
         brightness: Optional[int] = None,
-    ) -> Tuple[bytearray, Dict[str, int]]:
+    ) -> Tuple[List[bytearray], Dict[str, int]]:
         """Generate the levels change request."""
         channel_map = self.model_data.channel_map
         if channel_map:
@@ -998,13 +1004,13 @@ class LEDENETDevice:
         r_value = 0 if r is None else int(r)
         g_value = 0 if g is None else int(g)
         b_value = 0 if b is None else int(b)
-        w_value = 0 if w is None else int(w)
+        w_value = None if w is None else int(w)
         # ProtocolLEDENET9Byte devices support two white outputs for cold and warm.
         if w2 is None:
             # If we're only setting a single white value,
             # we set the second output to be the same as the first
             w2_value = (
-                int(w) if w is not None and self.color_mode != COLOR_MODE_CCT else 0
+                int(w) if w is not None and self.color_mode != COLOR_MODE_CCT else None
             )
         else:
             w2_value = int(w2)
@@ -1017,27 +1023,8 @@ class LEDENETDevice:
             elif r is None and g is None and b is None:
                 write_mode = LevelWriteMode.WHITES
 
-        _LOGGER.debug(
-            "%s: _generate_levels_change using %s: persist=%s r=%s/%s, g=%s/%s b=%s/%s, w=%s/%s w2=%s/%s write_mode=%s/%s",
-            self.ipaddr,
-            self.protocol,
-            persist,
-            r_value,
-            f"0x{r_value:02X}",
-            g_value,
-            f"0x{g_value:02X}",
-            b_value,
-            f"0x{b_value:02X}",
-            w_value,
-            f"0x{w_value:02X}",
-            w2_value,
-            f"0x{w2_value:02X}",
-            write_mode,
-            f"0x{write_mode.value:02X}",
-        )
-
         assert self._protocol is not None
-        msg = self._protocol.construct_levels_change(
+        msgs = self._protocol.construct_levels_change(
             persist, r_value, g_value, b_value, w_value, w2_value, write_mode
         )
         updates = {}
@@ -1045,8 +1032,8 @@ class LEDENETDevice:
         if multi_mode or write_mode in WRITE_ALL_COLORS:
             updates.update({"red": r_value, "green": g_value, "blue": b_value})
         if multi_mode or write_mode in WRITE_ALL_WHITES:
-            updates.update({"warm_white": w_value, "cool_white": w2_value})
-        return msg, updates
+            updates.update({"warm_white": w_value or 0, "cool_white": w2_value or 0})
+        return msgs, updates
 
     def _set_transition_complete_time(self) -> None:
         """Set the time we expect the transition will be completed.
