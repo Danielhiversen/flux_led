@@ -588,7 +588,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x06,
         # "AK001-ZJ2104" == v1 has RF remote support
-        # "AK001-ZJ2145" == v2.03 has IR remote support
+        # "AK001-ZJ2145" == v2.03, v2.09 has IR remote support
         # "AK001-ZJ2147" == v3.31 has 2.4ghz remote support
         models=[
             "AK001-ZJ100",
