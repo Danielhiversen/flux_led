@@ -396,7 +396,7 @@ HARDWARE = [
         chip=LEDENETChip.BL602,  # verified
         remote_rf=False,  # verified
         remote_24g=True,
-        remote_24g_controls=True,
+        remote_24g_controls=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2147",  # seen on Controller RGBW
@@ -840,8 +840,9 @@ MODELS = [
         model_num=0x33,
         # 'AK001-ZJ100' == v3 - WIFI370 version
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
-        # 'AK001-ZJ2101' == v8 - no dimmable effects confirmed, confirmed auto on
+        # 'AK001-ZJ2101' == v8.61 - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
+        # "AK001-ZJ2145" == v9.27 # w/IR
         # "AK001-ZJ2146" == v10.48 # 2.4ghz support
         # "AK001-ZJ2148" == v10.63 # 2.4ghz support, confirmed to be able to change 2.4G remote settings
         models=[
