@@ -240,16 +240,12 @@ class WifiLedBulb(LEDENETDevice):
         return rx
 
     def getClock(self) -> Optional[datetime.datetime]:
+        assert self._protocol is not None
         with self._lock:
             self._connect_if_disconnected()
-            assert self._protocol is not None
             self._send_msg(self._protocol.construct_get_time())
             rx = self._read_msg(12)
-        if len(rx) != 12:
-            return None
-        with contextlib.suppress(Exception):
-            return datetime.datetime(rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8])
-        return None
+        return self._protocol.parse_get_time(rx)
 
     def setClock(self) -> None:
         assert self._protocol is not None

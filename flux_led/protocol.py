@@ -2,6 +2,7 @@
 
 from abc import abstractmethod
 import colorsys
+import contextlib
 from dataclasses import dataclass
 import datetime
 from enum import Enum
@@ -476,6 +477,14 @@ class ProtocolBase:
     def construct_get_time(self) -> bytearray:
         """Construct a get time command."""
         return self.construct_message(bytearray([0x11, 0x1A, 0x1B, 0x0F]))
+
+    def parse_get_time(self, rx: bytes) -> Optional[datetime.datetime]:
+        """Parse a get time command."""
+        if len(rx) != 12:
+            return None
+        with contextlib.suppress(Exception):
+            return datetime.datetime(rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8])
+        return None
 
     def construct_set_time(self, time: datetime.datetime) -> bytearray:
         """Construct a set time command."""
