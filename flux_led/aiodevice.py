@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+from datetime import datetime
 import logging
 import time
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple
@@ -79,6 +80,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().__init__(ipaddr, port, timeout, discovery)
         self._lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
+        self._get_time_lock: asyncio.Lock = asyncio.Lock()
+        self._get_time_future: Optional[asyncio.Future[bool]] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._device_config_lock: asyncio.Lock = asyncio.Lock()
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
@@ -543,6 +546,24 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
         await self._async_send_msg(self._protocol.construct_query_remote_config())
 
+    async def async_get_time(self) -> None:
+        """Get the current time."""
+        assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_get_time())
+        async with self._get_time_lock:
+            self._get_time_future = asyncio.Future()
+            try:
+                await asyncio.wait_for(self._get_time_future, timeout=self.timeout)
+            except asyncio.TimeoutError:
+                _LOGGER.warning("%s: Could not get time from the device", self.ipaddr)
+                return None
+            return self._last_time
+
+    async def async_set_time(self, time: datetime) -> None:
+        """Set the current time."""
+        assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_set_time(time))
+
     async def _async_device_config_resync(self) -> None:
         await asyncio.sleep(DEVICE_CONFIG_WAIT_SECONDS)
         await self._async_device_config_setup()
@@ -613,6 +634,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             self._async_process_state_response(msg)
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
+        elif self._protocol.is_valid_get_time_response(msg):
+            self.process_time_response(msg)
         elif self._protocol.is_valid_device_config_response(msg):
             self.process_device_config_response(msg)
             changed_state = True
@@ -663,6 +686,12 @@ class AIOWifiLedBulb(LEDENETDevice):
         super().process_device_config_response(msg)
         if not self._device_config_future.done():
             self._device_config_future.set_result(True)
+
+    def process_time_response(self, msg: bytes) -> None:
+        """Process an time response."""
+        self._last_time = self._protocol.parse_get_time(msg)
+        if self._get_time_future and not self._get_time_future.done():
+            self._get_time_future.set_result(True)
 
     def process_remote_config_response(self, msg: bytes) -> None:
         """Process a 2.4ghz remote config response."""

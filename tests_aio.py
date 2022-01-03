@@ -1833,6 +1833,79 @@ async def test_christmas_protocol_device(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_async_get_time(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can get the time."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    # ic state
+    await task
+    assert light.model_num == 0x25
+    task = asyncio.ensure_future(light.async_get_time())
+    await asyncio.sleep(0)
+    # Invalid time
+    light._aio_protocol.data_received(b"\x0f\x11\x14\x32\x01\x02\x106\x02\x07\x00\xac")
+    light._aio_protocol.data_received(b"\x0f\x11\x14\x16\x01\x02\x106\x02\x07\x00\x9c")
+    time = await task
+    assert time == datetime.datetime(2022, 1, 2, 16, 54, 2)
+
+
+@pytest.mark.asyncio
+async def test_async_get_times_out(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can get the time."""
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.001)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    # ic state
+    await task
+    assert light.model_num == 0x25
+    task = asyncio.ensure_future(light.async_get_time())
+    await asyncio.sleep(0)
+    time = await task
+    assert time is None
+
+
+@pytest.mark.asyncio
+async def test_async_set_time(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set the time."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    # ic state
+    await task
+    assert light.model_num == 0x25
+
+    transport.reset_mock()
+    await light.async_set_time(datetime.datetime(2020, 1, 1, 1, 1, 1))
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\x10\x14\x14\x01\x01\x01\x01\x01\x03\x00\x0fO"
+    )
+
+
+@pytest.mark.asyncio
 async def test_async_enable_remote_access(mock_aio_protocol):
     """Test we can enable remote access."""
     light = AIOWifiLedBulb("192.168.1.166")
