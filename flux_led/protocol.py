@@ -496,7 +496,9 @@ class ProtocolBase:
         """Parse a get time command."""
         if self.is_valid_get_time_response(rx):
             with contextlib.suppress(Exception):
-                return datetime.datetime(rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8])
+                return datetime.datetime(
+                    rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8]
+                )
         return None
 
     def construct_set_time(self, time: datetime.datetime) -> bytearray:
