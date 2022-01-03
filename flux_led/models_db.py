@@ -1061,6 +1061,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA1,
+        # AK001-ZJ210 = v3.18
         models=["AK001-ZJ210"],
         description="Addressable v1",
         always_writes_white_and_colors=False,
