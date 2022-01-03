@@ -1552,7 +1552,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         #     |  |  |  |  |  |  |  |  |  segments (music mode)
         #     |  |  |  |  |  |  |  |  num pixels (music mode)
         #     |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
-        #     |  |  |  |  |  |  ic type (01=WS2812B, 02=SM16703, 03=SM16704, 04=WS2811, 05=UCS1903, 06=SK6812, 07=SK6812RGBW, 08=INK1003, 09=UCS2904B)
+        #     |  |  |  |  |  |  ic type (01=UCS1903, 02=SM16703, 03=WS2811, 04=WS2811B, 05=SK6812, 06=INK1003, 07=WS2801, 08=WS2815, 09=APA102, 10=TM1914, 11=UCS2904B)
         #     |  |  |  |  |  segments
         #     |  |  |  |  ?? (always 0x00)
         #     |  |  |  num pixels (16 bit, low byte)
@@ -1576,21 +1576,17 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             hex(segments),
             segments,
         )
-        if NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]) == COLOR_MODE_RGBW:
-            wirings = ADDRESSABLE_RGBW_NUM_TO_WIRING
-        else:
-            wirings = ADDRESSABLE_RGB_NUM_TO_WIRING
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=pixels_per_segment,
             segments=segments,
             music_pixels_per_segment=msg[8],
             music_segments=msg[9],
-            wirings=list(wirings.values()),
+            wirings=list(ADDRESSABLE_RGB_NUM_TO_WIRING.values()),
             wiring_num=msg[7],
-            wiring=wirings.get(msg[7]),
-            ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[7]),
+            ic_type=A2_NUM_TO_PROTOCOL.get(msg[6]),
             ic_type_num=msg[6],
-            operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
+            operating_mode=A2_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
 
     def construct_device_config(
@@ -1707,6 +1703,57 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         return self.construct_wrapped_message(
             super().construct_preset_pattern(pattern, speed, brightness),
             inner_pre_constructed=True,
+        )
+
+    def parse_strip_setting(self, msg: bytes) -> LEDENETAddressableDeviceConfiguration:
+        """Parse a strip settings message."""
+        # pos  0  1  2  3  4  5  6  7  8  9 10
+        #    00 63 01 2c 00 01 07 08 96 01 45
+        #     |  |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  |  checksum
+        #     |  |  |  |  |  |  |  |  |  |
+        #     |  |  |  |  |  |  |  |  |  segments (music mode)
+        #     |  |  |  |  |  |  |  |  num pixels (music mode)
+        #     |  |  |  |  |  |  |  wiring type (0 indexed, RGB or RGBW)
+        #     |  |  |  |  |  |  ic type (01=WS2812B, 02=SM16703, 03=SM16704, 04=WS2811, 05=UCS1903, 06=SK6812, 07=SK6812RGBW, 08=INK1003, 09=UCS2904B)
+        #     |  |  |  |  |  segments
+        #     |  |  |  |  ?? (always 0x00)
+        #     |  |  |  num pixels (16 bit, low byte)
+        #     |  |  num pixels (16 bit, high byte)
+        #     |  msg head
+        #     msg head
+        #
+        high_byte = msg[2]
+        low_byte = msg[3]
+        pixels_per_segment = (high_byte << 8) + low_byte
+        _LOGGER.debug("bytes: %s", msg)
+        _LOGGER.debug(
+            "Pixel count (high: %s, low: %s) is: %s",
+            hex(high_byte),
+            hex(low_byte),
+            pixels_per_segment,
+        )
+        segments = msg[5]
+        _LOGGER.debug(
+            "Segment count (%s) is: %s",
+            hex(segments),
+            segments,
+        )
+        if NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]) == COLOR_MODE_RGBW:
+            wirings = ADDRESSABLE_RGBW_NUM_TO_WIRING
+        else:
+            wirings = ADDRESSABLE_RGB_NUM_TO_WIRING
+        return LEDENETAddressableDeviceConfiguration(
+            pixels_per_segment=pixels_per_segment,
+            segments=segments,
+            music_pixels_per_segment=msg[8],
+            music_segments=msg[9],
+            wirings=list(wirings.values()),
+            wiring_num=msg[7],
+            wiring=wirings.get(msg[7]),
+            ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            ic_type_num=msg[6],
+            operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
 
     # To query music mode

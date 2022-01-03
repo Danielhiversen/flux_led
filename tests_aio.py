@@ -904,7 +904,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.segments == 2
     assert light.music_pixels_per_segment == 25
     assert light.music_segments == 2
-    assert light.ic_type == "WS2811"
+    assert light.ic_type == "WS2811B"
     assert light.ic_type_num == 4
     assert light.operating_mode is None
     assert light.operating_modes is None
