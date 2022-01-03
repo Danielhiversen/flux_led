@@ -325,6 +325,36 @@ A1_NUM_TO_OPERATING_MODE = {
 }
 A1_OPERATING_MODE_TO_NUM = {v: k for k, v in A1_NUM_TO_OPERATING_MODE.items()}
 
+A2_NUM_TO_PROTOCOL = {
+    1: "UCS1903",
+    2: "SM16703",
+    3: "WS2811",
+    4: "WS2811B",
+    5: "SK6812",
+    6: "INK1003",
+    7: "WS2801",
+    8: "WS2815",
+    9: "APA102",
+    10: "TM1914",
+    11: "UCS2904B",
+}
+A2_PROTOCOL_TO_NUM = {v: k for k, v in A2_NUM_TO_PROTOCOL.items()}
+
+A2_NUM_TO_OPERATING_MODE = {
+    1: COLOR_MODE_RGB,
+    2: COLOR_MODE_RGB,
+    3: COLOR_MODE_RGB,
+    4: COLOR_MODE_RGB,
+    5: COLOR_MODE_RGB,
+    6: COLOR_MODE_RGB,
+    7: COLOR_MODE_RGB,
+    8: COLOR_MODE_RGB,
+    9: COLOR_MODE_RGB,
+    10: COLOR_MODE_RGB,
+    11: COLOR_MODE_RGB,
+}
+A2_OPERATING_MODE_TO_NUM = {v: k for k, v in A2_NUM_TO_OPERATING_MODE.items()}
+
 NEW_ADDRESSABLE_NUM_TO_PROTOCOL = {
     1: "WS2812B",
     2: "SM16703",

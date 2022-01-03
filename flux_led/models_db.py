@@ -23,6 +23,10 @@ from .protocol import (
     A1_NUM_TO_PROTOCOL,
     A1_OPERATING_MODE_TO_NUM,
     A1_PROTOCOL_TO_NUM,
+    A2_NUM_TO_OPERATING_MODE,
+    A2_NUM_TO_PROTOCOL,
+    A2_OPERATING_MODE_TO_NUM,
+    A2_PROTOCOL_TO_NUM,
     ADDRESSABLE_RGB_NUM_TO_WIRING,
     ADDRESSABLE_RGB_WIRING_TO_NUM,
     NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE,
@@ -278,6 +282,21 @@ A1_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     ic_type=True,
     num_to_ic_type=A1_NUM_TO_PROTOCOL,
     ic_type_to_num=A1_PROTOCOL_TO_NUM,
+)
+A2_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
+    wiring=True,
+    num_to_wiring=ADDRESSABLE_RGB_NUM_TO_WIRING,
+    wiring_to_num=ADDRESSABLE_RGB_WIRING_TO_NUM,
+    operating_modes=False,
+    num_to_operating_mode=A2_NUM_TO_OPERATING_MODE,
+    operating_mode_to_num=A2_OPERATING_MODE_TO_NUM,
+    pixels=True,
+    segments=True,
+    music_pixels=True,
+    music_segments=True,
+    ic_type=True,
+    num_to_ic_type=A2_NUM_TO_PROTOCOL,
+    ic_type_to_num=A2_PROTOCOL_TO_NUM,
 )
 NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
     wiring=True,
@@ -1083,7 +1102,7 @@ MODELS = [
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
         microphone=True,
-        device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
+        device_config=A2_DEVICE_CONFIG,
     ),
     LEDENETModel(
         model_num=0xA3,
