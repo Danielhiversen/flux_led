@@ -1,5 +1,6 @@
 import datetime
 import logging
+import contextlib
 import select
 import socket
 import threading
@@ -239,45 +240,24 @@ class WifiLedBulb(LEDENETDevice):
         return rx
 
     def getClock(self) -> Optional[datetime.datetime]:
-        msg = bytearray([0x11, 0x1A, 0x1B, 0x0F])
         with self._lock:
             self._connect_if_disconnected()
             assert self._protocol is not None
-            self._send_msg(self._protocol.construct_message(msg))
+            self._send_msg(self._protocol.construct_get_time())
             rx = self._read_msg(12)
         if len(rx) != 12:
             return None
-        year = rx[3] + 2000
-        month = rx[4]
-        date = rx[5]
-        hour = rx[6]
-        minute = rx[7]
-        second = rx[8]
-        # dayofweek = rx[9]
-        try:
-            dt: Optional[datetime.datetime] = datetime.datetime(
-                year, month, date, hour, minute, second
+        with contextlib.suppress(Exception):
+            return datetime.datetime(
+                rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8]
             )
-        except Exception:
-            dt = None
-        return dt
+        return None
 
     def setClock(self) -> None:
         assert self._protocol is not None
-        msg = bytearray([0x10, 0x14])
-        now = datetime.datetime.now()
-        msg.append(now.year - 2000)
-        msg.append(now.month)
-        msg.append(now.day)
-        msg.append(now.hour)
-        msg.append(now.minute)
-        msg.append(now.second)
-        msg.append(now.isoweekday())  # day of week
-        msg.append(0x00)
-        msg.append(0x0F)
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_message(msg))
+            self._send_msg(self._protocol.construct_set_time(datetime.datetime.now()))
             # Setting the clock does not always respond so we
             # cycle the connection
             self.close()

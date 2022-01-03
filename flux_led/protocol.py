@@ -1,6 +1,7 @@
 """FluxLED Protocols."""
 
 from abc import abstractmethod
+import datetime
 import colorsys
 from dataclasses import dataclass
 from enum import Enum
@@ -471,6 +472,27 @@ class ProtocolBase:
     def construct_power_restore_state_query(self) -> bytearray:
         """The bytes to send for a query power restore state."""
         return self.construct_message(bytearray([0x32, 0x3A, 0x3B, 0x0F]))
+
+
+    def construct_get_time(self) -> bytearray:
+        """Construct a get time command."""
+        return self.construct_message(bytearray([0x11, 0x1A, 0x1B, 0x0F]))
+
+    def construct_set_time(self, time: datetime.datetime) -> bytearray:
+        """Construct a set time command."""
+        return self.construct_message(bytearray([
+            0x10,
+            0x14,
+            time.year - 2000,
+            time.month,
+            time.day,
+            time.hour,
+            time.minute,
+            time.second,
+            time.isoweekday(),  # day of week
+            0x00,
+            0x0F
+        ]))
 
     def construct_power_restore_state_change(
         self, restore_state: PowerRestoreStates
