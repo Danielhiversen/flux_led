@@ -2,7 +2,9 @@
 
 from abc import abstractmethod
 import colorsys
+import contextlib
 from dataclasses import dataclass
+import datetime
 from enum import Enum
 import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
@@ -98,6 +100,7 @@ LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
 LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
 LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 00 57
+LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -106,6 +109,7 @@ MSG_POWER_RESTORE_STATE = "power_restore_state"
 MSG_POWER_STATE = "power_state"
 MSG_STATE = "state"
 
+MSG_TIME = "time"
 MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
 
@@ -116,6 +120,9 @@ MSG_REMOTE_CONFIG = "remote_config"
 OUTER_MESSAGE_FIRST_BYTE = 0xB0
 
 MSG_UNIQUE_START = {
+    (0xF0, 0x11): MSG_TIME,
+    (0x0F, 0x11): MSG_TIME,
+    (0x00, 0x11): MSG_TIME,
     (0xF0, 0x71): MSG_POWER_STATE,
     (0x0F, 0x71): MSG_POWER_STATE,
     (0x00, 0x71): MSG_POWER_STATE,
@@ -134,6 +141,7 @@ MSG_UNIQUE_START = {
 }
 
 MSG_LENGTHS = {
+    MSG_TIME: LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN,
     MSG_REMOTE_CONFIG: LEDENET_REMOTE_CONFIG_RESPONSE_LEN,
     MSG_MUSIC_MODE_STATE: LEDNET_MUSIC_MODE_RESPONSE_LEN,
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
@@ -471,6 +479,47 @@ class ProtocolBase:
     def construct_power_restore_state_query(self) -> bytearray:
         """The bytes to send for a query power restore state."""
         return self.construct_message(bytearray([0x32, 0x3A, 0x3B, 0x0F]))
+
+    def construct_get_time(self) -> bytearray:
+        """Construct a get time command."""
+        return self.construct_message(bytearray([0x11, 0x1A, 0x1B, 0x0F]))
+
+    def is_valid_get_time_response(self, msg: bytes) -> bool:
+        """Check if the response is a valid time response."""
+        return (
+            _message_type_from_start_of_msg(msg) == MSG_TIME
+            and len(msg) == LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN
+            and self.is_checksum_correct(msg)
+        )
+
+    def parse_get_time(self, rx: bytes) -> Optional[datetime.datetime]:
+        """Parse a get time command."""
+        if self.is_valid_get_time_response(rx):
+            with contextlib.suppress(Exception):
+                return datetime.datetime(
+                    rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8]
+                )
+        return None
+
+    def construct_set_time(self, time: datetime.datetime) -> bytearray:
+        """Construct a set time command."""
+        return self.construct_message(
+            bytearray(
+                [
+                    0x10,
+                    0x14,
+                    time.year - 2000,
+                    time.month,
+                    time.day,
+                    time.hour,
+                    time.minute,
+                    time.second,
+                    time.isoweekday(),  # day of week
+                    0x00,
+                    0x0F,
+                ]
+            )
+        )
 
     def construct_power_restore_state_change(
         self, restore_state: PowerRestoreStates
