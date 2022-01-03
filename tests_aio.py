@@ -71,6 +71,16 @@ FLUX_DISCOVERY_24G_REMOTE = FluxLEDDiscovery(
     model_info=MODEL,
     model_description=MODEL_DESCRIPTION,
 )
+FLUX_DISCOVERY_LEGACY = FluxLEDDiscovery(
+    ipaddr=IP_ADDRESS,
+    model=MODEL,
+    id="ACCF23123456",
+    model_num=0x23,
+    version_num=0x04,
+    firmware_date=datetime.date(2021, 5, 5),
+    model_info=MODEL,
+    model_description=MODEL_DESCRIPTION,
+)
 
 
 def mock_coro(return_value=None, exception=None):
@@ -1902,6 +1912,37 @@ async def test_async_set_time(mock_aio_protocol, caplog: pytest.LogCaptureFixtur
     assert (
         transport.mock_calls[0][1][0]
         == b"\x10\x14\x14\x01\x01\x01\x01\x01\x03\x00\x0fO"
+    )
+
+    transport.reset_mock()
+    await light.async_set_time()
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0].startswith(b"\x10")
+
+
+@pytest.mark.asyncio
+async def test_async_set_time_legacy_device(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set the time on a legacy device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    light.discovery = FLUX_DISCOVERY_LEGACY
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(b"f\x03$A!\x08\x01\x19P\x01\x99")
+    # ic state
+    await task
+    assert light.model_num == 0x03
+
+    transport.reset_mock()
+    await light.async_set_time(datetime.datetime(2020, 1, 1, 1, 1, 1))
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0] == b"\x10\x14\x14\x01\x01\x01\x01\x01\x03\x00\x0f"
     )
 
     transport.reset_mock()
