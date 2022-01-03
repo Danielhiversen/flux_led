@@ -248,9 +248,7 @@ class WifiLedBulb(LEDENETDevice):
         if len(rx) != 12:
             return None
         with contextlib.suppress(Exception):
-            return datetime.datetime(
-                rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8]
-            )
+            return datetime.datetime(rx[3] + 2000, rx[4], rx[5], rx[6], rx[7], rx[8])
         return None
 
     def setClock(self) -> None:
