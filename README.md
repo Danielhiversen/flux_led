@@ -169,7 +169,7 @@ The following models have been tested with library.
 | 0x1A  | Christmas Light             |                                 |
 | 0x1C  | Table Light CCT             |                                 |
 | 0x21  | Bulb Dimmable               |                                 |
-| 0x25  | Controller RGB/WW/CW        | Supports RGB,RGBW,RGBWW,CW,DIM  |
+| 0x25  | Controller RGB/WW/CW        | Supports RGB, RGBW, RGBWW, CW, DIM  |
 | 0x33  | Controller RGB              |                                 |
 | 0x35  | Bulb RGBCW                  |                                 |
 | 0x41  | Controller Dimmable         |                                 |
@@ -179,9 +179,9 @@ The following models have been tested with library.
 | 0x93  | Switch 1c                   |                                 |
 | 0x94  | Switch 1c Watt              |                                 |
 | 0x97  | Socket 1c                   |                                 |
-| 0xA1  | Addressable v1              | Supports UCS1903,SM16703,WS2811,WS2812B,SK6812,INK1003,WS2801,LB1914 |
-| 0xA2  | Addressable v2              | Supports UCS1903,SM16703,WS2811,WS2811B,SK6812,INK1003,WS2801,WS2815,APA102,TM1914,UCS2904B |
-| 0xA3  | Addressable v3              | Supports WS2812B,SM16703,SM16704,WS2811,UCS1903,SK6812,SK6812RGBW,INK1003,UCS2904B |
+| 0xA1  | Addressable v1              | Supports UCS1903, SM16703, WS2811, WS2812B, SK6812, INK1003, WS2801, LB1914 |
+| 0xA2  | Addressable v2              | Supports UCS1903, SM16703, WS2811, WS2811B, SK6812, INK1003, WS2801, WS2815, APA102, TM1914, UCS2904B |
+| 0xA3  | Addressable v3              | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
 
 ### Unsupported Models
 
