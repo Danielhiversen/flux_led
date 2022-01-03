@@ -929,7 +929,7 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         )
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"b\x01,\x00\x02\x06\x02\x19\x02\xf0\xa4"
+    assert transport.mock_calls[0][1][0] == b"b\x01,\x00\x02\x05\x02\x19\x02\xf0\xa3"
 
     transport.reset_mock()
     with patch.object(light, "_async_device_config_resync", mock_coro):
