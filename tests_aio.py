@@ -1904,6 +1904,11 @@ async def test_async_set_time(mock_aio_protocol, caplog: pytest.LogCaptureFixtur
         == b"\x10\x14\x14\x01\x01\x01\x01\x01\x03\x00\x0fO"
     )
 
+    transport.reset_mock()
+    await light.async_set_time()
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0].startswith(b"\x10")
+
 
 @pytest.mark.asyncio
 async def test_async_enable_remote_access(mock_aio_protocol):

@@ -501,20 +501,21 @@ class ProtocolBase:
                 )
         return None
 
-    def construct_set_time(self, time: datetime.datetime) -> bytearray:
+    def construct_set_time(self, time: Optional[datetime.datetime]) -> bytearray:
         """Construct a set time command."""
+        dt = time or datetime.datetime.now()
         return self.construct_message(
             bytearray(
                 [
                     0x10,
                     0x14,
-                    time.year - 2000,
-                    time.month,
-                    time.day,
-                    time.hour,
-                    time.minute,
-                    time.second,
-                    time.isoweekday(),  # day of week
+                    dt.year - 2000,
+                    dt.month,
+                    dt.day,
+                    dt.hour,
+                    dt.minute,
+                    dt.second,
+                    dt.isoweekday(),  # day of week
                     0x00,
                     0x0F,
                 ]
