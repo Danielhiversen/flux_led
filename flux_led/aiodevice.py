@@ -559,7 +559,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 return None
             return self._last_time
 
-    async def async_set_time(self, time: datetime) -> None:
+    async def async_set_time(self, time: Optional[datetime] = None) -> None:
         """Set the current time."""
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_set_time(time))
