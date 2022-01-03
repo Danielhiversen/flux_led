@@ -546,7 +546,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
         await self._async_send_msg(self._protocol.construct_query_remote_config())
 
-    async def async_get_time(self) -> None:
+    async def async_get_time(self) -> Optional[datetime]:
         """Get the current time."""
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_get_time())
@@ -689,6 +689,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     def process_time_response(self, msg: bytes) -> None:
         """Process an time response."""
+        assert self._protocol is not None
         self._last_time = self._protocol.parse_get_time(msg)
         if self._get_time_future and not self._get_time_future.done():
             self._get_time_future.set_result(True)
