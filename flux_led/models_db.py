@@ -1106,8 +1106,8 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA3,
-        # AK001-ZJ2147 has RF remote support
-        # AK001-ZJ2148 has RF remote support, confirmed to be able to change 2.4G remote settings
+        # AK001-ZJ2147 v1.19 has RF remote support
+        # AK001-ZJ2148 v1.26, v1.27 has RF remote support, confirmed to be able to change 2.4G remote settings
         models=["AK001-ZJ2147", "AK001-ZJ2148"],
         description="Addressable v3",
         always_writes_white_and_colors=False,
