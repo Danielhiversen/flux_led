@@ -1,9 +1,9 @@
 """FluxLED Protocols."""
 
 from abc import abstractmethod
-import datetime
 import colorsys
 from dataclasses import dataclass
+import datetime
 from enum import Enum
 import logging
 from typing import List, NamedTuple, Optional, Tuple, Union

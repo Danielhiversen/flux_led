@@ -1,6 +1,6 @@
+import contextlib
 import datetime
 import logging
-import contextlib
 import select
 import socket
 import threading
