@@ -174,7 +174,7 @@ def _message_type_from_start_of_msg(data: bytes) -> Optional[str]:
         return MSG_UNIQUE_START.get(
             (data[0], data[1]), MSG_UNIQUE_START.get((data[0],))
         )
-    return MSG_UNIQUE_START.get((data[0],))
+    return MSG_UNIQUE_START.get((data[0],)) if len(data) else None
 
 
 class LEDENETOriginalRawState(NamedTuple):
