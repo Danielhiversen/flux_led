@@ -37,7 +37,7 @@ in PyQt, Kivy, or some other framework.
 * Setting custom pattern mode
 * Reading timers (sync version only)
 * Setting timers (sync version only)
-* Sync clock (sync version only)
+* Sync clock
 * Music Mode for devices with a built-in microphone (asyncio version only)
 * Remote access administration (asyncio version only)
 * Device configuration including wiring order, ic type, pixels, etc (asyncio version only)
