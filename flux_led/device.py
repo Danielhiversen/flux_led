@@ -7,8 +7,8 @@ import time
 from typing import Dict, List, Optional, Tuple
 
 from flux_led.protocol import (
-    LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN,
-    LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN,
+    LEDENET_TIME_RESPONSE_LEN,
+    LEDENET_TIMERS_RESPONSE_LEN,
     ProtocolLEDENETOriginal,
 )
 
@@ -249,7 +249,7 @@ class WifiLedBulb(LEDENETDevice):
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(self._protocol.construct_get_time())
-            rx = self._read_msg(LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN)
+            rx = self._read_msg(LEDENET_TIME_RESPONSE_LEN)
         return self._protocol.parse_get_time(rx)
 
     def setClock(self) -> None:
@@ -333,7 +333,7 @@ class WifiLedBulb(LEDENETDevice):
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
-            rx = self._read_msg(LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN)
+            rx = self._read_msg(LEDENET_TIMERS_RESPONSE_LEN)
         return self._protocol.parse_get_timers(rx)
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:

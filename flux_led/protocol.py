@@ -101,8 +101,8 @@ LEDENET_ADDRESSABLE_STATE_RESPONSE_LEN = 25
 LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
 LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 00 57
-LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
-LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN = 88
+LEDENET_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
+LEDENET_TIMERS_RESPONSE_LEN = 88
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -144,7 +144,8 @@ MSG_UNIQUE_START = {
 }
 
 MSG_LENGTHS = {
-    MSG_TIME: LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN,
+    MSG_TIMERS: LEDENET_TIMERS_RESPONSE_LEN,
+    MSG_TIME: LEDENET_TIME_RESPONSE_LEN,
     MSG_REMOTE_CONFIG: LEDENET_REMOTE_CONFIG_RESPONSE_LEN,
     MSG_MUSIC_MODE_STATE: LEDNET_MUSIC_MODE_RESPONSE_LEN,
     MSG_POWER_STATE: LEDENET_POWER_RESPONSE_LEN,
@@ -521,7 +522,7 @@ class ProtocolBase:
         """Check if the response is a valid time response."""
         return (
             _message_type_from_start_of_msg(msg) == MSG_TIME
-            and len(msg) == LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN
+            and len(msg) == LEDENET_TIME_RESPONSE_LEN
             and self.is_checksum_correct(msg)
         )
 
@@ -563,7 +564,7 @@ class ProtocolBase:
         """Check if the response is a valid timers response."""
         return (
             _message_type_from_start_of_msg(msg) == MSG_TIMERS
-            and len(msg) == LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN
+            and len(msg) == LEDENET_TIMERS_RESPONSE_LEN
         )
 
     def parse_get_timers(self, msg: bytes) -> List[LedTimer]:
