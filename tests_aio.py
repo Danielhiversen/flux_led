@@ -1953,8 +1953,10 @@ async def test_async_set_time_legacy_device(
 
 
 @pytest.mark.asyncio
-async def test_async_get_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
-    """Test we can get the timers."""
+async def test_async_get_timers_9byte_device(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can get the timers from a 9 byte device."""
     light = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
@@ -1997,6 +1999,73 @@ async def test_async_get_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert str(timers[4]) == "[ON ] 23:40  Once: 2022-01-03  Color: lime"
     assert timers[5].toBytes() == b"\xf0\x16\x01\x04\x07,\x00\x00a!\x00\xff\x00\x00\xf0"
     assert str(timers[5]) == "[ON ] 07:44  Once: 2022-01-04  Color: (33, 0, 255)"
+
+
+@pytest.mark.asyncio
+async def test_async_get_timers_socket_device(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can get the timers."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x97\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\x50"
+    )
+    light._aio_protocol.data_received(b"\xf0\x32\xf0\xf0\xf0\xf0\xe2")
+
+    await task
+    assert light.model_num == 0x97
+    task = asyncio.ensure_future(light.async_get_timers())
+    await asyncio.sleep(0)
+    light._aio_protocol.data_received(
+        b"\x0F\x22\xF0\x00\x00\x00\x11\x2F\x00\xFE\x23\x00\x00\x00\xF0\x00\x00\x00\x11\x30\x00\xFE\x23\x00\x00\x00\xF0\x00\x00\x00\x11\x30\x00\xFE\x24\x00\x00\x00\xF0\x00\x00\x00\x11\x30\x00\xFE\x23\x00\x00\x00\xF0\x00\x00\x00\x11\x30\x00\xFE\x23\x00\x00\x00\xF0\x00\x00\x00\x11\x30\x00\xFE\x23\x00\x00\x00\xF0\x00\x00\x00\x11\x31\x00\xFE\x24\x00\x00\x00\xF0\x00\x00\x00\x11\x31\x00\xFE\x23\x00\x00\x00\x00\xC4"
+    )
+    timers = await task
+    assert len(timers) == 8
+    assert len(timers[0].toBytes()) == 12
+    assert timers[0].toBytes() == b"\xf0\x00\x00\x00\x11/\x00\xfe\x00\x00\x00\x00"
+    assert str(timers[0]) == "[ON ] 17:47  SuMoTuWeThFrSa    "
+    assert str(timers[1]) == "[ON ] 17:48  SuMoTuWeThFrSa    "
+    assert str(timers[2]) == "[OFF] 17:48  SuMoTuWeThFrSa    "
+    assert str(timers[3]) == "[ON ] 17:48  SuMoTuWeThFrSa    "
+
+
+@pytest.mark.asyncio
+async def test_async_get_timers_8_byte_device(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can get the timers from an 8 byte device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x33\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xec"
+    )
+
+    await task
+    assert light.model_num == 0x33
+    task = asyncio.ensure_future(light.async_get_timers())
+    await asyncio.sleep(0)
+    light._aio_protocol.data_received(
+        b"\x0F\x22\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\xDD"
+    )
+    timers = await task
+    assert len(timers) == 6
+    assert len(timers[0].toBytes()) == 14
+    assert (
+        timers[0].toBytes()
+        == b"\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    )
+    assert str(timers[0]) == "Unset"
 
 
 @pytest.mark.asyncio
