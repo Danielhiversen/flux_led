@@ -249,7 +249,7 @@ class LedTimer:
         if self.warmth_level != 0:
             self.mode = "ww"
 
-        elif len(bytes) == 15:  # 9 byte protocol
+        if len(bytes) == 15:  # 9 byte protocol
             self.cold_level = bytes[13]
             on_byte = bytes[14]
         else:  # 8 byte protocol
