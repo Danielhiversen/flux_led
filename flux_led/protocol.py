@@ -577,6 +577,7 @@ class ProtocolBase:
         return (
             _message_type_from_start_of_msg(msg) == MSG_TIMERS
             and len(msg) == self.timer_response_len
+            and self.is_checksum_correct(msg)
         )
 
     def parse_get_timers(self, msg: bytes) -> List[LedTimer]:
@@ -1329,6 +1330,16 @@ class ProtocolLEDENET9ByteDimmableEffects(ProtocolLEDENET9ByteAutoOn):
 class ProtocolLEDENETAddressableBase(ProtocolLEDENET9Byte):
     """Base class for addressable protocols."""
 
+    @property
+    def timer_response_len(self) -> int:
+        """Return the time response len."""
+        return LEDENET_TIMERS_8BYTE_RESPONSE_LEN
+
+    @property
+    def timer_len(self) -> int:
+        """Return a single timer len."""
+        return 14
+
 
 class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
     def construct_request_strip_setting(self) -> bytearray:
@@ -2024,6 +2035,16 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
     MIN_BRIGHTNESS = 2
+
+    @property
+    def timer_response_len(self) -> int:
+        """Return the time response len."""
+        return LEDENET_TIMERS_8BYTE_RESPONSE_LEN
+
+    @property
+    def timer_len(self) -> int:
+        """Return a single timer len."""
+        return 14
 
     @property
     def name(self) -> str:
