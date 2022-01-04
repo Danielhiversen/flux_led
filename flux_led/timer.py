@@ -203,7 +203,7 @@ class LedTimer:
         14: 0f = turn off, f0 = turn on
     """
 
-    def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:
+    def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:  # noqa: C901
         self.red = 0
         self.green = 0
         self.blue = 0
@@ -261,7 +261,7 @@ class LedTimer:
             self.turn_on = False
             self.mode = "off"
 
-    def toBytes(self) -> bytearray:
+    def toBytes(self) -> bytearray:  # noqa: C901
         bytes = bytearray(self.length)
         if not self.active:
             bytes[0] = 0x0F
@@ -280,6 +280,10 @@ class LedTimer:
         bytes[5] = self.minute
         # what is 6?
         bytes[7] = self.repeat_mask
+
+        if self.length == 12:
+            bytes[8] == 0x23 if self.turn_on else 0x24
+            return bytes
 
         on_byte_num = 14 if self.length == 15 else 13
         if not self.turn_on:
