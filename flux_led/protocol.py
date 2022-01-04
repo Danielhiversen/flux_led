@@ -2031,7 +2031,6 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
             inner_pre_constructed=True,
         )
 
-
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
     MIN_BRIGHTNESS = 2
