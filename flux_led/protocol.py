@@ -102,7 +102,7 @@ LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
 LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 00 57
 LEDENET_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
-LEDENET_TIMERS_RESPONSE_LEN = 88
+LEDENET_TIMERS_RESPONSE_LEN = 94
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -573,10 +573,12 @@ class ProtocolBase:
             raise ValueError(f"Timers response not valid: {msg!r}")
         start = 2
         timer_list = []
-        timer_bytes_len = 14
+        timer_bytes_len = 15
         # pass in the 14-byte timer structs
         for _ in range(6):
-            timer_list.append(LedTimer(msg[start:][:timer_bytes_len]))
+            timer_bytes = msg[start:][:timer_bytes_len]
+            timer = LedTimer(timer_bytes)
+            timer_list.append(timer)
             start += timer_bytes_len
         return timer_list
 
