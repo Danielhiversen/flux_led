@@ -663,9 +663,8 @@ class PresetPattern:
 
     @staticmethod
     def valid(pattern: int) -> bool:
-        return (
-            pattern >= 0x24 and pattern <= 0x3A
-        ) or pattern in EFFECT_ID_NAME_LEGACY_CCT
+        instance = PresetPattern.instance()
+        return pattern in instance._value_to_str or pattern in EFFECT_ID_NAME_LEGACY_CCT
 
     @staticmethod
     def valtostr(pattern: int) -> Optional[str]:
