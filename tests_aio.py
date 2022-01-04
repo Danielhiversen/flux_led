@@ -836,6 +836,10 @@ async def test_ws2812b_a1(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
 
     await task
+    assert light._protocol.timer_count == 6
+    assert light._protocol.timer_len == 14
+    assert light._protocol.timer_response_len == 88
+
     assert light.pixels_per_segment == 50
     assert light.segments is None
     assert light.music_pixels_per_segment is None
@@ -1623,7 +1627,9 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert light.getCCT() == (0, 255)
     assert light.color_temp == 6500
     assert light.brightness == 255
-
+    assert light._protocol.timer_count == 6
+    assert light._protocol.timer_len == 14
+    assert light._protocol.timer_response_len == 88
     light._aio_protocol.data_received(
         b"\x81\x1C\x23\x61\x00\x05\x00\x00\x00\x00\x03\x64\x00\x8D"
     )
