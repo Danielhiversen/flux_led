@@ -2116,8 +2116,8 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         b0 b1 b2 b3 00 01 01 72 00 09 35 b1 64 64 00 00 00 03 b1 a5 - 100% cool
         b0 b1 b2 b3 00 01 01 9f 00 09 35 b1 64 32 00 00 00 03 7f 6e - 100% cool - dim 50%
         """
-        assert warm_white is not None
-        assert cool_white is not None
+        assert warm_white is not None, "CCT devices must set a warm white value"
+        assert cool_white is not None, "CCT devices must set a cool white value"
         scaled_temp, brightness = white_levels_to_scaled_color_temp(
             warm_white, cool_white
         )
