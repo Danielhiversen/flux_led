@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Optional, Union
 
 from .pattern import PresetPattern
 from .utils import utils
@@ -42,7 +42,7 @@ class LedTimer:
             f"{mask} must be one of 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80"
         )
 
-    def __init__(self, bytes: Optional[bytearray] = None) -> None:
+    def __init__(self, bytes: Optional[Union[bytes, bytearray]] = None) -> None:
         if bytes is not None:
             self.fromBytes(bytes)
             return
@@ -170,7 +170,7 @@ class LedTimer:
         13: 0f = turn off, f0 = turn on
     """
 
-    def fromBytes(self, bytes: bytearray) -> None:
+    def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:
         self.red = 0
         self.green = 0
         self.blue = 0

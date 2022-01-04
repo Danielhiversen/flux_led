@@ -556,7 +556,7 @@ class ProtocolBase:
             )
         )
 
-    def construct_get_timers(self) -> None:
+    def construct_get_timers(self) -> bytearray:
         """The bytes to get timers."""
         return self.construct_message(bytearray([0x22, 0x2A, 0x2B, 0x0F]))
 
@@ -570,7 +570,7 @@ class ProtocolBase:
     def parse_get_timers(self, msg: bytes) -> List[LedTimer]:
         """Parse get timers."""
         if not self.is_valid_timers_response(msg):
-            raise ValueError(f"Timers response not valid: {msg}")
+            raise ValueError(f"Timers response not valid: {msg!r}")
         start = 2
         timer_list = []
         timer_bytes_len = 14

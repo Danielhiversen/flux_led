@@ -563,7 +563,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 return None
             return self._last_time
 
-    async def async_get_timers(self) -> List[datetime]:
+    async def async_get_timers(self) -> Optional[List[LedTimer]]:
         """Get the timers."""
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_get_timers())
