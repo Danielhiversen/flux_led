@@ -717,21 +717,25 @@ async def _async_run_commands(  # noqa: C901
 
     if options.ww is not None:
         if options.ww > 100:
-            buf_in("Input can not be higher than 100%")
+            raise ValueError("Input can not be higher than 100%")
         else:
             buf_in(f"Setting warm white mode, level: {options.ww}%")
-            await bulb.async_set_levels(w=options.ww, persist=not options.volatile)
+            await bulb.async_set_levels(
+                w=utils.percentToByte(options.ww), persist=not options.volatile
+            )
 
     if options.cw is not None:
         if options.cw > 100:
-            buf_in("Input can not be higher than 100%")
+            raise ValueError("Input can not be higher than 100%")
         else:
             buf_in(f"Setting cold white mode, level: {options.cw}%")
-            await bulb.async_set_levels(w2=options.cw, persist=not options.volatile)
+            await bulb.async_set_levels(
+                w2=utils.percentToByte(options.cw), persist=not options.volatile
+            )
 
     if options.cct is not None:
         if options.cct[1] > 100:
-            buf_in("Brightness can not be higher than 100%")
+            raise ValueError("Brightness can not be higher than 100%")
         elif options.cct[0] < 2700 or options.cct[0] > 6500:
             buf_in("Color Temp must be between 2700 and 6500")
         else:
@@ -754,7 +758,7 @@ async def _async_run_commands(  # noqa: C901
         else:
             buf_in(f"[{name}]")
         if any(i < 0 or i > 255 for i in options.color):
-            buf_in("Invalid value received must be between 0-255")
+            raise ValueError("Invalid value received must be between 0-255")
         elif len(options.color) == 3:
             await bulb.async_set_levels(
                 options.color[0],
@@ -820,11 +824,9 @@ async def _async_run_commands(  # noqa: C901
 
     if options.showtimers:
         show_timers = await bulb.async_get_timers()
-        num = 0
         if show_timers:
-            for t in show_timers:
-                num += 1
-                buf_in(f"  Timer #{num}: {t}")
+            for idx, t in enumerate(show_timers):
+                buf_in(f"  Timer #{idx + 1}: {t}")
         buf_in("")
 
     print(buffer.rstrip("\n"))
@@ -859,11 +861,13 @@ async def async_main() -> None:  # noqa: C901
             for b in bulb_info_list:
                 print("  {} {}".format(b["id"], b["ipaddr"]))
             return
-
-    elif options.info:
-        for addr in args:
-            await scanner.async_scan(timeout=6, address=addr)
-        bulb_info_list = scanner.getBulbInfo()
+    else:
+        if options.info:
+            for addr in args:
+                await scanner.async_scan(timeout=6, address=addr)
+            bulb_info_list = scanner.getBulbInfo()
+        else:
+            bulb_info_list = []
         found_addrs = {discovery[ATTR_IPADDR] for discovery in bulb_info_list}
         for addr in args:
             if addr in found_addrs:
