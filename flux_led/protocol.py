@@ -581,7 +581,6 @@ class ProtocolBase:
 
     def construct_set_timers(self, timer_list: List[LedTimer]) -> bytearray:
         """Construct a set timers message."""
-        msg = self._protocol.construct_set_timers(timer_list)
         # remove inactive or expired timers from list
         for t in timer_list:
             if not t.isActive() or t.isExpired():
