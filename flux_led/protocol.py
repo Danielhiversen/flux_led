@@ -105,6 +105,7 @@ LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 0
 LEDENET_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
 LEDENET_TIMERS_8BYTE_RESPONSE_LEN = 88
 LEDENET_TIMERS_9BYTE_RESPONSE_LEN = 94
+LEDENET_TIMERS_SOCKET_RESPONSE_LEN = 100
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -2047,7 +2048,7 @@ class ProtocolLEDENETSocket(ProtocolLEDENET8Byte):
     @property
     def timer_response_len(self) -> int:
         """Return the time response len."""
-        return 100
+        return LEDENET_TIMERS_SOCKET_RESPONSE_LEN
 
     @property
     def timer_len(self) -> int:
