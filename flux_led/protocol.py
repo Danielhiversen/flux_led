@@ -579,6 +579,30 @@ class ProtocolBase:
             start += timer_bytes_len
         return timer_list
 
+    def construct_set_timers(self, timer_list: List[LedTimer]) -> bytearray:
+        """Construct a set timers message."""
+        msg = self._protocol.construct_set_timers(timer_list)
+        # remove inactive or expired timers from list
+        for t in timer_list:
+            if not t.isActive() or t.isExpired():
+                timer_list.remove(t)
+
+        # truncate if more than 6
+        if len(timer_list) > 6:
+            _LOGGER.warning("too many timers, truncating list")
+            del timer_list[6:]
+
+        # pad list to 6 with inactive timers
+        if len(timer_list) != 6:
+            for i in range(6 - len(timer_list)):
+                timer_list.append(LedTimer())
+
+        msg = bytearray([0x21])
+        for t in timer_list:
+            msg.extend(t.toBytes())
+        msg.extend(bytearray([0x00, 0xF0]))
+        return self.construct_message(msg)
+
     def construct_power_restore_state_change(
         self, restore_state: PowerRestoreStates
     ) -> bytearray:

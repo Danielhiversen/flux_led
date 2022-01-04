@@ -332,39 +332,15 @@ class WifiLedBulb(LEDENETDevice):
         msg = self._protocol.construct_get_timers()
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_message(msg))
+            self._send_msg(msg)
             rx = self._read_msg(LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN)
         return self._protocol.parse_get_timers(rx)
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:
         assert self._protocol is not None
-        # remove inactive or expired timers from list
-        for t in timer_list:
-            if not t.isActive() or t.isExpired():
-                timer_list.remove(t)
-
-        # truncate if more than 6
-        if len(timer_list) > 6:
-            print("too many timers, truncating list")
-            del timer_list[6:]
-
-        # pad list to 6 with inactive timers
-        if len(timer_list) != 6:
-            for i in range(6 - len(timer_list)):
-                timer_list.append(LedTimer())
-
-        msg_start = bytearray([0x21])
-        msg_end = bytearray([0x00, 0xF0])
-        msg = bytearray()
-
-        # build message
-        msg.extend(msg_start)
-        for t in timer_list:
-            msg.extend(t.toBytes())
-        msg.extend(msg_end)
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_message(msg))
+            self._send_msg(self._protocol.construct_set_timers(timer_list))
             # not sure what the resp is, prob some sort of ack?
             self._read_msg(4)
 
