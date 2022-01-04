@@ -53,8 +53,6 @@ package is installed.  (Easily done via pip, easy_install, or apt-get, etc.) Use
 * Flux_led package available at https://pypi.python.org/pypi/flux-led/
 ```
 pip install flux_led
-
-easy_install flux_led
 ```
 
 ##### Examples:
