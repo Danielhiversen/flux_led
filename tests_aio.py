@@ -8,7 +8,6 @@ import pytest
 
 from flux_led import aiodevice, aioscanner
 from flux_led.aio import AIOWifiLedBulb
-from flux_led.timer import LedTimer
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import (
@@ -35,6 +34,7 @@ from flux_led.scanner import (
     is_legacy_device,
     merge_discoveries,
 )
+from flux_led.timer import LedTimer
 
 IP_ADDRESS = "127.0.0.1"
 MODEL_NUM_HEX = "0x35"
@@ -2027,6 +2027,18 @@ async def test_async_set_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixt
         transport.mock_calls[0][1][0]
         == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\x00\xf0a"
     )
+
+    caplog.clear()
+    transport.reset_mock()
+    await light.async_set_timers(
+        [LedTimer(b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0") for _ in range(7)]
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\x00\xf0a"
+    )
+    assert "too many timers, truncating list" in caplog.text
 
     transport.reset_mock()
     await light.async_set_timers(
