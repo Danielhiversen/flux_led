@@ -2040,6 +2040,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
 
 class ProtocolLEDENETSocket(ProtocolLEDENET8Byte):
     @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_SOCKET
+
+    @property
     def timer_response_len(self) -> int:
         """Return the time response len."""
         return 100
