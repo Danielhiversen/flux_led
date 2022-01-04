@@ -1976,6 +1976,7 @@ async def test_async_get_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert len(timers) == 6
     for timer in timers:
         assert timer.toBytes() == b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0"
+        assert str(timer) == '[ON ] 12:45  --MoTuWeThFr--    Color: green'
 
 
 @pytest.mark.asyncio
