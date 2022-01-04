@@ -707,11 +707,7 @@ async def _async_process_bulb(
         buffer += str + "\n"
 
     bulb = AIOWifiLedBulb(info["ipaddr"], discovery=info)
-    try:
-        await bulb.async_setup(lambda *args: None)
-    except Exception as e:
-        buf_in("Unable to connect to bulb at [{}]: {}".format(info["ipaddr"], e))
-        return
+    await bulb.async_setup(lambda *args: None)
 
     if options.getclock:
         buf_in(
