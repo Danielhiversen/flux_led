@@ -9,6 +9,8 @@ from enum import Enum
 import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
 
+from flux_led.timer import LedTimer
+
 from .const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
@@ -101,18 +103,17 @@ LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
 LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 00 57
 LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
+LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN = 88
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
-
 MSG_POWER_RESTORE_STATE = "power_restore_state"
 MSG_POWER_STATE = "power_state"
 MSG_STATE = "state"
-
 MSG_TIME = "time"
+MSG_TIMERS = "timers"
 MSG_MUSIC_MODE_STATE = "music_mode_state"
 MSG_ADDRESSABLE_STATE = "addressable_state"
-
 MSG_DEVICE_CONFIG = "device_config"
 MSG_A1_DEVICE_CONFIG = "a1_device_config"
 MSG_REMOTE_CONFIG = "remote_config"
@@ -123,6 +124,9 @@ MSG_UNIQUE_START = {
     (0xF0, 0x11): MSG_TIME,
     (0x0F, 0x11): MSG_TIME,
     (0x00, 0x11): MSG_TIME,
+    (0xF0, 0x22): MSG_TIMERS,
+    (0x0F, 0x22): MSG_TIMERS,
+    (0x00, 0x22): MSG_TIMERS,
     (0xF0, 0x71): MSG_POWER_STATE,
     (0x0F, 0x71): MSG_POWER_STATE,
     (0x00, 0x71): MSG_POWER_STATE,
@@ -551,6 +555,30 @@ class ProtocolBase:
                 ]
             )
         )
+
+    def construct_get_timers(self) -> None:
+        """The bytes to get timers."""
+        return self.construct_message(bytearray([0x22, 0x2A, 0x2B, 0x0F]))
+
+    def is_valid_timers_response(self, msg: bytes) -> bool:
+        """Check if the response is a valid timers response."""
+        return (
+            _message_type_from_start_of_msg(msg) == MSG_TIMERS
+            and len(msg) == LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN
+        )
+
+    def parse_get_timers(self, msg: bytes) -> List[LedTimer]:
+        """Parse get timers."""
+        if not self.is_valid_timers_response(msg):
+            raise ValueError(f"Timers response not valid: {msg}")
+        start = 2
+        timer_list = []
+        timer_bytes_len = 14
+        # pass in the 14-byte timer structs
+        for _ in range(6):
+            timer_list.append(LedTimer(msg[start:][:timer_bytes_len]))
+            start += timer_bytes_len
+        return timer_list
 
     def construct_power_restore_state_change(
         self, restore_state: PowerRestoreStates

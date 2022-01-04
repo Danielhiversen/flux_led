@@ -6,6 +6,12 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
+from flux_led.protocol import (
+    LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN,
+    LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN,
+    ProtocolLEDENETOriginal,
+)
+
 from .base_device import LEDENETDevice
 from .const import (
     DEFAULT_RETRIES,
@@ -243,7 +249,7 @@ class WifiLedBulb(LEDENETDevice):
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(self._protocol.construct_get_time())
-            rx = self._read_msg(12)
+            rx = self._read_msg(LEDENET_REMOTE_CONFIG_TIME_RESPONSE_LEN)
         return self._protocol.parse_get_time(rx)
 
     def setClock(self) -> None:
@@ -320,27 +326,15 @@ class WifiLedBulb(LEDENETDevice):
 
     def getTimers(self) -> List[LedTimer]:
         assert self._protocol is not None
-        msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
-        resp_len = 88
+        if isinstance(self._protocol, ProtocolLEDENETOriginal):
+            led_timers: List[LedTimer] = []
+            return led_timers
+        msg = self._protocol.construct_get_timers()
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(self._protocol.construct_message(msg))
-            rx = self._read_msg(resp_len)
-        if len(rx) != resp_len:
-            print("response too short!")
-            raise Exception
-
-        # utils.dump_data(rx)
-        start = 2
-        timer_list = []
-        # pass in the 14-byte timer structs
-        for i in range(6):
-            timer_bytes = rx[start:][:14]
-            timer = LedTimer(timer_bytes)
-            timer_list.append(timer)
-            start += 14
-
-        return timer_list
+            rx = self._read_msg(LEDENET_REMOTE_CONFIG_TIMERS_RESPONSE_LEN)
+        return self._protocol.parse_get_timers(rx)
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:
         assert self._protocol is not None
