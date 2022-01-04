@@ -8,6 +8,7 @@ import pytest
 
 from flux_led import aiodevice, aioscanner
 from flux_led.aio import AIOWifiLedBulb
+from flux_led.timer import LedTimer
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
 from flux_led.const import (
@@ -2014,22 +2015,28 @@ async def test_async_set_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     light._aio_protocol.data_received(
         b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
     )
-    # ic state
     await task
     assert light.model_num == 0x25
 
     transport.reset_mock()
-    await light.async_set_timers(datetime.datetime(2020, 1, 1, 1, 1, 1))
+    await light.async_set_timers(
+        [LedTimer(b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0") for _ in range(6)]
+    )
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\x10\x14\x14\x01\x01\x01\x01\x01\x03\x00\x0fO"
+        == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\x00\xf0a"
     )
 
     transport.reset_mock()
-    await light.async_set_time()
+    await light.async_set_timers(
+        [LedTimer(b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0") for _ in range(2)]
+    )
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0].startswith(b"\x10")
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0\xbd"
+    )
 
 
 @pytest.mark.asyncio
