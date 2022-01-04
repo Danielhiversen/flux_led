@@ -29,6 +29,7 @@ from flux_led.protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    PROTOCOL_LEDENET_SOCKET,
 )
 from flux_led.utils import (
     color_temp_to_white_levels,
@@ -313,7 +314,7 @@ class TestLight(unittest.TestCase):
             switch.__str__(),
             "OFF  [Switch raw state: 129,151,36,36,0,0,0,0,0,0,2,0,0,98,]",
         )
-        self.assertEqual(switch.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(switch.protocol, PROTOCOL_LEDENET_SOCKET)
         self.assertEqual(switch.is_on, False)
         self.assertEqual(switch.mode, "switch")
         self.assertEqual(switch.device_type, flux_led.DeviceType.Switch)
@@ -332,7 +333,7 @@ class TestLight(unittest.TestCase):
             switch.__str__(),
             "ON  [Switch raw state: 129,151,35,35,0,0,0,0,0,0,2,0,0,96,]",
         )
-        self.assertEqual(switch.protocol, PROTOCOL_LEDENET_8BYTE)
+        self.assertEqual(switch.protocol, PROTOCOL_LEDENET_SOCKET)
         self.assertEqual(switch.is_on, True)
         self.assertEqual(switch.device_type, flux_led.DeviceType.Switch)
 

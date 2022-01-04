@@ -46,6 +46,8 @@ class LedTimer:
         self, bytes: Optional[Union[bytes, bytearray]] = None, length: int = 14
     ) -> None:
         self.cold_level = 0
+        self.pattern_code = 0
+        self.delay = 0
         if bytes is not None:
             self.length = len(bytes)
             self.fromBytes(bytes)
@@ -201,7 +203,7 @@ class LedTimer:
         14: 0f = turn off, f0 = turn on
     """
 
-    def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:
+    def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:  # noqa: C901
         self.red = 0
         self.green = 0
         self.blue = 0
@@ -215,8 +217,16 @@ class LedTimer:
         self.hour = bytes[4]
         self.minute = bytes[5]
         self.repeat_mask = bytes[7]
-        self.pattern_code = bytes[8]
 
+        if len(bytes) == 12:  # sockets
+            if bytes[8] == 0x23:
+                self.turn_on = True
+            else:
+                self.turn_on = False
+                self.mode = "off"
+            return
+
+        self.pattern_code = bytes[8]
         if self.pattern_code == 0x00:
             self.mode = "default"
         elif self.pattern_code == 0x61:
@@ -239,10 +249,10 @@ class LedTimer:
         if self.warmth_level != 0:
             self.mode = "ww"
 
-        if len(bytes) == 15:
+        if len(bytes) == 15:  # 9 byte protocol
             self.cold_level = bytes[13]
             on_byte = bytes[14]
-        else:
+        else:  # 8 byte protocol
             on_byte = bytes[13]
 
         if on_byte == 0xF0:
@@ -251,7 +261,7 @@ class LedTimer:
             self.turn_on = False
             self.mode = "off"
 
-    def toBytes(self) -> bytearray:
+    def toBytes(self) -> bytearray:  # noqa: C901
         bytes = bytearray(self.length)
         if not self.active:
             bytes[0] = 0x0F
@@ -270,6 +280,10 @@ class LedTimer:
         bytes[5] = self.minute
         # what is 6?
         bytes[7] = self.repeat_mask
+
+        if self.length == 12:
+            bytes[8] == 0x23 if self.turn_on else 0x24
+            return bytes
 
         on_byte_num = 14 if self.length == 15 else 13
         if not self.turn_on:

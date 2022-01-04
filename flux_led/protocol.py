@@ -76,6 +76,7 @@ PROTOCOL_LEDENET_ORIGINAL_CCT = "LEDENET_ORIGINAL_CCT"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_9BYTE_AUTO_ON = "LEDENET_AUTO_ON"
 PROTOCOL_LEDENET_9BYTE_DIMMABLE_EFFECTS = "LEDENET_DIMMABLE_EFFECTS"
+PROTOCOL_LEDENET_SOCKET = "LEDENET_SOCKET"
 PROTOCOL_LEDENET_8BYTE = "LEDENET_8BYTE"  # Previously was called None
 PROTOCOL_LEDENET_8BYTE_AUTO_ON = "LEDENET_8BYTES_AUTO_ON"
 PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS = "LEDENET_8BYTE_DIMMABLE_EFFECTS"
@@ -572,6 +573,11 @@ class ProtocolBase:
         """Return a single timer len."""
         return 14
 
+    @property
+    def timer_count(self) -> int:
+        """Return the number of timers."""
+        return 6
+
     def is_valid_timers_response(self, msg: bytes) -> bool:
         """Check if the response is a valid timers response."""
         return (
@@ -588,7 +594,7 @@ class ProtocolBase:
         timer_list = []
         timer_bytes_len = self.timer_len
         # pass in the timer_len-byte timer structs
-        for _ in range(6):
+        for _ in range(self.timer_count):
             timer_bytes = msg[start:][:timer_bytes_len]
             timer = LedTimer(timer_bytes)
             timer_list.append(timer)
@@ -604,13 +610,13 @@ class ProtocolBase:
                 timer_list.remove(t)
 
         # truncate if more than 6
-        if len(timer_list) > 6:
+        if len(timer_list) > self.timer_count:
             _LOGGER.warning("too many timers, truncating list")
-            del timer_list[6:]
+            del timer_list[self.timer_count :]
 
         # pad list to 6 with inactive timers
-        if len(timer_list) != 6:
-            for i in range(6 - len(timer_list)):
+        if len(timer_list) != self.timer_count:
+            for i in range(self.timer_count - len(timer_list)):
                 timer_list.append(LedTimer(length=self.timer_len))
 
         msg = bytearray([0x21])
@@ -2030,6 +2036,28 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
             ),
             inner_pre_constructed=True,
         )
+
+
+class ProtocolLEDENETSocket(ProtocolLEDENET8Byte):
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_SOCKET
+
+    @property
+    def timer_response_len(self) -> int:
+        """Return the time response len."""
+        return 100
+
+    @property
+    def timer_len(self) -> int:
+        """Return a single timer len."""
+        return 12
+
+    @property
+    def timer_count(self) -> int:
+        """Return the number of timers."""
+        return 8
 
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):

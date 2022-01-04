@@ -46,6 +46,7 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    PROTOCOL_LEDENET_SOCKET,
     RGB_NUM_TO_WIRING,
     RGB_WIRING_TO_NUM,
     RGBW_MODE_TO_NUM,
@@ -779,7 +780,7 @@ MODELS = [
         models=[],
         description="Socket 2 USB",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
         channel_map={},
@@ -1022,7 +1023,7 @@ MODELS = [
         models=["AK001-ZJ2146"],
         description="Switch",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
         channel_map={},
@@ -1034,7 +1035,7 @@ MODELS = [
         models=[],
         description="Switch Watt",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
         channel_map={},
@@ -1046,7 +1047,7 @@ MODELS = [
         models=[],
         description="Switch 2 Channel",  # 2 channels
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
         channel_map={},
@@ -1058,7 +1059,7 @@ MODELS = [
         models=[],
         description="Switch 4 Channel",  # 4 channels
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
         channel_map={},
@@ -1071,7 +1072,7 @@ MODELS = [
         models=["AK001-ZJ2134", "AK001-ZJ2146"],
         description="Socket",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
         color_modes=set(),  # no color modes
         channel_map={},
