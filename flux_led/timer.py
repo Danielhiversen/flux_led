@@ -198,7 +198,7 @@ class LedTimer:
         11: b
         12: warm white level
         13: cold white level
-        14: 0f = turn off, f0 = turn on        
+        14: 0f = turn off, f0 = turn on
     """
 
     def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:
