@@ -6,6 +6,8 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
+from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
+
 from .base_device import LEDENETDevice
 from .const import (
     DEFAULT_RETRIES,
@@ -243,7 +245,7 @@ class WifiLedBulb(LEDENETDevice):
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(self._protocol.construct_get_time())
-            rx = self._read_msg(12)
+            rx = self._read_msg(LEDENET_TIME_RESPONSE_LEN)
         return self._protocol.parse_get_time(rx)
 
     def setClock(self) -> None:
@@ -320,59 +322,23 @@ class WifiLedBulb(LEDENETDevice):
 
     def getTimers(self) -> List[LedTimer]:
         assert self._protocol is not None
-        msg = bytearray([0x22, 0x2A, 0x2B, 0x0F])
-        resp_len = 88
+        if isinstance(self._protocol, ProtocolLEDENETOriginal):
+            led_timers: List[LedTimer] = []
+            return led_timers
+        msg = self._protocol.construct_get_timers()
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_message(msg))
-            rx = self._read_msg(resp_len)
-        if len(rx) != resp_len:
-            print("response too short!")
-            raise Exception
-
-        # utils.dump_data(rx)
-        start = 2
-        timer_list = []
-        # pass in the 14-byte timer structs
-        for i in range(6):
-            timer_bytes = rx[start:][:14]
-            timer = LedTimer(timer_bytes)
-            timer_list.append(timer)
-            start += 14
-
-        return timer_list
+            self._send_msg(msg)
+            rx = self._read_msg(self._protocol.timer_response_len)
+        return self._protocol.parse_get_timers(rx)
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:
         assert self._protocol is not None
-        # remove inactive or expired timers from list
-        for t in timer_list:
-            if not t.isActive() or t.isExpired():
-                timer_list.remove(t)
-
-        # truncate if more than 6
-        if len(timer_list) > 6:
-            print("too many timers, truncating list")
-            del timer_list[6:]
-
-        # pad list to 6 with inactive timers
-        if len(timer_list) != 6:
-            for i in range(6 - len(timer_list)):
-                timer_list.append(LedTimer())
-
-        msg_start = bytearray([0x21])
-        msg_end = bytearray([0x00, 0xF0])
-        msg = bytearray()
-
-        # build message
-        msg.extend(msg_start)
-        for t in timer_list:
-            msg.extend(t.toBytes())
-        msg.extend(msg_end)
         with self._lock:
             self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_message(msg))
+            self._send_msg(self._protocol.construct_set_timers(timer_list))
             # not sure what the resp is, prob some sort of ack?
-            self._read_msg(4)
+            self._read_msg(4)  # b'\x94\x00\x00\x00'
 
     @_socket_retry(attempts=2)  # type: ignore
     def query_state(self, led_type: Optional[str] = None) -> bytearray:

@@ -34,6 +34,7 @@ from flux_led.scanner import (
     is_legacy_device,
     merge_discoveries,
 )
+from flux_led.timer import LedTimer
 
 IP_ADDRESS = "127.0.0.1"
 MODEL_NUM_HEX = "0x35"
@@ -1080,7 +1081,7 @@ async def test_async_set_zones_unsupported_device(
 
 
 @pytest.mark.asyncio
-async def test_0x06_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+async def test_0x06_device_wiring(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can get wiring for an 0x06."""
     light = AIOWifiLedBulb("192.168.1.166")
 
@@ -1108,7 +1109,7 @@ async def test_0x06_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.asyncio
-async def test_0x07_device(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+async def test_0x07_device_wiring(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can get wiring for an 0x07."""
     light = AIOWifiLedBulb("192.168.1.166")
 
@@ -1949,6 +1950,126 @@ async def test_async_set_time_legacy_device(
     await light.async_set_time()
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0].startswith(b"\x10")
+
+
+@pytest.mark.asyncio
+async def test_async_get_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can get the timers."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+    assert light.model_num == 0x25
+    task = asyncio.ensure_future(light.async_get_timers())
+    await asyncio.sleep(0)
+    light._aio_protocol.data_received(
+        b"\x0F\x22\xF0\x16\x01\x04\x00\x2B\x00\x00\x61\x19\x47\xFF\x00\x00\xF0\xF0\x16\x01\x04\x04\x2C\x00\x00\x61\x7F\xFF\x00\x00\x00\xF0\xF0\x16\x01\x03\x16\x1F\x00\x00\x61\xFF\x00\x00\x00\x00\xF0\xF0\x16\x01\x03\x17\x13\x00\x00\x61\x81\x81\x81\x00\x00\xF0\xF0\x16\x01\x03\x17\x28\x00\x00\x61\x00\xFF\x00\x00\x00\xF0\xF0\x16\x01\x04\x07\x2C\x00\x00\x61\x21\x00\xFF\x00\x00\xF0\x00\x00"
+    )
+    timers = await task
+    assert len(timers) == 6
+    assert len(timers[0].toBytes()) == 15
+    assert timers[0].toBytes() == b"\xf0\x16\x01\x04\x00+\x00\x00a\x19G\xff\x00\x00\xf0"
+    assert str(timers[0]) == "[ON ] 00:43  Once: 2022-01-04  Color: (25, 71, 255)"
+    assert (
+        timers[1].toBytes() == b"\xf0\x16\x01\x04\x04,\x00\x00a\x7f\xff\x00\x00\x00\xf0"
+    )
+    assert str(timers[1]) == "[ON ] 04:44  Once: 2022-01-04  Color: chartreuse"
+    assert (
+        timers[2].toBytes()
+        == b"\xf0\x16\x01\x03\x16\x1f\x00\x00a\xff\x00\x00\x00\x00\xf0"
+    )
+    assert str(timers[2]) == "[ON ] 22:31  Once: 2022-01-03  Color: red"
+    assert (
+        timers[3].toBytes()
+        == b"\xf0\x16\x01\x03\x17\x13\x00\x00a\x81\x81\x81\x00\x00\xf0"
+    )
+    assert str(timers[3]) == "[ON ] 23:19  Once: 2022-01-03  Color: (129, 129, 129)"
+    assert (
+        timers[4].toBytes() == b"\xf0\x16\x01\x03\x17(\x00\x00a\x00\xff\x00\x00\x00\xf0"
+    )
+    assert str(timers[4]) == "[ON ] 23:40  Once: 2022-01-03  Color: lime"
+    assert timers[5].toBytes() == b"\xf0\x16\x01\x04\x07,\x00\x00a!\x00\xff\x00\x00\xf0"
+    assert str(timers[5]) == "[ON ] 07:44  Once: 2022-01-04  Color: (33, 0, 255)"
+
+
+@pytest.mark.asyncio
+async def test_async_get_timers_times_out(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test getting timers times out."""
+    light = AIOWifiLedBulb("192.168.1.166", timeout=0.001)
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    # ic state
+    await task
+    assert light.model_num == 0x25
+    task = asyncio.ensure_future(light.async_get_timers())
+    await asyncio.sleep(0)
+    time = await task
+    assert time is None
+
+
+@pytest.mark.asyncio
+async def test_async_set_timers(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set timers."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
+    assert light.model_num == 0x25
+
+    transport.reset_mock()
+    await light.async_set_timers(
+        [LedTimer(b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0") for _ in range(6)]
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\x00\xf0a"
+    )
+
+    caplog.clear()
+    transport.reset_mock()
+    await light.async_set_timers(
+        [LedTimer(b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0") for _ in range(7)]
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\x00\xf0a"
+    )
+    assert "too many timers, truncating list" in caplog.text
+
+    transport.reset_mock()
+    await light.async_set_timers(
+        [LedTimer(b"\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\xf0") for _ in range(2)]
+    )
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"!\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\xf0\x00\x00\x00\x0c-\x00>a\x00\x80\x00\x00\x00\xf0\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0\xbd"
+    )
 
 
 @pytest.mark.asyncio

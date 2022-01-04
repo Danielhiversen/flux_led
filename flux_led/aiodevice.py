@@ -40,6 +40,7 @@ from .protocol import (
     RemoteConfig,
 )
 from .scanner import FluxLEDDiscovery
+from .timer import LedTimer
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,6 +83,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._get_time_lock: asyncio.Lock = asyncio.Lock()
         self._get_time_future: Optional[asyncio.Future[bool]] = None
+        self._get_timers_lock: asyncio.Lock = asyncio.Lock()
+        self._get_timers_future: Optional[asyncio.Future[bool]] = None
+        self._timers: Optional[List[LedTimer]] = None
         self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
         self._device_config_lock: asyncio.Lock = asyncio.Lock()
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
@@ -559,6 +563,24 @@ class AIOWifiLedBulb(LEDENETDevice):
                 return None
             return self._last_time
 
+    async def async_get_timers(self) -> Optional[List[LedTimer]]:
+        """Get the timers."""
+        assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_get_timers())
+        async with self._get_timers_lock:
+            self._get_timers_future = asyncio.Future()
+            try:
+                await asyncio.wait_for(self._get_timers_future, timeout=self.timeout)
+            except asyncio.TimeoutError:
+                _LOGGER.warning("%s: Could not get timers from the device", self.ipaddr)
+                return None
+            return self._timers
+
+    async def async_set_timers(self, timer_list: List[LedTimer]) -> None:
+        """Set the timers."""
+        assert self._protocol is not None
+        await self._async_send_msg(self._protocol.construct_set_timers(timer_list))
+
     async def async_set_time(self, time: Optional[datetime] = None) -> None:
         """Set the current time."""
         assert self._protocol is not None
@@ -636,6 +658,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_power_state_response(msg)
         elif self._protocol.is_valid_get_time_response(msg):
             self.process_time_response(msg)
+        elif self._protocol.is_valid_timers_response(msg):
+            self.process_timers_response(msg)
+            changed_state = True
         elif self._protocol.is_valid_device_config_response(msg):
             self.process_device_config_response(msg)
             changed_state = True
@@ -693,6 +718,13 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._last_time = self._protocol.parse_get_time(msg)
         if self._get_time_future and not self._get_time_future.done():
             self._get_time_future.set_result(True)
+
+    def process_timers_response(self, msg: bytes) -> None:
+        """Process an timers response."""
+        assert self._protocol is not None
+        self._timers = self._protocol.parse_get_timers(msg)
+        if self._get_timers_future and not self._get_timers_future.done():
+            self._get_timers_future.set_result(True)
 
     def process_remote_config_response(self, msg: bytes) -> None:
         """Process a 2.4ghz remote config response."""
