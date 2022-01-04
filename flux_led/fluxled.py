@@ -697,17 +697,15 @@ def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
 # -------------------------------------------
 
 
-async def _async_process_bulb(
-    info: FluxLEDDiscovery, options: Any
+async def _async_run_commands(
+    bulb: AIOWifiLedBulb, info: FluxLEDDiscovery, options: Any
 ) -> None:  # noqa: C901
+    """Run requested commands on a bulb."""
     buffer = ""
 
     def buf_in(str) -> None:
         nonlocal buffer
         buffer += str + "\n"
-
-    bulb = AIOWifiLedBulb(info["ipaddr"], discovery=info)
-    await bulb.async_setup(lambda *args: None)
 
     if options.getclock:
         buf_in(
@@ -827,8 +825,19 @@ async def _async_process_bulb(
             buf_in(f"  Timer #{num}: {t}")
         buf_in("")
 
-    await bulb.async_stop()
     print(buffer.rstrip("\n"))
+
+
+async def _async_process_bulb(
+    info: FluxLEDDiscovery, options: Any
+) -> None:  # noqa: C901
+    """Process a bulb."""
+    bulb = AIOWifiLedBulb(info["ipaddr"], discovery=info)
+    await bulb.async_setup(lambda *args: None)
+    try:
+        await _async_run_commands(bulb, info, options)
+    finally:
+        await bulb.async_stop()
 
 
 async def async_main() -> None:
