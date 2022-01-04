@@ -720,14 +720,18 @@ async def _async_run_commands(  # noqa: C901
             buf_in("Input can not be higher than 100%")
         else:
             buf_in(f"Setting warm white mode, level: {options.ww}%")
-            await bulb.async_set_levels(w=options.ww, persist=not options.volatile)
+            await bulb.async_set_levels(
+                w=utils.percentToByte(options.ww), persist=not options.volatile
+            )
 
     if options.cw is not None:
         if options.cw > 100:
             buf_in("Input can not be higher than 100%")
         else:
             buf_in(f"Setting cold white mode, level: {options.cw}%")
-            await bulb.async_set_levels(w2=options.cw, persist=not options.volatile)
+            await bulb.async_set_levels(
+                w2=utils.percentToByte(options.cw), persist=not options.volatile
+            )
 
     if options.cct is not None:
         if options.cct[1] > 100:
@@ -859,11 +863,13 @@ async def async_main() -> None:  # noqa: C901
             for b in bulb_info_list:
                 print("  {} {}".format(b["id"], b["ipaddr"]))
             return
-
-    elif options.info:
-        for addr in args:
-            await scanner.async_scan(timeout=6, address=addr)
-        bulb_info_list = scanner.getBulbInfo()
+    else:
+        if options.info:
+            for addr in args:
+                await scanner.async_scan(timeout=6, address=addr)
+            bulb_info_list = scanner.getBulbInfo()
+        else:
+            bulb_info_list = []
         found_addrs = {discovery[ATTR_IPADDR] for discovery in bulb_info_list}
         for addr in args:
             if addr in found_addrs:
