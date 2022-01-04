@@ -703,7 +703,7 @@ async def _async_run_commands(
     """Run requested commands on a bulb."""
     buffer = ""
 
-    def buf_in(str) -> None:
+    def buf_in(str: str) -> None:
         nonlocal buffer
         buffer += str + "\n"
 
@@ -809,7 +809,8 @@ async def _async_run_commands(
         buf_in("{} [{}] {} ({})".format(info["id"], info["ipaddr"], bulb, bulb.model))
 
     if options.settimer:
-        timers = await bulb.async_get_timers()
+        empty_timers: List[LedTimer] = []
+        timers = await bulb.async_get_timers() or empty_timers
         num = int(options.settimer[0])
         buf_in(f"New Timer ---- #{num}: {options.new_timer}")
         if options.new_timer.isExpired():
@@ -818,11 +819,12 @@ async def _async_run_commands(
         await bulb.async_set_timers(timers)
 
     if options.showtimers:
-        timers = await bulb.async_get_timers()
+        show_timers = await bulb.async_get_timers()
         num = 0
-        for t in timers:
-            num += 1
-            buf_in(f"  Timer #{num}: {t}")
+        if show_timers:
+            for t in show_timers:
+                num += 1
+                buf_in(f"  Timer #{num}: {t}")
         buf_in("")
 
     print(buffer.rstrip("\n"))
