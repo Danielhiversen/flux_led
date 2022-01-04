@@ -342,7 +342,8 @@ class WifiLedBulb(LEDENETDevice):
             self._connect_if_disconnected()
             self._send_msg(self._protocol.construct_set_timers(timer_list))
             # not sure what the resp is, prob some sort of ack?
-            self._read_msg(4)
+            import pprint
+            pprint.pprint([self._read_msg(4)])
 
     @_socket_retry(attempts=2)  # type: ignore
     def query_state(self, led_type: Optional[str] = None) -> bytearray:
