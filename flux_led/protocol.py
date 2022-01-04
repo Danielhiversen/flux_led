@@ -9,8 +9,6 @@ from enum import Enum
 import logging
 from typing import List, NamedTuple, Optional, Tuple, Union
 
-from flux_led.timer import LedTimer
-
 from .const import (
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
@@ -26,6 +24,7 @@ from .const import (
     LevelWriteMode,
     MultiColorEffects,
 )
+from .timer import LedTimer
 from .utils import utils, white_levels_to_scaled_color_temp
 
 
