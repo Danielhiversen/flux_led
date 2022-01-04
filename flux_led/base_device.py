@@ -82,6 +82,7 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    PROTOCOL_LEDENET_SOCKET,
     LEDENETAddressableDeviceConfiguration,
     LEDENETOriginalRawState,
     LEDENETRawState,
@@ -98,6 +99,7 @@ from .protocol import (
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
+    ProtocolLEDENETSocket,
     RemoteConfig,
 )
 from .scanner import FluxLEDDiscovery, is_legacy_device
@@ -128,6 +130,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
     ProtocolLEDENETCCT,
+    ProtocolLEDENETSocket,
     ProtocolLEDENETAddressableChristmas,
 ]
 
@@ -165,6 +168,7 @@ PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
     PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
     PROTOCOL_LEDENET_CCT: ProtocolLEDENETCCT,
+    PROTOCOL_LEDENET_SOCKET: ProtocolLEDENETSocket,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS: ProtocolLEDENETAddressableChristmas,
 }
 
