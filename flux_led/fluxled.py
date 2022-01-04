@@ -754,7 +754,7 @@ async def _async_run_commands(  # noqa: C901
         )
         name = utils.color_tuple_to_string(options.color)
         if name is None:
-            buf_in()
+            buf_in("")
         else:
             buf_in(f"[{name}]")
         if any(i < 0 or i > 255 for i in options.color):
