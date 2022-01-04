@@ -824,11 +824,9 @@ async def _async_run_commands(  # noqa: C901
 
     if options.showtimers:
         show_timers = await bulb.async_get_timers()
-        num = 0
         if show_timers:
-            for t in show_timers:
-                num += 1
-                buf_in(f"  Timer #{num}: {t}")
+            for idx, t in enumerate(show_timers):
+                buf_in(f"  Timer #{idx + 1}: {t}")
         buf_in("")
 
     print(buffer.rstrip("\n"))
