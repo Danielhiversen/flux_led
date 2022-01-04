@@ -42,11 +42,16 @@ class LedTimer:
             f"{mask} must be one of 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80"
         )
 
-    def __init__(self, bytes: Optional[Union[bytes, bytearray]] = None) -> None:
+    def __init__(
+        self, bytes: Optional[Union[bytes, bytearray]] = None, length: int = 14
+    ) -> None:
+        self.cold_level = 0
         if bytes is not None:
+            self.length = len(bytes)
             self.fromBytes(bytes)
             return
 
+        self.length = length
         the_time = datetime.datetime.now() + datetime.timedelta(hours=1)
         self.setTime(the_time.hour, the_time.minute)
         self.setDate(the_time.year, the_time.month, the_time.day)
@@ -95,10 +100,12 @@ class LedTimer:
         self.green = 0
         self.blue = 0
         self.warmth_level = 0
+        self.cold_level = 0
 
     def setModePresetPattern(self, pattern: int, speed: int) -> None:
         self.mode = "preset"
         self.warmth_level = 0
+        self.cold_level = 0
         self.pattern_code = pattern
         self.delay = utils.speedToDelay(speed)
         self.turn_on = True
@@ -106,6 +113,7 @@ class LedTimer:
     def setModeColor(self, r: int, g: int, b: int) -> None:
         self.mode = "color"
         self.warmth_level = 0
+        self.cold_level = 0
         self.red = r
         self.green = g
         self.blue = b
@@ -115,6 +123,7 @@ class LedTimer:
     def setModeWarmWhite(self, level: int) -> None:
         self.mode = "ww"
         self.warmth_level = utils.percentToByte(level)
+        self.cold_level = 0
         self.pattern_code = 0x61
         self.red = 0
         self.green = 0
@@ -130,6 +139,7 @@ class LedTimer:
         self.brightness_start = utils.percentToByte(startBrightness)
         self.brightness_end = utils.percentToByte(endBrightness)
         self.warmth_level = utils.percentToByte(endBrightness)
+        self.cold_level = 0
         self.duration = int(duration)
 
     def setModeSunset(
@@ -141,6 +151,7 @@ class LedTimer:
         self.brightness_start = utils.percentToByte(startBrightness)
         self.brightness_end = utils.percentToByte(endBrightness)
         self.warmth_level = utils.percentToByte(endBrightness)
+        self.cold_level = 0
         self.duration = int(duration)
 
     def setModeTurnOff(self) -> None:
@@ -168,6 +179,26 @@ class LedTimer:
         11: b
         12: warm white level
         13: 0f = turn off, f0 = turn on
+
+    timer are in six 15-byte structs for 9 byte devices
+        f0 0f 08 10 10 15 00 00 25 1f 00 00 00 f0 0f
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14
+
+        0: f0 when active entry/ 0f when not active
+        1: (0f=15) year when no repeat, else 0
+        2:  month when no repeat, else 0
+        3:  dayofmonth when no repeat, else 0
+        4: hour
+        5: min
+        6: 0
+        7: repeat mask, Mo=0x2,Tu=0x04, We 0x8, Th=0x10 Fr=0x20, Sa=0x40, Su=0x80
+        8:  61 for solid color or warm, or preset pattern code
+        9:  r (or delay for preset pattern)
+        10: g
+        11: b
+        12: warm white level
+        13: cold white level
+        14: 0f = turn off, f0 = turn on        
     """
 
     def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:
@@ -208,14 +239,20 @@ class LedTimer:
         if self.warmth_level != 0:
             self.mode = "ww"
 
-        if bytes[13] == 0xF0:
+        if len(bytes) == 15:
+            self.cold_level = bytes[13]
+            on_byte = bytes[14]
+        else:
+            on_byte = bytes[13]
+
+        if on_byte == 0xF0:
             self.turn_on = True
         else:
             self.turn_on = False
             self.mode = "off"
 
     def toBytes(self) -> bytearray:
-        bytes = bytearray(14)
+        bytes = bytearray(self.length)
         if not self.active:
             bytes[0] = 0x0F
             # quit since all other zeros is good
@@ -234,10 +271,11 @@ class LedTimer:
         # what is 6?
         bytes[7] = self.repeat_mask
 
+        on_byte_num = 14 if self.length == 15 else 13
         if not self.turn_on:
-            bytes[13] = 0x0F
+            bytes[on_byte_num] = 0x0F
             return bytes
-        bytes[13] = 0xF0
+        bytes[on_byte_num] = 0xF0
 
         bytes[8] = self.pattern_code
         if PresetPattern.valid(self.pattern_code):
@@ -253,6 +291,8 @@ class LedTimer:
             bytes[10] = self.green
             bytes[11] = self.blue
         bytes[12] = self.warmth_level
+        if self.length == 15:
+            bytes[13] = self.cold_level
 
         return bytes
 

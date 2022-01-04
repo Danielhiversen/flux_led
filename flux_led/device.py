@@ -6,11 +6,7 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
-from flux_led.protocol import (
-    LEDENET_TIME_RESPONSE_LEN,
-    LEDENET_TIMERS_RESPONSE_LEN,
-    ProtocolLEDENETOriginal,
-)
+from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
 
 from .base_device import LEDENETDevice
 from .const import (
@@ -333,7 +329,7 @@ class WifiLedBulb(LEDENETDevice):
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
-            rx = self._read_msg(LEDENET_TIMERS_RESPONSE_LEN)
+            rx = self._read_msg(self._protocol.timer_response_len)
         return self._protocol.parse_get_timers(rx)
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:

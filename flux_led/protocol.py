@@ -102,7 +102,8 @@ LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN = 12
 LEDENET_DEVICE_CONFIG_RESPONSE_LEN = 11
 LEDENET_REMOTE_CONFIG_RESPONSE_LEN = 14  # 2b 03 00 00 00 00 29 00 00 00 00 00 00 57
 LEDENET_TIME_RESPONSE_LEN = 12  # 10 14 16 01 02 10 26 20 07 00 0f a9
-LEDENET_TIMERS_RESPONSE_LEN = 94
+LEDENET_TIMERS_8BYTE_RESPONSE_LEN = 88
+LEDENET_TIMERS_9BYTE_RESPONSE_LEN = 94
 
 MSG_ORIGINAL_POWER_STATE = "original_power_state"
 MSG_ORIGINAL_STATE = "original_state"
@@ -144,7 +145,6 @@ MSG_UNIQUE_START = {
 }
 
 MSG_LENGTHS = {
-    MSG_TIMERS: LEDENET_TIMERS_RESPONSE_LEN,
     MSG_TIME: LEDENET_TIME_RESPONSE_LEN,
     MSG_REMOTE_CONFIG: LEDENET_REMOTE_CONFIG_RESPONSE_LEN,
     MSG_MUSIC_MODE_STATE: LEDNET_MUSIC_MODE_RESPONSE_LEN,
@@ -467,6 +467,8 @@ class ProtocolBase:
         msg_type = _message_type_from_start_of_msg(data)
         if msg_type is None:
             return len(data)
+        if msg_type == MSG_TIMERS:
+            return self.timer_response_len
         return MSG_LENGTHS[msg_type]
 
     @abstractmethod
@@ -560,11 +562,21 @@ class ProtocolBase:
         """The bytes to get timers."""
         return self.construct_message(bytearray([0x22, 0x2A, 0x2B, 0x0F]))
 
+    @property
+    def timer_response_len(self) -> int:
+        """Return the time response len."""
+        return LEDENET_TIMERS_8BYTE_RESPONSE_LEN
+
+    @property
+    def timer_len(self) -> int:
+        """Return a single timer len."""
+        return 14
+
     def is_valid_timers_response(self, msg: bytes) -> bool:
         """Check if the response is a valid timers response."""
         return (
             _message_type_from_start_of_msg(msg) == MSG_TIMERS
-            and len(msg) == LEDENET_TIMERS_RESPONSE_LEN
+            and len(msg) == self.timer_response_len
         )
 
     def parse_get_timers(self, msg: bytes) -> List[LedTimer]:
@@ -573,8 +585,8 @@ class ProtocolBase:
             raise ValueError(f"Timers response not valid: {msg!r}")
         start = 2
         timer_list = []
-        timer_bytes_len = 15
-        # pass in the 14-byte timer structs
+        timer_bytes_len = self.timer_len
+        # pass in the timer_len-byte timer structs
         for _ in range(6):
             timer_bytes = msg[start:][:timer_bytes_len]
             timer = LedTimer(timer_bytes)
@@ -586,6 +598,7 @@ class ProtocolBase:
         """Construct a set timers message."""
         # remove inactive or expired timers from list
         for t in timer_list:
+            t.length = self.timer_len
             if not t.isActive() or t.isExpired():
                 timer_list.remove(t)
 
@@ -597,7 +610,7 @@ class ProtocolBase:
         # pad list to 6 with inactive timers
         if len(timer_list) != 6:
             for i in range(6 - len(timer_list)):
-                timer_list.append(LedTimer())
+                timer_list.append(LedTimer(length=self.timer_len))
 
         msg = bytearray([0x21])
         for t in timer_list:
@@ -1214,6 +1227,16 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_9BYTE
+
+    @property
+    def timer_response_len(self) -> int:
+        """Return the time response len."""
+        return LEDENET_TIMERS_9BYTE_RESPONSE_LEN
+
+    @property
+    def timer_len(self) -> int:
+        """Return a single timer len."""
+        return 15
 
     def construct_levels_change(
         self,
