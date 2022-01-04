@@ -655,6 +655,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_time_response(msg)
         elif self._protocol.is_valid_timers_response(msg):
             self.process_timers_response(msg)
+            changed_state = True
         elif self._protocol.is_valid_device_config_response(msg):
             self.process_device_config_response(msg)
             changed_state = True
