@@ -568,7 +568,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETOriginal):
             led_timers: List[LedTimer] = []
-            return led_timers        
+            return led_timers
         await self._async_send_msg(self._protocol.construct_get_timers())
         async with self._get_timers_lock:
             self._get_timers_future = asyncio.Future()

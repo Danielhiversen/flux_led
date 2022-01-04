@@ -697,9 +697,9 @@ def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
 # -------------------------------------------
 
 
-async def _async_run_commands(
+async def _async_run_commands(  # noqa: C901
     bulb: AIOWifiLedBulb, info: FluxLEDDiscovery, options: Any
-) -> None:  # noqa: C901
+) -> None:
     """Run requested commands on a bulb."""
     buffer = ""
 
@@ -830,9 +830,9 @@ async def _async_run_commands(
     print(buffer.rstrip("\n"))
 
 
-async def _async_process_bulb(
+async def _async_process_bulb(  # noqa: C901
     info: FluxLEDDiscovery, options: Any
-) -> None:  # noqa: C901
+) -> None:
     """Process a bulb."""
     bulb = AIOWifiLedBulb(info["ipaddr"], discovery=info)
     await bulb.async_setup(lambda *args: None)
@@ -842,8 +842,7 @@ async def _async_process_bulb(
         await bulb.async_stop()
 
 
-async def async_main() -> None:
-
+async def async_main() -> None:  # noqa: C901
     (options, args) = parseArgs()
     scanner = AIOBulbScanner()
 
