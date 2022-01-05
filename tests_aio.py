@@ -813,15 +813,16 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.color_modes == {COLOR_MODE_RGBW}
     transport.reset_mock()
 
-    await light.async_set_levels(r=255, g=255, b=255, w=255)
-    assert transport.mock_calls == [
-        call.write(
-            bytearray(
-                b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x12"
-            )
-        ),
-        call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x03G\xffFY")),
-    ]
+    with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
+        await light.async_set_levels(r=255, g=255, b=255, w=255)
+        assert transport.mock_calls == [
+            call.write(
+                bytearray(
+                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x12"
+                )
+            ),
+            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x03G\xffFY")),
+        ]
 
     transport.reset_mock()
     await light.async_set_levels(w=255)
