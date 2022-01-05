@@ -3,7 +3,7 @@ import unittest.mock as mock
 from unittest.mock import patch
 
 import pytest
-
+import datetime
 import flux_led
 from flux_led.const import (
     COLOR_MODE_CCT,
@@ -454,6 +454,9 @@ class TestLight(unittest.TestCase):
                 return bytearray(
                     b"\x81\x25\x23\x38\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xb5"
                 )
+            if calls == 5:
+                self.assertEqual(expected, 12)
+                return bytearray(b"\x0f\x11\x14\x16\x01\x02\x106\x02\x07\x00\x9c")
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
@@ -581,6 +584,14 @@ class TestLight(unittest.TestCase):
             light.__str__(),
             "ON  [Pattern: colorjump (Speed 50%) raw state: 129,37,35,56,5,16,182,0,152,25,4,37,15,181,]",
         )
+
+        assert light.getClock() == datetime.datetime(2022, 1, 2, 16, 54, 2)
+        self.assertEqual(mock_read.call_count, 5)
+        self.assertEqual(mock_send.call_count, 7)
+
+        light.setClock()
+        self.assertEqual(mock_read.call_count, 5)
+        self.assertEqual(mock_send.call_count, 8)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
