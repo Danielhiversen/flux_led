@@ -124,6 +124,10 @@ class utils:
     def percentToByte(percent: int) -> int:
         return int((max(0, min(100, percent)) * 255) / 100)
 
+    @staticmethod
+    def A3WarmWhiteToByte(val: int) -> int:
+        return round(((min(228, max(128, val)) - 128) * 255) / 100)
+
 
 def rgbwc_to_rgbcw(
     rgbwc_data: Tuple[int, int, int, int, int]
