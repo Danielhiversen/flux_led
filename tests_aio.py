@@ -828,6 +828,20 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert transport.mock_calls == [
         call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x03G\xffFZ"))
     ]
+    light._transition_complete_time = 0
+
+    light._aio_protocol.data_received(
+        b"\x81\xA3\x23\x61\x01\x32\x40\x40\x40\x80\x01\x00\x90\xAC"
+    )
+    assert light.raw_state.warm_white == 0
+    light._aio_protocol.data_received(
+        b"\x81\xA3\x23\x61\x01\x32\x40\x40\x40\xE4\x01\x00\x90\x10"
+    )
+    assert light.raw_state.warm_white == 255
+    light._aio_protocol.data_received(
+        b"\x81\xA3\x23\x61\x01\x32\x40\x40\x40\xB1\x01\x00\x90\xDD"
+    )
+    assert light.raw_state.warm_white == 125
 
 
 @pytest.mark.asyncio

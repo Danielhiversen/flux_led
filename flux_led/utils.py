@@ -126,8 +126,7 @@ class utils:
 
     @staticmethod
     def A3WarmWhiteToByte(val: int) -> int:
-        val = round((max(128, min(228, val)) - 128) * 2.55)
-        return 255 if val >= 253 else val
+        return round(((min(228, max(128, val)) - 128) * 255) / 100)
 
 
 def rgbwc_to_rgbcw(
