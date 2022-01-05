@@ -977,7 +977,7 @@ class LEDENETDevice:
             }
         )
 
-    def _generate_levels_change(
+    def _generate_levels_change(  # noqa: C901
         self,
         channels: Dict[str, Optional[int]],
         persist: bool = True,
