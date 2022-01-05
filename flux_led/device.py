@@ -88,7 +88,7 @@ class WifiLedBulb(LEDENETDevice):
             # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
             rx = self._read_msg(expected_response_len)
             _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
-            if len(rx) == expected_response_len:
+            if rx is not None and len(rx) == expected_response_len:
                 # We cannot use the power state workaround here
                 # since we are not listening for power state changes
                 # like the aio version
@@ -266,7 +266,7 @@ class WifiLedBulb(LEDENETDevice):
                 protocol.construct_state_query(), read_bytes
             )
             # if any response is recieved, use the protocol
-            if len(rx) != read_bytes:
+            if rx is None or len(rx) != read_bytes:
                 # We just sent a garage query which the old procotol
                 # cannot process, recycle the connection
                 self.close()
