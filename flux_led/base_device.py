@@ -977,7 +977,7 @@ class LEDENETDevice:
             }
         )
 
-    def _generate_levels_change(
+    def _generate_levels_change(  # noqa: C901
         self,
         channels: Dict[str, Optional[int]],
         persist: bool = True,
@@ -1011,11 +1011,12 @@ class LEDENETDevice:
         w_value = None if w is None else int(w)
         # ProtocolLEDENET9Byte devices support two white outputs for cold and warm.
         if w2 is None:
-            # If we're only setting a single white value,
-            # we set the second output to be the same as the first
-            w2_value = (
-                int(w) if w is not None and self.color_mode != COLOR_MODE_CCT else None
-            )
+            if self.color_mode in {COLOR_MODE_CCT, COLOR_MODE_RGBWW}:
+                # If we're only setting a single white value, we preserve the cold white value
+                w2_value: Optional[int] = self.cold_white
+            else:
+                # If we're only setting a single white value, we set the second output to be the same as the first
+                w2_value = w_value
         else:
             w2_value = int(w2)
 
