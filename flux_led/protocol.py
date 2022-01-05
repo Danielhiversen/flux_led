@@ -175,9 +175,7 @@ REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG = {
 }
 
 
-def _message_type_from_start_of_msg(data: Optional[bytes]) -> Optional[str]:
-    if data is None:
-        return None
+def _message_type_from_start_of_msg(data: bytes) -> Optional[str]:
     if len(data) > 1:
         return MSG_UNIQUE_START.get(
             (data[0], data[1]), MSG_UNIQUE_START.get((data[0],))
