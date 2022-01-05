@@ -1610,7 +1610,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
 
         """
         if foreground_color is None:
-            foreground_color = (0xFF, 0x00, 0x00)
+            foreground_color = (0xFF, 0xFF, 0xFF)
         if background_color is None:
             background_color = (0x00, 0x00, 0x00)
         if effect and not (1 <= effect <= 16):

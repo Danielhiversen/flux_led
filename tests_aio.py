@@ -738,6 +738,19 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
         == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x05B\x01\x102\x85\xdb"
     )
 
+    for i in range(5, 255):
+        transport.reset_mock()
+        await light.async_set_brightness(128)
+        assert transport.mock_calls[0][0] == "write"
+        counter_byte = transport.mock_calls[0][1][0][7]
+        assert counter_byte == i
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    counter_byte = transport.mock_calls[0][1][0][7]
+    assert counter_byte == 0
+
 
 @pytest.mark.asyncio
 async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
@@ -1872,6 +1885,7 @@ async def test_async_get_time(mock_aio_protocol, caplog: pytest.LogCaptureFixtur
     light._aio_protocol.data_received(b"\x0f\x11\x14\x16\x01\x02\x106\x02\x07\x00\x9c")
     time = await task
     assert time == datetime.datetime(2022, 1, 2, 16, 54, 2)
+    assert light._protocol.parse_get_time(b"\x0f") is None
 
 
 @pytest.mark.asyncio
@@ -2005,6 +2019,9 @@ async def test_async_get_timers_9byte_device(
     assert str(timers[4]) == "[ON ] 23:40  Once: 2022-01-03  Color: lime"
     assert timers[5].toBytes() == b"\xf0\x16\x01\x04\x07,\x00\x00a!\x00\xff\x00\x00\xf0"
     assert str(timers[5]) == "[ON ] 07:44  Once: 2022-01-04  Color: (33, 0, 255)"
+
+    with pytest.raises(ValueError):
+        light._protocol.parse_get_timers(b"\x0f")
 
 
 @pytest.mark.asyncio
