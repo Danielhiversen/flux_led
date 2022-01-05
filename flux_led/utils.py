@@ -122,7 +122,15 @@ class utils:
 
     @staticmethod
     def percentToByte(percent: int) -> int:
-        return int((max(0, min(100, percent)) * 255) / 100)
+        return round((max(0, min(100, percent)) * 255) / 100)
+
+    @staticmethod
+    def byteToA3WarmWhite(byte: int) -> int:
+        return 128 + int((max(0, min(255, byte)) * 100) / 128)
+
+    @staticmethod
+    def A3WarmWhiteToByte(val: int) -> int:
+        return round((max(128, min(228, val)) - 128) * 2.55)
 
 
 def rgbwc_to_rgbcw(

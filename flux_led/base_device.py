@@ -809,6 +809,15 @@ class LEDENETDevice:
             )
             return
 
+        if isinstance(self._protocol, ProtocolLEDENETAddressableA3):
+            if updated is not None:
+                self.raw_state = raw_state
+                return
+            # A3 uses a unique scale for warm white
+            self.raw_state = raw_state._replace(
+                warm_white=utils.A3WarmWhiteToByte(raw_state.warm_white)
+            )
+
         self.raw_state = raw_state
 
     def __str__(self) -> str:  # noqa: C901
