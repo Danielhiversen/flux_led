@@ -275,6 +275,7 @@ class WifiLedBulb(LEDENETDevice):
             if not protocol.is_valid_state_response(full_msg):
                 self.close()
                 continue
+            assert isinstance(full_msg, bytearray)
             self._set_protocol_from_msg(full_msg, protocol.name)
             return full_msg
         raise Exception("Cannot determine protocol")
