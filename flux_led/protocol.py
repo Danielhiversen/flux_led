@@ -1562,7 +1562,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         if warm_white is not None:
             msgs.append(
                 self.construct_message(
-                    bytearray([0x47, utils.byteToA3WarmWhite(warm_white or 0x00)])
+                    bytearray([0x47, warm_white or 0x00])
                 )
             )
         return msgs
