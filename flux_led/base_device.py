@@ -817,6 +817,7 @@ class LEDENETDevice:
             self.raw_state = raw_state._replace(
                 warm_white=utils.A3WarmWhiteToByte(raw_state.warm_white)
             )
+            return
 
         self.raw_state = raw_state
 
