@@ -332,8 +332,10 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         """Process and send a levels change."""
         self._set_transition_complete_time()
-        for msg in msgs:
+        for idx, msg in enumerate(msgs):
             await self._async_send_msg(msg)
+            if idx > 0:
+                await asyncio.sleep(COMMAND_SPACING_DELAY)
         if updates:
             self._replace_raw_state(updates)
 
