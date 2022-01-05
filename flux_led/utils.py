@@ -122,7 +122,7 @@ class utils:
 
     @staticmethod
     def percentToByte(percent: int) -> int:
-        return round((max(0, min(100, percent)) * 255) / 100)
+        return int((max(0, min(100, percent)) * 255) / 100)
 
     @staticmethod
     def A3WarmWhiteToByte(val: int) -> int:
