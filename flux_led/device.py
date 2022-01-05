@@ -88,7 +88,7 @@ class WifiLedBulb(LEDENETDevice):
             # - 0x0F 0x71 [0x23|0x24] [CHECK DIGIT]
             rx = self._read_msg(expected_response_len)
             _LOGGER.debug("%s: state response %s", self.ipaddr, rx)
-            if len(rx) == expected_response_len:
+            if rx is not None and len(rx) == expected_response_len:
                 # We cannot use the power state workaround here
                 # since we are not listening for power state changes
                 # like the aio version
@@ -242,44 +242,42 @@ class WifiLedBulb(LEDENETDevice):
 
     def getClock(self) -> Optional[datetime.datetime]:
         assert self._protocol is not None
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_get_time())
-            rx = self._read_msg(LEDENET_TIME_RESPONSE_LEN)
-        return self._protocol.parse_get_time(rx)
+        return self._protocol.parse_get_time(
+            self._send_and_read_with_retry(
+                self._protocol.construct_get_time(), LEDENET_TIME_RESPONSE_LEN
+            )
+        )
 
     def setClock(self) -> None:
         assert self._protocol is not None
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_set_time(datetime.datetime.now()))
-            # Setting the clock does not always respond so we
-            # cycle the connection
-            self.close()
+        self._send_and_read_with_retry(
+            self._protocol.construct_set_time(datetime.datetime.now()), 0
+        )
+        # Setting the clock does not always respond so we
+        # cycle the connection
+        self.close()
 
     def _determine_protocol(self) -> bytearray:
         """Determine the type of protocol based of first 2 bytes."""
         read_bytes = 2
         for protocol_cls in self._protocol_probes():
             protocol = protocol_cls()
-            with self._lock:
-                self._connect_if_disconnected()
-                self._send_msg(protocol.construct_state_query())
-                rx = self._read_msg(read_bytes)
-                # if any response is recieved, use the protocol
-                if len(rx) != read_bytes:
-                    # We just sent a garage query which the old procotol
-                    # cannot process, recycle the connection
-                    self.close()
-                    continue
-                full_msg = rx + self._read_msg(
-                    protocol.state_response_length - read_bytes
-                )
-                if not protocol.is_valid_state_response(full_msg):
-                    self.close()
-                    continue
-                self._set_protocol_from_msg(full_msg, protocol.name)
-                return full_msg
+            rx = self._send_and_read_with_retry(
+                protocol.construct_state_query(), read_bytes
+            )
+            # if any response is recieved, use the protocol
+            if rx is None or len(rx) != read_bytes:
+                # We just sent a garage query which the old procotol
+                # cannot process, recycle the connection
+                self.close()
+                continue
+            full_msg = rx + self._read_msg(protocol.state_response_length - read_bytes)
+            if not protocol.is_valid_state_response(full_msg):
+                self.close()
+                continue
+            assert isinstance(full_msg, bytearray)
+            self._set_protocol_from_msg(full_msg, protocol.name)
+            return full_msg
         raise Exception("Cannot determine protocol")
 
     def setPresetPattern(
@@ -290,8 +288,8 @@ class WifiLedBulb(LEDENETDevice):
         retry: int = DEFAULT_RETRIES,
     ) -> None:
         self._set_transition_complete_time()
-        self._send_with_retry(
-            self._generate_preset_pattern(pattern, speed, brightness), retry=retry
+        self._send_and_read_with_retry(
+            self._generate_preset_pattern(pattern, speed, brightness), 0, retry=retry
         )
 
     def set_effect(
@@ -314,11 +312,15 @@ class WifiLedBulb(LEDENETDevice):
         self._process_levels_change(*self._generate_random_levels_change(), retry=retry)
 
     @_socket_retry(attempts=2)  # type: ignore
-    def _send_with_retry(self, msg: bytearray) -> None:
-        """Send a message under the lock."""
+    def _send_and_read_with_retry(
+        self, msg: bytearray, read_len: int
+    ) -> Optional[bytearray]:
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
+            if read_len == 0:
+                return None
+            return self._read_msg(read_len)
 
     def getTimers(self) -> List[LedTimer]:
         assert self._protocol is not None
@@ -326,19 +328,15 @@ class WifiLedBulb(LEDENETDevice):
             led_timers: List[LedTimer] = []
             return led_timers
         msg = self._protocol.construct_get_timers()
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(msg)
-            rx = self._read_msg(self._protocol.timer_response_len)
-        return self._protocol.parse_get_timers(rx)
+        return self._protocol.parse_get_timers(
+            self._send_and_read_with_retry(msg, self._protocol.timer_response_len)
+        )
 
     def sendTimers(self, timer_list: List[LedTimer]) -> None:
         assert self._protocol is not None
-        with self._lock:
-            self._connect_if_disconnected()
-            self._send_msg(self._protocol.construct_set_timers(timer_list))
-            # not sure what the resp is, prob some sort of ack?
-            self._read_msg(4)  # b'\x94\x00\x00\x00'
+        self._send_and_read_with_retry(
+            self._protocol.construct_set_timers(timer_list), 4  # b'\x94\x00\x00\x00'
+        )
 
     @_socket_retry(attempts=2)  # type: ignore
     def query_state(self, led_type: Optional[str] = None) -> bytearray:
@@ -368,8 +366,10 @@ class WifiLedBulb(LEDENETDevice):
         retry: int = DEFAULT_RETRIES,
     ) -> None:
         """Set a custom pattern on the device."""
-        self._send_with_retry(
-            self._generate_custom_patterm(rgb_list, speed, transition_type), retry=retry
+        self._send_and_read_with_retry(
+            self._generate_custom_patterm(rgb_list, speed, transition_type),
+            0,
+            retry=retry,
         )
 
     def refreshState(self) -> None:
