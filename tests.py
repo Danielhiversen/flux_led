@@ -530,7 +530,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b"1\x00\x00\x00\x19\x19\x0f\x0f\x81")),
+            mock.call(bytearray(b"1\x00\x00\x00\x19\x00\x0f\x0fh")),
         )
 
         light._transition_complete_time = 0
@@ -592,6 +592,28 @@ class TestLight(unittest.TestCase):
         light.setClock()
         self.assertEqual(mock_read.call_count, 5)
         self.assertEqual(mock_send.call_count, 8)
+
+        light.setWarmWhite(50)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\x7f%\x0f\x0f\xf3")),
+        )
+        light.setWarmWhite255(utils.percentToByte(50))
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\x7f%\x0f\x0f\xf3")),
+        )
+        light.setColdWhite(50)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\x00\x7f\x0f\x0f\xce")),
+        )
+        light.setColdWhite255(utils.percentToByte(50))
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\x00\x7f\x0f\x0f\xce")),
+        )
+        light.close()
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -692,7 +714,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b"1\x00\x00\x00\x19\x19\x0f\x0f\x81")),
+            mock.call(bytearray(b"1\x00\x00\x00\x19\x00\x0f\x0fh")),
         )
 
         light._transition_complete_time = 0
