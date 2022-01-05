@@ -79,7 +79,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         """Init and setup the bulb."""
         super().__init__(ipaddr, port, timeout, discovery)
-        self._lock = asyncio.Lock()
+        self._connect_lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._get_time_lock: asyncio.Lock = asyncio.Lock()
         self._get_time_future: Optional[asyncio.Future[bool]] = None
@@ -747,8 +747,10 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_send_msg(self, msg: bytearray) -> None:
         """Write a message on the socket."""
         if not self._aio_protocol:
-            async with self._lock:
-                await self._async_connect()
+            async with self._connect_lock:
+                # Check again under the lock
+                if not self._aio_protocol:
+                    await self._async_connect()
         assert self._aio_protocol is not None
         self._aio_protocol.write(msg)
 
@@ -758,7 +760,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             protocol = protocol_cls()
             assert isinstance(protocol, (ProtocolLEDENET8Byte, ProtocolLEDENETOriginal))
             self._protocol = protocol
-            async with self._lock:
+            async with self._connect_lock:
                 await self._async_connect()
                 assert self._aio_protocol is not None
                 self._determine_protocol_future = asyncio.Future()
