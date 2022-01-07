@@ -82,6 +82,16 @@ FLUX_DISCOVERY_LEGACY = FluxLEDDiscovery(
     model_info=MODEL,
     model_description=MODEL_DESCRIPTION,
 )
+FLUX_DISCOVERY_MISSING_HARDWARE = FluxLEDDiscovery(
+    ipaddr=IP_ADDRESS,
+    model=None,
+    id=FLUX_MAC_ADDRESS,
+    model_num=0x25,
+    version_num=0x04,
+    firmware_date=datetime.date(2021, 5, 5),
+    model_info=MODEL,
+    model_description=MODEL_DESCRIPTION,
+)
 
 
 def mock_coro(return_value=None, exception=None):
@@ -2557,6 +2567,27 @@ async def test_async_config_remotes_no_response(
     await task
     assert light.paired_remotes is None
     assert "Could not determine 2.4ghz remote config" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_partial_discovery(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test discovery that is missing hardware data."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    light.discovery = FLUX_DISCOVERY_MISSING_HARDWARE
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    light._aio_protocol.data_received(
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x5e\x00\x0e\x2b\x01\x00\x00\x00\x00\x29\x00\x00\x00\x00\x00\x00\x55\xde"
+    )
+    await task
+    assert light.hardware is None
 
 
 @pytest.mark.asyncio

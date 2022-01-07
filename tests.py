@@ -1,9 +1,10 @@
+import datetime
 import unittest
 import unittest.mock as mock
 from unittest.mock import patch
 
 import pytest
-import datetime
+
 import flux_led
 from flux_led.const import (
     COLOR_MODE_CCT,
