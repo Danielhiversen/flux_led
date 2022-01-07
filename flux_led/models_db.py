@@ -648,7 +648,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x08,
         # AK001-ZJ2101 is v1
-        # AK001-ZJ2145 is v2
+        # AK001-ZJ2145 is v2.11
         models=["AK001-ZJ2101", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGB with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
@@ -918,8 +918,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x41,
-        # 'AK001-ZJ2104' is v2
-        # 'AK001-ZJ2104' likely supports turning on by effect/levels set
+        # 'AK001-ZJ2104' is v2.51 and supports turning on by effect/levels set
         models=["AK001-ZJ2104"],
         description="Controller Dimmable",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -1068,7 +1067,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x97,  # 0x97
-        # AK001-ZJ2146 = v3 (has BLE)
+        # AK001-ZJ2146 = v3.11 (has BLE)
         models=["AK001-ZJ2134", "AK001-ZJ2146"],
         description="Socket",  # 1 channel
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
