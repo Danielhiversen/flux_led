@@ -119,13 +119,14 @@ BASE_MODE_MAP = {
 
 
 MULTI_MODE_NUM_TO_MODE = {
+    0: COLOR_MODE_RGBWW,  # Factory default, no mode set AKA RGBWW
     1: COLOR_MODE_DIM,
     2: COLOR_MODE_CCT,
     3: COLOR_MODE_RGB,
     4: COLOR_MODE_RGBW,
     5: COLOR_MODE_RGBWW,
 }
-MULTI_MODE_MODE_TO_NUM = {v: k for k, v in MULTI_MODE_NUM_TO_MODE.items()}
+MULTI_MODE_MODE_TO_NUM = {v: k for k, v in MULTI_MODE_NUM_TO_MODE.items() if k != 0}
 
 GENERIC_RGB_MAP = {
     0x13: {COLOR_MODE_RGB},  # RGB (RGB) verified on model 0x33
