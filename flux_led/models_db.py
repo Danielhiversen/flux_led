@@ -108,7 +108,6 @@ class LEDENETHardware:
 
 
 BASE_MODE_MAP = {
-    0x00: {COLOR_MODE_RGB},  # Factory default, no mode set AKA RGB
     0x01: {COLOR_MODE_DIM},  # AKA DIM
     0x02: {COLOR_MODE_CCT},  # AKA CCT
     0x03: {COLOR_MODE_RGB},  # AKA RGB
@@ -120,7 +119,7 @@ BASE_MODE_MAP = {
 
 
 MULTI_MODE_NUM_TO_MODE = {
-    0: COLOR_MODE_RGB,  # Factory default, no mode set AKA RGB
+    0: COLOR_MODE_RGBWW,  # Factory default, no mode set AKA RGBWW
     1: COLOR_MODE_DIM,
     2: COLOR_MODE_CCT,
     3: COLOR_MODE_RGB,
