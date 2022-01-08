@@ -814,6 +814,18 @@ MODELS = [
         device_config=IMMUTABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
+        model_num=0x1D,
+        models=[],
+        description="Fill Light",
+        always_writes_white_and_colors=False,  # Formerly rgbwprotocol
+        protocols=[MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_AUTO_ON)],
+        mode_to_color_mode={},
+        color_modes={COLOR_MODE_DIM},  # Formerly rgbwcapable
+        channel_map={STATE_WARM_WHITE: STATE_RED, STATE_RED: STATE_WARM_WHITE},
+        microphone=False,
+        device_config=IMMUTABLE_DEVICE_CONFIG,
+    ),
+    LEDENETModel(
         model_num=0x1E,  # Should be the same as 0x35
         models=[],
         description="Ceiling Light RGBCW",
@@ -1124,13 +1136,11 @@ MODELS = [
         models=[],
         description="Addressable v4",
         always_writes_white_and_colors=False,
-        protocols=[
-            MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)
-        ],  # Currently no difference from v3 proto
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
-        microphone=True,  # may be false
+        microphone=False,  # confirmed false
         device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
@@ -1138,13 +1148,23 @@ MODELS = [
         models=[],
         description="Addressable v6",
         always_writes_white_and_colors=False,
-        protocols=[
-            MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)
-        ],  # Currently no difference from v3 proto
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
-        microphone=True,  # may be false
+        microphone=True,  # likely true, but unconfirmed
+        device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
+    ),
+    LEDENETModel(
+        model_num=0xA7,
+        models=[],
+        description="Addressable v7",
+        always_writes_white_and_colors=False,
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_A3)],
+        mode_to_color_mode={},
+        color_modes=COLOR_MODES_ADDRESSABLE,
+        channel_map={},
+        microphone=True,  # likely true, but unconfirmed
         device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
