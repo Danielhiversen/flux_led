@@ -127,7 +127,7 @@ MULTI_MODE_NUM_TO_MODE = {
     4: COLOR_MODE_RGBW,
     5: COLOR_MODE_RGBWW,
 }
-MULTI_MODE_MODE_TO_NUM = {v: k for k, v in MULTI_MODE_NUM_TO_MODE.items()}
+MULTI_MODE_MODE_TO_NUM = {v: k for k, v in MULTI_MODE_NUM_TO_MODE.items() if k != 0}
 
 GENERIC_RGB_MAP = {
     0x13: {COLOR_MODE_RGB},  # RGB (RGB) verified on model 0x33

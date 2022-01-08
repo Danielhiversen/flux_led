@@ -629,6 +629,42 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
+    def test_rgbww_controller_version_2_after_factory_reset(
+        self, mock_connect, mock_read, mock_send
+    ):
+
+        calls = 0
+
+        def read_data(expected):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.assertEqual(expected, 2)
+                return bytearray(b"\x81\x25")
+            if calls == 2:
+                self.assertEqual(expected, 12)
+                return bytearray(b"\x23\x61\x00\x03\x00\xFF\x00\x00\x02\x00\x5A\x88")
+            if calls == 3:
+                self.assertEqual(expected, 14)
+                return bytearray(
+                    b"\x81\x25\x23\x61\x00\x03\x00\xFF\x00\x00\x02\x00\x5A\x88"
+                )
+
+        mock_read.side_effect = read_data
+        light = flux_led.WifiLedBulb("192.168.1.164")
+        assert light.color_modes == {COLOR_MODE_RGB}
+        self.assertEqual(light.protocol, PROTOCOL_LEDENET_9BYTE)
+        self.assertEqual(light.model_num, 0x25)
+        self.assertEqual(light.version_num, 2)
+        self.assertEqual(light.mode, "color")
+        self.assertEqual(light.raw_state.mode, 0)
+        self.assertEqual(light.microphone, False)
+        self.assertEqual(light.model, "Controller RGB/WW/CW (0x25)")
+        self.assertEqual(light.operating_mode, COLOR_MODE_RGB)
+
+    @patch("flux_led.WifiLedBulb._send_msg")
+    @patch("flux_led.WifiLedBulb._read_msg")
+    @patch("flux_led.WifiLedBulb.connect")
     def test_rgbww_controller_version_9(self, mock_connect, mock_read, mock_send):
 
         calls = 0
