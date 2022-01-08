@@ -120,6 +120,7 @@ BASE_MODE_MAP = {
 
 
 MULTI_MODE_NUM_TO_MODE = {
+    0: COLOR_MODE_RGB,  # Factory default, no mode set AKA RGB
     1: COLOR_MODE_DIM,
     2: COLOR_MODE_CCT,
     3: COLOR_MODE_RGB,
