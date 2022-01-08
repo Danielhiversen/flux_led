@@ -160,8 +160,8 @@ The following models have been tested with library.
 | 0x03  | Legacy CCT Controller       | no         | Original protocol               |
 | 0x04  | UFO Controller RGBW         | no         |                                 |
 | 0x06  | Controller RGBW             | no         |                                 |
-| 0x07  | Controller RGBCW            | yes        |                                 |
-| 0x08  | Controller RGB with MIC     | no         |                                 |
+| 0x07  | Controller RGBCW            | no         |                                 |
+| 0x08  | Controller RGB with MIC     | yes        |                                 |
 | 0x0E  | Floor Lamp RGBCW            | no         |                                 |
 | 0x10  | Christmas Light             | no         |                                 |
 | 0x1A  | Christmas Light             | no         |                                 |
