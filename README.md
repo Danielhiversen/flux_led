@@ -155,7 +155,7 @@ Options:
 The following models have been tested with library.
 
 | Model | Description                 | Microphone | Notes                           |
-| ----- | --------------------------- | ----------- -------------------------------- |
+| ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x01  | Legacy RGB Controller       | no         | Original protocol               |
 | 0x03  | Legacy CCT Controller       | no         | Original protocol               |
 | 0x04  | UFO Controller RGBW         | no         |                                 |
@@ -186,7 +186,7 @@ The following models have been tested with library.
 The following models have not been tested with library but may work.
 
 | Model | Description                 | Microphone | Notes                           |
-| ----- | --------------------------- | ----------- -------------------------------- |
+| ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
 | 0x09  | Ceiling Light CCT           | no         |                                 |
 | 0x16  | Magnetic Light CCT          | no         |                                 |
