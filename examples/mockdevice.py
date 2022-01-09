@@ -16,7 +16,7 @@ MINOR_VERSION = 28
 ON_AT_START = False
 # MODEL = "AK001-ZJ2101"  # Supports auto on
 # MODEL = "AK001-ZJ2145"  # Supports dimmable effects
-MODEL = "AK001-ZJ2101"
+MODEL = "AK001-ZJ2145"
 
 
 def get_local_ip():
@@ -67,7 +67,7 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
         minor_version_str = str(MINOR_VERSION).zfill(2).upper()
         if data.startswith(AIOBulbScanner.DISCOVER_MESSAGE):
             self.send(
-                f"{self.local_ip},B4E842{model_str}{version_str}{minor_version_str},AK001-ZJ2145".encode(),
+                f"{self.local_ip},B4E842{model_str}{version_str}{minor_version_str},{MODEL}".encode(),
                 addr,
             )
         if data.startswith(AIOBulbScanner.VERSION_MESSAGE):
