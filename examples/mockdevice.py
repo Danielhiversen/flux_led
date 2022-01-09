@@ -13,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 DEVICE_ID = 0x33
 VERSION = 9
 MINOR_VERSION = 27
-# MODEL = "AK001-ZJ2134"  # Supports auto on
+# MODEL = "AK001-ZJ2101"  # Supports auto on
 # MODEL = "AK001-ZJ2145"  # Supports dimmable effects
 MODEL = 'AK001-ZJ2101'
 
