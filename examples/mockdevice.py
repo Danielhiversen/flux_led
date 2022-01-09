@@ -58,7 +58,7 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
         )
         assert self.transport is not None
         if data.startswith(AIOBulbScanner.DISCOVER_MESSAGE):
-            self.send(f"{self.local_ip},B4E842123250,AK001-ZJ2147".encode(), addr)
+            self.send(f"{self.local_ip},B4E842123251,AK001-ZJ2147".encode(), addr)
         if data.startswith(AIOBulbScanner.VERSION_MESSAGE):
             model_str = hex(DEVICE_ID)[2:].zfill(2).upper()
             self.send(f"+ok={model_str}_33_20200428_ZG-LX\r".encode(), addr)
