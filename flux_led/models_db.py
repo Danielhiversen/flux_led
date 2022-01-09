@@ -1152,7 +1152,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
-        microphone=True,  # likely true, but unconfirmed
+        microphone=True,  # confirmed with mocks to be true
         device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
@@ -1164,7 +1164,7 @@ MODELS = [
         mode_to_color_mode={},
         color_modes=COLOR_MODES_ADDRESSABLE,
         channel_map={},
-        microphone=True,  # likely true, but unconfirmed
+        microphone=True,  # confirmed with mocks to be true
         device_config=NEW_ADDRESABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
