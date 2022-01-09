@@ -198,7 +198,7 @@ The following models have not been tested with the library but may work.
 | ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol, discontinued |
 
-### Untested Models
+### Unsupported Models
 
 The following models are confirmed to be unsupported.
 
