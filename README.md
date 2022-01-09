@@ -178,6 +178,7 @@ The following models have been tested with library.
 | 0x44  | Bulb RGBW                   | no         |                                 |
 | 0x52  | Bulb CCT                    | no         |                                 |
 | 0x54  | Downlight RGBW              | no         |                                 |
+| 0x62  | Controller CCT              | no         |                                 |
 | 0x93  | Switch 1c                   | no         |                                 |
 | 0x94  | Switch 1c Watt              | no         |                                 |
 | 0x97  | Socket 1c                   | no         |                                 |
@@ -195,8 +196,6 @@ The following models have not been tested with library but may work.
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
-| 0x1C  | Fill Light                  | no         |                                 |
-| 0x62  | Controller CCT              | no         | May be discontinued             |
 | 0x95  | Switch 2c                   | no         |                                 |
 | 0x96  | Switch 4c                   | no         |                                 |
 | 0xD1  | Digital Light               | no         |                                 |
@@ -212,6 +211,7 @@ The following models are confirmed to be unsupported.
 | 0x18  | Plant / Grow Light          | no         |                                 |
 | 0x19  | Socket with 2 USB Ports     | no         |                                 |
 | 0x1B  | Aroma / Fragrance Lamp      | no         |                                 |
+| 0x1D  | Fill Light                  | no         |                                 |
 
 ### Known Vendors
 
