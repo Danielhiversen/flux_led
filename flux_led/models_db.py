@@ -762,7 +762,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x18,
         models=[],
-        description="Plant Light",
+        description="Plant Grow Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -774,7 +774,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x19,
         models=[],
-        description="Socket 2 USB",
+        description="Socket with 2 USB",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_SOCKET)],
         mode_to_color_mode={},
@@ -786,7 +786,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x1B,
         models=[],
-        description="Spray Light",
+        description="Aroma Fragrance Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},
@@ -1165,7 +1165,7 @@ MODELS = [
     LEDENETModel(
         model_num=0xD1,
         models=[],
-        description="Digital Light",
+        description="Digital Time Light",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},

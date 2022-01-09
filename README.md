@@ -205,13 +205,13 @@ The following models are confirmed to be unsupported.
 
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
-| 0x18  | Plant / Grow Light          | no         |                                 |
-| 0x19  | Socket with 2 USB Ports     | no         |                                 |
-| 0x1B  | Aroma / Fragrance Lamp      | no         |                                 |
+| 0x18  | Plant Grow Light            | no         |                                 |
+| 0x19  | Socket with 2 USB           | no         |                                 |
+| 0x1B  | Aroma Fragrance Lamp        | no         |                                 |
 | 0x1D  | Fill Light                  | no         |                                 |
-| 0x95  | Switch 2c                   | no         |                                 |
-| 0x96  | Switch 4c                   | no         |                                 |
-| 0xD1  | Digital Light / Time Lamp   | no         |                                 |
+| 0x95  | Switch 2 Channel            | no         |                                 |
+| 0x96  | Switch 4 Channel            | no         |                                 |
+| 0xD1  | Digital Time Lamp           | no         |                                 |
 
 ### Known Vendors
 
