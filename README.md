@@ -166,6 +166,7 @@ The following models have been tested with library.
 | 0x0E  | Floor Lamp RGBCW            | no         |                                 |
 | 0x10  | Christmas Light             | no         |                                 |
 | 0x16  | Magnetic Light CCT          | no         |                                 |
+| 0x17  | Magnetic Light Dimmable     | no         |                                 |
 | 0x1A  | Christmas Light             | no         |                                 |
 | 0x1C  | Table Light CCT             | no         |                                 |
 | 0x21  | Bulb Dimmable               | no         |                                 |
@@ -193,7 +194,6 @@ The following models have not been tested with library but may work.
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
-| 0x17  | Magnetic Light Dimmable     | no         |                                 |
 | 0x18  | Plant Light                 | no         |                                 |
 | 0x19  | Socket 2 USB                | no         |                                 |
 | 0x1B  | Spray Light                 | no         |                                 |
