@@ -16,7 +16,8 @@ MINOR_VERSION = 28
 ON_AT_START = False
 # MODEL = "AK001-ZJ2101"  # Supports auto on
 # MODEL = "AK001-ZJ2145"  # Supports dimmable effects
-MODEL = 'AK001-ZJ2101'
+MODEL = "AK001-ZJ2101"
+
 
 def get_local_ip():
     """Find the local ip address."""
