@@ -10,8 +10,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEVICE_ID = 0x96
-VERSION = 1
+DEVICE_ID = 0x33
+VERSION = 9
+MINOR_VERSION = 27
+# MODEL = "AK001-ZJ2134" # Supports auto on
+MODEL = "AK001-ZJ2145"  # Supports dimmable effects
 
 
 def get_local_ip():
@@ -57,11 +60,19 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
             len(data),
         )
         assert self.transport is not None
+        model_str = hex(DEVICE_ID)[2:].zfill(2).upper()
+        version_str = hex(VERSION)[2:].zfill(2).upper()
+        minor_version_str = str(MINOR_VERSION).zfill(2).upper()
         if data.startswith(AIOBulbScanner.DISCOVER_MESSAGE):
-            self.send(f"{self.local_ip},B4E842123251,AK001-ZJ2147".encode(), addr)
+            self.send(
+                f"{self.local_ip},B4E842{model_str}{version_str}{minor_version_str},AK001-ZJ2145".encode(),
+                addr,
+            )
         if data.startswith(AIOBulbScanner.VERSION_MESSAGE):
             model_str = hex(DEVICE_ID)[2:].zfill(2).upper()
-            self.send(f"+ok={model_str}_33_20200428_ZG-LX\r".encode(), addr)
+            self.send(
+                f"+ok={model_str}_{minor_version_str}_20210428_ZG-BL\r".encode(), addr
+            )
 
     def error_received(self, ex: Optional[Exception]) -> None:
         """Handle error."""
@@ -129,15 +140,15 @@ class MagichomeServerProtocol(asyncio.Protocol):
                             DEVICE_ID,
                             0x23,
                             0x61,
-                            0x05,
-                            0x03,
+                            0xC5,
+                            0x17,
+                            0x18,
                             0x00,
-                            0xFF,
                             0x00,
                             0x00,
                             VERSION,
-                            0x00,
-                            0x5A,
+                            0xF0,
+                            0xF2,
                         ]
                     )
                 ),

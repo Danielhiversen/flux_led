@@ -105,6 +105,8 @@ class LEDENETHardware:
     remote_rf: bool  # legacy rf remote
     remote_24g: bool  # 2.4ghz remote
     remote_24g_controls: bool  # 2.4ghz remote controls (pair/unpair remotes)
+    auto_on: bool  # turns on when adjusting levels/setting effects
+    dimmable_effects: bool  # supports dimming effects
 
 
 BASE_MODE_MAP = {
@@ -369,6 +371,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ200",
@@ -376,6 +380,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ210",  # might also be "AK001-ZJ2100"
@@ -383,6 +389,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2101",
@@ -390,6 +398,8 @@ HARDWARE = [
         remote_rf=False,
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=True,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2104",
@@ -397,6 +407,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=True,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2134",  # seen in smart plugs only?
@@ -404,6 +416,8 @@ HARDWARE = [
         remote_rf=False,
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="AK001-ZJ2145",
@@ -411,6 +425,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=True,
+        dimmable_effects=True,
     ),
     LEDENETHardware(
         model="AK001-ZJ2146",  # seen in smart plugs & Controller RGBCW, but RF remote isn't supported on plugs
@@ -418,6 +434,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=True,
         remote_24g_controls=False,
+        auto_on=True,
+        dimmable_effects=True,
     ),
     LEDENETHardware(
         model="AK001-ZJ2147",  # seen on Controller RGBW
@@ -425,6 +443,8 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=True,
         remote_24g_controls=False,
+        auto_on=True,
+        dimmable_effects=True,
     ),
     LEDENETHardware(
         model="AK001-ZJ2148",  # seen on older Addressable v3
@@ -432,6 +452,8 @@ HARDWARE = [
         remote_rf=True,  # verified
         remote_24g=True,
         remote_24g_controls=True,
+        auto_on=True,
+        dimmable_effects=True,
     ),
     LEDENETHardware(
         model="AK001-ZJ2149",  # seen on newer Addressable v3
@@ -439,6 +461,8 @@ HARDWARE = [
         remote_rf=True,  # verified
         remote_24g=True,
         remote_24g_controls=True,
+        auto_on=True,
+        dimmable_effects=True,
     ),
     LEDENETHardware(
         model="HF-A11",  # reported older large box controllers (may be original proto)
@@ -446,6 +470,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ002",  # reported older large box controllers (may be original proto)
@@ -453,6 +479,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ004",  # reported older large box controllers (may be original proto)
@@ -460,6 +488,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ2",  # reported older large box controllers (may be original proto)
@@ -467,6 +497,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-A11-ZJ201",  # reported older large box controllers (may be original proto)
@@ -474,6 +506,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ2001",  # reported older large box controllers (may be original proto)
@@ -481,6 +515,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100",  # reported on older UFO
@@ -488,6 +524,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-",
@@ -495,6 +533,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-0",  # reported on older UFO
@@ -502,6 +542,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-1",  # reported on older UFO
@@ -509,6 +551,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ001",
@@ -516,6 +560,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ011",
@@ -523,6 +569,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ002",  # seen on older UFO
@@ -530,6 +578,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
     LEDENETHardware(
         model="HF-LPB100-ZJ200",  # seen on RGBW Downlight
@@ -537,6 +587,8 @@ HARDWARE = [
         remote_rf=False,  # unverified
         remote_24g=False,
         remote_24g_controls=False,
+        auto_on=False,
+        dimmable_effects=False,
     ),
 ]
 
