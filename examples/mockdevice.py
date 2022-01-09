@@ -12,7 +12,8 @@ _LOGGER = logging.getLogger(__name__)
 
 DEVICE_ID = 0x33
 VERSION = 9
-MINOR_VERSION = 27
+MINOR_VERSION = 28
+ON_AT_START = False
 # MODEL = "AK001-ZJ2101"  # Supports auto on
 # MODEL = "AK001-ZJ2145"  # Supports dimmable effects
 MODEL = 'AK001-ZJ2101'
@@ -138,7 +139,7 @@ class MagichomeServerProtocol(asyncio.Protocol):
                         [
                             0x81,
                             DEVICE_ID,
-                            0x23,
+                            0x23 if ON_AT_START else 0x24,
                             0x61,
                             0xC5,
                             0x17,
