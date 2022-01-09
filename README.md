@@ -188,19 +188,16 @@ The following models have been tested with library.
 | 0xA4  | Addressable v4              | no         | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
 | 0xA6  | Addressable v6              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
 | 0xA7  | Addressable v7              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
+| 0xE1  | Ceiling Light CCT           | no         |                                 |
+| 0xE2  | Ceiling Light Assist        | no         | Auxiliary Switch not supported  |
 
 ### Untested Models
 
-The following models have not been tested with library but may work.
+The following models have not been tested with the library but may work.
 
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
-| 0x95  | Switch 2c                   | no         |                                 |
-| 0x96  | Switch 4c                   | no         |                                 |
-| 0xD1  | Digital Light               | no         |                                 |
-| 0xE1  | Ceiling Light               | no         |                                 |
-| 0xE2  | Ceiling Light Assist        | no         |                                 |
 
 ### Unsupported Models
 
@@ -212,6 +209,9 @@ The following models are confirmed to be unsupported.
 | 0x19  | Socket with 2 USB Ports     | no         |                                 |
 | 0x1B  | Aroma / Fragrance Lamp      | no         |                                 |
 | 0x1D  | Fill Light                  | no         |                                 |
+| 0x95  | Switch 2c                   | no         |                                 |
+| 0x96  | Switch 4c                   | no         |                                 |
+| 0xD1  | Digital Light / Time Lamp   | no         |                                 |
 
 ### Known Vendors
 
