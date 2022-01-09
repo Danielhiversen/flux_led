@@ -1,10 +1,8 @@
 import asyncio
 import logging
-import pprint
 import socket
 
 from typing import Tuple, Optional
-from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioscanner import AIOBulbScanner
 from flux_led.protocol import OUTER_MESSAGE_WRAPPER
 
@@ -12,8 +10,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEVICE_ID = 0xA4
-VERSION = 2
+DEVICE_ID = 0xA3
+VERSION = 5
 
 
 def get_local_ip():
@@ -172,12 +170,12 @@ class MagichomeServerProtocol(asyncio.Protocol):
 
 async def go():
     loop = asyncio.get_running_loop()
-    bulb_server = await loop.create_server(
+    await loop.create_server(
         lambda: MagichomeServerProtocol(),
         host="0.0.0.0",
         port=5577,
     )
-    bulb_discovery_server = await loop.create_datagram_endpoint(
+    await loop.create_datagram_endpoint(
         lambda: MagicHomeDiscoveryProtocol(),
         local_addr=("0.0.0.0", AIOBulbScanner.DISCOVERY_PORT),
     )
