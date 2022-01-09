@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEVICE_ID = 0x94
+DEVICE_ID = 0x96
 VERSION = 1
 
 
