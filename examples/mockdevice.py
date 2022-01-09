@@ -6,12 +6,14 @@ import socket
 from typing import Tuple, Optional
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioscanner import AIOBulbScanner
+from flux_led.protocol import OUTER_MESSAGE_WRAPPER
 
 logging.basicConfig(level=logging.DEBUG)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEVICE_ID = 0x25
+DEVICE_ID = 0xA4
+VERSION = 2
 
 
 def get_local_ip():
@@ -38,22 +40,30 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
 
+    def send(self, data: bytes, addr: Tuple[str, int]) -> None:
+        """Trigger on data."""
+        _LOGGER.debug(
+            "UDP %s => %s (%d)",
+            addr,
+            data,
+            len(data),
+        )
+        self.transport.sendto(data, addr)
+
     def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
         """Trigger on data."""
         _LOGGER.debug(
-            "%s <= %s (%d)",
+            "UDP %s <= %s (%d)",
             addr,
-            " ".join(f"0x{x:02X}" for x in data),
+            data,
             len(data),
         )
         assert self.transport is not None
         if data.startswith(AIOBulbScanner.DISCOVER_MESSAGE):
-            self.transport.sendto(
-                f"{self.local_ip},B4E842123456,AK001-ZJ2149".encode(), addr
-            )
+            self.send(f"{self.local_ip},B4E842123456,AK001-ZJ2147".encode(), addr)
         if data.startswith(AIOBulbScanner.VERSION_MESSAGE):
-            model_str = hex(DEVICE_ID)[2:].zfill(2)
-            self.transport.sendto(f"+ok={model_str}_33_20200428_ZG-LX\r", addr)
+            model_str = hex(DEVICE_ID)[2:].zfill(2).upper()
+            self.send(f"+ok={model_str}_33_20200428_ZG-LX\r".encode(), addr)
 
     def error_received(self, ex: Optional[Exception]) -> None:
         """Handle error."""
@@ -66,7 +76,7 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
 class MagichomeServerProtocol(asyncio.Protocol):
     """A asyncio.Protocol implementing the MagicHome protocol."""
 
-    def __init__(self, loop) -> None:
+    def __init__(self) -> None:
         self.loop = asyncio.get_running_loop()
         self.handler = None
         self.peername = None
@@ -74,34 +84,104 @@ class MagichomeServerProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc: Exception) -> None:
         """Handle connection lost."""
+        _LOGGER.debug("%s: Connection lost: %s", self.peername, exc)
 
     def connection_made(self, transport: asyncio.Transport) -> None:
         """Handle incoming connection."""
+        _LOGGER.debug("%s: Connection made", transport)
         self.peername = transport.get_extra_info("peername")
         self.transport = transport
-        _LOGGER.debug("%s: Connection made", self.peername)
+
+    def send(self, data: bytes, random_byte: Optional[None]) -> None:
+        """Trigger on data."""
+        if random_byte is not None:
+            msg = self.construct_wrapped_message(data, random_byte)
+        else:
+            msg = data
+        _LOGGER.debug(
+            "TCP %s => %s (%d)",
+            self.peername,
+            " ".join(f"0x{x:02X}" for x in msg),
+            len(msg),
+        )
+        self.transport.write(msg)
 
     def data_received(self, data: bytes) -> None:
         """Process new data from the socket."""
         _LOGGER.debug(
-            "%s <= %s (%d)",
+            "TCP %s <= %s (%d)",
             self.peername,
             " ".join(f"0x{x:02X}" for x in data),
             len(data),
         )
+        assert self.transport is not None
+        if data.startswith(bytearray([*OUTER_MESSAGE_WRAPPER])):
+            msg = data[10:-1]
+            random = data[7]
+        else:
+            random = None
+            msg = data
+
+        if msg.startswith(bytearray([0x81])):
+            self.send(
+                self.construct_message(
+                    bytearray(
+                        [
+                            0x81,
+                            DEVICE_ID,
+                            0x23,
+                            0x61,
+                            0x05,
+                            0x03,
+                            0x00,
+                            0xFF,
+                            0x00,
+                            0x00,
+                            VERSION,
+                            0x00,
+                            0x5A,
+                        ]
+                    )
+                ),
+                random,
+            )
+
+    def construct_wrapped_message(
+        self, inner_msg: bytearray, random_byte: int
+    ) -> bytearray:
+        """Construct a wrapped message."""
+        inner_msg_len = len(inner_msg)
+        return self.construct_message(
+            bytearray(
+                [
+                    *OUTER_MESSAGE_WRAPPER,
+                    random_byte,
+                    inner_msg_len >> 8,
+                    inner_msg_len & 0xFF,
+                    *inner_msg,
+                ]
+            )
+        )
+
+    def construct_message(self, raw_bytes: bytearray) -> bytearray:
+        """Calculate checksum of byte array and add to end."""
+        csum = sum(raw_bytes) & 0xFF
+        raw_bytes.append(csum)
+        return raw_bytes
 
 
 async def go():
     loop = asyncio.get_running_loop()
     bulb_server = await loop.create_server(
         lambda: MagichomeServerProtocol(),
+        host="0.0.0.0",
         port=5577,
     )
     bulb_discovery_server = await loop.create_datagram_endpoint(
         lambda: MagicHomeDiscoveryProtocol(),
-        local_addr=("", AIOBulbScanner.DISCOVERY_PORT),
+        local_addr=("0.0.0.0", AIOBulbScanner.DISCOVERY_PORT),
     )
-    await asyncio.sleep(500)
+    await asyncio.sleep(86400)
 
 
 asyncio.run(go())
