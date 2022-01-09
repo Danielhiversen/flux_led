@@ -169,6 +169,7 @@ The following models have been tested with library.
 | 0x17  | Magnetic Light Dimmable     | no         |                                 |
 | 0x1A  | Christmas Light             | no         |                                 |
 | 0x1C  | Table Light CCT             | no         |                                 |
+| 0x1E  | Ceiling Light RGBCW         | no         |                                 |
 | 0x21  | Bulb Dimmable               | no         |                                 |
 | 0x25  | Controller RGB/WW/CW        | no         | Supports RGB, RGBW, RGBWW, CW, DIM |
 | 0x33  | Controller RGB              | no         |                                 |
@@ -187,24 +188,30 @@ The following models have been tested with library.
 | 0xA6  | Addressable v6              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
 | 0xA7  | Addressable v7              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
 
-### Unsupported Models
+### Untested Models
 
 The following models have not been tested with library but may work.
 
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
-| 0x18  | Plant Light                 | no         |                                 |
-| 0x19  | Socket 2 USB                | no         |                                 |
-| 0x1B  | Spray Light                 | no         |                                 |
 | 0x1C  | Fill Light                  | no         |                                 |
-| 0x1E  | Ceiling Light RGBCW         | no         | Likely works & same as 0x35     |
 | 0x62  | Controller CCT              | no         | May be discontinued             |
 | 0x95  | Switch 2c                   | no         |                                 |
 | 0x96  | Switch 4c                   | no         |                                 |
 | 0xD1  | Digital Light               | no         |                                 |
 | 0xE1  | Ceiling Light               | no         |                                 |
 | 0xE2  | Ceiling Light Assist        | no         |                                 |
+
+### Unsupported Models
+
+The following models are confirmed to be unsupported.
+
+| Model | Description                 | Microphone | Notes                           |
+| ----- | --------------------------- | ---------- | ------------------------------- |
+| 0x18  | Plant / Grow Light          | no         |                                 |
+| 0x19  | Socket with 2 USB Ports     | no         |                                 |
+| 0x1B  | Aroma / Fragrance Lamp      | no         |                                 |
 
 ### Known Vendors
 
