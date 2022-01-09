@@ -197,7 +197,7 @@ The following models have not been tested with the library but may work.
 
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
-| 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
+| 0x02  | Legacy Dimmable Controller  | no         | Original protocol, discontinued |
 
 ### Unsupported Models
 
