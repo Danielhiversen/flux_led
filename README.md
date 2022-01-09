@@ -162,10 +162,14 @@ The following models have been tested with library.
 | 0x06  | Controller RGBW             | no         |                                 |
 | 0x07  | Controller RGBCW            | no         |                                 |
 | 0x08  | Controller RGB with MIC     | yes        |                                 |
+| 0x09  | Ceiling Light CCT           | no         |                                 |
 | 0x0E  | Floor Lamp RGBCW            | no         |                                 |
 | 0x10  | Christmas Light             | no         |                                 |
+| 0x16  | Magnetic Light CCT          | no         |                                 |
+| 0x17  | Magnetic Light Dimmable     | no         |                                 |
 | 0x1A  | Christmas Light             | no         |                                 |
 | 0x1C  | Table Light CCT             | no         |                                 |
+| 0x1E  | Ceiling Light RGBCW         | no         |                                 |
 | 0x21  | Bulb Dimmable               | no         |                                 |
 | 0x25  | Controller RGB/WW/CW        | no         | Supports RGB, RGBW, RGBWW, CW, DIM |
 | 0x33  | Controller RGB              | no         |                                 |
@@ -174,37 +178,40 @@ The following models have been tested with library.
 | 0x44  | Bulb RGBW                   | no         |                                 |
 | 0x52  | Bulb CCT                    | no         |                                 |
 | 0x54  | Downlight RGBW              | no         |                                 |
+| 0x62  | Controller CCT              | no         |                                 |
 | 0x93  | Switch 1c                   | no         |                                 |
 | 0x94  | Switch 1c Watt              | no         |                                 |
 | 0x97  | Socket 1c                   | no         |                                 |
 | 0xA1  | Addressable v1              | no         | Supports UCS1903, SM16703, WS2811, WS2812B, SK6812, INK1003, WS2801, LB1914 |
 | 0xA2  | Addressable v2              | yes        | Supports UCS1903, SM16703, WS2811, WS2811B, SK6812, INK1003, WS2801, WS2815, APA102, TM1914, UCS2904B |
 | 0xA3  | Addressable v3              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
+| 0xA4  | Addressable v4              | no         | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
+| 0xA6  | Addressable v6              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
+| 0xA7  | Addressable v7              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
+| 0xE1  | Ceiling Light CCT           | no         |                                 |
+| 0xE2  | Ceiling Light Assist        | no         | Auxiliary Switch not supported  |
 
-### Unsupported Models
+### Untested Models
 
-The following models have not been tested with library but may work.
+The following models have not been tested with the library but may work.
 
 | Model | Description                 | Microphone | Notes                           |
 | ----- | --------------------------- | ---------- | ------------------------------- |
 | 0x02  | Legacy Dimmable Controller  | no         | Original protocol               |
-| 0x09  | Ceiling Light CCT           | no         |                                 |
-| 0x16  | Magnetic Light CCT          | no         |                                 |
-| 0x17  | Magnetic Light Dimmable     | no         |                                 |
-| 0x18  | Plant Light                 | no         |                                 |
-| 0x19  | Socket 2 USB                | no         |                                 |
-| 0x1B  | Spray Light                 | no         |                                 |
-| 0x1C  | Fill Light                  | no         |                                 |
-| 0x1E  | Ceiling Light RGBCW         | no         | Likely works & same as 0x35     |
-| 0x62  | Controller CCT              | no         | May be discontinued             |
+
+### Unsupported Models
+
+The following models are confirmed to be unsupported.
+
+| Model | Description                 | Microphone | Notes                           |
+| ----- | --------------------------- | ---------- | ------------------------------- |
+| 0x18  | Plant / Grow Light          | no         |                                 |
+| 0x19  | Socket with 2 USB Ports     | no         |                                 |
+| 0x1B  | Aroma / Fragrance Lamp      | no         |                                 |
+| 0x1D  | Fill Light                  | no         |                                 |
 | 0x95  | Switch 2c                   | no         |                                 |
 | 0x96  | Switch 4c                   | no         |                                 |
-| 0xD1  | Digital Light               | no         |                                 |
-| 0xE1  | Ceiling Light               | no         |                                 |
-| 0xE2  | Ceiling Light Assist        | no         |                                 |
-| 0xA4  | Addressable v4              | no         | Likely same as A3 without mic and supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
-| 0xA6  | Addressable v6              | yes        | Likely same as A3 and supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
-| 0xA7  | Addressable v7              | yes        | Likely same as A3 and supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
+| 0xD1  | Digital Light / Time Lamp   | no         |                                 |
 
 ### Known Vendors
 
