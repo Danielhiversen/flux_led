@@ -678,7 +678,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x0B,
         models=[],
-        description="Switch 1c",
+        description="Switch 1 Channel",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
         mode_to_color_mode={},

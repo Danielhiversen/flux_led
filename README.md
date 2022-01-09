@@ -179,8 +179,8 @@ The following models have been tested with library.
 | 0x52  | Bulb CCT                    | no         |                                 |
 | 0x54  | Downlight RGBW              | no         |                                 |
 | 0x62  | Controller CCT              | no         |                                 |
-| 0x93  | Switch 1c                   | no         |                                 |
-| 0x97  | Socket 1c                   | no         |                                 |
+| 0x93  | Switch 1 Channel            | no         |                                 |
+| 0x97  | Socket                      | no         |                                 |
 | 0xA1  | Addressable v1              | no         | Supports UCS1903, SM16703, WS2811, WS2812B, SK6812, INK1003, WS2801, LB1914 |
 | 0xA2  | Addressable v2              | yes        | Supports UCS1903, SM16703, WS2811, WS2811B, SK6812, INK1003, WS2801, WS2815, APA102, TM1914, UCS2904B |
 | 0xA3  | Addressable v3              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW, INK1003, UCS2904B |
