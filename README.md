@@ -180,7 +180,6 @@ The following models have been tested with library.
 | 0x54  | Downlight RGBW              | no         |                                 |
 | 0x62  | Controller CCT              | no         |                                 |
 | 0x93  | Switch 1c                   | no         |                                 |
-| 0x94  | Switch 1c Watt              | no         |                                 |
 | 0x97  | Socket 1c                   | no         |                                 |
 | 0xA1  | Addressable v1              | no         | Supports UCS1903, SM16703, WS2811, WS2812B, SK6812, INK1003, WS2801, LB1914 |
 | 0xA2  | Addressable v2              | yes        | Supports UCS1903, SM16703, WS2811, WS2811B, SK6812, INK1003, WS2801, WS2815, APA102, TM1914, UCS2904B |
@@ -209,6 +208,7 @@ The following models are confirmed to be unsupported.
 | 0x19  | Socket with 2 USB           | no         |                                 |
 | 0x1B  | Aroma Fragrance Lamp        | no         |                                 |
 | 0x1D  | Fill Light                  | no         |                                 |
+| 0x94  | Switch 1c Watt              | no         |                                 |
 | 0x95  | Switch 2 Channel            | no         |                                 |
 | 0x96  | Switch 4 Channel            | no         |                                 |
 | 0xD1  | Digital Time Lamp           | no         |                                 |
