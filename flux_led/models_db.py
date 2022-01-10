@@ -465,6 +465,15 @@ HARDWARE = [
         dimmable_effects=True,
     ),
     LEDENETHardware(
+        model="AK001-ZJ21410",  # seen on newer 0x1E Ceiling lights
+        chip=LEDENETChip.BL602,
+        remote_rf=True,  # verified
+        remote_24g=True,
+        remote_24g_controls=True,
+        auto_on=True,
+        dimmable_effects=True,
+    ),
+    LEDENETHardware(
         model="HF-A11",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
         remote_rf=False,  # unverified
@@ -875,6 +884,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x1E,  # Should be the same as 0x35
+        # 'AK001-ZJ21410' is v9.9 (with RF remote control support + pairing)
         models=[],
         description="Ceiling Light RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -924,7 +934,7 @@ MODELS = [
         model_num=0x33,
         # 'AK001-ZJ100' == v3 - WIFI370 version
         # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
-        # 'AK001-ZJ2101' == v8.61 - no dimmable effects confirmed, confirmed auto on
+        # 'AK001-ZJ2101' == v8.61, 8.62 (44 key) - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
         # "AK001-ZJ2145" == v9.27, 9.33 # w/IR
         # "AK001-ZJ2146" == v10.48 # 2.4ghz support
