@@ -639,14 +639,15 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x04,
+        # AK001-ZJ100 == v3.09
         # AK001-ZJ200 == v5.20
-        # There are a limited set of these devices that are the mini version
-        # but most are UFOs
+        # There are a limited set of these devices that are the mini version but most are UFOs
         models=[
             "HF-LPB100",
             "HF-LPB100-0",
             "HF-LPB100-1",
             "HF-LPB100-ZJ002",
+            "AK001-ZJ100",
             "AK001-ZJ200",
         ],
         description="UFO Controller RGBW",  # AKA ZJ-WFUF-170F
