@@ -348,9 +348,7 @@ class LEDENETDevice:
     @property
     def max_temp(self) -> int:
         """Returns the maximum color temp in kelvin."""
-        if self._white_channel_channel_type:
-            return int(self._white_channel_channel_type.value)
-        return MAX_TEMP
+        return int(self._white_channel_channel_type.value)
 
     @property
     def _rgbwwprotocol(self) -> bool:
