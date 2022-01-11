@@ -1667,7 +1667,9 @@ async def test_async_set_brightness_rgbw(mock_aio_protocol):
 async def test_0x06_rgbw_cct_warm(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can set CCT on RGBW with a warm strip."""
     light = AIOWifiLedBulb("192.168.1.166")
+    assert light.white_channel_channel_type == WhiteChannelType.WARM
     light.white_channel_channel_type = WhiteChannelType.WARM
+    assert light.white_channel_channel_type == WhiteChannelType.WARM
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -1712,6 +1714,7 @@ async def test_0x06_rgbw_cct_natural(
     """Test we can set CCT on RGBW with a natural strip."""
     light = AIOWifiLedBulb("192.168.1.166")
     light.white_channel_channel_type = WhiteChannelType.NATURAL
+    assert light.white_channel_channel_type == WhiteChannelType.NATURAL
 
     def _updated_callback(*args, **kwargs):
         pass
@@ -1754,6 +1757,7 @@ async def test_0x06_rgbw_cct_cold(mock_aio_protocol, caplog: pytest.LogCaptureFi
     """Test we can set CCT on RGBW with a cold strip."""
     light = AIOWifiLedBulb("192.168.1.166")
     light.white_channel_channel_type = WhiteChannelType.COLD
+    assert light.white_channel_channel_type == WhiteChannelType.COLD
 
     def _updated_callback(*args, **kwargs):
         pass
