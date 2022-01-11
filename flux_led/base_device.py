@@ -251,12 +251,12 @@ class LEDENETDevice:
 
     @property
     def white_channel_channel_type(self) -> Optional[int]:
-        """Return the color temp of the white channel."""
+        """Return the type of the white channel."""
         return self._white_channel_channel_type
 
     @white_channel_channel_type.setter
-    def white_channel_color_temp(self, value: WhiteChannelType) -> None:
-        """Set the color temp of the white channel."""
+    def white_channel_channel_type(self, value: WhiteChannelType) -> None:
+        """Set the type of the white channel."""
         self._white_channel_channel_type = value
 
     @property
