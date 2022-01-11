@@ -19,6 +19,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     COLOR_MODES_RGB_CCT,
     COLOR_MODES_RGB_W,
     DEFAULT_MODE,
+    DEFAULT_WHITE_CHANNEL_TYPE,
     EFFECT_MUSIC,
     EFFECT_RANDOM,
     MAX_TEMP,
@@ -42,6 +43,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     WRITE_ALL_COLORS,
     WRITE_ALL_WHITES,
     LevelWriteMode,
+    WhiteChannelType,
 )
 from .models_db import (
     BASE_MODE_MAP,
@@ -205,7 +207,7 @@ class LEDENETDevice:
         self._model_data: Optional[LEDENETModel] = None
         self._paired_remotes: Optional[int] = None
         self._remote_config: Optional[RemoteConfig] = None
-        self._white_channel_color_temp: int = MAX_TEMP
+        self._white_channel_channel_type: WhiteChannelType = DEFAULT_WHITE_CHANNEL_TYPE
         self._discovery = discovery
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
@@ -248,14 +250,14 @@ class LEDENETDevice:
         self._discovery = value
 
     @property
-    def white_channel_color_temp(self) -> Optional[int]:
+    def white_channel_channel_type(self) -> Optional[int]:
         """Return the color temp of the white channel."""
-        return self._white_channel_color_temp
+        return self._white_channel_channel_type
 
-    @white_channel_color_temp.setter
-    def white_channel_color_temp(self, value: int) -> None:
+    @white_channel_channel_type.setter
+    def white_channel_color_temp(self, value: WhiteChannelType) -> None:
         """Set the color temp of the white channel."""
-        self._white_channel_color_temp = value
+        self._white_channel_channel_type = value
 
     @property
     def hardware(self) -> Optional[LEDENETHardware]:
@@ -346,8 +348,8 @@ class LEDENETDevice:
     @property
     def max_temp(self) -> int:
         """Returns the maximum color temp in kelvin."""
-        if self._white_channel_color_temp:
-            return self._white_channel_color_temp
+        if self._white_channel_channel_type:
+            return self._white_channel_channel_type.value
         return MAX_TEMP
 
     @property
