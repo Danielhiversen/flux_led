@@ -23,7 +23,6 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     EFFECT_MUSIC,
     EFFECT_RANDOM,
     MAX_TEMP,
-    MIN_TEMP,
     MODE_COLOR,
     MODE_CUSTOM,
     MODE_MUSIC,
