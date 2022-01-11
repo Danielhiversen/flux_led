@@ -205,6 +205,7 @@ class LEDENETDevice:
         self._model_data: Optional[LEDENETModel] = None
         self._paired_remotes: Optional[int] = None
         self._remote_config: Optional[RemoteConfig] = None
+        self._white_channel_color_temp: int = MAX_TEMP
         self._discovery = discovery
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
@@ -245,6 +246,16 @@ class LEDENETDevice:
     def discovery(self, value: FluxLEDDiscovery) -> None:
         """Set the discovery data."""
         self._discovery = value
+
+    @property
+    def white_channel_color_temp(self) -> Optional[int]:
+        """Return the color temp of the white channel."""
+        return self._white_channel_color_temp
+
+    @white_channel_color_temp.setter
+    def white_channel_color_temp(self, value: int) -> None:
+        """Set the color temp of the white channel."""
+        self._white_channel_color_temp = value
 
     @property
     def hardware(self) -> Optional[LEDENETHardware]:
@@ -335,6 +346,8 @@ class LEDENETDevice:
     @property
     def max_temp(self) -> int:
         """Returns the maximum color temp in kelvin."""
+        if self._white_channel_color_temp:
+            return self._white_channel_color_temp
         return MAX_TEMP
 
     @property
@@ -360,6 +373,25 @@ class LEDENETDevice:
         return bool(raw_state.red or raw_state.green or raw_state.blue)
 
     @property
+    def color_is_white_only(self) -> bool:
+        """Return if the curent color is active and white."""
+        assert self.raw_state is not None
+        raw_state = self.raw_state
+        return bool(
+            # The device has a temp range
+            self.min_temp != self.max_temp
+            # At least one channel is on
+            and (
+                raw_state.red
+                or raw_state.green
+                or raw_state.blue
+                or raw_state.warm_white
+            )
+            # The color channels are white
+            and raw_state.red == raw_state.green == raw_state.blue
+        )
+
+    @property
     def multi_color_mode(self) -> bool:
         """The device supports multiple color modes."""
         return len(self.color_modes) > 1
@@ -372,7 +404,11 @@ class LEDENETDevice:
         # but we do not add it to internal color modes as
         # we need to distingush between devices that are RGB/CCT
         # and ones that are RGB&CCT
-        if COLOR_MODE_RGBWW in color_modes and COLOR_MODE_CCT not in color_modes:
+        if (
+            COLOR_MODE_CCT not in color_modes
+            and COLOR_MODE_RGBWW in color_modes
+            or COLOR_MODE_RGBW in color_modes
+        ):
             return {COLOR_MODE_CCT, *color_modes}
         return color_modes
 
@@ -509,6 +545,9 @@ class LEDENETDevice:
         if COLOR_MODE_RGBWW in color_modes:
             # We support CCT mode if the device supports RGBWW
             return COLOR_MODE_RGBWW if self.color_active else COLOR_MODE_CCT
+        if COLOR_MODE_RGBW in color_modes:
+            # We support CCT mode if the device supports RGB&W
+            return COLOR_MODE_CCT if self.color_is_white_only else COLOR_MODE_RGBW
         if (
             color_modes == COLOR_MODES_RGB_CCT
         ):  # RGB/CCT split, only one active at a time
@@ -662,19 +701,19 @@ class LEDENETDevice:
             if self.color_mode in {COLOR_MODE_DIM, COLOR_MODE_CCT}:
                 return MODE_WW
             return MODE_COLOR
-        elif pattern_code == EFFECT_CUSTOM_CODE:
+        if pattern_code == EFFECT_CUSTOM_CODE:
             return (
                 MODE_PRESET
                 if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS
                 else MODE_CUSTOM
             )
-        elif pattern_code in (PRESET_MUSIC_MODE, PRESET_MUSIC_MODE_LEGACY):
+        if pattern_code in (PRESET_MUSIC_MODE, PRESET_MUSIC_MODE_LEGACY):
             return MODE_MUSIC
-        elif PresetPattern.valid(pattern_code):
+        if PresetPattern.valid(pattern_code):
             return MODE_PRESET
-        elif BuiltInTimer.valid(pattern_code):
+        if BuiltInTimer.valid(pattern_code):
             return BuiltInTimer.valtostr(pattern_code)
-        elif self.protocol in ADDRESSABLE_PROTOCOLS:
+        if self.protocol in ADDRESSABLE_PROTOCOLS:
             return MODE_PRESET
         return None
 
@@ -893,8 +932,13 @@ class LEDENETDevice:
         # the warm and cold LEDs linearly to provide that
         assert self.raw_state is not None
         raw_state = self.raw_state
+        warm_white = raw_state.warm_white
+        if COLOR_MODE_RGBW in self.color_modes:
+            cool_white = raw_state.red if self.color_is_white_only else 0
+        else:
+            cool_white = raw_state.cool_white
         temp, brightness = white_levels_to_color_temp(
-            raw_state.warm_white, raw_state.cool_white
+            warm_white, cool_white, self.min_temp, self.max_temp
         )
         return temp, brightness
 

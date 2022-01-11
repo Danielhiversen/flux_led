@@ -820,7 +820,7 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
     assert light.color_mode == COLOR_MODE_RGBW
-    assert light.color_modes == {COLOR_MODE_RGBW}
+    assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
     transport.reset_mock()
 
     with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
@@ -853,6 +853,18 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         b"\x81\xA3\x23\x61\x01\x32\x40\x40\x40\xB1\x01\x00\x90\xDD"
     )
     assert light.raw_state.warm_white == 125
+
+    transport.reset_mock()
+    with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
+        await light.async_set_white_temp(6500, 255)
+        assert transport.mock_calls == [
+            call.write(
+                bytearray(
+                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x15"
+                )
+            ),
+            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x03G\x00G^")),
+        ]
 
 
 @pytest.mark.asyncio

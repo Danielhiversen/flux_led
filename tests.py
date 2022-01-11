@@ -2004,7 +2004,37 @@ class TestLight(unittest.TestCase):
 
         mock_read.side_effect = read_data
         light = flux_led.WifiLedBulb("192.168.1.164")
-        assert light.color_modes == {COLOR_MODE_RGBW}
+        assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
+        self.assertEqual(light.color_mode, COLOR_MODE_RGBW)
+
+        light.setWhiteTemperature(light.max_temp, 255)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\xff\xff\xff\x00\x00\x0f=")),
+        )
+        self.assertEqual(light.color_mode, COLOR_MODE_CCT)
+
+        light.setWhiteTemperature(light.min_temp, 255)
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 3)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x00\x00\x00\xff\x00\x0f?")),
+        )
+        self.assertEqual(light.color_mode, COLOR_MODE_CCT)
+
+        light.setWhiteTemperature(
+            light.max_temp - ((light.max_temp - light.min_temp) / 2), 255
+        )
+        self.assertEqual(mock_read.call_count, 2)
+        self.assertEqual(mock_send.call_count, 4)
+        self.assertEqual(
+            mock_send.call_args,
+            mock.call(bytearray(b"1\x80\x80\x80\x80\x00\x0f@")),
+        )
+        self.assertEqual(light.color_mode, COLOR_MODE_CCT)
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

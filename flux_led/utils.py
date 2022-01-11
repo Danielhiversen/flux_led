@@ -264,19 +264,24 @@ def rgbcw_brightness(
     )
 
 
-def color_temp_to_white_levels(temperature: int, brightness: float) -> WhiteLevels:
+def color_temp_to_white_levels(
+    temperature: int,
+    brightness: float,
+    min_temp: int = MIN_TEMP,
+    max_temp: int = MAX_TEMP,
+) -> WhiteLevels:
     # Assume output temperature of between 2700 and 6500 Kelvin, and scale
     # the warm and cold LEDs linearly to provide that
-    if not (MIN_TEMP <= temperature <= MAX_TEMP):
+    if not (min_temp <= temperature <= max_temp):
         raise ValueError(
-            f"Temperature of {temperature} is not valid and must be between {MIN_TEMP} and {MAX_TEMP}"
+            f"Temperature of {temperature} is not valid and must be between {min_temp} and {max_temp}"
         )
     if not (0 <= brightness <= 255):
         raise ValueError(
             f"Brightness of {brightness} is not valid and must be between 0 and 255"
         )
     brightness = round(brightness / 255, 2)
-    warm = ((MAX_TEMP - temperature) / MAX_MIN_TEMP_DIFF) * brightness
+    warm = ((max_temp - temperature) / (max_temp - min_temp)) * brightness
     cold = brightness - warm
     return WhiteLevels(round(255 * warm), round(255 * cold))
 
@@ -301,7 +306,7 @@ def scaled_color_temp_to_white_levels(
 
 
 def white_levels_to_color_temp(
-    warm_white: int, cool_white: int
+    warm_white: int, cool_white: int, min_temp: int = MIN_TEMP, max_temp: int = MAX_TEMP
 ) -> TemperatureBrightness:
     if not (0 <= warm_white <= 255):
         raise ValueError(
@@ -315,9 +320,9 @@ def white_levels_to_color_temp(
     cold = cool_white / 255
     brightness = warm + cold
     if brightness == 0:
-        temperature: float = MIN_TEMP
+        temperature: float = min_temp
     else:
-        temperature = ((cold / brightness) * MAX_MIN_TEMP_DIFF) + MIN_TEMP
+        temperature = ((cold / brightness) * (max_temp - min_temp)) + min_temp
     return TemperatureBrightness(round(temperature), min(255, round(brightness * 255)))
 
 

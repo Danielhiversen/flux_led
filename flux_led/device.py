@@ -10,6 +10,7 @@ from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
 
 from .base_device import LEDENETDevice
 from .const import (
+    COLOR_MODE_RGBW,
     DEFAULT_RETRIES,
     EFFECT_RANDOM,
     STATE_BLUE,
@@ -129,8 +130,15 @@ class WifiLedBulb(LEDENETDevice):
         persist: bool = True,
         retry: int = DEFAULT_RETRIES,
     ) -> None:
-        warm, cold = color_temp_to_white_levels(temperature, brightness)
-        self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
+        warm, cold = color_temp_to_white_levels(
+            temperature, brightness, self.min_temp, self.max_temp
+        )
+        if COLOR_MODE_RGBW in self.color_modes:
+            self.set_levels(
+                r=cold, g=cold, b=cold, w=warm, persist=persist, retry=retry
+            )
+        else:
+            self.set_levels(w=warm, w2=cold, persist=persist, retry=retry)
 
     def setRgb(
         self,
