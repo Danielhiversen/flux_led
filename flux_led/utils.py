@@ -272,10 +272,7 @@ def color_temp_to_white_levels(
 ) -> WhiteLevels:
     # Assume output temperature of between 2700 and 6500 Kelvin, and scale
     # the warm and cold LEDs linearly to provide that
-    if not (min_temp <= temperature <= max_temp):
-        raise ValueError(
-            f"Temperature of {temperature} is not valid and must be between {min_temp} and {max_temp}"
-        )
+    temperature = min(max(min_temp,temperature),max_temp)
     if not (0 <= brightness <= 255):
         raise ValueError(
             f"Brightness of {brightness} is not valid and must be between 0 and 255"

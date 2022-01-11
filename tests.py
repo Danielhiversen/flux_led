@@ -1855,8 +1855,6 @@ class TestLight(unittest.TestCase):
         assert color_temp_to_white_levels(6500, 255) == (0, 255)
         with pytest.raises(ValueError):
             color_temp_to_white_levels(6500, -1)
-        with pytest.raises(ValueError):
-            color_temp_to_white_levels(-1, 255)
 
     def test_white_levels_to_color_temp(self):
         assert white_levels_to_color_temp(0, 255) == (6500, 255)
