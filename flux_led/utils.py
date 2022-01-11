@@ -278,7 +278,11 @@ def color_temp_to_white_levels(
             f"Brightness of {brightness} is not valid and must be between 0 and 255"
         )
     brightness = round(brightness / 255, 2)
-    warm = ((max_temp - temperature) / (max_temp - min_temp)) * brightness
+    temp_diff = max_temp - min_temp
+    if temp_diff == 0:
+        warm = 0
+    else:
+        warm = ((max_temp - temperature) / temp_diff) * brightness
     cold = brightness - warm
     return WhiteLevels(round(255 * warm), round(255 * cold))
 
