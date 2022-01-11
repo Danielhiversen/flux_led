@@ -263,8 +263,13 @@ class AIOWifiLedBulb(LEDENETDevice):
         self, temperature: int, brightness: int, persist: bool = True
     ) -> None:
         """Set the white tempature."""
-        warm, cold = color_temp_to_white_levels(temperature, brightness)
-        await self.async_set_levels(w=warm, w2=cold, persist=persist)
+        warm, cold = color_temp_to_white_levels(
+            temperature, brightness, self.min_temp, self.max_temp
+        )
+        if self.rgbw_color_temp_support(self.color_modes):
+            await self.async_set_levels(cold, cold, cold, warm, 0, persist=persist)
+        else:
+            await self.async_set_levels(0, 0, 0, warm, cold, persist=persist)
 
     async def async_update(self) -> None:
         """Request an update.

@@ -8,6 +8,15 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
+MIN_TEMP: Final = 2700
+MAX_TEMP: Final = 6500
+
+
+class WhiteChannelType(Enum):
+    WARM = MIN_TEMP
+    NATURAL = MAX_TEMP - ((MAX_TEMP - MIN_TEMP) / 2)
+    COLD = MAX_TEMP
+
 
 class LevelWriteMode(Enum):
     ALL = 0x00
@@ -22,6 +31,8 @@ class MultiColorEffects(Enum):
     JUMP = 0x04
     BREATHING = 0x05
 
+
+DEFAULT_WHITE_CHANNEL_TYPE: Final = WhiteChannelType.WARM
 
 PRESET_MUSIC_MODE: Final = 0x62
 PRESET_MUSIC_MODE_LEGACY: Final = 0x5D
@@ -49,8 +60,7 @@ COLOR_MODE_ADDRESSABLE: Final = "ADDRESSABLE"
 
 STATE_CHANGE_LATENCY: Final = 1
 ADDRESSABLE_STATE_CHANGE_LATENCY: Final = 5
-MIN_TEMP: Final = 2700
-MAX_TEMP: Final = 6500
+
 
 WRITE_ALL_COLORS = (LevelWriteMode.ALL, LevelWriteMode.COLORS)
 WRITE_ALL_WHITES = (LevelWriteMode.ALL, LevelWriteMode.WHITES)

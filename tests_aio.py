@@ -16,7 +16,10 @@ from flux_led.const import (
     COLOR_MODE_RGBW,
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
+    MAX_TEMP,
+    MIN_TEMP,
     MultiColorEffects,
+    WhiteChannelType,
 )
 from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,
@@ -820,7 +823,7 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
     assert light.color_mode == COLOR_MODE_RGBW
-    assert light.color_modes == {COLOR_MODE_RGBW}
+    assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
     transport.reset_mock()
 
     with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
@@ -853,6 +856,18 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         b"\x81\xA3\x23\x61\x01\x32\x40\x40\x40\xB1\x01\x00\x90\xDD"
     )
     assert light.raw_state.warm_white == 125
+
+    transport.reset_mock()
+    with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
+        await light.async_set_white_temp(6500, 255)
+        assert transport.mock_calls == [
+            call.write(
+                bytearray(
+                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x15"
+                )
+            ),
+            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x03G\x00G^")),
+        ]
 
 
 @pytest.mark.asyncio
@@ -1545,13 +1560,13 @@ async def test_async_set_brightness_cct(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x0f\x0fN"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x00\x0f?"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x0f\x0f\xcf"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x00\x0f\xc0"
     assert light.brightness == 128
 
 
@@ -1646,6 +1661,118 @@ async def test_async_set_brightness_rgbw(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert transport.mock_calls[0][1][0] == b"1\x80\x00k\x80\x80\x00\x0f+"
     assert light.brightness == 128
+
+
+@pytest.mark.asyncio
+async def test_0x06_rgbw_cct_warm(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set CCT on RGBW with a warm strip."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    assert light.white_channel_channel_type == WhiteChannelType.WARM
+    light.white_channel_channel_type = WhiteChannelType.WARM
+    assert light.white_channel_channel_type == WhiteChannelType.WARM
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x06\x24\x61\x24\x01\x00\xFF\x00\x00\x03\x00\xF0\x23"
+    )
+    await task
+    assert light.model_num == 0x06
+    assert light.operating_mode == "RGB&W"
+    assert light.min_temp == MIN_TEMP
+    assert light.max_temp == MAX_TEMP
+    assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
+
+    transport.reset_mock()
+    await light.async_set_white_temp(light.max_temp, 255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\xff\xff\x00\x00\x0f="
+    assert light.brightness == 255
+    assert light.raw_state.red == 255
+    assert light.raw_state.green == 255
+    assert light.raw_state.blue == 255
+    assert light.raw_state.warm_white == 0
+
+    transport.reset_mock()
+    await light.async_set_white_temp(light.min_temp, 255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\xff\x00\x0f?"
+    assert light.brightness == 255
+    assert light.raw_state.red == 0
+    assert light.raw_state.green == 0
+    assert light.raw_state.blue == 0
+    assert light.raw_state.warm_white == 255
+
+
+@pytest.mark.asyncio
+async def test_0x06_rgbw_cct_natural(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set CCT on RGBW with a natural strip."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    light.white_channel_channel_type = WhiteChannelType.NATURAL
+    assert light.white_channel_channel_type == WhiteChannelType.NATURAL
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x06\x24\x61\x24\x01\x00\xFF\x00\x00\x03\x00\xF0\x23"
+    )
+    await task
+    assert light.model_num == 0x06
+    assert light.operating_mode == "RGB&W"
+    assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
+    assert light.min_temp == MAX_TEMP - ((MAX_TEMP - MIN_TEMP) / 2)
+    assert light.max_temp == MAX_TEMP
+
+    transport.reset_mock()
+    await light.async_set_white_temp(light.max_temp, 255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\xff\xff\x00\x00\x0f="
+    assert light.brightness == 255
+    assert light.raw_state.red == 255
+    assert light.raw_state.blue == 255
+    assert light.raw_state.green == 255
+    assert light.raw_state.warm_white == 0
+
+    transport.reset_mock()
+    await light.async_set_white_temp(light.min_temp, 255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\xff\x00\x0f?"
+    assert light.brightness == 255
+    assert light.raw_state.red == 0
+    assert light.raw_state.blue == 0
+    assert light.raw_state.green == 0
+    assert light.raw_state.warm_white == 255
+
+
+@pytest.mark.asyncio
+async def test_0x06_rgbw_cct_cold(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can set CCT on RGBW with a cold strip."""
+    light = AIOWifiLedBulb("192.168.1.166")
+    light.white_channel_channel_type = WhiteChannelType.COLD
+    assert light.white_channel_channel_type == WhiteChannelType.COLD
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x06\x24\x61\x24\x01\x00\xFF\x00\x00\x03\x00\xF0\x23"
+    )
+    await task
+    assert light.model_num == 0x06
+    assert light.operating_mode == "RGB&W"
+    assert light.color_modes == {COLOR_MODE_RGBW}
+    assert light.min_temp == MAX_TEMP
+    assert light.max_temp == MAX_TEMP
 
 
 @pytest.mark.asyncio
