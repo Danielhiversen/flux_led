@@ -13,9 +13,9 @@ MAX_TEMP: Final = 6500
 
 
 class WhiteChannelType(Enum):
-    WARM = MAX_TEMP
+    WARM = MIN_TEMP
     NATURAL = MAX_TEMP - ((MAX_TEMP - MIN_TEMP) / 2)
-    COLD = MIN_TEMP
+    COLD = MAX_TEMP
 
 
 class LevelWriteMode(Enum):
