@@ -10,7 +10,6 @@ from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
 
 from .base_device import LEDENETDevice
 from .const import (
-    COLOR_MODE_RGBW,
     DEFAULT_RETRIES,
     EFFECT_RANDOM,
     STATE_BLUE,
