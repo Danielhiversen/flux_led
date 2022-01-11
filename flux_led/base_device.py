@@ -250,7 +250,7 @@ class LEDENETDevice:
         self._discovery = value
 
     @property
-    def white_channel_channel_type(self) -> Optional[int]:
+    def white_channel_channel_type(self) -> WhiteChannelType:
         """Return the type of the white channel."""
         return self._white_channel_channel_type
 
