@@ -133,7 +133,7 @@ class WifiLedBulb(LEDENETDevice):
         warm, cold = color_temp_to_white_levels(
             temperature, brightness, self.min_temp, self.max_temp
         )
-        if COLOR_MODE_RGBW in self.color_modes:
+        if COLOR_MODE_RGBW in self.color_modes and self.color_temp_range:
             self.set_levels(
                 r=cold, g=cold, b=cold, w=warm, w2=0, persist=persist, retry=retry
             )

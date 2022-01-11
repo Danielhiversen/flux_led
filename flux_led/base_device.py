@@ -375,13 +375,18 @@ class LEDENETDevice:
         return bool(raw_state.red or raw_state.green or raw_state.blue)
 
     @property
+    def color_temp_range(self) -> int:
+        """The range of color temps."""
+        return self.max_temp - self.min_temp
+
+    @property
     def color_is_white_only(self) -> bool:
         """Return if the curent color is active and white."""
         assert self.raw_state is not None
         raw_state = self.raw_state
         return bool(
             # The device has a temp range
-            self.min_temp != self.max_temp
+            self.color_temp_range
             # At least one channel is on
             and (
                 raw_state.red
@@ -547,7 +552,7 @@ class LEDENETDevice:
         if COLOR_MODE_RGBWW in color_modes:
             # We support CCT mode if the device supports RGBWW
             return COLOR_MODE_RGBWW if self.color_active else COLOR_MODE_CCT
-        if COLOR_MODE_RGBW in color_modes:
+        if COLOR_MODE_RGBW in color_modes and self.color_temp_range:
             # We support CCT mode if the device supports RGB&W
             return COLOR_MODE_CCT if self.color_is_white_only else COLOR_MODE_RGBW
         if (
@@ -935,7 +940,7 @@ class LEDENETDevice:
         assert self.raw_state is not None
         raw_state = self.raw_state
         warm_white = raw_state.warm_white
-        if COLOR_MODE_RGBW in self.color_modes:
+        if COLOR_MODE_RGBW in self.color_modes and self.color_temp_range:
             cool_white = raw_state.red if self.color_is_white_only else 0
         else:
             cool_white = raw_state.cool_white
