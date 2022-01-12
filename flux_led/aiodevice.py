@@ -337,12 +337,14 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         """Process and send a levels change."""
         self._set_transition_complete_time()
+        if updates:
+            self._replace_raw_state(updates)
         for idx, msg in enumerate(msgs):
             await self._async_send_msg(msg)
             if idx > 0:
+                self._process_futures_and_callbacks()
                 await asyncio.sleep(COMMAND_SPACING_DELAY)
-        if updates:
-            self._replace_raw_state(updates)
+                self._set_transition_complete_time()
 
     async def async_set_preset_pattern(
         self, effect: int, speed: int, brightness: int = 100
