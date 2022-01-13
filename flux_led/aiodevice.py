@@ -111,7 +111,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._updated_callback = updated_callback
         try:
             await self._async_setup()
-        except (RuntimeError, asyncio.TimeoutError):
+        except Exception:  # pylint: disable=broad-except
             self._async_stop()
             raise
         return
