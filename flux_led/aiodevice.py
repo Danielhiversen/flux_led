@@ -109,6 +109,14 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def async_setup(self, updated_callback: Callable[[], None]) -> None:
         """Setup the connection and fetch initial state."""
         self._updated_callback = updated_callback
+        try:
+            await self._async_setup()
+        except (RuntimeError, asyncio.TimeoutError):
+            self._async_stop()
+            raise
+        return
+
+    async def _async_setup(self) -> None:
         await self._async_determine_protocol()
         assert self._protocol is not None
         if isinstance(self._protocol, ALL_IC_PROTOCOLS):
@@ -142,7 +150,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
         except asyncio.TimeoutError:
             self.set_unavailable()
-            raise RuntimeError("Could not determine power restore state")
+            raise RuntimeError(
+                f"{self.ipaddr}: Could not determine power restore state"
+            )
 
     async def _async_device_config_setup(self) -> None:
         """Setup an addressable light."""
@@ -161,7 +171,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             await asyncio.wait_for(self._device_config_future, timeout=self.timeout)
         except asyncio.TimeoutError:
             self.set_unavailable()
-            raise RuntimeError("Could not determine number pixels")
+            raise RuntimeError(f"{self.ipaddr}: Could not determine number pixels")
 
     async def async_stop(self) -> None:
         """Shutdown the connection."""
@@ -298,14 +308,14 @@ class AIOWifiLedBulb(LEDENETDevice):
                 self._aio_protocol.close()
             self.set_unavailable()
             self._updates_without_response = 0
-            raise RuntimeError("Bulb stopped responding")
+            raise RuntimeError(f"{self.ipaddr}: Bulb stopped responding")
         await self._async_send_state_query()
         self._updates_without_response += 1
 
     def _async_raise_if_offline(self) -> None:
         """Raise RuntimeError if the bulb is offline."""
         if not self.available:
-            raise RuntimeError("Bulb not responding, too soon to retry")
+            raise RuntimeError(f"{self.ipaddr}: Bulb not responding, too soon to retry")
 
     async def async_set_levels(
         self,
@@ -785,4 +795,4 @@ class AIOWifiLedBulb(LEDENETDevice):
                 else:
                     return
         self.set_unavailable()
-        raise RuntimeError("Cannot determine protocol")
+        raise RuntimeError(f"{self.ipaddr}: Cannot determine protocol")
