@@ -11,7 +11,7 @@ EFFECT_YELLOW_FADE = "yellow_fade"
 EFFECT_CYAN_FADE = "cyan_fade"
 EFFECT_PURPLE_FADE = "purple_fade"
 EFFECT_WHITE_FADE = "white_fade"
-EFFECT_SEVEN_COLOR_CROSS_FADE = "seven_color_cross_fade"
+EFFECT_RED_GREEN_BLUE_CROSS_FADE = "rgb_cross_fade"
 EFFECT_RED_GREEN_CROSS_FADE = "rg_cross_fade"
 EFFECT_RED_BLUE_CROSS_FADE = "rb_cross_fade"
 EFFECT_GREEN_BLUE_CROSS_FADE = "gb_cross_fade"
@@ -56,7 +56,7 @@ EFFECT_MAP = {
     EFFECT_COLORJUMP: 0x38,
 }
 EFFECT_MAP_AUTO_ON = {
-    EFFECT_SEVEN_COLOR_CROSS_FADE: 0x24,
+    EFFECT_RED_GREEN_BLUE_CROSS_FADE: 0x24,
     **EFFECT_MAP,
     EFFECT_CYCLE_RGB: 0x39,
     EFFECT_CYCLE_SEVEN_COLORS: 0x3A,
@@ -645,14 +645,18 @@ class PresetPattern:
     seven_color_jumping = EFFECT_MAP[EFFECT_COLORJUMP]
     cycle_rgb = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_RGB]
     cycle_seven_colors = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_SEVEN_COLORS]
-    seven_color_cross_fade = EFFECT_MAP_AUTO_ON[EFFECT_SEVEN_COLOR_CROSS_FADE]
+    red_green_blue_cross_fade = EFFECT_MAP_AUTO_ON[EFFECT_RED_GREEN_BLUE_CROSS_FADE]
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
-            v: k.replace("_", " ").title()
-            for k, v in PresetPattern.__dict__.items()
-            if type(v) is int
+            **EFFECT_ID_NAME_LEGACY_CCT,
+            **{
+                v: k.replace("_", " ").title()
+                for k, v in PresetPattern.__dict__.items()
+                if type(v) is int
+            },
         }
+        self._hex_str_valid_values = {f"0x{byte:02X}" for byte in self._value_to_str}
 
     @classmethod
     def instance(cls) -> "PresetPattern":
@@ -664,7 +668,13 @@ class PresetPattern:
     @staticmethod
     def valid(pattern: int) -> bool:
         instance = PresetPattern.instance()
-        return pattern in instance._value_to_str or pattern in EFFECT_ID_NAME_LEGACY_CCT
+        return pattern in instance._value_to_str
+
+    @staticmethod
+    def valid_or_raise(pattern: int) -> None:
+        instance = PresetPattern.instance()
+        if pattern not in instance._value_to_str:
+            raise ValueError(f"Pattern must be one of {instance._hex_str_valid_values}")
 
     @staticmethod
     def valtostr(pattern: int) -> Optional[str]:

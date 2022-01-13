@@ -650,6 +650,9 @@ async def test_async_set_levels(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     await asyncio.sleep(0)
     assert len(transport.mock_calls) == 4
 
+    with pytest.raises(ValueError):
+        await light.async_set_preset_pattern(101, 50, 100)
+
 
 @pytest.mark.asyncio
 async def test_async_set_levels_0x52(

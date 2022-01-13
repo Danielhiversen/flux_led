@@ -1171,9 +1171,7 @@ class LEDENETDevice:
             if pattern not in CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME:
                 raise ValueError("Pattern must be between 1 and 100")
         else:
-            PresetPattern.valtostr(pattern)
-            if not PresetPattern.valid(pattern):
-                raise ValueError("Pattern must be between 0x24 and 0x3a")
+            PresetPattern.valid_or_raise(pattern)
         if not (1 <= brightness <= 100):
             raise ValueError("Brightness must be between 1 and 100")
         self._last_effect_brightness = brightness
