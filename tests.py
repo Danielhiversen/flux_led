@@ -1035,7 +1035,7 @@ class TestLight(unittest.TestCase):
                 "red_fade",
                 "red_strobe",
                 "rg_cross_fade",
-                "seven_color_cross_fade",
+                "rgb_cross_fade",
                 "white_fade",
                 "white_strobe",
                 "yellow_fade",
@@ -1169,7 +1169,7 @@ class TestLight(unittest.TestCase):
                 "red_fade",
                 "red_strobe",
                 "rg_cross_fade",
-                "seven_color_cross_fade",
+                "rgb_cross_fade",
                 "white_fade",
                 "white_strobe",
                 "yellow_fade",
@@ -1246,7 +1246,7 @@ class TestLight(unittest.TestCase):
                 "red_fade",
                 "red_strobe",
                 "rg_cross_fade",
-                "seven_color_cross_fade",
+                "rgb_cross_fade",
                 "white_fade",
                 "white_strobe",
                 "yellow_fade",
@@ -1277,7 +1277,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"8(\x102\xa2")))
 
         light.set_effect("colorloop", 50, 50)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b'8%\x102\x9f')))
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"8%\x102\x9f")))
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")
@@ -1334,7 +1334,7 @@ class TestLight(unittest.TestCase):
                 "red_fade",
                 "red_strobe",
                 "rg_cross_fade",
-                "seven_color_cross_fade",
+                "rgb_cross_fade",
                 "white_fade",
                 "white_strobe",
                 "yellow_fade",
