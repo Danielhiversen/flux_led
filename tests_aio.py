@@ -1003,6 +1003,78 @@ async def test_ws2811_a2(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.asyncio
+async def test_ws2812b_older_a3(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
+    """Test we can determine ws2812b configuration on an older a3."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA3\x23\x61\x01\x32\x00\x64\x00\x00\x01\x00\x1E\x5E"
+    )
+    # ic state
+    light._aio_protocol.data_received(
+        b"\xB0\xB1\xB2\xB3\x00\x01\x01\x00\x00\x0B\x01\x63\x00\x1E\x00\x0A\x01\x00\x1E\x0A\xB5\x3D"
+    )
+
+    await task
+    assert light.pixels_per_segment == 30
+    assert light.segments == 10
+    assert light.music_pixels_per_segment == 30
+    assert light.music_segments == 10
+    assert light.ic_type == "WS2812B"
+    assert light.ic_type_num == 1
+    assert light.operating_mode is None
+    assert light.operating_modes is None
+    assert light.wiring == "RGB"
+    assert light.wiring_num == 0
+    assert light.wirings == ["RGB", "RBG", "GRB", "GBR", "BRG", "BGR"]
+    assert light.model_num == 0xA3
+    assert light.dimmable_effects is True
+    assert light.requires_turn_on is False
+
+    transport.reset_mock()
+    with patch.object(light, "_async_device_config_resync", mock_coro):
+        await light.async_set_device_config()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0bb\x00\x1e\x00\n\x01\x00\x1e\n\xf0\xa3\x1a"
+    )
+
+    transport.reset_mock()
+    with patch.object(light, "_async_device_config_resync", mock_coro):
+        await light.async_set_device_config(
+            ic_type="SK6812", wiring="GRB", pixels_per_segment=300
+        )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x0bb\x01,\x00\x06\x06\x02\x1e\n\xf0\xb5?"
+    )
+
+    transport.reset_mock()
+    with patch.object(light, "_async_device_config_resync", mock_coro):
+        await light.async_set_device_config(
+            pixels_per_segment=1000,
+            segments=1000,
+            music_pixels_per_segment=1000,
+            music_segments=1000,
+        )
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x0bb\x01,\x00\x06\x01\x00\x96\x06\xf0"\x1a'
+    )
+
+
+@pytest.mark.asyncio
 async def test_async_set_zones(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     """Test we can set set zone colors."""
     light = AIOWifiLedBulb("192.168.1.166")
