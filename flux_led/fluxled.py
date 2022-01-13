@@ -882,7 +882,8 @@ async def async_main() -> None:  # noqa: C901
     )
     for idx, info in enumerate(bulb_info_list):
         if isinstance(results[idx], Exception):
-            print(f"Error while processing {info}: {results[idx]}")
+            msg = str(results[idx]) or type(results[idx])
+            print(f"Error while processing {info}: {msg}")
     return
 
 
