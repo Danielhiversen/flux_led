@@ -623,7 +623,7 @@ class PresetPattern:
     cool_flash = EFFECT_MAP_LEGACY_CCT[EFFECT_COOL_FLASH]
     warm_gradual = EFFECT_MAP_LEGACY_CCT[EFFECT_WARM_GRADUAL]
     cool_gradual = EFFECT_MAP_LEGACY_CCT[EFFECT_COOL_GRADUAL]
-    seven_color_cross_fade = EFFECT_MAP[EFFECT_COLORLOOP]
+    coorloop = EFFECT_MAP[EFFECT_COLORLOOP]
     red_gradual_change = EFFECT_MAP[EFFECT_RED_FADE]
     green_gradual_change = EFFECT_MAP[EFFECT_GREEN_FADE]
     blue_gradual_change = EFFECT_MAP[EFFECT_BLUE_FADE]
@@ -649,10 +649,14 @@ class PresetPattern:
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
-            v: k.replace("_", " ").title()
-            for k, v in PresetPattern.__dict__.items()
-            if type(v) is int
+            **EFFECT_ID_NAME_LEGACY_CCT,
+            **{
+                v: k.replace("_", " ").title()
+                for k, v in PresetPattern.__dict__.items()
+                if type(v) is int
+            },
         }
+        self._hex_str_valid_values = {f"0x{byte:02X}" for byte in self._value_to_str}
 
     @classmethod
     def instance(cls) -> "PresetPattern":
@@ -664,7 +668,13 @@ class PresetPattern:
     @staticmethod
     def valid(pattern: int) -> bool:
         instance = PresetPattern.instance()
-        return pattern in instance._value_to_str or pattern in EFFECT_ID_NAME_LEGACY_CCT
+        return pattern in instance._value_to_str
+
+    @staticmethod
+    def valid_or_raise(pattern: int) -> bool:
+        instance = PresetPattern.instance()
+        if pattern not in instance._value_to_str:
+            raise ValueError(f"Pattern must be one of {instance._hex_str_valid_values}")
 
     @staticmethod
     def valtostr(pattern: int) -> Optional[str]:
