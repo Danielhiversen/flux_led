@@ -671,7 +671,7 @@ class PresetPattern:
         return pattern in instance._value_to_str
 
     @staticmethod
-    def valid_or_raise(pattern: int) -> bool:
+    def valid_or_raise(pattern: int) -> None:
         instance = PresetPattern.instance()
         if pattern not in instance._value_to_str:
             raise ValueError(f"Pattern must be one of {instance._hex_str_valid_values}")
