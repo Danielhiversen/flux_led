@@ -11,7 +11,7 @@ EFFECT_YELLOW_FADE = "yellow_fade"
 EFFECT_CYAN_FADE = "cyan_fade"
 EFFECT_PURPLE_FADE = "purple_fade"
 EFFECT_WHITE_FADE = "white_fade"
-EFFECT_SIX_COLOR_CROSS_FADE = "six_color_cross_fade"
+EFFECT_RED_GREEN_BLUE_CROSS_FADE = "rgb_cross_fade"
 EFFECT_RED_GREEN_CROSS_FADE = "rg_cross_fade"
 EFFECT_RED_BLUE_CROSS_FADE = "rb_cross_fade"
 EFFECT_GREEN_BLUE_CROSS_FADE = "gb_cross_fade"
@@ -56,7 +56,7 @@ EFFECT_MAP = {
     EFFECT_COLORJUMP: 0x38,
 }
 EFFECT_MAP_AUTO_ON = {
-    EFFECT_SIX_COLOR_CROSS_FADE: 0x24,
+    EFFECT_RED_GREEN_BLUE_CROSS_FADE: 0x24,
     **EFFECT_MAP,
     EFFECT_CYCLE_RGB: 0x39,
     EFFECT_CYCLE_SEVEN_COLORS: 0x3A,
@@ -645,7 +645,7 @@ class PresetPattern:
     seven_color_jumping = EFFECT_MAP[EFFECT_COLORJUMP]
     cycle_rgb = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_RGB]
     cycle_seven_colors = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_SEVEN_COLORS]
-    six_color_cross_fade = EFFECT_MAP_AUTO_ON[EFFECT_SIX_COLOR_CROSS_FADE]
+    red_green_blue_cross_fade = EFFECT_MAP_AUTO_ON[EFFECT_RED_GREEN_BLUE_CROSS_FADE]
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
