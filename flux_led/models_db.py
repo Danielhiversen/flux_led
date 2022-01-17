@@ -937,7 +937,7 @@ MODELS = [
         # 'AK001-ZJ2134' == v8.02 - seen on the water proof controllers for outdoor garden light
         # 'AK001-ZJ2101' == v8.61, 8.62 (44 key) - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
-        # "AK001-ZJ2145" == v9.27, 9.33 # w/IR
+        # "AK001-ZJ2145" == v9.27, 9.30, 9.33 # w/IR
         # "AK001-ZJ2146" == v10.48 # 2.4ghz support
         # "AK001-ZJ2148" == v10.63 # 2.4ghz support, confirmed to be able to change 2.4G remote settings
         models=[
