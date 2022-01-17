@@ -987,6 +987,12 @@ class TestLight(unittest.TestCase):
                 "129,53,35,56,5,16,182,0,152,25,4,37,15,197,]"
             ),
         )
+        light.setWhiteTemperature(2700, 255)
+        self.assertEqual(mock_read.call_count, 4)
+        self.assertEqual(mock_send.call_count, 7)
+        self.assertEqual(
+            mock_send.call_args, mock.call(bytearray(b"1\x00\x00\x00\xff\x00\x0f\x0fN"))
+        )
 
     @patch("flux_led.WifiLedBulb._send_msg")
     @patch("flux_led.WifiLedBulb._read_msg")

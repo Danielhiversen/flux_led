@@ -1507,6 +1507,31 @@ async def test_async_set_music_mode_device_without_mic_0x07(
 
 
 @pytest.mark.asyncio
+async def test_async_set_white_temp_0x35(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can set music mode on an 0x08."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        transport, protocol = await mock_aio_protocol()
+        light._aio_protocol.data_received(
+            b"\x81\x35\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xee"
+        )
+        await task
+        assert light.model_num == 0x35
+
+        transport.reset_mock()
+        await light.async_set_white_temp(6500, 255)
+        assert transport.mock_calls[0][0] == "write"
+        assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x00\xff\x0f\x0fN"
+
+
+@pytest.mark.asyncio
 async def test_async_failed_callback(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
@@ -1635,13 +1660,13 @@ async def test_async_set_brightness_cct(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x00\x0f?"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x0f\x0fN"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x00\x0f\xc0"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x0f\x0f\xcf"
     assert light.brightness == 128
 
 
