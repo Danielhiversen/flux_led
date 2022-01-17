@@ -135,7 +135,7 @@ class WifiLedBulb(LEDENETDevice):
         if self.rgbw_color_temp_support(self.color_modes):
             self.set_levels(cold, cold, cold, warm, 0, persist=persist, retry=retry)
         else:
-            self.set_levels(0, 0, 0, warm, cold, persist=persist, retry=retry)
+            self.set_levels(None, None, None, warm, cold, persist=persist, retry=retry)
 
     def setRgb(
         self,
