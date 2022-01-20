@@ -694,7 +694,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x07,
-        # "AK001-ZJ2146" == v2 has RF remote support
+        # "AK001-ZJ2146" == v2.06 has RF remote support
         models=["AK001-ZJ2146"],
         description="Controller RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
@@ -711,7 +711,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x08,
         # AK001-ZJ2101 is v1
-        # AK001-ZJ2145 is v2.11
+        # AK001-ZJ2145 is v2.11 (Upgradable to v2.15)
         models=["AK001-ZJ2101", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGB with MIC",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
