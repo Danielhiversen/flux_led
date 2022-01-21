@@ -520,20 +520,20 @@ class AIOWifiLedBulb(LEDENETDevice):
         # change two values before the first one has been updated
         async with self._device_config_lock:
             device_config = self.model_data.device_config
+            ic_type_to_num = device_config.ic_type_to_num
+            operating_mode_to_num = device_config.operating_mode_to_num
+            if self._device_config is not None:
+                wiring_to_num = self._device_config.wiring_to_num
+            else:
+                wiring_to_num = device_config.wiring_to_num
             operating_mode_num = (
                 self.operating_mode_num
                 if operating_mode is None
-                else device_config.operating_mode_to_num[operating_mode]
+                else operating_mode_to_num[operating_mode]
             )
-            wiring_num = (
-                self.wiring_num
-                if wiring is None
-                else device_config.wiring_to_num[wiring]
-            )
+            wiring_num = self.wiring_num if wiring is None else wiring_to_num[wiring]
             ic_type_num = (
-                self.ic_type_num
-                if ic_type is None
-                else device_config.ic_type_to_num[ic_type]
+                self.ic_type_num if ic_type is None else ic_type_to_num[ic_type]
             )
             assert self._protocol is not None
             assert not isinstance(self._protocol, ProtocolLEDENETOriginal)

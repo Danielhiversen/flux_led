@@ -829,21 +829,31 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
     transport.reset_mock()
 
+    with patch.object(light, "_async_device_config_resync", mock_coro):
+        await light.async_set_device_config(ic_type="SK6812RGBW", wiring="WRGB")
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0bb\x00\x90\x00\x01\x07\x06\x90\x01\xf0\x81\xd6'
+    )
+
+    transport.reset_mock()
     with patch.object(aiodevice, "COMMAND_SPACING_DELAY", 0):
         await light.async_set_levels(r=255, g=255, b=255, w=255)
         assert transport.mock_calls == [
             call.write(
                 bytearray(
-                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x12"
+                    b'\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x13'
                 )
             ),
-            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\x03G\xffFY")),
+            call.write(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x03G\xffFZ')),
         ]
 
     transport.reset_mock()
     await light.async_set_levels(w=255)
     assert transport.mock_calls == [
-        call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x03G\xffFZ"))
+        call.write(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x03G\xffF['))
     ]
     light._transition_complete_time = 0
 
@@ -866,10 +876,10 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         assert transport.mock_calls == [
             call.write(
                 bytearray(
-                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x15"
+                    bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x16')
                 )
             ),
-            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x03G\x00G^")),
+            call.write(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x06\x00\x03G\x00G_')),
         ]
 
 
