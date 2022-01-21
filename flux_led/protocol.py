@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import datetime
 from enum import Enum
 import logging
-from typing import List, NamedTuple, Optional, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
     COLOR_MODE_RGB,
@@ -54,6 +54,8 @@ class LEDENETAddressableDeviceConfiguration:
     wirings: List[str]  # available wirings in the current mode
     wiring: Optional[str]  # RGB/BRG/GBR etc
     wiring_num: Optional[int]  # RGB/BRG/GBR number
+    num_to_wiring: Dict[int, str]
+    wiring_to_num: Dict[str, int]
     ic_type: Optional[str]  # WS2812B UCS.. etc
     ic_type_num: Optional[int]  # WS2812B UCS.. number etc
     operating_mode: Optional[str]  # RGB, RGBW
@@ -1429,6 +1431,8 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
             wirings=list(ADDRESSABLE_RGB_WIRING_TO_NUM),
             wiring_num=msg[10],
             wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[10]),
+            num_to_wiring=ADDRESSABLE_RGB_NUM_TO_WIRING,
+            wiring_to_num=ADDRESSABLE_RGB_WIRING_TO_NUM,
             ic_type=A1_NUM_TO_PROTOCOL.get(msg[3]),
             ic_type_num=msg[3],
             operating_mode=A1_NUM_TO_OPERATING_MODE.get(msg[3]),
@@ -1683,6 +1687,8 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
             wirings=list(ADDRESSABLE_RGB_NUM_TO_WIRING.values()),
             wiring_num=msg[7],
             wiring=ADDRESSABLE_RGB_NUM_TO_WIRING.get(msg[7]),
+            num_to_wiring=ADDRESSABLE_RGB_NUM_TO_WIRING,
+            wiring_to_num=ADDRESSABLE_RGB_WIRING_TO_NUM,
             ic_type=A2_NUM_TO_PROTOCOL.get(msg[6]),
             ic_type_num=msg[6],
             operating_mode=A2_NUM_TO_OPERATING_MODE.get(msg[6]),
@@ -1840,8 +1846,12 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         )
         if NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]) == COLOR_MODE_RGBW:
             wirings = ADDRESSABLE_RGBW_NUM_TO_WIRING
+            num_to_wiring = ADDRESSABLE_RGBW_NUM_TO_WIRING
+            wiring_to_num = ADDRESSABLE_RGBW_WIRING_TO_NUM
         else:
             wirings = ADDRESSABLE_RGB_NUM_TO_WIRING
+            num_to_wiring = ADDRESSABLE_RGB_NUM_TO_WIRING
+            wiring_to_num = ADDRESSABLE_RGB_WIRING_TO_NUM
         return LEDENETAddressableDeviceConfiguration(
             pixels_per_segment=pixels_per_segment,
             segments=segments,
@@ -1851,6 +1861,8 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
             wiring_num=msg[7],
             wiring=wirings.get(msg[7]),
             ic_type=NEW_ADDRESSABLE_NUM_TO_PROTOCOL.get(msg[6]),
+            num_to_wiring=num_to_wiring,
+            wiring_to_num=wiring_to_num,
             ic_type_num=msg[6],
             operating_mode=NEW_ADDRESSABLE_NUM_TO_OPERATING_MODE.get(msg[6]),
         )
@@ -2331,6 +2343,8 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
             wirings=[],
             wiring_num=None,
             wiring=None,
+            num_to_wiring={},
+            wiring_to_num={},
             ic_type=None,
             ic_type_num=None,
             operating_mode=COLOR_MODE_RGB,
