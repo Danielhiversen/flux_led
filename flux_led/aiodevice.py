@@ -21,6 +21,7 @@ from .const import (
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
     EFFECT_RANDOM,
+    PRESET_MUSIC_MODE,
     STATE_BLUE,
     STATE_COOL_WHITE,
     STATE_GREEN,
@@ -421,6 +422,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         if not self.microphone:
             raise ValueError("{self.model} does not have a built-in microphone")
+        self._set_preset_pattern_transition_complete_time()
+        self._replace_raw_state({"preset_pattern": PRESET_MUSIC_MODE})
         for idx, bytes_send in enumerate(
             self._protocol.construct_music_mode(
                 sensitivity or 100,
