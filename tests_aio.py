@@ -22,7 +22,6 @@ from flux_led.const import (
     WhiteChannelType,
 )
 from flux_led.protocol import (
-    PROTOCOL_LEDENET_8BYTE,
     PROTOCOL_LEDENET_8BYTE_AUTO_ON,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
