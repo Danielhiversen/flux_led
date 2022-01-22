@@ -1220,18 +1220,18 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         37 02 00 39  Jump
         37 03 00 3a  Strobe
         """
-        # Valid modes
+        # Valid effect
         # 0x00 - Fade In
         # 0x01 - Gradual
         # 0x02 - Jump
         # 0x03 - Strobe
-        if mode and not (0x00 <= mode <= 0x03):
+        if effect and not (0x00 <= effect <= 0x03):
             raise ValueError(
                 "Mode must be one of (0x00 - Fade In, 0x01 - Gradual, 0x02 - Jump, 0x03 - Strobe)"
             )
         return [
             self.construct_message(bytearray([0x73, 0x01, sensitivity, 0x0F])),
-            self.construct_message(bytearray([0x37, mode or 0x00, 0x00])),
+            self.construct_message(bytearray([0x37, effect or 0x00, 0x00])),
         ]
 
 
