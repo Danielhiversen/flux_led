@@ -23,6 +23,7 @@ from flux_led.const import (
 )
 from flux_led.protocol import (
     PROTOCOL_LEDENET_8BYTE,
+    PROTOCOL_LEDENET_8BYTE_AUTO_ON,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
@@ -1359,7 +1360,7 @@ async def test_async_set_music_mode_0x08_v1_firmware(
         assert light.version_num == 1
         assert light.effect == EFFECT_MUSIC
         assert light.microphone is True
-        assert light.protocol == PROTOCOL_LEDENET_8BYTE
+        assert light.protocol == PROTOCOL_LEDENET_8BYTE_AUTO_ON
 
         transport.reset_mock()
         await light.async_set_music_mode()
