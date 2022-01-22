@@ -32,6 +32,8 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODEL_NUMS_SWITCHS,
     PRESET_MUSIC_MODE,
     PRESET_MUSIC_MODE_LEGACY,
+    PRESET_MUSIC_MODES,
+    PRESET_PATTERN_CHANGE_LATENCY,
     STATE_BLUE,
     STATE_CHANGE_LATENCY,
     STATE_COOL_WHITE,
@@ -211,6 +213,7 @@ class LEDENETDevice:
         self._protocol: Optional[PROTOCOL_TYPES] = None
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
+        self._preset_pattern_transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
         self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
 
@@ -659,6 +662,7 @@ class LEDENETDevice:
         """
         color_mode = self.color_mode
         raw_state = self.raw_state
+
         assert raw_state is not None
 
         if self._named_effect:
@@ -670,6 +674,8 @@ class LEDENETDevice:
                     # the red byte holds the brightness during an effect
                     return min(255, round(raw_state.red * 255 / 100))
                 return round(self._last_effect_brightness * 255 / 100)
+            return 255
+        if raw_state.preset_pattern in PRESET_MUSIC_MODES and not self.dimmable_effects:
             return 255
         if color_mode == COLOR_MODE_DIM:
             return int(raw_state.warm_white)
@@ -748,16 +754,23 @@ class LEDENETDevice:
                 utils.raw_state_to_dec(raw_state),
             )
 
-        if time.monotonic() < self._transition_complete_time:
+        now_time = time.monotonic()
+        transition_states = set()
+        if now_time < self._transition_complete_time:
             # Do not update the channel states if a transition is
             # in progress as the state will not be correct
             # until the transition is completed since devices
             # "FADE" into the state requested.
+            transition_states |= CHANNEL_STATES
+        if now_time < self._preset_pattern_transition_complete_time:
+            transition_states.add("preset_pattern")
+
+        if transition_states:
             self._replace_raw_state(
                 {
                     name: value
                     for name, value in raw_state._asdict().items()
-                    if name not in CHANNEL_STATES
+                    if name not in transition_states
                 }
             )
         else:
@@ -1112,6 +1125,21 @@ class LEDENETDevice:
             self.ipaddr,
             transition_time,
             self._transition_complete_time,
+        )
+        # If we are doing a state transition cancel and preset pattern transition
+        self._preset_pattern_transition_complete_time = 0
+
+    def _set_preset_pattern_transition_complete_time(self) -> None:
+        """Set the time we expect the preset_pattern transition will be completed."""
+        assert self.raw_state is not None
+        self._preset_pattern_transition_complete_time = (
+            time.monotonic() + PRESET_PATTERN_CHANGE_LATENCY
+        )
+        _LOGGER.debug(
+            "%s: Mode trransition time is %s, set _preset_pattern_transition_complete_time to %s",
+            self.ipaddr,
+            PRESET_PATTERN_CHANGE_LATENCY,
+            self._preset_pattern_transition_complete_time,
         )
 
     def getRgb(self) -> Tuple[int, int, int]:

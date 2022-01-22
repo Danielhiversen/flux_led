@@ -835,7 +835,7 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0bb\x00\x90\x00\x01\x07\x06\x90\x01\xf0\x81\xd6'
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x0bb\x00\x90\x00\x01\x07\x06\x90\x01\xf0\x81\xd6"
     )
 
     transport.reset_mock()
@@ -844,16 +844,16 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         assert transport.mock_calls == [
             call.write(
                 bytearray(
-                    b'\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x13'
+                    b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x13"
                 )
             ),
-            call.write(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x03G\xffFZ')),
+            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x03G\xffFZ")),
         ]
 
     transport.reset_mock()
     await light.async_set_levels(w=255)
     assert transport.mock_calls == [
-        call.write(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x03G\xffF['))
+        call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x03G\xffF["))
     ]
     light._transition_complete_time = 0
 
@@ -876,10 +876,12 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         assert transport.mock_calls == [
             call.write(
                 bytearray(
-                    bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x16')
+                    bytearray(
+                        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\rA\x01\xff\xff\xff\x00\x00\x00`\xff\x00\x00\x9e\x16"
+                    )
                 )
             ),
-            call.write(bytearray(b'\xb0\xb1\xb2\xb3\x00\x01\x01\x06\x00\x03G\x00G_')),
+            call.write(bytearray(b"\xb0\xb1\xb2\xb3\x00\x01\x01\x06\x00\x03G\x00G_")),
         ]
 
 
@@ -1352,14 +1354,19 @@ async def test_async_set_music_mode_0x08_v1_firmware(
         task = asyncio.create_task(light.async_setup(_updated_callback))
         transport, protocol = await mock_aio_protocol()
         light._aio_protocol.data_received(
-            b"\x81\x08\x23\x62\x23\x01\x80\x00\xFF\x00\x01\x00\x00\xB2"
+            b"\x81\x08\x23\x62\x23\x01\x80\x00\x80\x00\x01\x00\x00\x33"
         )
         await task
         assert light.model_num == 0x08
         assert light.version_num == 1
         assert light.effect == EFFECT_MUSIC
         assert light.microphone is True
+        assert light.raw_state.red == 128
+        assert light.raw_state.green == 0
+        assert light.raw_state.blue == 128
         assert light.protocol == PROTOCOL_LEDENET_8BYTE_AUTO_ON
+        # In music mode, we always report 255 otherwise it will likely be 0
+        assert light.brightness == 255
 
         transport.reset_mock()
         await light.async_set_music_mode()
