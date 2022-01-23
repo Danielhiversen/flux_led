@@ -318,7 +318,7 @@ class LEDENETDevice:
     @property
     def rgbwprotocol(self) -> bool:
         """Devices that don't require a separate rgb/w bit."""
-        return self.model_data.always_writes_white_and_colors
+        return self.rgbwcapable or self.model_data.always_writes_white_and_colors
 
     @property
     def microphone(self) -> bool:

@@ -227,6 +227,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         calls = (
             self._async_turn_on,
             self._async_turn_on,
+            self._async_turn_on,
             self._async_turn_off_on,
             self._async_turn_on,
             self._async_turn_on,
