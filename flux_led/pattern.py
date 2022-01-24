@@ -683,8 +683,8 @@ class PresetPattern:
 
     @staticmethod
     def str_to_val(effect: str) -> int:
-        if effect in EFFECT_MAP:
-            return EFFECT_MAP[effect]
+        if effect in EFFECT_MAP_AUTO_ON:
+            return EFFECT_MAP_AUTO_ON[effect]
         mapped_effect = effect.replace(" ", "_").lower()
         if hasattr(PresetPattern, mapped_effect):
             return cast(int, getattr(PresetPattern, mapped_effect))
