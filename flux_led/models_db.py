@@ -935,7 +935,7 @@ MODELS = [
         model_num=0x33,
         # 'AK001-ZJ100' == v3 - WIFI370 version
         # 'AK001-ZJ210' == v6.37 - Seen on the outdoor string lights from Lytworx
-        # 'AK001-ZJ2104' == v7 supports turning on by effect/levels set
+        # 'AK001-ZJ2104' == v7.07 - Seen on usb fairy lights - supports turning on by effect/levels set
         # 'AK001-ZJ2134' == v8.02 - seen on the water proof controllers for outdoor garden light
         # 'AK001-ZJ2101' == v8.61, 8.62 (44 key) - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9 # no rf support!
