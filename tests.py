@@ -533,7 +533,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x00\x00\x00\x19\x00\x00\x0fY')),
+            mock.call(bytearray(b"1\x00\x00\x00\x19\x00\x00\x0fY")),
         )
 
         light._transition_complete_time = 0
@@ -599,22 +599,22 @@ class TestLight(unittest.TestCase):
         light.setWarmWhite(50)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x00\x00\x00\x7f%\x00\x0f\xe4')),
+            mock.call(bytearray(b"1\x00\x00\x00\x7f%\x00\x0f\xe4")),
         )
         light.setWarmWhite255(utils.percentToByte(50))
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x00\x00\x00\x7f%\x00\x0f\xe4')),
+            mock.call(bytearray(b"1\x00\x00\x00\x7f%\x00\x0f\xe4")),
         )
         light.setColdWhite(50)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x00\x00\x00\x00\x7f\x00\x0f\xbf')),
+            mock.call(bytearray(b"1\x00\x00\x00\x00\x7f\x00\x0f\xbf")),
         )
         light.setColdWhite255(utils.percentToByte(50))
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x00\x00\x00\x00\x7f\x00\x0f\xbf')),
+            mock.call(bytearray(b"1\x00\x00\x00\x00\x7f\x00\x0f\xbf")),
         )
         light.setCustomPattern([[255, 0, 0]], 50, TRANSITION_GRADUAL)
         self.assertEqual(
@@ -762,7 +762,7 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(
             mock_send.call_args,
-            mock.call(bytearray(b'1\x00\x00\x00\x19\x00\x00\x0fY')),
+            mock.call(bytearray(b"1\x00\x00\x00\x19\x00\x00\x0fY")),
         )
 
         light._transition_complete_time = 0

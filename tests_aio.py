@@ -1340,9 +1340,9 @@ async def test_async_set_music_mode_0x08(
         transport.reset_mock()
         await light.async_set_music_mode(effect=2)
         assert transport.mock_calls[0][0] == "write"
-        assert transport.mock_calls[0][1][0] == b's\x01d\x0f\xe7'
+        assert transport.mock_calls[0][1][0] == b"s\x01d\x0f\xe7"
         assert transport.mock_calls[1][0] == "write"
-        assert transport.mock_calls[1][1][0] == b'7\x02\x009'
+        assert transport.mock_calls[1][1][0] == b"7\x02\x009"
 
         with pytest.raises(ValueError):
             await light.async_set_music_mode(effect=0x08)
@@ -1685,13 +1685,13 @@ async def test_async_set_brightness_cct_0x25(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x00\x00\x00g\x98\x00\x0f?'
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x00\x0f?"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x00\x00\x004L\x00\x0f\xc0'
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x00\x0f\xc0"
     assert light.brightness == 128
 
 
@@ -1716,14 +1716,15 @@ async def test_async_set_brightness_cct_0x07(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x00\x00\x00\x00\xff\x0f\x0fN'
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x00\xff\x0f\x0fN"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x00\x00\x00\x00\x80\x0f\x0f\xcf'
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x00\x80\x0f\x0f\xcf"
     assert light.brightness == 128
+
 
 @pytest.mark.asyncio
 async def test_async_set_brightness_dim(mock_aio_protocol):
@@ -1746,13 +1747,13 @@ async def test_async_set_brightness_dim(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x00\x00\x00\xff\xff\x00\x0f>'
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\xff\xff\x00\x0f>"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x00\x00\x00\x80\x80\x00\x0f@'
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x80\x80\x00\x0f@"
     assert light.brightness == 128
 
 
@@ -1777,15 +1778,14 @@ async def test_async_set_brightness_rgb_0x33(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\xff\x00\xd4\x00\x00\x0f\x13'
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd4\x00\x00\x0f\x13"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x80\x00j\x00\x00\x0f*'
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00j\x00\x00\x0f*"
     assert light.brightness == 128
-
 
 
 @pytest.mark.asyncio
@@ -1809,13 +1809,13 @@ async def test_async_set_brightness_rgb_0x25(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\xff\x00\xd4\x00\x00\x00\x0f\x13'
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd4\x00\x00\x00\x0f\x13"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b'1\x80\x00j\x00\x00\x00\x0f*'
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00j\x00\x00\x00\x0f*"
     assert light.brightness == 128
 
 
