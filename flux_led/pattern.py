@@ -55,7 +55,7 @@ EFFECT_MAP = {
     EFFECT_WHITE_STROBE: 0x37,
     EFFECT_COLORJUMP: 0x38,
 }
-EFFECT_MAP_AUTO_ON = {
+EFFECT_MAP_DIMMABLE = {
     EFFECT_RED_GREEN_BLUE_CROSS_FADE: 0x24,
     **EFFECT_MAP,
     EFFECT_CYCLE_RGB: 0x39,
@@ -73,11 +73,11 @@ EFFECT_MAP_LEGACY_CCT = {
 }
 
 EFFECT_ID_NAME_LEGACY_CCT = {v: k for k, v in EFFECT_MAP_LEGACY_CCT.items()}
-EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_AUTO_ON.items()}
+EFFECT_ID_NAME = {v: k for k, v in EFFECT_MAP_DIMMABLE.items()}
 EFFECT_CUSTOM_CODE = 0x60
 
 EFFECT_LIST = sorted(EFFECT_MAP)
-EFFECT_LIST_AUTO_ON = sorted(EFFECT_MAP_AUTO_ON)
+EFFECT_LIST_DIMMABLE = sorted(EFFECT_MAP_DIMMABLE)
 EFFECT_LIST_LEGACY_CCT = sorted(EFFECT_MAP_LEGACY_CCT)
 
 ADDRESSABLE_EFFECT_ID_NAME = {
@@ -643,9 +643,9 @@ class PresetPattern:
     purple_strobe_flash = EFFECT_MAP[EFFECT_PURPLE_STROBE]
     white_strobe_flash = EFFECT_MAP[EFFECT_WHITE_STROBE]
     seven_color_jumping = EFFECT_MAP[EFFECT_COLORJUMP]
-    cycle_rgb = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_RGB]
-    cycle_seven_colors = EFFECT_MAP_AUTO_ON[EFFECT_CYCLE_SEVEN_COLORS]
-    red_green_blue_cross_fade = EFFECT_MAP_AUTO_ON[EFFECT_RED_GREEN_BLUE_CROSS_FADE]
+    cycle_rgb = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_RGB]
+    cycle_seven_colors = EFFECT_MAP_DIMMABLE[EFFECT_CYCLE_SEVEN_COLORS]
+    red_green_blue_cross_fade = EFFECT_MAP_DIMMABLE[EFFECT_RED_GREEN_BLUE_CROSS_FADE]
 
     def __init__(self) -> None:
         self._value_to_str: Dict[int, str] = {
@@ -683,8 +683,8 @@ class PresetPattern:
 
     @staticmethod
     def str_to_val(effect: str) -> int:
-        if effect in EFFECT_MAP_AUTO_ON:
-            return EFFECT_MAP_AUTO_ON[effect]
+        if effect in EFFECT_MAP_DIMMABLE:
+            return EFFECT_MAP_DIMMABLE[effect]
         mapped_effect = effect.replace(" ", "_").lower()
         if hasattr(PresetPattern, mapped_effect):
             return cast(int, getattr(PresetPattern, mapped_effect))
