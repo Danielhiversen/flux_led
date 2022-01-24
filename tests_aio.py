@@ -422,11 +422,12 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
         await asyncio.create_task(light.async_turn_on())
         assert light.is_on is False
-        assert "Failed to turn on (1/5)" in caplog.text
-        assert "Failed to turn on (2/5)" in caplog.text
-        assert "Failed to turn on (3/5)" in caplog.text
-        assert "Failed to turn on (4/5)" in caplog.text
-        assert "Failed to turn on (5/5)" in caplog.text
+        assert "Failed to turn on (1/6)" in caplog.text
+        assert "Failed to turn on (2/6)" in caplog.text
+        assert "Failed to turn on (3/6)" in caplog.text
+        assert "Failed to turn on (4/6)" in caplog.text
+        assert "Failed to turn on (5/6)" in caplog.text
+        assert "Failed to turn on (6/6)" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -1339,9 +1340,9 @@ async def test_async_set_music_mode_0x08(
         transport.reset_mock()
         await light.async_set_music_mode(effect=2)
         assert transport.mock_calls[0][0] == "write"
-        assert transport.mock_calls[0][1][0] == b's\x01d\x0f\xe7'
+        assert transport.mock_calls[0][1][0] == b"s\x01d\x0f\xe7"
         assert transport.mock_calls[1][0] == "write"
-        assert transport.mock_calls[1][1][0] == b'7\x02\x009'
+        assert transport.mock_calls[1][1][0] == b"7\x02\x009"
 
         with pytest.raises(ValueError):
             await light.async_set_music_mode(effect=0x08)
@@ -1664,8 +1665,8 @@ async def test_async_set_brightness_rgbww(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
-async def test_async_set_brightness_cct(mock_aio_protocol):
-    """Test we can set brightness with a cct device."""
+async def test_async_set_brightness_cct_0x25(mock_aio_protocol):
+    """Test we can set brightness with a 0x25 cct device."""
     light = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
@@ -1684,13 +1685,44 @@ async def test_async_set_brightness_cct(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x0f\x0fN"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00g\x98\x00\x0f?"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x0f\x0f\xcf"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x004L\x00\x0f\xc0"
+    assert light.brightness == 128
+
+
+@pytest.mark.asyncio
+async def test_async_set_brightness_cct_0x07(mock_aio_protocol):
+    """Test we can set brightness with a 0x07 cct device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x07\x24\x61\xC7\x01\x00\x00\x00\x00\x02\xFF\x0F\xE5"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x00\xff\x0f\x0fN"
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x00\x80\x0f\x0f\xcf"
     assert light.brightness == 128
 
 
@@ -1715,19 +1747,50 @@ async def test_async_set_brightness_dim(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\xff\xff\x0f\x0fM"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\xff\xff\x00\x0f>"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x80\x80\x0f\x0fO"
+    assert transport.mock_calls[0][1][0] == b"1\x00\x00\x00\x80\x80\x00\x0f@"
     assert light.brightness == 128
 
 
 @pytest.mark.asyncio
-async def test_async_set_brightness_rgb(mock_aio_protocol):
+async def test_async_set_brightness_rgb_0x33(mock_aio_protocol):
     """Test we can set brightness with a rgb only device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x33\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xec"
+    )
+    await task
+
+    await light.async_stop()
+    await asyncio.sleep(0)  # make sure nothing throws
+
+    transport.reset_mock()
+    await light.async_set_brightness(255)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd4\x00\x00\x0f\x13"
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00j\x00\x00\x0f*"
+    assert light.brightness == 128
+
+
+@pytest.mark.asyncio
+async def test_async_set_brightness_rgb_0x25(mock_aio_protocol):
+    """Test we can set brightness with a 0x25 device."""
     light = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
@@ -1746,13 +1809,13 @@ async def test_async_set_brightness_rgb(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd4\x00\x00\xf0\x0f\x03"
+    assert transport.mock_calls[0][1][0] == b"1\xff\x00\xd4\x00\x00\x00\x0f\x13"
     assert light.brightness == 255
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0] == b"1\x80\x00j\x00\x00\xf0\x0f\x1a"
+    assert transport.mock_calls[0][1][0] == b"1\x80\x00j\x00\x00\x00\x0f*"
     assert light.brightness == 128
 
 
