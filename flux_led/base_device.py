@@ -65,7 +65,7 @@ from .pattern import (
     EFFECT_ID_NAME,
     EFFECT_ID_NAME_LEGACY_CCT,
     EFFECT_LIST,
-    EFFECT_LIST_AUTO_ON,
+    EFFECT_LIST_DIMMABLE,
     EFFECT_LIST_LEGACY_CCT,
     ORIGINAL_ADDRESSABLE_EFFECT_ID_NAME,
     ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID,
@@ -603,7 +603,7 @@ class LEDENETDevice:
         elif protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
             effects = CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.values()
         elif COLOR_MODES_RGB.intersection(self.color_modes):
-            effects = EFFECT_LIST if self.requires_turn_on else EFFECT_LIST_AUTO_ON
+            effects = EFFECT_LIST_DIMMABLE if self.dimmable_effects else EFFECT_LIST
         elif protocol == PROTOCOL_LEDENET_ORIGINAL_CCT:
             effects = EFFECT_LIST_LEGACY_CCT
         if self.microphone:
