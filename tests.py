@@ -1423,8 +1423,11 @@ class TestLight(unittest.TestCase):
         self.assertEqual(mock_send.call_args, mock.call(bytearray(b"88\x10d\xe4")))
 
         # Library names
-        light.set_effect("seven_color_jumping", 50, 60)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"88\x10<\xbc")))
+        light.set_effect("seven_color_jumping", 50, 50)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"88\x102\xb2")))
+
+        light.set_effect("rgb_cross_fade", 50, 60)
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"8$\x10<\xa8")))
 
         with pytest.raises(ValueError):
             light.set_effect("unknown", 50)
@@ -1438,7 +1441,7 @@ class TestLight(unittest.TestCase):
         light._transition_complete_time = 0
         light.update_state()
         self.assertEqual(mock_read.call_count, 4)
-        self.assertEqual(mock_send.call_count, 6)
+        self.assertEqual(mock_send.call_count, 7)
         self.assertEqual(mock_send.call_args, mock.call(bytearray(LEDENET_STATE_QUERY)))
         self.assertEqual(light.mode, "preset")
         self.assertEqual(light.effect, "colorjump")
