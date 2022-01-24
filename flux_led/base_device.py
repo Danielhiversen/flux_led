@@ -1074,7 +1074,7 @@ class LEDENETDevice:
         w_value = None if w is None else int(w)
         # ProtocolLEDENET9Byte devices support two white outputs for cold and warm.
         if w2 is None:
-            if self.color_mode in {COLOR_MODE_CCT, COLOR_MODE_RGBWW}:
+            if w is not None and self.color_mode in {COLOR_MODE_CCT, COLOR_MODE_RGBWW}:
                 # If we're only setting a single white value, we preserve the cold white value
                 w2_value: Optional[int] = self.cold_white
             else:
