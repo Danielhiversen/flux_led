@@ -710,7 +710,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x08,
-        # AK001-ZJ2101 is v1
+        # AK001-ZJ2101 is v1.11
         # AK001-ZJ2145 is v2.11 (Upgradable to v2.15)
         models=["AK001-ZJ2101", "AK001-ZJ2145", "AK001-ZJ2147"],
         description="Controller RGB with MIC",
@@ -933,7 +933,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x33,
-        # 'AK001-ZJ100' == v3 - WIFI370 version
+        # 'AK001-ZJ100' == v3.03 - WIFI370 version
         # 'AK001-ZJ210' == v6.37 - Seen on the outdoor string lights from Lytworx
         # 'AK001-ZJ2104' == v7.07 - Seen on usb fairy lights - supports turning on by effect/levels set
         # 'AK001-ZJ2134' == v8.02 - seen on the water proof controllers for outdoor garden light
@@ -966,9 +966,9 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x35,
-        # 'AK001-ZJ2101' and 'AK001-ZJ2104' is v7
+        # 'AK001-ZJ2101' is v7.63 and 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2145' is v8
-        # 'AK001-ZJ2146' is v9
+        # 'AK001-ZJ2146' is v9.62 (seen on 9w RF Bulb)
         # 'AK001-ZJ2147' is v9.7 (with RF remote control support)
         # 'AK001-ZJ2146' 40w flood light, newer smart bulbs (with RF remote control support)
         models=[
