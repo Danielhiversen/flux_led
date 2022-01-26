@@ -696,6 +696,11 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.process_remote_config_response(msg)
             changed_state = True
         else:
+            _LOGGER.debug(
+                "%s: Ignoring unknown message: %s",
+                self.ipaddr,
+                " ".join(f"0x{x:02X}" for x in msg),
+            )
             return
         if not changed_state and self.raw_state == prev_state:
             return
