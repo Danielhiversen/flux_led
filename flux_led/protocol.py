@@ -167,7 +167,8 @@ MSG_LENGTHS = {
     MSG_A1_DEVICE_CONFIG: LEDENET_A1_DEVICE_CONFIG_RESPONSE_LEN,
 }
 
-OUTER_MESSAGE_WRAPPER = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00, 0x01, 0x01]
+OUTER_MESSAGE_WRAPPER_FIRST_BYTES = [OUTER_MESSAGE_FIRST_BYTE, 0xB1, 0xB2, 0xB3, 0x00]
+OUTER_MESSAGE_WRAPPER = [*OUTER_MESSAGE_WRAPPER_FIRST_BYTES, 0x01, 0x01]
 OUTER_MESSAGE_WRAPPER_START_LEN = 10
 CHECKSUM_LEN = 1
 
@@ -445,7 +446,7 @@ class ProtocolBase:
 
     def is_valid_outer_message(self, data: bytes) -> bool:
         """Check if a message is a valid outer message."""
-        if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER)):
+        if not data.startswith(bytearray(OUTER_MESSAGE_WRAPPER_FIRST_BYTES)):
             return False
         return self.is_checksum_correct(data)
 

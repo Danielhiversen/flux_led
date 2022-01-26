@@ -648,7 +648,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x04,
-        # AK001-ZJ100 == v3.09
+        # AK001-ZJ100 == v3.09, v3.15 (Illume)
         # AK001-ZJ200 == v5.20
         # There are a limited set of these devices that are the mini version but most are UFOs
         models=[
@@ -968,15 +968,16 @@ MODELS = [
         model_num=0x35,
         # 'AK001-ZJ2101' is v7.63 and 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2145' is v8
-        # 'AK001-ZJ2146' is v9.62 (seen on 9w RF Bulb)
+        # 'AK001-ZJ2146' is v9, 40w flood light, newer smart bulbs (with RF remote control support)
         # 'AK001-ZJ2147' is v9.7 (with RF remote control support)
-        # 'AK001-ZJ2146' 40w flood light, newer smart bulbs (with RF remote control support)
+        # 'AK001-ZJ21410' is v9.91 seen on the Bunpeon smart floor light ASIN:B09MN65324
         models=[
             "AK001-ZJ2101",
             "AK001-ZJ2104",
             "AK001-ZJ2145",
             "AK001-ZJ2146",
             "AK001-ZJ2147",
+            "AK001-ZJ21410",
         ],
         description="Bulb RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
