@@ -1012,10 +1012,14 @@ MODELS = [
         model_num=0x44,
         # v8 - AK001-ZJ200 aka old flux
         # v9 - AK001-ZJ210
+        # v10.49 - AK001-ZJ2101
         models=["AK001-ZJ200", "AK001-ZJ210"],
         description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+            MinVersionProtocol(10, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
+        ],
         mode_to_color_mode={},
         color_modes=COLOR_MODES_RGB_W,  # Formerly rgbwcapable
         channel_map={},
