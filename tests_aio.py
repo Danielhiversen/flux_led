@@ -1575,6 +1575,26 @@ async def test_setup_0x35_with_ZJ21410(
 
 
 @pytest.mark.asyncio
+async def test_setup_0x44_with_version_num_10(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we use the right protocol for 044 with v10."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x44\x24\x61\x01\x01\xFF\x00\xFF\x00\x0A\x00\xF0\x44"
+    )
+    await task
+    assert light.model_num == 0x44
+    assert light.protocol == PROTOCOL_LEDENET_8BYTE_AUTO_ON
+
+
+@pytest.mark.asyncio
 async def test_async_failed_callback(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
