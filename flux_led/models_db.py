@@ -389,7 +389,7 @@ HARDWARE = [
         remote_rf=False,  # verified
         remote_24g=False,
         remote_24g_controls=False,
-        auto_on=False,
+        auto_on=True,
         dimmable_effects=False,
     ),
     LEDENETHardware(
