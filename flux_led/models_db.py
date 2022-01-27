@@ -934,7 +934,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x33,
         # 'AK001-ZJ100' == v3.03 - WIFI370 version
-        # 'AK001-ZJ210' == v6.37 - Seen on the outdoor string lights from Lytworx
+        # 'AK001-ZJ210' == v6.37 - Seen on the outdoor string lights from Lytworx -- May support auto on?
         # 'AK001-ZJ2104' == v7.07 - Seen on usb fairy lights - supports turning on by effect/levels set
         # 'AK001-ZJ2134' == v8.02 - seen on the water proof controllers for outdoor garden light
         # 'AK001-ZJ2101' == v8.61, 8.62 (44 key) - no dimmable effects confirmed, confirmed auto on
@@ -1011,13 +1011,13 @@ MODELS = [
     LEDENETModel(
         model_num=0x44,
         # v8 - AK001-ZJ200 aka old flux
-        # v9 - AK001-ZJ210
+        # v9.34 - AK001-ZJ210
         # v10.49 - AK001-ZJ2101
         models=["AK001-ZJ200", "AK001-ZJ210", "AK001-ZJ2101"],
         description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
-            MinVersionProtocol(10, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
+            MinVersionProtocol(9, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
             MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
         ],
         mode_to_color_mode={},
@@ -1173,7 +1173,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0xA2,
-        # 'AK001-ZJ2104' likely supports turning on by effect/levels set
+        # 'AK001-ZJ2104' = v2.33 supports turning on by effect/levels set
         models=["AK001-ZJ2104"],
         description="Addressable v2",
         always_writes_white_and_colors=False,
