@@ -670,7 +670,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x06,
-        # "AK001-ZJ2104" == v1 has RF remote support
+        # "AK001-ZJ2104" == v1.11 has RF remote support
         # "AK001-ZJ2145" == v2.03, v2.06, v2.09 has IR remote support but not always pinned out
         # "AK001-ZJ2147" == v3.31 has 2.4ghz remote support
         models=[
@@ -684,6 +684,7 @@ MODELS = [
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
             MinVersionProtocol(2, PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS),
+            MinVersionProtocol(1, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
             MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
         ],
         mode_to_color_mode=GENERIC_RGBW_MAP,
@@ -920,7 +921,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x25,
-        # 'AK001-ZJ200' == v2 - some devices have RF remote support (the mini ones)
+        # 'AK001-ZJ200' == v2.08 - some devices have RF remote support (the mini ones)
         models=["HF-LPB100-ZJ200", "AK001-ZJ200"],
         description="Controller RGB/WW/CW",
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
