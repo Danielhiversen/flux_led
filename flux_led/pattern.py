@@ -2,7 +2,6 @@ from typing import Dict, Optional, cast
 
 from .const import MultiColorEffects
 
-FFECT_RANDOM = "random"
 EFFECT_COLORLOOP = "colorloop"
 EFFECT_RED_FADE = "red_fade"
 EFFECT_GREEN_FADE = "green_fade"
