@@ -10,13 +10,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEVICE_ID = 0x33
+DEVICE_ID = 0xA1
 VERSION = 9
 MINOR_VERSION = 28
 ON_AT_START = False
 # MODEL = "AK001-ZJ2101"  # Supports auto on
 # MODEL = "AK001-ZJ2145"  # Supports dimmable effects
-MODEL = "AK001-ZJ2145"
+MODEL = "AK001-ZJ2147"
 
 
 def get_local_ip():
