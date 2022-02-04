@@ -2174,7 +2174,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x07\xa3\x01\x10\x00\x00\x00\xb4:"
+        == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x058\x01\x10\x00Ib'
     )
     light._transition_complete_time = 0
     light._aio_protocol.data_received(
@@ -2188,7 +2188,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x07\xa3\x01\x01\x00\x00\x00\xa5\x1d"
+        == b'\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x058\x01\x01\x00:E'
     )
 
     light._transition_complete_time = 0
