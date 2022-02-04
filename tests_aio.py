@@ -2170,32 +2170,32 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert light.brightness == 255
 
     transport.reset_mock()
-    await light.async_set_effect("Random Jump Async", 50)
+    await light.async_set_effect("Twinkle Green", 50)
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x048\x01\x10Ia"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\x048\n\x10Rs"
     )
     light._transition_complete_time = 0
     light._aio_protocol.data_received(
-        b"\x81\x1a\x23\x60\x01\x00\x64\x10\x00\x00\x01\x00\x06\x9a"
+        b"\x81\x1A\x23\x25\x0A\x00\x0F\x01\x00\x00\x01\x00\x06\x04"
     )
-    assert light.effect == "Random Jump Async"
-    assert light.speed == 50
+    assert light.effect == "Twinkle Green"
+    assert light.speed == 100
 
     transport.reset_mock()
-    await light.async_set_effect("Random Jump Async", 100)
+    await light.async_set_effect("Strobe Red, Green", 100)
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x048\x01\x01:D"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x04\x00\x048=\x01v\xbc"
     )
 
     light._transition_complete_time = 0
     light._aio_protocol.data_received(
-        b"\x81\x1a\x23\x60\x02\x00\x64\x01\x00\x00\x01\x00\x06\x8c"
+        b"\x81\x1A\x23\x25\x3D\x00\x0F\x01\x00\x00\x01\x00\x06\x37"
     )
-    assert light.effect == "Random Gradient Async"
+    assert light.effect == "Strobe Red, Green"
     assert light.speed == 100
 
     with pytest.raises(ValueError):
