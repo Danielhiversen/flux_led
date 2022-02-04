@@ -2315,7 +2315,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         sent_zones = len(rgb_list)
         if sent_zones > points:
             raise ValueError(f"Device supports a maximum of {points} zones")
-        msg = bytearray([0xA0, 0x00, 0x60])
+        msg = bytearray([0xA0, 0x00, 0x06])
         zone_size = points // sent_zones
         remaining = points
         for rgb in rgb_list:
