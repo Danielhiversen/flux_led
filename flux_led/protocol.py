@@ -2202,7 +2202,6 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
                     0x38,
                     pattern,
                     utils.speedToDelay(speed),
-                    0x00,
                 ]
             )
         )
