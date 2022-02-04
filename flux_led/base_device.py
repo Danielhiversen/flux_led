@@ -632,9 +632,11 @@ class LEDENETDevice:
                 return ADDRESSABLE_EFFECT_ID_NAME.get(mode)
             if pattern_code == 0x24:
                 return ASSESSABLE_MULTI_COLOR_ID_NAME.get(mode)
+            return None
         if protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
             if pattern_code == 0x60:
                 return CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME.get(mode)
+            return None
         if protocol == PROTOCOL_LEDENET_ORIGINAL_CCT:
             return EFFECT_ID_NAME_LEGACY_CCT.get(pattern_code)
         return EFFECT_ID_NAME.get(pattern_code)
