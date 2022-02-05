@@ -661,7 +661,7 @@ MODELS = [
             "AK001-ZJ200",
             "AK001-ZJ2104",
         ],
-        description="UFO Controller RGBW",  # AKA ZJ-WFUF-170F
+        description="Controller RGB&W",  # AKA ZJ-WFUF-170F
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
         protocols=[
             MinVersionProtocol(6, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
