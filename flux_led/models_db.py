@@ -650,6 +650,7 @@ MODELS = [
         model_num=0x04,
         # AK001-ZJ100 == v3.09, v3.15 (Illume)
         # AK001-ZJ200 == v5.20
+        # AK001-ZJ2104 == v6.20 (Dals)
         # There are a limited set of these devices that are the mini version but most are UFOs
         models=[
             "HF-LPB100",
@@ -658,10 +659,14 @@ MODELS = [
             "HF-LPB100-ZJ002",
             "AK001-ZJ100",
             "AK001-ZJ200",
+            "AK001-ZJ2104",
         ],
-        description="UFO Controller RGBW",  # AKA ZJ-WFUF-170F
+        description="Controller RGB&W",  # AKA ZJ-WFUF-170F
         always_writes_white_and_colors=True,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE)],
+        protocols=[
+            MinVersionProtocol(6, PROTOCOL_LEDENET_8BYTE_AUTO_ON),
+            MinVersionProtocol(0, PROTOCOL_LEDENET_8BYTE),
+        ],
         mode_to_color_mode={},
         color_modes={COLOR_MODE_RGBW},  # Formerly rgbwcapable
         channel_map={},
