@@ -2971,6 +2971,9 @@ async def test_async_scanner(mock_discovery_aio_protocol):
         b"192.168.198.196,B4E842E10520,AK001-ZJ2144", ("192.168.198.196", 48899)
     )
     protocol.datagram_received(
+        b"192.168.211.230,A020A61D892B,AK001-ZJ100", ("192.168.211.230", 48899)
+    )
+    protocol.datagram_received(
         b"+ok=TCP,GARBAGE,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
@@ -2978,6 +2981,9 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     )
     protocol.datagram_received(
         b"+ok=TCP,8816,ra8816us02.magichue.net\r", ("192.168.213.252", 48899)
+    )
+    protocol.datagram_received(
+        b"+ok=TCP,8806,mhc8806us.magichue.net", ("192.168.211.230", 48899)
     )
     protocol.datagram_received(b"AT+LVER\r", ("127.0.0.1", 48899))
     protocol.datagram_received(
@@ -2995,6 +3001,9 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     )
     protocol.datagram_received(
         b"192.168.213.65,F4CFA23E1AAF,AK001-ZJ2104", ("192.168.213.65", 48899)
+    )
+    protocol.datagram_received(
+        b"+ok=33_11_20170307_IR_mini\r\n", ("192.168.211.230", 48899)
     )
     protocol.datagram_received(b"+ok=", ("192.168.213.65", 48899))
     protocol.datagram_received(b"+ok=A2_33_20200428_ZG-LX\r", ("192.168.213.65", 48899))
@@ -3055,6 +3064,19 @@ async def test_async_scanner(mock_discovery_aio_protocol):
             "remote_access_host": "ra8816us02.magichue.net",
             "remote_access_port": 8816,
             "version_num": 3,
+        },
+        {
+            "firmware_date": datetime.date(2017, 3, 7),
+            "id": "A020A61D892B",
+            "ipaddr": "192.168.211.230",
+            "model": "AK001-ZJ100",
+            "model_description": "Controller RGB IR Mini",
+            "model_info": "IR_mini",
+            "model_num": 51,
+            "remote_access_enabled": True,
+            "remote_access_host": "mhc8806us.magichue.net",
+            "remote_access_port": 8806,
+            "version_num": 17,
         },
         {
             "firmware_date": datetime.date(2021, 1, 9),

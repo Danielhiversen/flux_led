@@ -86,12 +86,16 @@ def merge_discoveries(target: FluxLEDDiscovery, source: FluxLEDDiscovery) -> Non
             target[k] = v  # type: ignore[misc]
 
 
+def _strip_new_lines(msg: str) -> str:
+    return msg.replace("\r", "").replace("\n", "")
+
+
 def _process_discovery_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     """Process response from b'HF-A11ASSISTHREAD'
 
     b'192.168.214.252,B4E842E10588,AK001-ZJ2145'
     """
-    data_split = decoded_data.split(",")
+    data_split = _strip_new_lines(decoded_data).split(",")
     if len(data_split) < 3:
         return
     ipaddr = data_split[0]
@@ -109,8 +113,8 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
 
     b'+ok=07_06_20210106_ZG-BL\r'
     """
-    version_data = decoded_data[4:].replace("\r", "")
-    data_split = version_data.split("_", 4)
+    version_data = _strip_new_lines(decoded_data[4:])
+    data_split = version_data.split("_", maxsplit=3)
     if len(data_split) == 1:
         with contextlib.suppress(ValueError):
             data[ATTR_VERSION_NUM] = int(data_split[0], 16)
@@ -142,7 +146,7 @@ def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) ->
 
     b'+ok=TCP,8816,ra8816us02.magichue.net\r'
     """
-    data_split = decoded_data.replace("\r", "").split(",")
+    data_split = _strip_new_lines(decoded_data).split(",")
     if len(data_split) < 3:
         if not data.get(ATTR_REMOTE_ACCESS_ENABLED):
             data[ATTR_REMOTE_ACCESS_ENABLED] = False
