@@ -66,6 +66,7 @@ MODEL_INFO_NAMES = {
     "CL-BL": "",  # Send on the 0x1C table lamp
     "ZG-BL-IR": "IR",
     "IR": "IR",
+    "IR_MINI": "IR Mini",
     "ZG-BL-EH7W": "7w",
     "ZG-BL-IH9WL": "9w RF",
     "ZG-BL-IH9W": "9w RF",
@@ -939,7 +940,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x33,
-        # 'AK001-ZJ100' == v3.03 - WIFI370 version
+        # 'AK001-ZJ100' == v3.03 WIFI370 version, v3.11 IR_mini
         # 'AK001-ZJ210' == v6.37 - Seen on the outdoor string lights from Lytworx -- May support auto on?
         # 'AK001-ZJ2104' == v7.07 - Seen on usb fairy lights - supports turning on by effect/levels set
         # 'AK001-ZJ2134' == v8.02 - seen on the water proof controllers for outdoor garden light
@@ -1329,7 +1330,7 @@ def get_model_description(model_num: int, model_info: Optional[str]) -> str:
 def format_model_description(description: str, model_info: Optional[str]) -> str:
     """Format the description for a model."""
     if model_info:
-        extra = MODEL_INFO_NAMES.get(model_info)
+        extra = MODEL_INFO_NAMES.get(model_info.upper())
         if extra:
             return f"{description} {extra}"
     return description
