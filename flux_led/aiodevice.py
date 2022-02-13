@@ -53,6 +53,7 @@ DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
+POWER_CHANGE_ATTEMPTS = 6
 
 #
 # PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
@@ -92,8 +93,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
         self._remote_config_future: asyncio.Future[bool] = asyncio.Future()
         self._device_config_setup = False
-        self._on_futures: List["asyncio.Future[bool]"] = []
-        self._off_futures: List["asyncio.Future[bool]"] = []
+        self._power_state_futures: List["asyncio.Future[bool]"] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
@@ -189,85 +189,57 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_state_query())
 
-    async def _async_execute_and_wait_for(
-        self,
-        futures: List["asyncio.Future[bool]"],
-        coro: Callable[[], Coroutine[None, None, None]],
+    async def _async_wait_power_state_change(
+        self, future: asyncio.Future, state: bool
     ) -> bool:
-        future: "asyncio.Future[bool]" = asyncio.Future()
-        futures.append(future)
-        await coro()
-        _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT / 2)
+            if future.done() and future.result() == state:
+                return True
+        return False
+
+    async def _async_set_power_state(self, state: bool) -> bool:
+        assert self._protocol is not None
+        future: "asyncio.Future[bool]" = asyncio.Future()
+        self._power_state_futures.append(future)
+        await self._async_send_msg(self._protocol.construct_state_change(state))
+        _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
+        if await self._async_wait_power_state_change(future, state):
             return True
         _LOGGER.debug(
-            "%s: Did not get expected power state response, sending state query",
+            "%s: Did not get expected power state %s, sending state query",
             self.ipaddr,
+            state,
         )
+        future = asyncio.Future()
+        self._power_state_futures.append(future)
         await self._async_send_state_query()
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(future, POWER_STATE_TIMEOUT / 2)
+        if await self._async_wait_power_state_change(future, state):
             return True
         _LOGGER.debug(
             "%s: State query did not return expected power state", self.ipaddr
         )
         return False
 
-    async def _async_turn_on(self) -> None:
-        assert self._protocol is not None
-        await self._async_send_msg(self._protocol.construct_state_change(True))
-
-    async def _async_turn_off_on(self) -> None:
-        await self._async_turn_off()
-        await self._async_turn_on()
-
     async def async_turn_on(self) -> bool:
         """Turn on the device."""
-        calls = (
-            self._async_turn_on,
-            self._async_turn_on,
-            self._async_turn_on,
-            self._async_turn_off_on,
-            self._async_turn_on,
-            self._async_turn_on,
-        )
-        for idx, call in enumerate(calls):
-            if (
-                await self._async_execute_and_wait_for(self._on_futures, call)
-                or self.is_on
-            ):
-                return True
-            _LOGGER.debug(
-                "%s: Failed to turn on (%s/%s)", self.ipaddr, 1 + idx, len(calls)
-            )
-        return False
-
-    async def _async_turn_off(self) -> None:
-        assert self._protocol is not None
-        await self._async_send_msg(self._protocol.construct_state_change(False))
-
-    async def _async_turn_on_off(self) -> None:
-        await self._async_turn_on()
-        await self._async_turn_off()
+        await self._async_set_power_state_with_retry(True)
 
     async def async_turn_off(self) -> bool:
         """Turn off the device."""
-        calls = (
-            self._async_turn_off,
-            self._async_turn_off,
-            self._async_turn_on_off,
-            self._async_turn_off,
-            self._async_turn_off,
-        )
-        for idx, call in enumerate(calls):
-            if (
-                await self._async_execute_and_wait_for(self._off_futures, call)
-                or not self.is_on
-            ):
+        await self._async_set_power_state_with_retry(False)
+
+    async def _async_set_power_state_with_retry(self, state: bool) -> bool:
+        for idx in range(POWER_CHANGE_ATTEMPTS):
+            if await self._async_set_power_state(state):
                 return True
-            _LOGGER.debug(
-                "%s: Failed to turn off (%s/%s)", self.ipaddr, 1 + idx, len(calls)
+            _LOGGER.log(
+                logging.WARNING if idx + 1 == POWER_CHANGE_ATTEMPTS else logging.DEBUG,
+                "%s: Failed to set power state to %s (%s/%s)",
+                self.ipaddr,
+                state,
+                1 + idx,
+                POWER_CHANGE_ATTEMPTS,
             )
         return False
 
@@ -708,11 +680,10 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     def _process_futures_and_callbacks(self) -> None:
         """Called when state changes."""
-        futures = self._on_futures if self.is_on else self._off_futures
-        for future in futures:
+        for future in self._power_state_futures:
             if not future.done():
-                future.set_result(True)
-        futures.clear()
+                future.set_result(self.is_on)
+        self._power_state_futures.clear()
         assert self._updated_callback is not None
         try:
             self._updated_callback()
