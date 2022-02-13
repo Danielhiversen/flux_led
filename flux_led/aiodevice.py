@@ -244,6 +244,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
             if await self._async_set_power_state(state, False):
+                self._process_callbacks()
                 return True
             _LOGGER.debug(
                 "%s: Failed to set power state to %s (%s/%s)",
@@ -256,9 +257,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             # Sometimes these devices respond with "I turned off" and
             # they actually even when we are requesting to turn on.
             assert self._protocol is not None
-            self._set_power_state(
-                self._protocol.on_byte if state else self._protocol.off_byte
-            )
+            byte = self._protocol.on_byte if state else self._protocol.off_byte
+            self._set_power_state(byte)
+            self._process_callbacks()
             return True
         return False
 
@@ -666,13 +667,16 @@ class AIOWifiLedBulb(LEDENETDevice):
         self.set_available()
         prev_state = self.raw_state
         changed_state = False
+        process_power_futures = False
         if self._protocol.is_valid_outer_message(msg):
             msg = self._protocol.extract_inner_message(msg)
 
         if self._protocol.is_valid_state_response(msg):
             self._async_process_state_response(msg)
+            process_power_futures = True
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
+            process_power_futures = True
         elif self._protocol.is_valid_get_time_response(msg):
             self.process_time_response(msg)
         elif self._protocol.is_valid_timers_response(msg):
@@ -693,16 +697,17 @@ class AIOWifiLedBulb(LEDENETDevice):
                 " ".join(f"0x{x:02X}" for x in msg),
             )
             return
+        if process_power_futures:
+            for future in self._power_state_futures:
+                if not future.done():
+                    future.set_result(self.is_on)
+        self._power_state_futures.clear()
         if not changed_state and self.raw_state == prev_state:
             return
-        self._process_futures_and_callbacks()
+        self._process_callbacks()
 
-    def _process_futures_and_callbacks(self) -> None:
+    def _process_callbacks(self) -> None:
         """Called when state changes."""
-        for future in self._power_state_futures:
-            if not future.done():
-                future.set_result(self.is_on)
-        self._power_state_futures.clear()
         assert self._updated_callback is not None
         try:
             self._updated_callback()
