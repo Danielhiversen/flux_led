@@ -3,7 +3,7 @@ import contextlib
 from datetime import datetime
 import logging
 import time
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
@@ -32,8 +32,8 @@ from .const import (
 from .protocol import (
     POWER_RESTORE_BYTES_TO_POWER_RESTORE,
     REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
-    LEDENETRawState,
     LEDENETOriginalRawState,
+    LEDENETRawState,
     PowerRestoreState,
     PowerRestoreStates,
     ProtocolLEDENET8Byte,
@@ -196,7 +196,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_state_change(
-        self, future: "asyncio.Future[bool]", state: bool
+        self, future: "asyncio.Future[Any]", state: bool
     ) -> bool:
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT / 2)
@@ -229,10 +229,12 @@ class AIOWifiLedBulb(LEDENETDevice):
             _LOGGER.debug(
                 "%s: Bulb failed to respond, sending state query", self.ipaddr
             )
-        future = asyncio.Future()
-        self._state_futures.append(future)
+        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
+            asyncio.Future()
+        )
+        self._state_futures.append(state_future)
         await self._async_send_state_query()
-        if await self._async_wait_state_change(future, state):
+        if await self._async_wait_state_change(state_future, state):
             return True
         _LOGGER.debug(
             "%s: State query did not return expected power state", self.ipaddr
