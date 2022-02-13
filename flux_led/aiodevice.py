@@ -190,7 +190,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_power_state_change(
-        self, future: asyncio.Future, state: bool
+        self, future: "asyncio.Future[bool]", state: bool
     ) -> bool:
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT / 2)
