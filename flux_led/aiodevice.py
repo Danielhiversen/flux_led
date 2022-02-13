@@ -3,7 +3,7 @@ import contextlib
 from datetime import datetime
 import logging
 import time
-from typing import Callable, Coroutine, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
@@ -53,7 +53,7 @@ DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
-POWER_CHANGE_ATTEMPTS = 6
+POWER_CHANGE_ATTEMPTS = 4
 
 #
 # PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
@@ -198,7 +198,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 return True
         return False
 
-    async def _async_set_power_state(self, state: bool) -> bool:
+    async def _async_set_power_state(
+        self, state: bool, accept_any_response: bool
+    ) -> bool:
         assert self._protocol is not None
         future: "asyncio.Future[bool]" = asyncio.Future()
         self._power_state_futures.append(future)
@@ -206,11 +208,17 @@ class AIOWifiLedBulb(LEDENETDevice):
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
         if await self._async_wait_power_state_change(future, state):
             return True
-        _LOGGER.debug(
-            "%s: Did not get expected power state %s, sending state query",
-            self.ipaddr,
-            state,
-        )
+        responded = future.done()
+        if responded and accept_any_response:
+            return True
+        elif responded:
+            _LOGGER.debug(
+                "%s: Bulb responded with wrong power state %s, sending state query",
+                self.ipaddr,
+                state,
+            )
+        else:
+            _LOGGER.debug("%s: Bulb failed to respond, sending state query")
         future = asyncio.Future()
         self._power_state_futures.append(future)
         await self._async_send_state_query()
@@ -231,17 +239,21 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
-            if await self._async_set_power_state(state):
+            if await self._async_set_power_state(state, False):
                 return True
-            _LOGGER.log(
-                logging.WARNING if idx + 1 == POWER_CHANGE_ATTEMPTS else logging.DEBUG,
+            _LOGGER.debug(
                 "%s: Failed to set power state to %s (%s/%s)",
                 self.ipaddr,
                 state,
                 1 + idx,
                 POWER_CHANGE_ATTEMPTS,
             )
-        return False
+        if await self._async_set_power_state(state, True):
+            # Sometimes these devices respond with "I turned off" and
+            # they actually even when we are requesting to turn on.
+            self._set_power_state(
+                self._protocol.on_byte if state else self._protocol.off_byte
+            )
 
     async def async_set_white_temp(
         self, temperature: int, brightness: int, persist: bool = True
