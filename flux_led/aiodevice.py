@@ -93,6 +93,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
         self._remote_config_future: asyncio.Future[bool] = asyncio.Future()
         self._device_config_setup = False
+        self._power_state_lock = asyncio.Lock()
         self._power_state_futures: List["asyncio.Future[bool]"] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
@@ -235,11 +236,15 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_turn_on(self) -> bool:
         """Turn on the device."""
-        return await self._async_set_power_state_with_retry(True)
+        return await self._async_set_power_locked(True)
 
     async def async_turn_off(self) -> bool:
         """Turn off the device."""
-        return await self._async_set_power_state_with_retry(False)
+        return await self._async_set_power_locked(False)
+
+    async def _async_set_power_locked(self, state: bool) -> bool:
+        async with self._power_state_lock:
+            return await self._async_set_power_state_with_retry(state)
 
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
