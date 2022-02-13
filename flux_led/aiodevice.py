@@ -231,11 +231,11 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_turn_on(self) -> bool:
         """Turn on the device."""
-        await self._async_set_power_state_with_retry(True)
+        return await self._async_set_power_state_with_retry(True)
 
     async def async_turn_off(self) -> bool:
         """Turn off the device."""
-        await self._async_set_power_state_with_retry(False)
+        return await self._async_set_power_state_with_retry(False)
 
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
@@ -251,9 +251,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         if await self._async_set_power_state(state, True):
             # Sometimes these devices respond with "I turned off" and
             # they actually even when we are requesting to turn on.
-            self._set_power_state(
+            assert self._protocol is not None
+            return self._set_power_state(
                 self._protocol.on_byte if state else self._protocol.off_byte
             )
+        return False
 
     async def async_set_white_temp(
         self, temperature: int, brightness: int, persist: bool = True
