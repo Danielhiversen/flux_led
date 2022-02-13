@@ -710,6 +710,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     def _process_state_futures(self) -> None:
         """Process power future responses."""
+        assert self.raw_state is not None
         for future in self._state_futures:
             if not future.done():
                 future.set_result(self.raw_state)
