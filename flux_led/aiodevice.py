@@ -210,6 +210,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             return True
         responded = future.done()
         if responded and accept_any_response:
+            # The magic home app will accept any response as success
+            # so after a few tries, we do as well.
             return True
         elif responded:
             _LOGGER.debug(
