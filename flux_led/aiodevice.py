@@ -220,7 +220,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 state,
             )
         else:
-            _LOGGER.debug("%s: Bulb failed to respond, sending state query")
+            _LOGGER.debug(
+                "%s: Bulb failed to respond, sending state query", self.ipaddr
+            )
         future = asyncio.Future()
         self._power_state_futures.append(future)
         await self._async_send_state_query()
