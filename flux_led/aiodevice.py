@@ -346,7 +346,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         for idx, msg in enumerate(msgs):
             await self._async_send_msg(msg)
             if idx > 0:
-                self._process_futures_and_callbacks()
+                self._process_callbacks()
                 await asyncio.sleep(COMMAND_SPACING_DELAY)
                 self._set_transition_complete_time()
 
