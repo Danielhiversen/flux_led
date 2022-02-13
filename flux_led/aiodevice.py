@@ -244,7 +244,6 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
             if await self._async_set_power_state(state, False):
-                self._process_callbacks()
                 return True
             _LOGGER.debug(
                 "%s: Failed to set power state to %s (%s/%s)",
@@ -259,7 +258,6 @@ class AIOWifiLedBulb(LEDENETDevice):
             assert self._protocol is not None
             byte = self._protocol.on_byte if state else self._protocol.off_byte
             self._set_power_state(byte)
-            self._process_callbacks()
             return True
         return False
 
