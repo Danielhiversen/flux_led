@@ -254,9 +254,10 @@ class AIOWifiLedBulb(LEDENETDevice):
             # Sometimes these devices respond with "I turned off" and
             # they actually even when we are requesting to turn on.
             assert self._protocol is not None
-            return self._set_power_state(
+            self._set_power_state(
                 self._protocol.on_byte if state else self._protocol.off_byte
             )
+            return True
         return False
 
     async def async_set_white_temp(
