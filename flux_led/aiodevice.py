@@ -3,7 +3,7 @@ import contextlib
 from datetime import datetime
 import logging
 import time
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
@@ -32,6 +32,8 @@ from .const import (
 from .protocol import (
     POWER_RESTORE_BYTES_TO_POWER_RESTORE,
     REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
+    LEDENETRawState,
+    LEDENETOriginalRawState,
     PowerRestoreState,
     PowerRestoreStates,
     ProtocolLEDENET8Byte,
@@ -95,6 +97,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._device_config_setup = False
         self._power_state_lock = asyncio.Lock()
         self._power_state_futures: List["asyncio.Future[bool]"] = []
+        self._state_futures: List[
+            "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]"
+        ] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
@@ -190,7 +195,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_state_query())
 
-    async def _async_wait_power_state_change(
+    async def _async_wait_state_change(
         self, future: "asyncio.Future[bool]", state: bool
     ) -> bool:
         with contextlib.suppress(asyncio.TimeoutError):
@@ -207,7 +212,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._power_state_futures.append(future)
         await self._async_send_msg(self._protocol.construct_state_change(state))
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
-        if await self._async_wait_power_state_change(future, state):
+        if await self._async_wait_state_change(future, state):
             return True
         responded = future.done()
         if responded and accept_any_response:
@@ -225,9 +230,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 "%s: Bulb failed to respond, sending state query", self.ipaddr
             )
         future = asyncio.Future()
-        self._power_state_futures.append(future)
+        self._state_futures.append(future)
         await self._async_send_state_query()
-        if await self._async_wait_power_state_change(future, state):
+        if await self._async_wait_state_change(future, state):
             return True
         _LOGGER.debug(
             "%s: State query did not return expected power state", self.ipaddr
@@ -670,16 +675,15 @@ class AIOWifiLedBulb(LEDENETDevice):
         self.set_available()
         prev_state = self.raw_state
         changed_state = False
-        process_power_futures = False
         if self._protocol.is_valid_outer_message(msg):
             msg = self._protocol.extract_inner_message(msg)
 
         if self._protocol.is_valid_state_response(msg):
             self._async_process_state_response(msg)
-            process_power_futures = True
+            self._process_state_futures()
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
-            process_power_futures = True
+            self._process_power_futures()
         elif self._protocol.is_valid_get_time_response(msg):
             self.process_time_response(msg)
         elif self._protocol.is_valid_timers_response(msg):
@@ -700,14 +704,23 @@ class AIOWifiLedBulb(LEDENETDevice):
                 " ".join(f"0x{x:02X}" for x in msg),
             )
             return
-        if process_power_futures:
-            for future in self._power_state_futures:
-                if not future.done():
-                    future.set_result(self.is_on)
-        self._power_state_futures.clear()
         if not changed_state and self.raw_state == prev_state:
             return
         self._process_callbacks()
+
+    def _process_state_futures(self) -> None:
+        """Process power future responses."""
+        for future in self._state_futures:
+            if not future.done():
+                future.set_result(self.raw_state)
+        self._state_futures.clear()
+
+    def _process_power_futures(self) -> None:
+        """Process power future responses."""
+        for future in self._power_state_futures:
+            if not future.done():
+                future.set_result(self.is_on)
+        self._power_state_futures.clear()
 
     def _process_callbacks(self) -> None:
         """Called when state changes."""
