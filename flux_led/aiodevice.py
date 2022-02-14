@@ -55,7 +55,7 @@ DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
 POWER_STATE_TIMEOUT = 0.6
-POWER_CHANGE_ATTEMPTS = 3
+POWER_CHANGE_ATTEMPTS = 6
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -253,7 +253,10 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
-            if await self._async_set_power_state(state, False):
+            accept_any_power_state_response = idx > 2
+            if await self._async_set_power_state(
+                state, accept_any_power_state_response
+            ):
                 _LOGGER.debug(
                     "%s: Completed power state change to %s (%s/%s)",
                     self.ipaddr,
@@ -261,6 +264,13 @@ class AIOWifiLedBulb(LEDENETDevice):
                     1 + idx,
                     POWER_CHANGE_ATTEMPTS,
                 )
+                if accept_any_power_state_response:
+                    # Sometimes these devices respond with "I turned off" and
+                    # they actually even when we are requesting to turn on.
+                    assert self._protocol is not None
+                    byte = self._protocol.on_byte if state else self._protocol.off_byte
+                    self._set_power_state(byte)
+                    self._set_power_transition_complete_time()
                 return True
             _LOGGER.debug(
                 "%s: Failed to set power state to %s (%s/%s)",
@@ -269,15 +279,6 @@ class AIOWifiLedBulb(LEDENETDevice):
                 1 + idx,
                 POWER_CHANGE_ATTEMPTS,
             )
-        if await self._async_set_power_state(state, True):
-            _LOGGER.debug("%s: Assuming power state change of %s", self.ipaddr, state)
-            # Sometimes these devices respond with "I turned off" and
-            # they actually even when we are requesting to turn on.
-            assert self._protocol is not None
-            byte = self._protocol.on_byte if state else self._protocol.off_byte
-            self._set_power_state(byte)
-            self._set_power_transition_complete_time()
-            return True
         return False
 
     async def async_set_white_temp(

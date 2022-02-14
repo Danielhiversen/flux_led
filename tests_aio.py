@@ -441,7 +441,7 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
             light.is_on is True
         )  # transition time should now be in effect since we forced state
 
-        data = [*(b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde",) * 10]
+        data = [*(b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde",) * 14]
         await light.async_turn_off()
         await asyncio.sleep(0)
         # If all we get is on 0x81 responses, the bulb failed to turn off
@@ -455,9 +455,12 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010):
         await asyncio.create_task(light.async_turn_off())
         assert light.is_on is True
-        assert "Failed to set power state to False (1/3)" in caplog.text
-        assert "Failed to set power state to False (2/3)" in caplog.text
-        assert "Failed to set power state to False (3/3)" in caplog.text
+        assert "Failed to set power state to False (1/6)" in caplog.text
+        assert "Failed to set power state to False (2/6)" in caplog.text
+        assert "Failed to set power state to False (3/6)" in caplog.text
+        assert "Failed to set power state to False (4/6)" in caplog.text
+        assert "Failed to set power state to False (5/6)" in caplog.text
+        assert "Failed to set power state to False (6/6)" in caplog.text
 
     with patch.object(light._aio_protocol, "write", _send_data), patch.object(
         aiodevice, "POWER_STATE_TIMEOUT", 0.010
@@ -502,9 +505,12 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010):
         await asyncio.create_task(light.async_turn_on())
         assert light.is_on is False
-        assert "Failed to set power state to True (1/3)" in caplog.text
-        assert "Failed to set power state to True (2/3)" in caplog.text
-        assert "Failed to set power state to True (3/3)" in caplog.text
+        assert "Failed to set power state to True (1/6)" in caplog.text
+        assert "Failed to set power state to True (2/6)" in caplog.text
+        assert "Failed to set power state to True (3/6)" in caplog.text
+        assert "Failed to set power state to True (4/6)" in caplog.text
+        assert "Failed to set power state to True (5/6)" in caplog.text
+        assert "Failed to set power state to True (6/6)" in caplog.text
 
 
 @pytest.mark.asyncio
