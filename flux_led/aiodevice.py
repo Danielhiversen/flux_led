@@ -206,12 +206,11 @@ class AIOWifiLedBulb(LEDENETDevice):
             [state_future, power_state_future], state
         ):
             return True
-        responded = power_state_future.done() or state_future.done()
-        if responded and accept_any_power_state_response:
+        if power_state_future.done() and accept_any_power_state_response:
             # The magic home app will accept any response as success
             # so after a few tries, we do as well.
             return True
-        elif responded:
+        elif power_state_future.done() or state_future.done():
             _LOGGER.debug(
                 "%s: Bulb power state change taking longer than expected to %s, sending state query",
                 self.ipaddr,
