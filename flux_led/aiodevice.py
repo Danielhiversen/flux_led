@@ -56,7 +56,7 @@ DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
 POWER_STATE_TIMEOUT = 0.6
-POWER_CHANGE_ATTEMPTS = 2
+POWER_CHANGE_ATTEMPTS = 3
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -254,7 +254,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 POWER_CHANGE_ATTEMPTS,
             )
             if 1 + idx != POWER_CHANGE_ATTEMPTS:
-                await asyncio.sleep(POWER_STATE_TIMEOUT)
+                await asyncio.sleep(POWER_STATE_TIMEOUT/2)
         if await self._async_set_power_state(state, True):
             # Sometimes these devices respond with "I turned off" and
             # they actually even when we are requesting to turn on.
