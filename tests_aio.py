@@ -492,29 +492,30 @@ async def test_turn_on_off_via_power_state_message(
     def _updated_callback(*args, **kwargs):
         pass
 
-    task = asyncio.create_task(light.async_setup(_updated_callback))
-    await mock_aio_protocol()
-    light._aio_protocol.data_received(
-        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
-    )
-    await task
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        await mock_aio_protocol()
+        light._aio_protocol.data_received(
+            b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+        )
+        await task
 
-    task = asyncio.create_task(light.async_turn_off())
-    # Wait for the future to get added
-    await asyncio.sleep(0)
-    light._ignore_next_power_state_update = False
-    light._aio_protocol.data_received(b"\x0F\x71\x24\xA4")
-    await asyncio.sleep(0)
-    assert light.is_on is False
-    await task
+        task = asyncio.create_task(light.async_turn_off())
+        # Wait for the future to get added
+        await asyncio.sleep(0)
+        light._ignore_next_power_state_update = False
+        light._aio_protocol.data_received(b"\x0F\x71\x24\xA4")
+        await asyncio.sleep(0)
+        assert light.is_on is False
+        await task
 
-    task = asyncio.create_task(light.async_turn_on())
-    await asyncio.sleep(0)
-    light._ignore_next_power_state_update = False
-    light._aio_protocol.data_received(b"\x0F\x71\x23\xA3")
-    await asyncio.sleep(0)
-    assert light.is_on is True
-    await task
+        task = asyncio.create_task(light.async_turn_on())
+        await asyncio.sleep(0)
+        light._ignore_next_power_state_update = False
+        light._aio_protocol.data_received(b"\x0F\x71\x23\xA3")
+        await asyncio.sleep(0)
+        assert light.is_on is True
+        await task
 
 
 @pytest.mark.asyncio

@@ -184,12 +184,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_state_change(
-        self, future: "asyncio.Future[Any]", state: bool
+        self, futures: List["asyncio.Future[Any]"], state: bool
     ) -> bool:
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT)
-            if future.done() and self.is_on == state:
-                return True
+        _, done = await asyncio.wait(futures, timeout=POWER_STATE_TIMEOUT)
+        if done and self.is_on == state:
+            return True
         return False
 
     async def _async_set_power_state(
@@ -197,10 +196,14 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> bool:
         assert self._protocol is not None
         future: "asyncio.Future[bool]" = asyncio.Future()
+        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
+            asyncio.Future()
+        )
         self._power_state_futures.append(future)
+        self._state_futures.append(state_future)
         await self._async_send_msg(self._protocol.construct_state_change(state))
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
-        if await self._async_wait_state_change(future, state):
+        if await self._async_wait_state_change([state_future, future], state):
             return True
         responded = future.done()
         if responded and accept_any_power_state_response:
@@ -220,9 +223,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
             asyncio.Future()
         )
-        self._state_futures.append(state_future)
         await self._async_send_state_query()
-        if await self._async_wait_state_change(state_future, state):
+        if await self._async_wait_state_change([state_future], state):
             return True
         _LOGGER.debug(
             "%s: State query did not return expected power state of %s",
