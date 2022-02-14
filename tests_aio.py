@@ -96,8 +96,6 @@ FLUX_DISCOVERY_MISSING_HARDWARE = FluxLEDDiscovery(
     model_description=MODEL_DESCRIPTION,
 )
 
-logging.getLogger("flux_led").setLevel(logging.DEBUG)
-
 
 def mock_coro(return_value=None, exception=None):
     """Return a coro that returns a value or raise an exception."""
@@ -492,29 +490,32 @@ async def test_turn_on_off_via_assessable_state_message(
     def _updated_callback(*args, **kwargs):
         pass
 
-    task = asyncio.create_task(light.async_setup(_updated_callback))
-    await mock_aio_protocol()
-    # protocol state
-    light._aio_protocol.data_received(
-        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
-    )
-    # ic sorting
-    light._aio_protocol.data_received(b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0")
-    await task
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        await mock_aio_protocol()
+        # protocol state
+        light._aio_protocol.data_received(
+            b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+        )
+        # ic sorting
+        light._aio_protocol.data_received(
+            b"\x00\x63\x00\x19\x00\x02\x04\x03\x19\x02\xA0"
+        )
+        await task
 
-    data = None
+        data = None
 
-    def _send_data(*args, **kwargs):
-        light._aio_protocol.data_received(data)
+        def _send_data(*args, **kwargs):
+            light._aio_protocol.data_received(data)
 
-    with patch.object(light._aio_protocol, "write", _send_data):
-        data = b"\xB0\xB1\xB2\xB3\x00\x01\x01\x23\x00\x0E\x81\xA3\x24\x25\xFF\x47\x64\xFF\xFF\x00\x01\x00\x1E\x34\x61"
-        await light.async_turn_off()
-        assert light.is_on is False
+        with patch.object(light._aio_protocol, "write", _send_data):
+            data = b"\xB0\xB1\xB2\xB3\x00\x01\x01\x23\x00\x0E\x81\xA3\x24\x25\xFF\x47\x64\xFF\xFF\x00\x01\x00\x1E\x34\x61"
+            await light.async_turn_off()
+            assert light.is_on is False
 
-        data = b"\xB0\xB1\xB2\xB3\x00\x01\x01\x24\x00\x0E\x81\xA3\x23\x25\x5F\x21\x64\xFF\xFF\x00\x01\x00\x1E\x6D\xD4"
-        await light.async_turn_on()
-        assert light.is_on is True
+            data = b"\xB0\xB1\xB2\xB3\x00\x01\x01\x24\x00\x0E\x81\xA3\x23\x25\x5F\x21\x64\xFF\xFF\x00\x01\x00\x1E\x6D\xD4"
+            await light.async_turn_on()
+            assert light.is_on is True
 
 
 @pytest.mark.asyncio
@@ -544,26 +545,27 @@ async def test_handling_connection_lost(mock_aio_protocol):
     def _updated_callback(*args, **kwargs):
         pass
 
-    task = asyncio.create_task(light.async_setup(_updated_callback))
-    await mock_aio_protocol()
-    light._aio_protocol.data_received(
-        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
-    )
-    await task
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.025):
+        task = asyncio.create_task(light.async_setup(_updated_callback))
+        await mock_aio_protocol()
+        light._aio_protocol.data_received(
+            b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+        )
+        await task
 
-    light._aio_protocol.connection_lost(None)
-    await asyncio.sleep(0)  # make sure nothing throws
+        light._aio_protocol.connection_lost(None)
+        await asyncio.sleep(0)  # make sure nothing throws
 
-    # Test we reconnect and can turn off
-    task = asyncio.create_task(light.async_turn_off())
-    # Wait for the future to get added
-    await asyncio.sleep(0.1)  # wait for reconnect
-    light._aio_protocol.data_received(
-        b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
-    )
-    await asyncio.sleep(0)
-    assert light.is_on is False
-    await task
+        # Test we reconnect and can turn off
+        task = asyncio.create_task(light.async_turn_off())
+        # Wait for the future to get added
+        await asyncio.sleep(0.1)  # wait for reconnect
+        light._aio_protocol.data_received(
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
+        )
+        await asyncio.sleep(0)
+        assert light.is_on is False
+        await task
 
 
 @pytest.mark.asyncio
