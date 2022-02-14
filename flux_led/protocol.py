@@ -819,6 +819,24 @@ class ProtocolBase:
         )
 
 
+class ProtocolLEDENETWrappedMessageMixIn:
+    """A protocol that needs messages wrapped."""
+
+    def construct_state_query(self) -> bytearray:
+        """The bytes to send for a query request."""
+        return self.construct_wrapped_message(
+            super().construct_state_query(),
+            inner_pre_constructed=True,
+        )
+
+    def construct_state_change(self, turn_on: int) -> bytearray:
+        """The bytes to send for a state change request."""
+        return self.construct_wrapped_message(
+            super().construct_state_change(turn_on),
+            inner_pre_constructed=True,
+        )
+
+
 class ProtocolLEDENETOriginal(ProtocolBase):
     """The original LEDENET protocol with no checksums."""
 
@@ -1767,7 +1785,9 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         )
 
 
-class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
+class ProtocolLEDENETAddressableA3(
+    ProtocolLEDENETWrappedMessageMixIn, ProtocolLEDENETAddressableA2
+):
     def construct_request_strip_setting(self) -> bytearray:
         return self.construct_wrapped_message(
             super().construct_request_strip_setting(),
@@ -2079,7 +2099,7 @@ class ProtocolLEDENETSocket(ProtocolLEDENET8Byte):
         return 8
 
 
-class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
+class ProtocolLEDENETCCT(ProtocolLEDENETWrappedMessageMixIn, ProtocolLEDENET9Byte):
 
     MIN_BRIGHTNESS = 2
 
@@ -2159,7 +2179,9 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         ]
 
 
-class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
+class ProtocolLEDENETAddressableChristmas(
+    ProtocolLEDENETWrappedMessageMixIn, ProtocolLEDENETAddressableBase
+):
     @property
     def name(self) -> str:
         """The name of the protocol."""
