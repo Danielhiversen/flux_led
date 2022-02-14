@@ -223,7 +223,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         if state_future.done():
             state_future = asyncio.Future()
             self._state_futures.append(state_future)
-        pending = [state_future]
+        pending: "List[asyncio.Future[Any]]" = [state_future]
         if not power_state_future.done():
             # If the power state still hasn't responded
             # we want to stop waiting as soon as it does
