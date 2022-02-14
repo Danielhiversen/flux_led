@@ -280,7 +280,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 POWER_CHANGE_ATTEMPTS,
             )
         _LOGGER.error(
-            "%s: Failed to change power state to %s after %s attempts",
+            "%s: Failed to change power state to %s after %s attempts; Try rebooting the device",
             self.ipaddr,
             state,
             POWER_CHANGE_ATTEMPTS,
