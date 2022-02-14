@@ -56,7 +56,7 @@ DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
-POWER_CHANGE_ATTEMPTS = 4
+POWER_CHANGE_ATTEMPTS = 2
 
 
 class AIOWifiLedBulb(LEDENETDevice):
