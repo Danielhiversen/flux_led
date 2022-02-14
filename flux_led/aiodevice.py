@@ -54,8 +54,8 @@ MAX_UPDATES_WITHOUT_RESPONSE = 4
 DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
-POWER_STATE_TIMEOUT = 0.6
-POWER_CHANGE_ATTEMPTS = 3
+POWER_STATE_TIMEOUT = 1.2
+POWER_CHANGE_ATTEMPTS = 6
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -183,9 +183,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_state_change(
-        self, futures: List["asyncio.Future[Any]"], state: bool
+        self, futures: List["asyncio.Future[Any]"], state: bool, timeout: float
     ) -> bool:
-        done, _ = await asyncio.wait(futures, timeout=POWER_STATE_TIMEOUT)
+        done, _ = await asyncio.wait(futures, timeout=timeout)
         if done and self.is_on == state:
             return True
         return False
@@ -203,7 +203,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_change(state))
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
         if await self._async_wait_state_change(
-            [state_future, power_state_future], state
+            [state_future, power_state_future], state, POWER_STATE_TIMEOUT * (3 / 8)
         ):
             return True
         if power_state_future.done() and accept_any_power_state_response:
@@ -223,8 +223,15 @@ class AIOWifiLedBulb(LEDENETDevice):
         if state_future.done():
             state_future = asyncio.Future()
             self._state_futures.append(state_future)
+        pending: "List[asyncio.Future[Any]]" = [state_future]
+        if not power_state_future.done():
+            # If the power state still hasn't responded
+            # we want to stop waiting as soon as it does
+            pending.append(power_state_future)
         await self._async_send_state_query()
-        if await self._async_wait_state_change([state_future], state):
+        if await self._async_wait_state_change(
+            pending, state, POWER_STATE_TIMEOUT * (5 / 8)
+        ):
             return True
         _LOGGER.debug(
             "%s: State query did not return expected power state of %s",
@@ -248,7 +255,10 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
-            if await self._async_set_power_state(state, False):
+            accept_any_power_state_response = idx > 2
+            if await self._async_set_power_state(
+                state, accept_any_power_state_response
+            ):
                 _LOGGER.debug(
                     "%s: Completed power state change to %s (%s/%s)",
                     self.ipaddr,
@@ -256,6 +266,13 @@ class AIOWifiLedBulb(LEDENETDevice):
                     1 + idx,
                     POWER_CHANGE_ATTEMPTS,
                 )
+                if accept_any_power_state_response and self.is_on != state:
+                    # Sometimes these devices respond with "I turned off" and
+                    # they actually turn on when we are requesting to turn on.
+                    assert self._protocol is not None
+                    byte = self._protocol.on_byte if state else self._protocol.off_byte
+                    self._set_power_state(byte)
+                    self._set_power_transition_complete_time()
                 return True
             _LOGGER.debug(
                 "%s: Failed to set power state to %s (%s/%s)",
@@ -264,15 +281,12 @@ class AIOWifiLedBulb(LEDENETDevice):
                 1 + idx,
                 POWER_CHANGE_ATTEMPTS,
             )
-        if await self._async_set_power_state(state, True):
-            _LOGGER.debug("%s: Assuming power state change of %s", self.ipaddr, state)
-            # Sometimes these devices respond with "I turned off" and
-            # they actually even when we are requesting to turn on.
-            assert self._protocol is not None
-            byte = self._protocol.on_byte if state else self._protocol.off_byte
-            self._set_power_state(byte)
-            self._set_power_transition_complete_time()
-            return True
+        _LOGGER.error(
+            "%s: Failed to change power state to %s after %s attempts; Try rebooting the device",
+            self.ipaddr,
+            state,
+            POWER_CHANGE_ATTEMPTS,
+        )
         return False
 
     async def async_set_white_temp(

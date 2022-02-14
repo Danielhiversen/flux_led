@@ -1774,6 +1774,20 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
             inner_pre_constructed=True,
         )
 
+    def construct_state_query(self) -> bytearray:
+        """The bytes to send for a query request."""
+        return self.construct_wrapped_message(
+            super().construct_state_query(),
+            inner_pre_constructed=True,
+        )
+
+    def construct_state_change(self, turn_on: int) -> bytearray:
+        """The bytes to send for a state change request."""
+        return self.construct_wrapped_message(
+            super().construct_state_change(turn_on),
+            inner_pre_constructed=True,
+        )
+
     # ic response
     # 0x00 0x63 0x00 0x32 0x00 0x01 0x04 0x03 0x32 0x01 0xD0 (11)
     # b0 b1 b2 b3 00 01 01 37 00 0b 00 63 00 32 00 01 04 03 32 01 d0 aa
@@ -2083,6 +2097,20 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
     MIN_BRIGHTNESS = 2
 
+    def construct_state_query(self) -> bytearray:
+        """The bytes to send for a query request."""
+        return self.construct_wrapped_message(
+            super().construct_state_query(),
+            inner_pre_constructed=True,
+        )
+
+    def construct_state_change(self, turn_on: int) -> bytearray:
+        """The bytes to send for a state change request."""
+        return self.construct_wrapped_message(
+            super().construct_state_change(turn_on),
+            inner_pre_constructed=True,
+        )
+
     @property
     def timer_response_len(self) -> int:
         """Return the time response len."""
@@ -2160,6 +2188,20 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
 
 class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
+    def construct_state_query(self) -> bytearray:
+        """The bytes to send for a query request."""
+        return self.construct_wrapped_message(
+            super().construct_state_query(),
+            inner_pre_constructed=True,
+        )
+
+    def construct_state_change(self, turn_on: int) -> bytearray:
+        """The bytes to send for a state change request."""
+        return self.construct_wrapped_message(
+            super().construct_state_change(turn_on),
+            inner_pre_constructed=True,
+        )
+
     @property
     def name(self) -> str:
         """The name of the protocol."""
