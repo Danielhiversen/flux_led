@@ -209,7 +209,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             return True
         elif responded:
             _LOGGER.debug(
-                "%s: Bulb responded with wrong power state %s, sending state query",
+                "%s: Bulb power state change taking longer than expected to %s, sending state query",
                 self.ipaddr,
                 state,
             )
@@ -225,7 +225,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         if await self._async_wait_state_change(state_future, state):
             return True
         _LOGGER.debug(
-            "%s: State query did not return expected power state", self.ipaddr
+            "%s: State query did not return expected power state of %s",
+            self.ipaddr,
+            state,
         )
         return False
 
@@ -245,6 +247,13 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
         for idx in range(POWER_CHANGE_ATTEMPTS):
             if await self._async_set_power_state(state, False):
+                _LOGGER.debug(
+                    "%s: Completed power state change to %s (%s/%s)",
+                    self.ipaddr,
+                    state,
+                    1 + idx,
+                    POWER_CHANGE_ATTEMPTS,
+                )
                 return True
             _LOGGER.debug(
                 "%s: Failed to set power state to %s (%s/%s)",
@@ -254,8 +263,9 @@ class AIOWifiLedBulb(LEDENETDevice):
                 POWER_CHANGE_ATTEMPTS,
             )
             if 1 + idx != POWER_CHANGE_ATTEMPTS:
-                await asyncio.sleep(POWER_STATE_TIMEOUT/2)
+                await asyncio.sleep(POWER_STATE_TIMEOUT / 2)
         if await self._async_set_power_state(state, True):
+            _LOGGER.debug("%s: Assuming power state change of %s", self.ipaddr, state)
             # Sometimes these devices respond with "I turned off" and
             # they actually even when we are requesting to turn on.
             assert self._protocol is not None
