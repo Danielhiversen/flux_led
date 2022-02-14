@@ -1145,7 +1145,7 @@ class LEDENETDevice:
             time.monotonic() + PRESET_PATTERN_CHANGE_LATENCY
         )
         _LOGGER.debug(
-            "%s: Mode trransition time is %s, set _preset_pattern_transition_complete_time to %s",
+            "%s: Mode transition time is %s, set _preset_pattern_transition_complete_time to %s",
             self.ipaddr,
             PRESET_PATTERN_CHANGE_LATENCY,
             self._preset_pattern_transition_complete_time,
@@ -1158,7 +1158,7 @@ class LEDENETDevice:
             time.monotonic() + POWER_STATE_CHANGE_LATENCY
         )
         _LOGGER.debug(
-            "%s: Mode trransition time is %s, set _power_sate_transition_complete_time to %s",
+            "%s: Mode transition time is %s, set _power_state_transition_complete_time to %s",
             self.ipaddr,
             POWER_STATE_CHANGE_LATENCY,
             self._power_state_transition_complete_time,
