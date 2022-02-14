@@ -264,7 +264,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                     1 + idx,
                     POWER_CHANGE_ATTEMPTS,
                 )
-                if accept_any_power_state_response:
+                if accept_any_power_state_response and self.is_on != state:
                     # Sometimes these devices respond with "I turned off" and
                     # they actually turn on when we are requesting to turn on.
                     assert self._protocol is not None
@@ -281,7 +281,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             )
         _LOGGER.error(
             "%s: Failed to change power state to %s after %s attempts",
-            self.ip,
+            self.ipaddr,
             state,
             POWER_CHANGE_ATTEMPTS,
         )
