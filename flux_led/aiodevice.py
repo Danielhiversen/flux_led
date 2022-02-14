@@ -1,9 +1,8 @@
 import asyncio
-import contextlib
 from datetime import datetime
 import logging
 import time
-from typing import Callable, Coroutine, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
@@ -32,6 +31,8 @@ from .const import (
 from .protocol import (
     POWER_RESTORE_BYTES_TO_POWER_RESTORE,
     REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
+    LEDENETOriginalRawState,
+    LEDENETRawState,
     PowerRestoreState,
     PowerRestoreStates,
     ProtocolLEDENET8Byte,
@@ -43,6 +44,7 @@ from .protocol import (
 from .scanner import FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
+from .const import PUSH_UPDATE_INTERVAL, NEVER_TIME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,20 +54,8 @@ MAX_UPDATES_WITHOUT_RESPONSE = 4
 DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
-POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
-
-#
-# PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
-# since we do not care about the state when its off. When it turns on
-# the device will push its new state to us anyways (except for buggy firmwares
-# are identified in protocol.py)
-#
-# The downside to a longer polling interval for OFF is the
-# time to declare the device offline is MAX_UPDATES_WITHOUT_RESPONSE*PUSH_UPDATE_INTERVAL
-#
-PUSH_UPDATE_INTERVAL = 90  # seconds
-
-NEVER_TIME = -PUSH_UPDATE_INTERVAL
+POWER_STATE_TIMEOUT = 0.6
+POWER_CHANGE_ATTEMPTS = 3
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -92,8 +82,11 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._device_config_future: asyncio.Future[bool] = asyncio.Future()
         self._remote_config_future: asyncio.Future[bool] = asyncio.Future()
         self._device_config_setup = False
-        self._on_futures: List["asyncio.Future[bool]"] = []
-        self._off_futures: List["asyncio.Future[bool]"] = []
+        self._power_state_lock = asyncio.Lock()
+        self._power_state_futures: List["asyncio.Future[bool]"] = []
+        self._state_futures: List[
+            "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]"
+        ] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
         self._updated_callback: Optional[Callable[[], None]] = None
         self._updates_without_response = 0
@@ -189,86 +182,96 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_state_query())
 
-    async def _async_execute_and_wait_for(
-        self,
-        futures: List["asyncio.Future[bool]"],
-        coro: Callable[[], Coroutine[None, None, None]],
+    async def _async_wait_state_change(
+        self, futures: List["asyncio.Future[Any]"], state: bool
     ) -> bool:
-        future: "asyncio.Future[bool]" = asyncio.Future()
-        futures.append(future)
-        await coro()
-        _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(asyncio.shield(future), POWER_STATE_TIMEOUT / 2)
+        _, done = await asyncio.wait(futures, timeout=POWER_STATE_TIMEOUT)
+        if done and self.is_on == state:
             return True
-        _LOGGER.debug(
-            "%s: Did not get expected power state response, sending state query",
-            self.ipaddr,
-        )
-        await self._async_send_state_query()
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(future, POWER_STATE_TIMEOUT / 2)
-            return True
-        _LOGGER.debug(
-            "%s: State query did not return expected power state", self.ipaddr
-        )
         return False
 
-    async def _async_turn_on(self) -> None:
+    async def _async_set_power_state(
+        self, state: bool, accept_any_power_state_response: bool
+    ) -> bool:
         assert self._protocol is not None
-        await self._async_send_msg(self._protocol.construct_state_change(True))
-
-    async def _async_turn_off_on(self) -> None:
-        await self._async_turn_off()
-        await self._async_turn_on()
+        future: "asyncio.Future[bool]" = asyncio.Future()
+        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
+            asyncio.Future()
+        )
+        self._power_state_futures.append(future)
+        self._state_futures.append(state_future)
+        await self._async_send_msg(self._protocol.construct_state_change(state))
+        _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
+        if await self._async_wait_state_change([state_future, future], state):
+            return True
+        responded = future.done()
+        if responded and accept_any_power_state_response:
+            # The magic home app will accept any response as success
+            # so after a few tries, we do as well.
+            return True
+        elif responded:
+            _LOGGER.debug(
+                "%s: Bulb power state change taking longer than expected to %s, sending state query",
+                self.ipaddr,
+                state,
+            )
+        else:
+            _LOGGER.debug(
+                "%s: Bulb failed to respond, sending state query", self.ipaddr
+            )
+        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
+            asyncio.Future()
+        )
+        await self._async_send_state_query()
+        if await self._async_wait_state_change([state_future], state):
+            return True
+        _LOGGER.debug(
+            "%s: State query did not return expected power state of %s",
+            self.ipaddr,
+            state,
+        )
+        return False
 
     async def async_turn_on(self) -> bool:
         """Turn on the device."""
-        calls = (
-            self._async_turn_on,
-            self._async_turn_on,
-            self._async_turn_on,
-            self._async_turn_off_on,
-            self._async_turn_on,
-            self._async_turn_on,
-        )
-        for idx, call in enumerate(calls):
-            if (
-                await self._async_execute_and_wait_for(self._on_futures, call)
-                or self.is_on
-            ):
-                return True
-            _LOGGER.debug(
-                "%s: Failed to turn on (%s/%s)", self.ipaddr, 1 + idx, len(calls)
-            )
-        return False
-
-    async def _async_turn_off(self) -> None:
-        assert self._protocol is not None
-        await self._async_send_msg(self._protocol.construct_state_change(False))
-
-    async def _async_turn_on_off(self) -> None:
-        await self._async_turn_on()
-        await self._async_turn_off()
+        return await self._async_set_power_locked(True)
 
     async def async_turn_off(self) -> bool:
         """Turn off the device."""
-        calls = (
-            self._async_turn_off,
-            self._async_turn_off,
-            self._async_turn_on_off,
-            self._async_turn_off,
-            self._async_turn_off,
-        )
-        for idx, call in enumerate(calls):
-            if (
-                await self._async_execute_and_wait_for(self._off_futures, call)
-                or not self.is_on
-            ):
+        return await self._async_set_power_locked(False)
+
+    async def _async_set_power_locked(self, state: bool) -> bool:
+        async with self._power_state_lock:
+            self._power_state_transition_complete_time = NEVER_TIME
+            return await self._async_set_power_state_with_retry(state)
+
+    async def _async_set_power_state_with_retry(self, state: bool) -> bool:
+        for idx in range(POWER_CHANGE_ATTEMPTS):
+            if await self._async_set_power_state(state, False):
+                _LOGGER.debug(
+                    "%s: Completed power state change to %s (%s/%s)",
+                    self.ipaddr,
+                    state,
+                    1 + idx,
+                    POWER_CHANGE_ATTEMPTS,
+                )
                 return True
             _LOGGER.debug(
-                "%s: Failed to turn off (%s/%s)", self.ipaddr, 1 + idx, len(calls)
+                "%s: Failed to set power state to %s (%s/%s)",
+                self.ipaddr,
+                state,
+                1 + idx,
+                POWER_CHANGE_ATTEMPTS,
             )
+        if await self._async_set_power_state(state, True):
+            _LOGGER.debug("%s: Assuming power state change of %s", self.ipaddr, state)
+            # Sometimes these devices respond with "I turned off" and
+            # they actually even when we are requesting to turn on.
+            assert self._protocol is not None
+            byte = self._protocol.on_byte if state else self._protocol.off_byte
+            self._set_power_state(byte)
+            self._set_power_transition_complete_time()
+            return True
         return False
 
     async def async_set_white_temp(
@@ -354,7 +357,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         for idx, msg in enumerate(msgs):
             await self._async_send_msg(msg)
             if idx > 0:
-                self._process_futures_and_callbacks()
+                self._process_callbacks()
                 await asyncio.sleep(COMMAND_SPACING_DELAY)
                 self._set_transition_complete_time()
 
@@ -680,8 +683,10 @@ class AIOWifiLedBulb(LEDENETDevice):
 
         if self._protocol.is_valid_state_response(msg):
             self._async_process_state_response(msg)
+            self._process_state_futures()
         elif self._protocol.is_valid_power_state_response(msg):
             self.process_power_state_response(msg)
+            self._process_power_futures()
         elif self._protocol.is_valid_get_time_response(msg):
             self.process_time_response(msg)
         elif self._protocol.is_valid_timers_response(msg):
@@ -704,15 +709,25 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
         if not changed_state and self.raw_state == prev_state:
             return
-        self._process_futures_and_callbacks()
+        self._process_callbacks()
 
-    def _process_futures_and_callbacks(self) -> None:
-        """Called when state changes."""
-        futures = self._on_futures if self.is_on else self._off_futures
-        for future in futures:
+    def _process_state_futures(self) -> None:
+        """Process power future responses."""
+        assert self.raw_state is not None
+        for future in self._state_futures:
             if not future.done():
-                future.set_result(True)
-        futures.clear()
+                future.set_result(self.raw_state)
+        self._state_futures.clear()
+
+    def _process_power_futures(self) -> None:
+        """Process power future responses."""
+        for future in self._power_state_futures:
+            if not future.done():
+                future.set_result(self.is_on)
+        self._power_state_futures.clear()
+
+    def _process_callbacks(self) -> None:
+        """Called when state changes."""
         assert self._updated_callback is not None
         try:
             self._updated_callback()

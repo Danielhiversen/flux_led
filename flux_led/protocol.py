@@ -946,7 +946,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
             or msg[2] not in (self.on_byte, self.off_byte)
         ):
             return False
-        return self.is_checksum_correct(msg)
+        return True  # checksum does not always match
 
     def _is_start_of_power_state_response(self, data: bytes) -> bool:
         """Check if a message is the start of a state response."""
