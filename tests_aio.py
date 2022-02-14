@@ -2224,20 +2224,28 @@ async def test_christmas_protocol_device_turn_on(mock_aio_protocol):
     assert light._protocol.state_push_updates is False
 
     data = []
+    written = []
 
     def _send_data(*args, **kwargs):
+        written.append(args[0])
         light._aio_protocol.data_received(data.pop(0))
 
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010), patch.object(
         light._aio_protocol, "write", _send_data
     ):
         data = [
+            b"\x81\x1a\x23\x61\x00\x00\x00\xff\x00\x00\x01\x00\x06\x25",
             b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
         ]
         await light.async_turn_off()
         await asyncio.sleep(0)
         assert light.is_on is False
         assert len(data) == 0
+
+    assert written == [
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\x04q$\x0f\xa4\x14",
+        b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x04\x81\x8a\x8b\x96\xf9",
+    ]
 
 
 @pytest.mark.asyncio
