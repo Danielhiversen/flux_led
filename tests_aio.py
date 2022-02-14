@@ -415,7 +415,7 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         await light.async_turn_on()
         await asyncio.sleep(0)
         assert light.is_on is True
-        assert len(data) == 5
+        assert len(data) == 3
         light._aio_protocol.data_received(
             b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
         )
@@ -430,8 +430,9 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010):
         await asyncio.create_task(light.async_turn_off())
         assert light.is_on is True
-        assert "Failed to set power state to False (1/2)" in caplog.text
-        assert "Failed to set power state to False (2/2)" in caplog.text
+        assert "Failed to set power state to False (1/3)" in caplog.text
+        assert "Failed to set power state to False (2/3)" in caplog.text
+        assert "Failed to set power state to False (3/3)" in caplog.text
 
     with patch.object(light._aio_protocol, "write", _send_data), patch.object(
         aiodevice, "POWER_STATE_TIMEOUT", 0.010
@@ -476,8 +477,9 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010):
         await asyncio.create_task(light.async_turn_on())
         assert light.is_on is False
-        assert "Failed to set power state to True (1/2)" in caplog.text
-        assert "Failed to set power state to True (2/2)" in caplog.text
+        assert "Failed to set power state to True (1/3)" in caplog.text
+        assert "Failed to set power state to True (2/3)" in caplog.text
+        assert "Failed to set power state to True (3/3)" in caplog.text
 
 
 @pytest.mark.asyncio
