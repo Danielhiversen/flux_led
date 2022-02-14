@@ -416,6 +416,12 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         await asyncio.sleep(0)
         assert light.is_on is True
         assert len(data) == 5
+        light._aio_protocol.data_received(
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
+        )
+        assert (
+            light.is_on is True
+        )  # transition time should now be in effect since we forced state
 
     await asyncio.sleep(0)
     caplog.clear()
