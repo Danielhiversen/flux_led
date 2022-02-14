@@ -45,6 +45,7 @@ from .protocol import (
 from .scanner import FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
+from .const import PUSH_UPDATE_INTERVAL, NEVER_TIME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,19 +57,6 @@ DEVICE_CONFIG_WAIT_SECONDS = (
 )
 POWER_STATE_TIMEOUT = 1.2  # number of seconds before declaring on/off failed
 POWER_CHANGE_ATTEMPTS = 4
-
-#
-# PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
-# since we do not care about the state when its off. When it turns on
-# the device will push its new state to us anyways (except for buggy firmwares
-# are identified in protocol.py)
-#
-# The downside to a longer polling interval for OFF is the
-# time to declare the device offline is MAX_UPDATES_WITHOUT_RESPONSE*PUSH_UPDATE_INTERVAL
-#
-PUSH_UPDATE_INTERVAL = 90  # seconds
-
-NEVER_TIME = -PUSH_UPDATE_INTERVAL
 
 
 class AIOWifiLedBulb(LEDENETDevice):
@@ -251,6 +239,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_set_power_locked(self, state: bool) -> bool:
         async with self._power_state_lock:
+            self._power_state_transition_complete_time = NEVER_TIME
             return await self._async_set_power_state_with_retry(state)
 
     async def _async_set_power_state_with_retry(self, state: bool) -> bool:
@@ -270,6 +259,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             assert self._protocol is not None
             byte = self._protocol.on_byte if state else self._protocol.off_byte
             self._set_power_state(byte)
+            self._set_power_transition_complete_time()
             return True
         return False
 

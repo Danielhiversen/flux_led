@@ -60,7 +60,8 @@ COLOR_MODE_RGBW: Final = "RGBW"
 COLOR_MODE_RGBWW: Final = "RGBWW"
 COLOR_MODE_ADDRESSABLE: Final = "ADDRESSABLE"
 
-STATE_CHANGE_LATENCY: Final = 3
+POWER_STATE_CHANGE_LATENCY: Final = 3
+STATE_CHANGE_LATENCY: Final = 2
 ADDRESSABLE_STATE_CHANGE_LATENCY: Final = 5
 PRESET_PATTERN_CHANGE_LATENCY: Final = 40  # Time to switch to music mode
 
@@ -139,3 +140,17 @@ PIXELS_PER_SEGMENT_MAX: Final = 300
 MUSIC_SEGMENTS_MAX: Final = 64
 MUSIC_PIXELS_MAX: Final = 960
 MUSIC_PIXELS_PER_SEGMENT_MAX: Final = 150
+
+
+#
+# PUSH_UPDATE_INTERVAL reduces polling the device for state when its off
+# since we do not care about the state when its off. When it turns on
+# the device will push its new state to us anyways (except for buggy firmwares
+# are identified in protocol.py)
+#
+# The downside to a longer polling interval for OFF is the
+# time to declare the device offline is MAX_UPDATES_WITHOUT_RESPONSE*PUSH_UPDATE_INTERVAL
+#
+PUSH_UPDATE_INTERVAL = 90  # seconds
+
+NEVER_TIME = -PUSH_UPDATE_INTERVAL

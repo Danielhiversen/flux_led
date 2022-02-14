@@ -5,9 +5,12 @@ import random
 import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
+from .const import NEVER_TIME
+
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     ATTR_MODEL,
+    POWER_STATE_CHANGE_LATENCY,
     ATTR_MODEL_DESCRIPTION,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
@@ -215,6 +218,7 @@ class LEDENETDevice:
         self._mode: Optional[str] = None
         self._transition_complete_time: float = 0
         self._preset_pattern_transition_complete_time: float = 0
+        self._power_state_transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
         self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
 
@@ -759,12 +763,13 @@ class LEDENETDevice:
 
         now_time = time.monotonic()
         transition_states = set()
+        if now_time < self._power_state_transition_complete_time:
+            transition_states.add(STATE_POWER_STATE)
         if now_time < self._transition_complete_time:
             # Do not update the channel states if a transition is
             # in progress as the state will not be correct
             # until the transition is completed since devices
             # "FADE" into the state requested.
-            transition_states.add(STATE_POWER_STATE)
             transition_states |= CHANNEL_STATES
         if now_time < self._preset_pattern_transition_complete_time:
             transition_states.add("preset_pattern")
@@ -1131,7 +1136,7 @@ class LEDENETDevice:
             self._transition_complete_time,
         )
         # If we are doing a state transition cancel and preset pattern transition
-        self._preset_pattern_transition_complete_time = 0
+        self._preset_pattern_transition_complete_time = NEVER_TIME
 
     def _set_preset_pattern_transition_complete_time(self) -> None:
         """Set the time we expect the preset_pattern transition will be completed."""
@@ -1144,6 +1149,19 @@ class LEDENETDevice:
             self.ipaddr,
             PRESET_PATTERN_CHANGE_LATENCY,
             self._preset_pattern_transition_complete_time,
+        )
+
+    def _set_power_transition_complete_time(self) -> None:
+        """Set the time we expect the power transition will be completed."""
+        assert self.raw_state is not None
+        self._power_state_transition_complete_time = (
+            time.monotonic() + POWER_STATE_CHANGE_LATENCY
+        )
+        _LOGGER.debug(
+            "%s: Mode trransition time is %s, set _power_sate_transition_complete_time to %s",
+            self.ipaddr,
+            POWER_STATE_CHANGE_LATENCY,
+            self._power_state_transition_complete_time,
         )
 
     def getRgb(self) -> Tuple[int, int, int]:
