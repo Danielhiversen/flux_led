@@ -406,6 +406,24 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
         assert len(data) == 0
 
         data = [
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
+            b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde",
+        ]
+        await light.async_turn_on()
+        await asyncio.sleep(0)
+        assert light.is_on is True
+        assert len(data) == 0
+
+        data = [
+            b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde",
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
+        ]
+        await light.async_turn_off()
+        await asyncio.sleep(0)
+        assert light.is_on is False
+        assert len(data) == 0
+
+        data = [
             *(
                 b"\xF0\x71\x24\x85",
                 b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
