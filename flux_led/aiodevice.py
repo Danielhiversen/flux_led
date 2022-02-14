@@ -183,7 +183,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_state_change(
-        self, futures: List["asyncio.Future[Any]"], state: bool, timeout: int
+        self, futures: List["asyncio.Future[Any]"], state: bool, timeout: float
     ) -> bool:
         done, _ = await asyncio.wait(futures, timeout=timeout)
         if done and self.is_on == state:
@@ -203,7 +203,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_change(state))
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
         if await self._async_wait_state_change(
-            [state_future, power_state_future], state, POWER_STATE_TIMEOUT * 1 / 4
+            [state_future, power_state_future], state, POWER_STATE_TIMEOUT * (3 / 8)
         ):
             return True
         if power_state_future.done() and accept_any_power_state_response:
@@ -230,7 +230,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             pending.append(power_state_future)
         await self._async_send_state_query()
         if await self._async_wait_state_change(
-            pending, state, POWER_STATE_TIMEOUT * 3 / 4
+            pending, state, POWER_STATE_TIMEOUT * (5 / 8)
         ):
             return True
         _LOGGER.debug(
