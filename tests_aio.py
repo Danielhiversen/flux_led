@@ -375,17 +375,37 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     )
     await task
 
-    data = None
+    data = []
 
     def _send_data(*args, **kwargs):
-        light._aio_protocol.data_received(data)
+        light._aio_protocol.data_received(data.pop(0))
 
     with patch.object(light._aio_protocol, "write", _send_data):
-        data = b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
+        data = [
+            b"\xF0\x71\x24\x85",
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
+        ]
         await light.async_turn_off()
         assert light.is_on is False
 
-        data = b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+        data = [
+            b"\xF0\x71\x24\x85",
+            b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde",
+        ]
+        await light.async_turn_on()
+        assert light.is_on is True
+
+        data = [b"\xF0\x71\x24\x85"]
+        await light.async_turn_off()
+        assert light.is_on is False
+
+        data = [
+            *(
+                b"\xF0\x71\x24\x85",
+                b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
+            )
+            * 5
+        ]
         await light.async_turn_on()
         assert light.is_on is True
 
@@ -404,7 +424,13 @@ async def test_turn_on_off(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     with patch.object(light._aio_protocol, "write", _send_data), patch.object(
         aiodevice, "POWER_STATE_TIMEOUT", 0.025
     ):
-        data = b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf"
+        data = [
+            *(
+                b"\xF0\x71\x24\x85",
+                b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
+            )
+            * 5
+        ]
         await light.async_turn_off()
         assert light.is_on is False
 
