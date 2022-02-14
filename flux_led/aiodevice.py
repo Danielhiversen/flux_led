@@ -185,7 +185,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_wait_state_change(
         self, futures: List["asyncio.Future[Any]"], state: bool
     ) -> bool:
-        _, done = await asyncio.wait(futures, timeout=POWER_STATE_TIMEOUT)
+        done, _ = await asyncio.wait(futures, timeout=POWER_STATE_TIMEOUT)
         if done and self.is_on == state:
             return True
         return False
@@ -194,17 +194,19 @@ class AIOWifiLedBulb(LEDENETDevice):
         self, state: bool, accept_any_power_state_response: bool
     ) -> bool:
         assert self._protocol is not None
-        future: "asyncio.Future[bool]" = asyncio.Future()
+        power_state_future: "asyncio.Future[bool]" = asyncio.Future()
         state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
             asyncio.Future()
         )
-        self._power_state_futures.append(future)
+        self._power_state_futures.append(power_state_future)
         self._state_futures.append(state_future)
         await self._async_send_msg(self._protocol.construct_state_change(state))
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
-        if await self._async_wait_state_change([state_future, future], state):
+        if await self._async_wait_state_change(
+            [state_future, power_state_future], state
+        ):
             return True
-        responded = future.done()
+        responded = power_state_future.done() or state_future.done()
         if responded and accept_any_power_state_response:
             # The magic home app will accept any response as success
             # so after a few tries, we do as well.
@@ -219,9 +221,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             _LOGGER.debug(
                 "%s: Bulb failed to respond, sending state query", self.ipaddr
             )
-        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
-            asyncio.Future()
-        )
+        if state_future.done():
+            state_future = asyncio.Future()
+            self._state_futures.append(state_future)
         await self._async_send_state_query()
         if await self._async_wait_state_change([state_future], state):
             return True
