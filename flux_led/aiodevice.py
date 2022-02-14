@@ -264,8 +264,6 @@ class AIOWifiLedBulb(LEDENETDevice):
                 1 + idx,
                 POWER_CHANGE_ATTEMPTS,
             )
-            if 1 + idx != POWER_CHANGE_ATTEMPTS:
-                await asyncio.sleep(POWER_STATE_TIMEOUT / 2)
         if await self._async_set_power_state(state, True):
             _LOGGER.debug("%s: Assuming power state change of %s", self.ipaddr, state)
             # Sometimes these devices respond with "I turned off" and
