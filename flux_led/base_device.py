@@ -38,6 +38,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     STATE_CHANGE_LATENCY,
     STATE_COOL_WHITE,
     STATE_GREEN,
+    STATE_POWER_STATE,
     STATE_RED,
     STATE_WARM_WHITE,
     STATIC_MODES,
@@ -763,6 +764,7 @@ class LEDENETDevice:
             # in progress as the state will not be correct
             # until the transition is completed since devices
             # "FADE" into the state requested.
+            transition_states.add(STATE_POWER_STATE)
             transition_states |= CHANNEL_STATES
         if now_time < self._preset_pattern_transition_complete_time:
             transition_states.add("preset_pattern")
