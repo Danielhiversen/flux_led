@@ -279,6 +279,12 @@ class AIOWifiLedBulb(LEDENETDevice):
                 1 + idx,
                 POWER_CHANGE_ATTEMPTS,
             )
+        _LOGGER.error(
+            "%s: Failed to change power state to %s after %s attempts",
+            self.ip,
+            state,
+            POWER_CHANGE_ATTEMPTS,
+        )
         return False
 
     async def async_set_white_temp(
