@@ -54,7 +54,7 @@ MAX_UPDATES_WITHOUT_RESPONSE = 4
 DEVICE_CONFIG_WAIT_SECONDS = (
     3.5  # time it takes for the device to respond after a config change
 )
-POWER_STATE_TIMEOUT = 0.6
+POWER_STATE_TIMEOUT = 1.2
 POWER_CHANGE_ATTEMPTS = 6
 
 
@@ -183,9 +183,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_state_change(
-        self, futures: List["asyncio.Future[Any]"], state: bool
+        self, futures: List["asyncio.Future[Any]"], state: bool, timeout: int
     ) -> bool:
-        done, _ = await asyncio.wait(futures, timeout=POWER_STATE_TIMEOUT)
+        done, _ = await asyncio.wait(futures, timeout=timeout)
         if done and self.is_on == state:
             return True
         return False
@@ -203,7 +203,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_change(state))
         _LOGGER.debug("%s: Waiting for power state response", self.ipaddr)
         if await self._async_wait_state_change(
-            [state_future, power_state_future], state
+            [state_future, power_state_future], state, POWER_STATE_TIMEOUT * 1 / 4
         ):
             return True
         if power_state_future.done() and accept_any_power_state_response:
@@ -229,7 +229,9 @@ class AIOWifiLedBulb(LEDENETDevice):
             # we want to stop waiting as soon as it does
             pending.append(power_state_future)
         await self._async_send_state_query()
-        if await self._async_wait_state_change(pending, state):
+        if await self._async_wait_state_change(
+            pending, state, POWER_STATE_TIMEOUT * 3 / 4
+        ):
             return True
         _LOGGER.debug(
             "%s: State query did not return expected power state of %s",
