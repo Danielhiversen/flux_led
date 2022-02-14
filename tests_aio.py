@@ -2201,6 +2201,46 @@ async def test_cct_protocol_device(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+async def test_christmas_protocol_device_turn_on(mock_aio_protocol):
+    """Test a christmas protocol device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x1a\x23\x61\x00\x00\x00\xff\x00\x00\x01\x00\x06\x25"
+    )
+    await task
+    assert light.rgb == (0, 255, 0)
+    assert light.brightness == 255
+    assert len(light.effect_list) == 101
+    assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
+    assert light.dimmable_effects is False
+    assert light.requires_turn_on is False
+    assert light._protocol.power_push_updates is True
+    assert light._protocol.state_push_updates is False
+
+    data = []
+
+    def _send_data(*args, **kwargs):
+        light._aio_protocol.data_received(data.pop(0))
+
+    with patch.object(aiodevice, "POWER_STATE_TIMEOUT", 0.010), patch.object(
+        light._aio_protocol, "write", _send_data
+    ):
+        data = [
+            b"\x81\x25\x24\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xdf",
+        ]
+        await light.async_turn_off()
+        await asyncio.sleep(0)
+        assert light.is_on is False
+        assert len(data) == 0
+
+
+@pytest.mark.asyncio
 async def test_christmas_protocol_device(mock_aio_protocol):
     """Test a christmas protocol device."""
     light = AIOWifiLedBulb("192.168.1.166")
