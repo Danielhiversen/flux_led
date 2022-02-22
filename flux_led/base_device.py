@@ -186,7 +186,7 @@ PATTERN_CODE_TO_EFFECT = {
     EFFECT_CUSTOM_CODE: EFFECT_CUSTOM,
 }
 
-SERIALIZEABLE_TYPES = (str, bool, dict, int, float, list, tuple, set)
+SERIALIZABLE_TYPES = (str, bool, dict, int, float, list, tuple, set)
 
 
 class DeviceType(Enum):
@@ -1275,6 +1275,6 @@ class LEDENETDevice:
                 value = asdict(value)
             if hasattr(value, "value"):
                 value = value.value
-            if value is None or isinstance(value, SERIALIZEABLE_TYPES):
+            if value is None or isinstance(value, SERIALIZABLE_TYPES):
                 device_state[name] = value
         return data
