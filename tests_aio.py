@@ -909,6 +909,8 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.requires_turn_on is False
     assert light.color_mode == COLOR_MODE_RGBW
     assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
+    assert light.diagnostics["device_state"]["wiring_num"] == 8
+    assert light.diagnostics["last_messages"]["state"] == '0x81 0xA3 0x23 0x25 0x01 0x10 0x64 0x00 0x00 0x00 0x04 0x00 0xF0 0xD5'
     transport.reset_mock()
 
     with patch.object(light, "_async_device_config_resync", mock_coro):
