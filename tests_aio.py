@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import datetime
+import json
 import logging
 from unittest.mock import MagicMock, call, patch
 
@@ -96,6 +97,12 @@ FLUX_DISCOVERY_MISSING_HARDWARE = FluxLEDDiscovery(
     model_description=MODEL_DESCRIPTION,
 )
 
+class MinJSONEncoder(json.JSONEncoder):
+
+    def default(self, o):
+        if isinstance(o, set):
+            return list(o)
+        return json.JSONEncoder.default(self, o)
 
 def mock_coro(return_value=None, exception=None):
     """Return a coro that returns a value or raise an exception."""
@@ -909,8 +916,10 @@ async def test_SK6812RGBW(mock_aio_protocol, caplog: pytest.LogCaptureFixture):
     assert light.requires_turn_on is False
     assert light.color_mode == COLOR_MODE_RGBW
     assert light.color_modes == {COLOR_MODE_RGBW, COLOR_MODE_CCT}
-    assert light.diagnostics["device_state"]["wiring_num"] == 8
-    assert light.diagnostics["last_messages"]["state"] == '0x81 0xA3 0x23 0x25 0x01 0x10 0x64 0x00 0x00 0x00 0x04 0x00 0xF0 0xD5'
+    diag = light.diagnostics
+    assert isinstance(json.dumps(diag, cls=MinJSONEncoder), str)
+    assert diag["device_state"]["wiring_num"] == 8
+    assert diag["last_messages"]["state"] == '0x81 0xA3 0x23 0x25 0x01 0x10 0x64 0x00 0x00 0x00 0x04 0x00 0xF0 0xD5'
     transport.reset_mock()
 
     with patch.object(light, "_async_device_config_resync", mock_coro):
