@@ -1,16 +1,14 @@
 import colorsys
+from dataclasses import asdict, is_dataclass
 from enum import Enum
 import logging
 import random
 import time
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Type, Union
-
-from .const import NEVER_TIME
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     ATTR_MODEL,
-    POWER_STATE_CHANGE_LATENCY,
     ATTR_MODEL_DESCRIPTION,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
@@ -33,6 +31,8 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_SWITCH,
     MODE_WW,
     MODEL_NUMS_SWITCHS,
+    NEVER_TIME,
+    POWER_STATE_CHANGE_LATENCY,
     PRESET_MUSIC_MODE,
     PRESET_MUSIC_MODE_LEGACY,
     PRESET_MUSIC_MODES,
@@ -186,6 +186,8 @@ PATTERN_CODE_TO_EFFECT = {
     EFFECT_CUSTOM_CODE: EFFECT_CUSTOM,
 }
 
+SERIALIZABLE_TYPES = (str, bool, dict, int, float, list, tuple, set)
+
 
 class DeviceType(Enum):
     Bulb = 0
@@ -221,6 +223,7 @@ class LEDENETDevice:
         self._power_state_transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
         self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
+        self._last_message: Dict[str, bytes] = {}
 
     def _protocol_probes(
         self,
@@ -1255,3 +1258,23 @@ class LEDENETDevice:
         if protocol in OLD_EFFECTS_PROTOCOLS:
             return ORIGINAL_ADDRESSABLE_EFFECT_NAME_ID[effect]
         return PresetPattern.str_to_val(effect)
+
+    @property
+    def diagnostics(self) -> Dict[str, Any]:
+        """Return diagnostics for the device."""
+        data: Dict[str, Any] = {"device_state": {}, "last_messages": {}}
+        last_messages = data["last_messages"]
+        for name, msg in self._last_message.items():
+            last_messages[name] = " ".join(f"0x{x:02X}" for x in msg)
+        device_state = data["device_state"]
+        for name in dir(self):
+            if name.startswith("_") or name == "diagnostics" or not hasattr(self, name):
+                continue
+            value: Any = getattr(self, name)
+            if is_dataclass(value):
+                value = asdict(value)
+            if hasattr(value, "value"):
+                value = value.value
+            if value is None or isinstance(value, SERIALIZABLE_TYPES):
+                device_state[name] = value
+        return data

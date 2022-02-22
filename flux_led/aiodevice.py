@@ -20,7 +20,9 @@ from .const import (
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
     EFFECT_RANDOM,
+    NEVER_TIME,
     PRESET_MUSIC_MODE,
+    PUSH_UPDATE_INTERVAL,
     STATE_BLUE,
     STATE_COOL_WHITE,
     STATE_GREEN,
@@ -44,7 +46,6 @@ from .protocol import (
 from .scanner import FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
-from .const import PUSH_UPDATE_INTERVAL, NEVER_TIME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -697,25 +698,33 @@ class AIOWifiLedBulb(LEDENETDevice):
             msg = self._protocol.extract_inner_message(msg)
 
         if self._protocol.is_valid_state_response(msg):
+            self._last_message["state"] = msg
             self._async_process_state_response(msg)
             self._process_state_futures()
         elif self._protocol.is_valid_power_state_response(msg):
+            self._last_message["power_state"] = msg
             self.process_power_state_response(msg)
             self._process_power_futures()
         elif self._protocol.is_valid_get_time_response(msg):
+            self._last_message["get_time"] = msg
             self.process_time_response(msg)
         elif self._protocol.is_valid_timers_response(msg):
+            self._last_message["timers"] = msg
             self.process_timers_response(msg)
             changed_state = True
         elif self._protocol.is_valid_device_config_response(msg):
+            self._last_message["device_config"] = msg
             self.process_device_config_response(msg)
             changed_state = True
         elif self._protocol.is_valid_power_restore_state_response(msg):
+            self._last_message["power_restore_state"] = msg
             self.process_power_restore_state_response(msg)
         elif self._protocol.is_valid_remote_config_response(msg):
+            self._last_message["remote_config"] = msg
             self.process_remote_config_response(msg)
             changed_state = True
         else:
+            self._last_message["unknown"] = msg
             _LOGGER.debug(
                 "%s: Ignoring unknown message: %s",
                 self.ipaddr,
