@@ -1,17 +1,14 @@
 import colorsys
-from dataclasses import is_dataclass, asdict
+from dataclasses import asdict, is_dataclass
 from enum import Enum
 import logging
 import random
 import time
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
-from .const import NEVER_TIME
-
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     ATTR_MODEL,
-    POWER_STATE_CHANGE_LATENCY,
     ATTR_MODEL_DESCRIPTION,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
@@ -34,6 +31,8 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     MODE_SWITCH,
     MODE_WW,
     MODEL_NUMS_SWITCHS,
+    NEVER_TIME,
+    POWER_STATE_CHANGE_LATENCY,
     PRESET_MUSIC_MODE,
     PRESET_MUSIC_MODE_LEGACY,
     PRESET_MUSIC_MODES,

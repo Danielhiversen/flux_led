@@ -20,7 +20,9 @@ from .const import (
     COLOR_MODE_RGBWW,
     EFFECT_MUSIC,
     EFFECT_RANDOM,
+    NEVER_TIME,
     PRESET_MUSIC_MODE,
+    PUSH_UPDATE_INTERVAL,
     STATE_BLUE,
     STATE_COOL_WHITE,
     STATE_GREEN,
@@ -44,7 +46,6 @@ from .protocol import (
 from .scanner import FluxLEDDiscovery
 from .timer import LedTimer
 from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
-from .const import PUSH_UPDATE_INTERVAL, NEVER_TIME
 
 _LOGGER = logging.getLogger(__name__)
 
