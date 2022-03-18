@@ -9,9 +9,9 @@
 
 
 
-### Magic Home / flux_led
+### Magic Home / Surp Life / flux_led
 
-This is a utility for controlling stand-alone Magic Home devices manufactured by [Zengge](http://www.zengge.com/sy).
+This is a utility for controlling stand-alone [Magic Home](http://www.zengge.com/appkzd) and [Surp Life](http://www.zengge.com/newbrand) devices manufactured by [Zengge](http://www.zengge.com/sy).
 The protocol was reverse-engineered by studying packet captures between a 
 bulb and the controlling "Magic Home" mobile app.  The code here dealing 
 with the network protocol is littered with magic numbers, and ain't so pretty.
@@ -272,6 +272,7 @@ The following models are confirmed to be unsupported.
 - SMFX
 - [Sumaote](https://fvtled.com/)
 - [Superhome](https://superhome.com.cy/)
+- [SurpLife](http://www.zengge.com/newbrand) 
 - [SuperlightingLED](https://www.superlightingled.com/)
 - Svipear
 - Tommox
