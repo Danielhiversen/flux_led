@@ -975,6 +975,7 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x35,
+        # 'AK001-ZJ200' is v5.17
         # 'AK001-ZJ2101' is v7.63
         # 'AK001-ZJ2104' is v7.07
         # 'AK001-ZJ2145' is v8.47, v8.56 - seen on 7w bulbs
@@ -982,6 +983,7 @@ MODELS = [
         # 'AK001-ZJ2147' is v9.7 (with RF remote control support)
         # 'AK001-ZJ21410' is v9.91 seen on the Bunpeon smart floor light ASIN:B09MN65324
         models=[
+            "AK001-ZJ200",
             "AK001-ZJ2101",
             "AK001-ZJ2104",
             "AK001-ZJ2145",
