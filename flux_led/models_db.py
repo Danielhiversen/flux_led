@@ -650,7 +650,7 @@ MODELS = [
     LEDENETModel(
         model_num=0x04,
         # AK001-ZJ100 == v3.09, v3.15 (Illume)
-        # AK001-ZJ200 == v5.20
+        # AK001-ZJ200 == v4.17 (Mini), v5.20
         # AK001-ZJ2104 == v6.20 (Dals)
         # There are a limited set of these devices that are the mini version but most are UFOs
         models=[
