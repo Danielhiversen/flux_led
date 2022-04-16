@@ -2586,6 +2586,29 @@ async def test_async_get_timers_socket_device(
 
 
 @pytest.mark.asyncio
+async def test_sockets_push_updates(
+    mock_aio_protocol, caplog: pytest.LogCaptureFixture
+):
+    """Test we can get the timers."""
+    socket = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(socket.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    socket._aio_protocol.data_received(
+        b"\x81\x97\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\x50"
+    )
+    socket._aio_protocol.data_received(b"\xf0\x32\xf0\xf0\xf0\xf0\xe2")
+
+    await task
+    assert socket.model_num == 0x97
+    assert socket._protocol.power_push_updates is True
+    assert socket._protocol.state_push_updates is True
+
+
+@pytest.mark.asyncio
 async def test_async_get_timers_8_byte_device(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
