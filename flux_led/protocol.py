@@ -2073,6 +2073,16 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
 
 class ProtocolLEDENETSocket(ProtocolLEDENET8Byte):
     @property
+    def power_push_updates(self) -> bool:
+        """If True the protocol pushes power state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
     def name(self) -> str:
         """The name of the protocol."""
         return PROTOCOL_LEDENET_SOCKET
