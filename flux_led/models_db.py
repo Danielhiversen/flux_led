@@ -412,12 +412,21 @@ HARDWARE = [
         dimmable_effects=False,
     ),
     LEDENETHardware(
+        model="AK001-ZJ2131",  # seen on 0x33 larger mini ones
+        chip=LEDENETChip.S82GESNC,  # couldn't get the device appart
+        remote_rf=False,
+        remote_24g=False,
+        remote_24g_controls=False,
+        auto_on=True,
+        dimmable_effects=False,
+    ),
+    LEDENETHardware(
         model="AK001-ZJ2134",  # seen in smart plugs only?
         chip=LEDENETChip.S82GESNC,  # couldn't get the device appart
         remote_rf=False,
         remote_24g=False,
         remote_24g_controls=False,
-        auto_on=False,
+        auto_on=True,
         dimmable_effects=False,
     ),
     LEDENETHardware(
@@ -947,6 +956,7 @@ MODELS = [
         # 'AK001-ZJ2104' == v7.07 - Seen on usb fairy lights - supports turning on by effect/levels set
         # 'AK001-ZJ2134' == v8.02 - seen on the water proof controllers for outdoor garden light
         # 'AK001-ZJ2101' == v8.61, 8.62 (44 key) - no dimmable effects confirmed, confirmed auto on
+        # 'AK001-ZJ2131' == v8.38 larger mini controller - no dimmable effects confirmed, confirmed auto on
         # "AK001-ZJ2145" == v9.25, v9.27, 9.30, 9.33 # w/IR
         # "AK001-ZJ2146" == v10.48 # 2.4ghz support, some have IR
         # "AK001-ZJ2148" == v10.63 # 2.4ghz support, confirmed to be able to change 2.4G remote settings
@@ -955,6 +965,7 @@ MODELS = [
             "AK001-ZJ210",
             "AK001-ZJ2104",
             "AK001-ZJ2101",
+            "AK001-ZJ2131",
             "AK001-ZJ2134",
             "AK001-ZJ2145",
             "AK001-ZJ2146",
