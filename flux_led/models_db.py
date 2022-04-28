@@ -1033,10 +1033,11 @@ MODELS = [
     ),
     LEDENETModel(
         model_num=0x44,
+        # v5 - HF-LPB100-ZJ200 - Schultze imports 7w bulb
         # v8 - AK001-ZJ200 aka old flux
         # v9.34 - AK001-ZJ210
         # v10.49 - AK001-ZJ2101
-        models=["AK001-ZJ200", "AK001-ZJ210", "AK001-ZJ2101"],
+        models=["HF-LPB100-ZJ200", "AK001-ZJ200", "AK001-ZJ210", "AK001-ZJ2101"],
         description="Bulb RGBW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
