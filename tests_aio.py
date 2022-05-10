@@ -2236,7 +2236,7 @@ async def test_christmas_protocol_device_turn_on(mock_aio_protocol):
     assert light.dimmable_effects is False
     assert light.requires_turn_on is False
     assert light._protocol.power_push_updates is True
-    assert light._protocol.state_push_updates is False
+    assert light._protocol.state_push_updates is True
 
     data = []
     written = []
@@ -2284,7 +2284,7 @@ async def test_christmas_protocol_device(mock_aio_protocol):
     assert light.dimmable_effects is False
     assert light.requires_turn_on is False
     assert light._protocol.power_push_updates is True
-    assert light._protocol.state_push_updates is False
+    assert light._protocol.state_push_updates is True
 
     transport.reset_mock()
     await light.async_set_brightness(255)
