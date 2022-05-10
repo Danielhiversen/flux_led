@@ -1797,6 +1797,11 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         return True
 
     @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return True
+
+    @property
     def zones(self) -> bool:
         """If the protocol supports zones."""
         return True
