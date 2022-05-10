@@ -812,7 +812,7 @@ async def test_async_set_effect(mock_aio_protocol, caplog: pytest.LogCaptureFixt
     assert light.dimmable_effects is True
     assert light.requires_turn_on is False
     assert light._protocol.power_push_updates is True
-    assert light._protocol.state_push_updates is False
+    assert light._protocol.state_push_updates is True
 
     transport.reset_mock()
     await light.async_set_effect("random", 50)
