@@ -336,7 +336,7 @@ async def test_extract_from_outer_message(mock_aio_protocol):
     assert light.color_modes == {COLOR_MODE_RGB}
     assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
     assert light.model_num == 0x1A
-    assert light.model == "Christmas Light (0x1A)"
+    assert light.model == "String Lights (0x1A)"
     assert light.is_on is True
     assert len(light.effect_list) == 101
     assert light.rgb == (255, 0, 0)
@@ -360,7 +360,7 @@ async def test_extract_from_outer_message_and_reassemble(mock_aio_protocol):
     assert light.color_modes == {COLOR_MODE_RGB}
     assert light.protocol == PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS
     assert light.model_num == 0x1A
-    assert light.model == "Christmas Light (0x1A)"
+    assert light.model == "String Lights (0x1A)"
     assert light.is_on is True
     assert len(light.effect_list) == 101
     assert light.rgb == (255, 0, 0)

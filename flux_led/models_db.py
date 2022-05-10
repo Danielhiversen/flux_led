@@ -800,9 +800,10 @@ MODELS = [
         device_config=IMMUTABLE_DEVICE_CONFIG,
     ),
     LEDENETModel(
+        # 'AK001-ZJ2147' is v1.25
         model_num=0x1A,
         models=["AK001-ZJ2147"],
-        description="Christmas Light",
+        description="String Lights",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS)],
         mode_to_color_mode={},
