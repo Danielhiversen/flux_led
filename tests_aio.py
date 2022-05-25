@@ -3,6 +3,7 @@ import contextlib
 import datetime
 import json
 import logging
+import time
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -19,6 +20,7 @@ from flux_led.const import (
     EFFECT_MUSIC,
     MAX_TEMP,
     MIN_TEMP,
+    PUSH_UPDATE_INTERVAL,
     MultiColorEffects,
     WhiteChannelType,
 )
@@ -667,6 +669,64 @@ async def test_handling_unavailable_after_no_response(mock_aio_protocol):
     with pytest.raises(RuntimeError):
         await light.async_update()
     assert light.available is False
+
+
+@pytest.mark.asyncio
+async def test_handling_unavailable_after_no_response_force(mock_aio_protocol):
+    """Test we handle the bulb not responding."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, _ = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
+    # ic state
+    light._aio_protocol.data_received(
+        b"\xB0\xB1\xB2\xB3\x00\x01\x01\x00\x00\x0B\x00\x63\x00\x90\x00\x01\x07\x08\x90\x01\x94\xFB"
+    )
+    await task
+    assert light._protocol.power_push_updates is True
+
+    transport.reset_mock()
+    await light.async_update()
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\x04\x81\x8a\x8b\x96\xf9"
+    )
+
+    light._last_update_time = time.monotonic() - (PUSH_UPDATE_INTERVAL + 1)
+    await light.async_update()
+    light._last_update_time = time.monotonic() - (PUSH_UPDATE_INTERVAL + 1)
+    await light.async_update()
+    light._last_update_time = time.monotonic() - (PUSH_UPDATE_INTERVAL + 1)
+    await light.async_update()
+    light._last_update_time = time.monotonic() - (PUSH_UPDATE_INTERVAL + 1)
+    with pytest.raises(RuntimeError):
+        await light.async_update()
+    assert light.available is False
+
+    with pytest.raises(RuntimeError):
+        await light.async_update()
+
+    transport.reset_mock()
+    await light.async_update(force=True)
+    assert len(transport.mock_calls) == 1
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x04\x81\x8a\x8b\x96\xfd"
+    )
+    assert light.available is False
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
+    assert light.available is True
 
 
 @pytest.mark.asyncio
