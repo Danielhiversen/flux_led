@@ -302,14 +302,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         else:
             await self.async_set_levels(None, None, None, warm, cold, persist=persist)
 
-    async def async_update(self) -> None:
+    async def async_update(self, force: bool = False) -> None:
         """Request an update.
 
         The callback will be triggered when the state is recieved.
         """
         now = time.monotonic()
         assert self._protocol is not None
-        if (self._last_update_time + PUSH_UPDATE_INTERVAL) > now:
+        if not force and (self._last_update_time + PUSH_UPDATE_INTERVAL) > now:
             if self.is_on:
                 # If the device pushes state updates when on
                 # then no need to poll except for the interval
