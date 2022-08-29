@@ -10,6 +10,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     ATTR_MODEL,
     ATTR_MODEL_DESCRIPTION,
+    ATTR_MODEL_INFO,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -740,8 +741,8 @@ class LEDENETDevice:
             return self._port
         if (
             self._discovery
-            and self._discovery.model_info
-            and "armacost" in self._discovery.model_info.lower()
+            and ATTR_MODEL_INFO in self._discovery
+            and "armacost" in self._discovery[ATTR_MODEL_INFO].lower()
         ):
             return ARMACOST_PORT
         return DEFAULT_PORT
