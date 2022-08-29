@@ -742,6 +742,7 @@ class LEDENETDevice:
         if (
             self._discovery
             and ATTR_MODEL_INFO in self._discovery
+            and self._discovery[ATTR_MODEL_INFO]
             and "armacost" in self._discovery[ATTR_MODEL_INFO].lower()
         ):
             return ARMACOST_PORT
