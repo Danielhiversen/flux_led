@@ -10,6 +10,7 @@ from .const import (  # imported for back compat, remove once Home Assistant no 
     ADDRESSABLE_STATE_CHANGE_LATENCY,
     ATTR_MODEL,
     ATTR_MODEL_DESCRIPTION,
+    ATTR_MODEL_INFO,
     CHANNEL_STATES,
     COLOR_MODE_CCT,
     COLOR_MODE_DIM,
@@ -189,6 +190,10 @@ PATTERN_CODE_TO_EFFECT = {
 SERIALIZABLE_TYPES = (str, bool, dict, int, float, list, tuple, set)
 
 
+DEFAULT_PORT = 5577
+ARMACOST_PORT = 34001
+
+
 class DeviceType(Enum):
     Bulb = 0
     Switch = 1
@@ -200,13 +205,13 @@ class LEDENETDevice:
     def __init__(
         self,
         ipaddr: str,
-        port: int = 5577,
+        port: int = 0,
         timeout: float = 5,
         discovery: Optional[FluxLEDDiscovery] = None,
     ) -> None:
         """Init the LEDENEt Device."""
         self.ipaddr: str = ipaddr
-        self.port: int = port
+        self._port: int = port
         self.timeout: float = timeout
         self.raw_state: Optional[Union[LEDENETOriginalRawState, LEDENETRawState]] = None
         self.available: Optional[bool] = None
@@ -728,6 +733,18 @@ class LEDENETDevice:
         if self.protocol in ADDRESSABLE_PROTOCOLS:
             return MODE_PRESET
         return None
+
+    @property
+    def port(self) -> int:
+        """Return the discovered port."""
+        if self._port:
+            return self._port
+        if (
+            self._discovery
+            and "armacost" in (self._discovery.get(ATTR_MODEL_INFO) or "").lower()
+        ):
+            return ARMACOST_PORT
+        return DEFAULT_PORT
 
     def set_unavailable(self) -> None:
         self.available = False

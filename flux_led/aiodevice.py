@@ -65,7 +65,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     def __init__(
         self,
         ipaddr: str,
-        port: int = 5577,
+        port: int = 0,
         timeout: float = 5,
         discovery: Optional[FluxLEDDiscovery] = None,
     ) -> None:
