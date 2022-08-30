@@ -3186,6 +3186,16 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     transport, protocol = await mock_discovery_aio_protocol()
     protocol.datagram_received(b"HF-A11ASSISTHREAD", ("127.0.0.1", 48899))
     protocol.datagram_received(
+        b"192.168.1.193,DC4F22E6462E,AK001-ZJ200", ("192.168.1.193", 48899)
+    )
+    protocol.datagram_received(
+        b"+ok=25_18_20170908_Armacost\r", ("192.168.1.193", 48899)
+    )
+    protocol.datagram_received(
+        b"+ok=TCP,8806,mhc8806us.magichue.net\r", ("192.168.1.193", 48899)
+    )
+
+    protocol.datagram_received(
         b"192.168.213.252,B4E842E10588,AK001-ZJ2145", ("192.168.213.252", 48899)
     )
     protocol.datagram_received(
@@ -3240,6 +3250,19 @@ async def test_async_scanner(mock_discovery_aio_protocol):
     )
     data = await task
     assert data == [
+        {
+            "firmware_date": datetime.date(2017, 9, 8),
+            "id": "DC4F22E6462E",
+            "ipaddr": "192.168.1.193",
+            "model": "AK001-ZJ200",
+            "model_description": "Controller RGB/WW/CW",
+            "model_info": "Armacost",
+            "model_num": 37,
+            "remote_access_enabled": True,
+            "remote_access_host": "mhc8806us.magichue.net",
+            "remote_access_port": 8806,
+            "version_num": 24,
+        },
         {
             "firmware_date": datetime.date(2021, 2, 4),
             "id": "B4E842E10588",
@@ -3585,3 +3608,49 @@ def test_merge_discoveries() -> None:
     partial = FLUX_DISCOVERY_PARTIAL.copy()
     merge_discoveries(full, partial)
     assert full == FLUX_DISCOVERY
+
+
+@pytest.mark.asyncio
+async def test_armacost():
+    """Test armacost uses port 34001."""
+    discovery = FluxLEDDiscovery(
+        {
+            "firmware_date": datetime.date(2017, 9, 8),
+            "id": "DC4F22E6462E",
+            "ipaddr": "192.168.1.193",
+            "model": "AK001-ZJ200",
+            "model_description": "Controller RGB/WW/CW",
+            "model_info": "Armacost",
+            "model_num": 37,
+            "remote_access_enabled": True,
+            "remote_access_host": "mhc8806us.magichue.net",
+            "remote_access_port": 8806,
+            "version_num": 24,
+        }
+    )
+    light = AIOWifiLedBulb("192.168.1.193")
+    light.discovery = discovery
+    assert light.port == 34001
+
+
+@pytest.mark.asyncio
+async def test_not_armacost():
+    """Test not armacost uses 5577."""
+    discovery = FluxLEDDiscovery(
+        {
+            "firmware_date": datetime.date(2021, 2, 4),
+            "id": "B4E842E10588",
+            "ipaddr": "192.168.213.252",
+            "model": "AK001-ZJ2145",
+            "model_description": "Controller RGB with MIC",
+            "model_info": "ZG-BL",
+            "model_num": 8,
+            "remote_access_enabled": True,
+            "remote_access_host": "ra8816us02.magichue.net",
+            "remote_access_port": 8816,
+            "version_num": 21,
+        }
+    )
+    light = AIOWifiLedBulb("192.168.213.252")
+    light.discovery = discovery
+    assert light.port == 5577
