@@ -41,8 +41,8 @@ See the following for valid color names: http://www.w3schools.com/html/html_colo
 import asyncio
 import datetime
 import logging
-from optparse import OptionGroup, OptionParser, Values
 import sys
+from optparse import OptionGroup, OptionParser, Values
 from typing import Any, List, Optional, Tuple
 
 from .aio import AIOWifiLedBulb
