@@ -1,7 +1,7 @@
 import asyncio
-from datetime import datetime
 import logging
 import time
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .aioprotocol import AIOLEDENETProtocol

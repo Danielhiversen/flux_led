@@ -1,8 +1,8 @@
 import ast
-from collections import namedtuple
 import colorsys
 import contextlib
 import datetime
+from collections import namedtuple
 from typing import Iterable, List, Optional, Tuple, Union, cast
 
 import webcolors  # type: ignore

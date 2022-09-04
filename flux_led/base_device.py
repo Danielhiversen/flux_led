@@ -1,9 +1,9 @@
 import colorsys
-from dataclasses import asdict, is_dataclass
-from enum import Enum
 import logging
 import random
 import time
+from dataclasses import asdict, is_dataclass
+from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
@@ -90,6 +90,7 @@ from .protocol import (
     PROTOCOL_LEDENET_CCT,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
+    PROTOCOL_LEDENET_ORIGINAL_RGBW,
     PROTOCOL_LEDENET_SOCKET,
     LEDENETAddressableDeviceConfiguration,
     LEDENETOriginalRawState,
@@ -107,6 +108,7 @@ from .protocol import (
     ProtocolLEDENETCCT,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
+    ProtocolLEDENETOriginalRGBW,
     ProtocolLEDENETSocket,
     RemoteConfig,
 )
@@ -137,6 +139,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
+    ProtocolLEDENETOriginalRGBW,
     ProtocolLEDENETCCT,
     ProtocolLEDENETSocket,
     ProtocolLEDENETAddressableChristmas,
@@ -166,6 +169,7 @@ SPEED_ADJUST_WILL_TURN_ON = {
 PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ORIGINAL: ProtocolLEDENETOriginal,
     PROTOCOL_LEDENET_ORIGINAL_CCT: ProtocolLEDENETOriginalCCT,
+    PROTOCOL_LEDENET_ORIGINAL_RGBW: ProtocolLEDENETOriginalRGBW,
     PROTOCOL_LEDENET_8BYTE: ProtocolLEDENET8Byte,
     PROTOCOL_LEDENET_8BYTE_AUTO_ON: ProtocolLEDENET8ByteAutoOn,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS: ProtocolLEDENET8ByteDimmableEffects,

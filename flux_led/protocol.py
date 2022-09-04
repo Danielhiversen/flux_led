@@ -1,12 +1,12 @@
 """FluxLED Protocols."""
 
-from abc import abstractmethod
 import colorsys
 import contextlib
-from dataclasses import dataclass
 import datetime
-from enum import Enum
 import logging
+from abc import abstractmethod
+from dataclasses import dataclass
+from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from .const import (
@@ -74,6 +74,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Protocol names
 PROTOCOL_LEDENET_ORIGINAL = "LEDENET_ORIGINAL"
+PROTOCOL_LEDENET_ORIGINAL_RGBW = "LEDENET_ORIGINAL_RGBW"
 PROTOCOL_LEDENET_ORIGINAL_CCT = "LEDENET_ORIGINAL_CCT"
 PROTOCOL_LEDENET_9BYTE = "LEDENET"
 PROTOCOL_LEDENET_9BYTE_AUTO_ON = "LEDENET_AUTO_ON"
@@ -891,6 +892,41 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         """Convert raw_state to a namedtuple."""
         raw_bytearray = bytearray([*raw_state, 0])
         return LEDENETOriginalRawState(*raw_bytearray)
+
+
+class ProtocolLEDENETOriginalRGBW(ProtocolLEDENETOriginal):
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_ORIGINAL_RGBW
+
+    def construct_levels_change(
+        self,
+        persist: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
+        write_mode: LevelWriteMode,
+    ) -> List[bytearray]:
+        """The bytes to send for a level change request."""
+        # sample message for original LEDENET RGBW protocol (w/o checksum at end)
+        return [
+            self.construct_message(
+                bytearray(
+                    [
+                        0x56,
+                        red or 0x00,
+                        green or 0x00,
+                        blue or 0x00,
+                        warm_white or 0x00,
+                        write_mode.value,
+                        0xAA,
+                    ]
+                )
+            )
+        ]
 
 
 class ProtocolLEDENETOriginalCCT(ProtocolLEDENETOriginal):

@@ -1,7 +1,7 @@
 """FluxLED Models Database."""
 
-from enum import Enum
 import sys
+from enum import Enum
 
 if sys.version_info >= (3, 8):
     from typing import Final  # pylint: disable=no-name-in-module
