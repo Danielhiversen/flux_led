@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEVICE_ID = 0xA1
+DEVICE_ID = 0x09
 VERSION = 9
 MINOR_VERSION = 28
 ON_AT_START = False
