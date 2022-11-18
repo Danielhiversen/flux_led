@@ -2150,11 +2150,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     MIN_BRIGHTNESS = 2
 
     @property
-    def name(self) -> str:
-        """The name of the protocol."""
-        return PROTOCOL_LEDENET_CCT
-
-    @property
     def timer_response_len(self) -> int:
         """Return the time response len."""
         return LEDENET_TIMERS_8BYTE_RESPONSE_LEN
@@ -2168,6 +2163,11 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
+
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_CCT
 
     @property
     def power_push_updates(self) -> bool:
