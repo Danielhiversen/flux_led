@@ -2167,7 +2167,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     @property
     def name(self) -> str:
         """The name of the protocol."""
-        return PROTOCOL_LEDENET_CCT_WRAPPED
+        return PROTOCOL_LEDENET_CCT
 
     @property
     def dimmable_effects(self) -> bool:
@@ -2226,6 +2226,11 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
 
 class ProtocolLEDENETCCTWrapped(ProtocolLEDENETCCT):
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_CCT_WRAPPED
+
     @property
     def state_push_updates(self) -> bool:
         """If True the protocol pushes state updates when controlled via ir/rf/app."""
