@@ -9,11 +9,21 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
-from .const import (COLOR_MODE_RGB, COLOR_MODE_RGBW, MUSIC_PIXELS_MAX,
-                    MUSIC_PIXELS_PER_SEGMENT_MAX, MUSIC_SEGMENTS_MAX,
-                    PIXELS_MAX, PIXELS_PER_SEGMENT_MAX, SEGMENTS_MAX,
-                    TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE,
-                    LevelWriteMode, MultiColorEffects)
+from .const import (
+    COLOR_MODE_RGB,
+    COLOR_MODE_RGBW,
+    MUSIC_PIXELS_MAX,
+    MUSIC_PIXELS_PER_SEGMENT_MAX,
+    MUSIC_SEGMENTS_MAX,
+    PIXELS_MAX,
+    PIXELS_PER_SEGMENT_MAX,
+    SEGMENTS_MAX,
+    TRANSITION_GRADUAL,
+    TRANSITION_JUMP,
+    TRANSITION_STROBE,
+    LevelWriteMode,
+    MultiColorEffects,
+)
 from .timer import LedTimer
 from .utils import utils, white_levels_to_scaled_color_temp
 
