@@ -721,9 +721,9 @@ MODELS = [
         device_config=RGB_DEVICE_CONFIG,
     ),
     LEDENETModel(
-        model_num=0x09,  # same as 0xE1
+        model_num=0x09,  # same as 0xE1 but not wrapped
         models=[],
-        description="High Voltage Ceiling Light CCT",
+        description="High Voltage Bulb CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_CCT)],
         mode_to_color_mode={},
