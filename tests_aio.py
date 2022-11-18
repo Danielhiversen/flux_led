@@ -25,6 +25,8 @@ from flux_led.const import (
     WhiteChannelType,
 )
 from flux_led.protocol import (
+    ProtocolLEDENETCCT,
+    ProtocolLEDENETCCTWrapped,
     PROTOCOL_LEDENET_8BYTE_AUTO_ON,
     PROTOCOL_LEDENET_8BYTE_DIMMABLE_EFFECTS,
     PROTOCOL_LEDENET_9BYTE,
@@ -2157,8 +2159,8 @@ async def test_0x06_rgbw_cct_cold(mock_aio_protocol, caplog: pytest.LogCaptureFi
 
 
 @pytest.mark.asyncio
-async def test_cct_protocol_device(mock_aio_protocol):
-    """Test a cct protocol device."""
+async def test_wrapped_cct_protocol_device(mock_aio_protocol):
+    """Test a wrapped cct protocol device."""
     light = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
@@ -2173,6 +2175,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert light.getCCT() == (0, 255)
     assert light.color_temp == 6500
     assert light.brightness == 255
+    assert isinstance(light._protocol, ProtocolLEDENETCCTWrapped)
     assert light._protocol.timer_count == 6
     assert light._protocol.timer_len == 14
     assert light._protocol.timer_response_len == 88
@@ -2274,6 +2277,126 @@ async def test_cct_protocol_device(mock_aio_protocol):
     light._last_update_time = aiodevice.NEVER_TIME
     await light.async_update()
 
+
+
+@pytest.mark.asyncio
+async def test_cct_protocol_device(mock_aio_protocol):
+    """Test a original cct protocol device."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x09\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xB5"
+    )
+    await task
+    assert light.getCCT() == (0, 255)
+    assert light.color_temp == 6500
+    assert light.brightness == 255
+    assert isinstance(light._protocol, ProtocolLEDENETCCT)
+    assert light._protocol.timer_count == 6
+    assert light._protocol.timer_len == 14
+    assert light._protocol.timer_response_len == 88
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x23\x61\x00\x05\x00\x00\x00\x00\x03\x64\x00\x8D"
+    )
+    assert light.getCCT() == (255, 0)
+    assert light.color_temp == 2700
+    assert light.brightness == 255
+    assert light.dimmable_effects is False
+    assert light.requires_turn_on is False
+    assert light._protocol.power_push_updates is True
+    assert light._protocol.state_push_updates is True
+
+    transport.reset_mock()
+    await light.async_set_brightness(32)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\t5\xb1\x00\r\x00\x00\x00\x03\xf6\xbd"
+    )
+    assert light.brightness == 33
+
+    transport.reset_mock()
+    await light.async_set_brightness(128)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\t5\xb1\x002\x00\x00\x00\x03\x1b\x08"
+    )
+    assert light.brightness == 128
+
+    transport.reset_mock()
+    await light.async_set_brightness(1)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\t5\xb1\x00\x02\x00\x00\x00\x03\xeb\xa9"
+    )
+    assert light.brightness == 0
+
+    transport.reset_mock()
+    await light.async_set_levels(w=0, w2=255)
+    assert transport.mock_calls[0][0] == "write"
+    assert (
+        transport.mock_calls[0][1][0]
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\t5\xb1dd\x00\x00\x00\x03\xb16"
+    )
+    assert light.getCCT() == (0, 255)
+    assert light.color_temp == 6500
+    assert light.brightness == 255
+
+    transport.reset_mock()
+    await light.async_set_effect("random", 50)
+    assert transport.mock_calls[0][0] == "write"
+    assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3\x00")
+
+    # light is on
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC8"
+    )
+    assert light._last_update_time == aiodevice.NEVER_TIME
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await asyncio.sleep(0)
+    assert len(transport.mock_calls) == 1
+
+    # light is off
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x24\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC9"
+    )
+    transport.reset_mock()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await light.async_update()
+    await asyncio.sleep(0)
+    assert len(transport.mock_calls) == 0
+
+    transport.reset_mock()
+    for _ in range(4):
+        light._last_update_time = aiodevice.NEVER_TIME
+        await light.async_update()
+    await asyncio.sleep(0)
+    assert len(transport.mock_calls) == 4
+
+    light._last_update_time = aiodevice.NEVER_TIME
+    for _ in range(4):
+        # First failure should keep the device in
+        # a failure state until we get to an update
+        # time
+        with pytest.raises(RuntimeError):
+            await light.async_update()
+
+    # Should not raise now that bulb has recovered
+    light._last_update_time = aiodevice.NEVER_TIME
+    await light.async_update()
 
 @pytest.mark.asyncio
 async def test_christmas_protocol_device_turn_on(mock_aio_protocol):

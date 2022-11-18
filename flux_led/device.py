@@ -6,18 +6,12 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
-from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
+from flux_led.protocol import (LEDENET_TIME_RESPONSE_LEN,
+                               ProtocolLEDENETOriginal)
 
 from .base_device import LEDENETDevice
-from .const import (
-    DEFAULT_RETRIES,
-    EFFECT_RANDOM,
-    STATE_BLUE,
-    STATE_COOL_WHITE,
-    STATE_GREEN,
-    STATE_RED,
-    STATE_WARM_WHITE,
-)
+from .const import (DEFAULT_RETRIES, EFFECT_RANDOM, STATE_BLUE,
+                    STATE_COOL_WHITE, STATE_GREEN, STATE_RED, STATE_WARM_WHITE)
 from .scanner import FluxLEDDiscovery
 from .sock import _socket_retry
 from .timer import LedTimer

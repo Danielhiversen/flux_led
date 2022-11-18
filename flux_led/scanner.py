@@ -8,19 +8,10 @@ import time
 from datetime import date
 from typing import Dict, List, Optional, Tuple, Union, cast
 
-from .const import (
-    ATTR_FIRMWARE_DATE,
-    ATTR_ID,
-    ATTR_IPADDR,
-    ATTR_MODEL,
-    ATTR_MODEL_DESCRIPTION,
-    ATTR_MODEL_INFO,
-    ATTR_MODEL_NUM,
-    ATTR_REMOTE_ACCESS_ENABLED,
-    ATTR_REMOTE_ACCESS_HOST,
-    ATTR_REMOTE_ACCESS_PORT,
-    ATTR_VERSION_NUM,
-)
+from .const import (ATTR_FIRMWARE_DATE, ATTR_ID, ATTR_IPADDR, ATTR_MODEL,
+                    ATTR_MODEL_DESCRIPTION, ATTR_MODEL_INFO, ATTR_MODEL_NUM,
+                    ATTR_REMOTE_ACCESS_ENABLED, ATTR_REMOTE_ACCESS_HOST,
+                    ATTR_REMOTE_ACCESS_PORT, ATTR_VERSION_NUM)
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module

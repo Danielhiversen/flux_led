@@ -9,21 +9,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
-from .const import (
-    COLOR_MODE_RGB,
-    COLOR_MODE_RGBW,
-    MUSIC_PIXELS_MAX,
-    MUSIC_PIXELS_PER_SEGMENT_MAX,
-    MUSIC_SEGMENTS_MAX,
-    PIXELS_MAX,
-    PIXELS_PER_SEGMENT_MAX,
-    SEGMENTS_MAX,
-    TRANSITION_GRADUAL,
-    TRANSITION_JUMP,
-    TRANSITION_STROBE,
-    LevelWriteMode,
-    MultiColorEffects,
-)
+from .const import (COLOR_MODE_RGB, COLOR_MODE_RGBW, MUSIC_PIXELS_MAX,
+                    MUSIC_PIXELS_PER_SEGMENT_MAX, MUSIC_SEGMENTS_MAX,
+                    PIXELS_MAX, PIXELS_PER_SEGMENT_MAX, SEGMENTS_MAX,
+                    TRANSITION_GRADUAL, TRANSITION_JUMP, TRANSITION_STROBE,
+                    LevelWriteMode, MultiColorEffects)
 from .timer import LedTimer
 from .utils import utils, white_levels_to_scaled_color_temp
 
@@ -87,6 +77,7 @@ PROTOCOL_LEDENET_ADDRESSABLE_A1 = "LEDENET_ADDRESSABLE_A1"
 PROTOCOL_LEDENET_ADDRESSABLE_A2 = "LEDENET_ADDRESSABLE_A2"
 PROTOCOL_LEDENET_ADDRESSABLE_A3 = "LEDENET_ADDRESSABLE_A3"
 PROTOCOL_LEDENET_CCT = "LEDENET_CCT"
+PROTOCOL_LEDENET_CCT_WRAPPED = "LEDENET_CCT_WRAPPED"
 PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS = "LEDENET_CHRISTMAS"
 
 TRANSITION_BYTES = {
@@ -2148,19 +2139,10 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
 
     MIN_BRIGHTNESS = 2
 
-    def construct_state_query(self) -> bytearray:
-        """The bytes to send for a query request."""
-        return self.construct_wrapped_message(
-            super().construct_state_query(),
-            inner_pre_constructed=True,
-        )
-
-    def construct_state_change(self, turn_on: int) -> bytearray:
-        """The bytes to send for a state change request."""
-        return self.construct_wrapped_message(
-            super().construct_state_change(turn_on),
-            inner_pre_constructed=True,
-        )
+    @property
+    def name(self) -> str:
+        """The name of the protocol."""
+        return PROTOCOL_LEDENET_CCT
 
     @property
     def timer_response_len(self) -> int:
@@ -2175,7 +2157,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     @property
     def name(self) -> str:
         """The name of the protocol."""
-        return PROTOCOL_LEDENET_CCT
+        return PROTOCOL_LEDENET_CCT_WRAPPED
 
     @property
     def dimmable_effects(self) -> bool:
@@ -2185,11 +2167,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
     @property
     def power_push_updates(self) -> bool:
         """If True the protocol pushes power state updates when controlled via ir/rf/app."""
-        return True
-
-    @property
-    def state_push_updates(self) -> bool:
-        """If True the protocol pushes state updates when controlled via ir/rf/app."""
         return True
 
     @property
@@ -2219,7 +2196,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
             warm_white, cool_white
         )
         return [
-            self.construct_wrapped_message(
+            self.construct_message(
                 bytearray(
                     [
                         0x35,
@@ -2234,6 +2211,52 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
                         0x03,
                     ]
                 )
+            )
+        ]
+
+
+class ProtocolLEDENETCCTWrapped(ProtocolLEDENETCCT):
+    @property
+    def state_push_updates(self) -> bool:
+        """If True the protocol pushes state updates when controlled via ir/rf/app."""
+        return True
+
+    def construct_state_query(self) -> bytearray:
+        """The bytes to send for a query request."""
+        return self.construct_wrapped_message(
+            super().construct_state_query(),
+            inner_pre_constructed=True,
+        )
+
+    def construct_state_change(self, turn_on: int) -> bytearray:
+        """The bytes to send for a state change request."""
+        return self.construct_wrapped_message(
+            super().construct_state_change(turn_on),
+            inner_pre_constructed=True,
+        )
+
+    def construct_levels_change(
+        self,
+        persist: int,
+        red: Optional[int],
+        green: Optional[int],
+        blue: Optional[int],
+        warm_white: Optional[int],
+        cool_white: Optional[int],
+        write_mode: LevelWriteMode,
+    ) -> List[bytearray]:
+        """The bytes to send for a level change request.
+
+        b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
+        b0 b1 b2 b3 00 01 01 72 00 09 35 b1 64 64 00 00 00 03 b1 a5 - 100% cool
+        b0 b1 b2 b3 00 01 01 9f 00 09 35 b1 64 32 00 00 00 03 7f 6e - 100% cool - dim 50%
+        """
+        return [
+            self.construct_wrapped_message(
+                super().construct_levels_change(
+                    persist, red, green, blue, warm_white, cool_white, write_mode
+                )[0],
+                inner_pre_constructed=True,
             )
         ]
 

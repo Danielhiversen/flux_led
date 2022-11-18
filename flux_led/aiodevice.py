@@ -6,46 +6,25 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
-from .base_device import (
-    ALL_ADDRESSABLE_PROTOCOLS,
-    ALL_IC_PROTOCOLS,
-    DeviceType,
-    LEDENETDevice,
-)
-from .const import (
-    COLOR_MODE_CCT,
-    COLOR_MODE_DIM,
-    COLOR_MODE_RGB,
-    COLOR_MODE_RGBW,
-    COLOR_MODE_RGBWW,
-    EFFECT_MUSIC,
-    EFFECT_RANDOM,
-    NEVER_TIME,
-    PRESET_MUSIC_MODE,
-    PUSH_UPDATE_INTERVAL,
-    STATE_BLUE,
-    STATE_COOL_WHITE,
-    STATE_GREEN,
-    STATE_RED,
-    STATE_WARM_WHITE,
-    MultiColorEffects,
-)
-from .protocol import (
-    POWER_RESTORE_BYTES_TO_POWER_RESTORE,
-    REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
-    LEDENETOriginalRawState,
-    LEDENETRawState,
-    PowerRestoreState,
-    PowerRestoreStates,
-    ProtocolLEDENET8Byte,
-    ProtocolLEDENETAddressableA3,
-    ProtocolLEDENETAddressableChristmas,
-    ProtocolLEDENETOriginal,
-    RemoteConfig,
-)
+from .base_device import (ALL_ADDRESSABLE_PROTOCOLS, ALL_IC_PROTOCOLS,
+                          DeviceType, LEDENETDevice)
+from .const import (COLOR_MODE_CCT, COLOR_MODE_DIM, COLOR_MODE_RGB,
+                    COLOR_MODE_RGBW, COLOR_MODE_RGBWW, EFFECT_MUSIC,
+                    EFFECT_RANDOM, NEVER_TIME, PRESET_MUSIC_MODE,
+                    PUSH_UPDATE_INTERVAL, STATE_BLUE, STATE_COOL_WHITE,
+                    STATE_GREEN, STATE_RED, STATE_WARM_WHITE,
+                    MultiColorEffects)
+from .protocol import (POWER_RESTORE_BYTES_TO_POWER_RESTORE,
+                       REMOTE_CONFIG_BYTES_TO_REMOTE_CONFIG,
+                       LEDENETOriginalRawState, LEDENETRawState,
+                       PowerRestoreState, PowerRestoreStates,
+                       ProtocolLEDENET8Byte, ProtocolLEDENETAddressableA3,
+                       ProtocolLEDENETAddressableChristmas,
+                       ProtocolLEDENETOriginal, RemoteConfig)
 from .scanner import FluxLEDDiscovery
 from .timer import LedTimer
-from .utils import color_temp_to_white_levels, rgbw_brightness, rgbww_brightness
+from .utils import (color_temp_to_white_levels, rgbw_brightness,
+                    rgbww_brightness)
 
 _LOGGER = logging.getLogger(__name__)
 
