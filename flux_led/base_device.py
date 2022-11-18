@@ -88,6 +88,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_CCT,
+    PROTOCOL_LEDENET_CCT_WRAPPED,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
     PROTOCOL_LEDENET_ORIGINAL_RGBW,
@@ -106,6 +107,7 @@ from .protocol import (
     ProtocolLEDENETAddressableA3,
     ProtocolLEDENETAddressableChristmas,
     ProtocolLEDENETCCT,
+    ProtocolLEDENETCCTWrapped,
     ProtocolLEDENETOriginal,
     ProtocolLEDENETOriginalCCT,
     ProtocolLEDENETOriginalRGBW,
@@ -141,6 +143,7 @@ PROTOCOL_TYPES = Union[
     ProtocolLEDENETOriginalCCT,
     ProtocolLEDENETOriginalRGBW,
     ProtocolLEDENETCCT,
+    ProtocolLEDENETCCTWrapped,
     ProtocolLEDENETSocket,
     ProtocolLEDENETAddressableChristmas,
 ]
@@ -180,6 +183,7 @@ PROTOCOL_NAME_TO_CLS = {
     PROTOCOL_LEDENET_ADDRESSABLE_A2: ProtocolLEDENETAddressableA2,
     PROTOCOL_LEDENET_ADDRESSABLE_A1: ProtocolLEDENETAddressableA1,
     PROTOCOL_LEDENET_CCT: ProtocolLEDENETCCT,
+    PROTOCOL_LEDENET_CCT_WRAPPED: ProtocolLEDENETCCTWrapped,
     PROTOCOL_LEDENET_SOCKET: ProtocolLEDENETSocket,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS: ProtocolLEDENETAddressableChristmas,
 }
@@ -307,7 +311,7 @@ class LEDENETDevice:
     @property
     def _whites_are_temp_brightness(self) -> bool:
         """Return true if warm_white and cool_white are scaled temp values and not raw 0-255."""
-        return self.protocol == PROTOCOL_LEDENET_CCT
+        return self.protocol in (PROTOCOL_LEDENET_CCT, PROTOCOL_LEDENET_CCT_WRAPPED)
 
     @property
     def model(self) -> str:

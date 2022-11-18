@@ -44,6 +44,7 @@ from .protocol import (
     PROTOCOL_LEDENET_ADDRESSABLE_A3,
     PROTOCOL_LEDENET_ADDRESSABLE_CHRISTMAS,
     PROTOCOL_LEDENET_CCT,
+    PROTOCOL_LEDENET_CCT_WRAPPED,
     PROTOCOL_LEDENET_ORIGINAL,
     PROTOCOL_LEDENET_ORIGINAL_CCT,
     PROTOCOL_LEDENET_SOCKET,
@@ -745,9 +746,9 @@ MODELS = [
         device_config=RGB_DEVICE_CONFIG,
     ),
     LEDENETModel(
-        model_num=0x09,  # same as 0xE1
+        model_num=0x09,  # same as 0xE1 but not wrapped
         models=[],
-        description="High Voltage Ceiling Light CCT",
+        description="High Voltage Bulb CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_CCT)],
         mode_to_color_mode={},
@@ -883,7 +884,7 @@ MODELS = [
         models=["AK001-ZJ2149"],
         description="Table Light CCT",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
-        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_CCT)],
+        protocols=[MinVersionProtocol(0, PROTOCOL_LEDENET_CCT_WRAPPED)],
         mode_to_color_mode={},
         color_modes={COLOR_MODE_CCT},  # Formerly rgbwcapable
         channel_map={},
