@@ -2309,14 +2309,14 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert light.dimmable_effects is False
     assert light.requires_turn_on is False
     assert light._protocol.power_push_updates is True
-    assert light._protocol.state_push_updates is True
+    assert light._protocol.state_push_updates is False
 
     transport.reset_mock()
     await light.async_set_brightness(32)
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x00\x00\t5\xb1\x00\r\x00\x00\x00\x03\xf6\xbd"
+        == b'5\xb1\x00\r\x00\x00\x00\x03\xf6'
     )
     assert light.brightness == 33
 
@@ -2325,7 +2325,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x01\x00\t5\xb1\x002\x00\x00\x00\x03\x1b\x08"
+        == b'5\xb1\x002\x00\x00\x00\x03\x1b'
     )
     assert light.brightness == 128
 
@@ -2334,7 +2334,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x02\x00\t5\xb1\x00\x02\x00\x00\x00\x03\xeb\xa9"
+        == b'5\xb1\x00\x02\x00\x00\x00\x03\xeb'
     )
     assert light.brightness == 0
 
@@ -2343,7 +2343,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x03\x00\t5\xb1dd\x00\x00\x00\x03\xb16"
+        == b'5\xb1dd\x00\x00\x00\x03\xb1'
     )
     assert light.getCCT() == (0, 255)
     assert light.color_temp == 6500
@@ -2352,7 +2352,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_effect("random", 50)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0].startswith(b"\xb0\xb1\xb2\xb3\x00")
+    assert transport.mock_calls[0][1][0].startswith(b'5\xb1')
 
     # light is on
     light._aio_protocol.data_received(
@@ -2365,7 +2365,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     await light.async_update()
     await light.async_update()
     await asyncio.sleep(0)
-    assert len(transport.mock_calls) == 1
+    assert len(transport.mock_calls) == 4
 
     # light is off
     light._aio_protocol.data_received(
