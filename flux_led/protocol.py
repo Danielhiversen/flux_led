@@ -2165,11 +2165,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         return 14
 
     @property
-    def name(self) -> str:
-        """The name of the protocol."""
-        return PROTOCOL_LEDENET_CCT
-
-    @property
     def dimmable_effects(self) -> bool:
         """Protocol supports dimmable effects."""
         return False
