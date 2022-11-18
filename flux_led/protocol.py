@@ -2174,11 +2174,6 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         """If True the protocol pushes power state updates when controlled via ir/rf/app."""
         return True
 
-    @property
-    def requires_turn_on(self) -> bool:
-        """If True the device must be turned on before setting level/patterns/modes."""
-        return False
-
     def construct_levels_change(
         self,
         persist: int,
@@ -2230,6 +2225,11 @@ class ProtocolLEDENETCCTWrapped(ProtocolLEDENETCCT):
     def state_push_updates(self) -> bool:
         """If True the protocol pushes state updates when controlled via ir/rf/app."""
         return True
+
+    @property
+    def requires_turn_on(self) -> bool:
+        """If True the device must be turned on before setting level/patterns/modes."""
+        return False
 
     def construct_state_query(self) -> bytearray:
         """The bytes to send for a query request."""
