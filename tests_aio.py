@@ -2278,7 +2278,6 @@ async def test_wrapped_cct_protocol_device(mock_aio_protocol):
     await light.async_update()
 
 
-
 @pytest.mark.asyncio
 async def test_cct_protocol_device(mock_aio_protocol):
     """Test a original cct protocol device."""
@@ -2314,37 +2313,25 @@ async def test_cct_protocol_device(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_brightness(32)
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b'5\xb1\x00\r\x00\x00\x00\x03\xf6'
-    )
+    assert transport.mock_calls[0][1][0] == b"5\xb1\x00\r\x00\x00\x00\x03\xf6"
     assert light.brightness == 33
 
     transport.reset_mock()
     await light.async_set_brightness(128)
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b'5\xb1\x002\x00\x00\x00\x03\x1b'
-    )
+    assert transport.mock_calls[0][1][0] == b"5\xb1\x002\x00\x00\x00\x03\x1b"
     assert light.brightness == 128
 
     transport.reset_mock()
     await light.async_set_brightness(1)
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b'5\xb1\x00\x02\x00\x00\x00\x03\xeb'
-    )
+    assert transport.mock_calls[0][1][0] == b"5\xb1\x00\x02\x00\x00\x00\x03\xeb"
     assert light.brightness == 0
 
     transport.reset_mock()
     await light.async_set_levels(w=0, w2=255)
     assert transport.mock_calls[0][0] == "write"
-    assert (
-        transport.mock_calls[0][1][0]
-        == b'5\xb1dd\x00\x00\x00\x03\xb1'
-    )
+    assert transport.mock_calls[0][1][0] == b"5\xb1dd\x00\x00\x00\x03\xb1"
     assert light.getCCT() == (0, 255)
     assert light.color_temp == 6500
     assert light.brightness == 255
@@ -2352,7 +2339,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     transport.reset_mock()
     await light.async_set_effect("random", 50)
     assert transport.mock_calls[0][0] == "write"
-    assert transport.mock_calls[0][1][0].startswith(b'5\xb1')
+    assert transport.mock_calls[0][1][0].startswith(b"5\xb1")
 
     # light is on
     light._aio_protocol.data_received(
@@ -2397,6 +2384,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     # Should not raise now that bulb has recovered
     light._last_update_time = aiodevice.NEVER_TIME
     await light.async_update()
+
 
 @pytest.mark.asyncio
 async def test_christmas_protocol_device_turn_on(mock_aio_protocol):
