@@ -4,6 +4,7 @@ import logging
 import time
 from typing import Callable, Dict, List, Optional, Tuple, cast
 
+from .aioutils import asyncio_timeout
 from .scanner import MESSAGE_SEND_INTERLEAVE_DELAY, BulbScanner, FluxLEDDiscovery
 
 _LOGGER = logging.getLogger(__name__)
@@ -68,7 +69,8 @@ class AIOBulbScanner(BulbScanner):
             events.append(event)
         for idx, command in enumerate(commands):
             self._send_message(transport, destination, command)
-            await asyncio.wait_for(event_map[idx].wait(), timeout=timeout)
+            async with asyncio_timeout(timeout):
+                await event_map[idx].wait()
 
     async def _async_send_commands_and_reboot(
         self,
@@ -122,9 +124,8 @@ class AIOBulbScanner(BulbScanner):
         time_out = timeout / self.BROADCAST_FREQUENCY
         while True:
             try:
-                await asyncio.wait_for(
-                    asyncio.shield(found_all_future), timeout=time_out
-                )
+                async with asyncio_timeout(time_out):
+                    await asyncio.shield(found_all_future)
             except asyncio.TimeoutError:
                 pass
             else:

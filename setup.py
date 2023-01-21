@@ -31,7 +31,7 @@ dev_requirements = [
     "wheel>=0.34.2",
 ]
 
-requirements = ["webcolors", 'typing_extensions;python_version<"3.8"']
+requirements = ["webcolors", 'typing_extensions;python_version<"3.8"', "async_timeout>=3.0.0"]
 
 
 extra_requirements = {
