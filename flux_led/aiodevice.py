@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
+from .aioutils import asyncio_timeout
 from .base_device import (
     ALL_ADDRESSABLE_PROTOCOLS,
     ALL_IC_PROTOCOLS,
@@ -133,7 +134,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_query_remote_config())
         try:
-            await asyncio.wait_for(self._remote_config_future, timeout=self.timeout)
+            async with asyncio_timeout(self.timeout):
+                await self._remote_config_future
         except asyncio.TimeoutError:
             _LOGGER.warning("%s: Could not determine 2.4ghz remote config", self.ipaddr)
 
@@ -142,7 +144,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_power_restore_state_query())
         try:
-            await asyncio.wait_for(self._power_restore_future, timeout=self.timeout)
+            async with asyncio_timeout(self.timeout):
+                await self._power_restore_future
         except asyncio.TimeoutError:
             self.set_unavailable()
             raise RuntimeError(
@@ -163,7 +166,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
         await self._async_send_msg(self._protocol.construct_request_strip_setting())
         try:
-            await asyncio.wait_for(self._device_config_future, timeout=self.timeout)
+            async with asyncio_timeout(self.timeout):
+                await self._device_config_future
         except asyncio.TimeoutError:
             self.set_unavailable()
             raise RuntimeError(f"{self.ipaddr}: Could not determine number pixels")
@@ -599,7 +603,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         async with self._get_time_lock:
             self._get_time_future = asyncio.Future()
             try:
-                await asyncio.wait_for(self._get_time_future, timeout=self.timeout)
+                async with asyncio_timeout(self.timeout):
+                    await self._get_time_future
             except asyncio.TimeoutError:
                 _LOGGER.warning("%s: Could not get time from the device", self.ipaddr)
                 return None
@@ -615,7 +620,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         async with self._get_timers_lock:
             self._get_timers_future = asyncio.Future()
             try:
-                await asyncio.wait_for(self._get_timers_future, timeout=self.timeout)
+                async with asyncio_timeout(self.timeout):
+                    await self._get_timers_future
             except asyncio.TimeoutError:
                 _LOGGER.warning("%s: Could not get timers from the device", self.ipaddr)
                 return None
@@ -637,16 +643,14 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def _async_connect(self) -> None:
         """Create connection."""
-        _, self._aio_protocol = await asyncio.wait_for(
-            self.loop.create_connection(  # type: ignore
+        async with asyncio_timeout(self.timeout):
+            _, self._aio_protocol = await self.loop.create_connection(  # type: ignore
                 lambda: AIOLEDENETProtocol(
                     self._async_data_recieved, self._async_connection_lost
                 ),
                 self.ipaddr,
                 self.port,
-            ),
-            timeout=self.timeout,
-        )
+            )
 
     def _async_connection_lost(self, exc: Optional[Exception]) -> None:
         """Called when the connection is lost."""
@@ -833,9 +837,8 @@ class AIOWifiLedBulb(LEDENETDevice):
                 self._determine_protocol_future = asyncio.Future()
                 self._aio_protocol.write(protocol.construct_state_query())
                 try:
-                    await asyncio.wait_for(
-                        self._determine_protocol_future, timeout=self.timeout
-                    )
+                    async with asyncio_timeout(self.timeout):
+                        await self._determine_protocol_future
                 except asyncio.TimeoutError:
                     if self._aio_protocol:
                         self._aio_protocol.close()
