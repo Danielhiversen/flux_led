@@ -241,6 +241,7 @@ class LEDENETDevice:
         self._last_effect_brightness: int = 100
         self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
         self._last_message: Dict[str, bytes] = {}
+        self._unavailable_reason: Optional[str] = None
 
     def _protocol_probes(
         self,
@@ -760,10 +761,12 @@ class LEDENETDevice:
 
     def set_unavailable(self, reason: str) -> None:
         _LOGGER.debug("%s: set_unavailable: %s", self.ipaddr, reason)
+        self._unavailable_reason = reason
         self.available = False
 
     def set_available(self, reason: str) -> None:
         _LOGGER.debug("%s: set_available: %s", self.ipaddr, reason)
+        self._unavailable_reason = None
         self.available = True
 
     def process_device_config_response(self, msg: bytes) -> None:

@@ -355,7 +355,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         """Raise DeviceUnavailableException if the bulb is offline."""
         if not self.available:
             raise DeviceUnavailableException(
-                f"{self.ipaddr}: Bulb not responding, too soon to retry"
+                f"{self.ipaddr}: Bulb not responding {self._unavailable_reason}, too soon to retry"
             )
 
     async def async_set_levels(
