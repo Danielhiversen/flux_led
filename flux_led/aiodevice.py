@@ -335,7 +335,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 # to make sure the device is still responding
                 return
         self._last_update_time = now
-        if self._updates_without_response == MAX_UPDATES_WITHOUT_RESPONSE:
+        if self._updates_without_response >= MAX_UPDATES_WITHOUT_RESPONSE:
             if self._aio_protocol:
                 self._aio_protocol.close()
             self.set_unavailable(
