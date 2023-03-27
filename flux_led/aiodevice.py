@@ -344,7 +344,13 @@ class AIOWifiLedBulb(LEDENETDevice):
             raise DeviceUnavailableException(
                 f"{self.ipaddr}: device stopped responding after {MAX_UPDATES_WITHOUT_RESPONSE} requests to send state"
             )
-        await self._async_send_state_query()
+        try:
+            await self._async_send_state_query()
+        except asyncio.TimeoutError as ex:
+            raise DeviceUnavailableException(
+                f"{self.ipaddr}: timed out trying to connect after {self.timeout} seconds"
+            ) from ex
+
         self._updates_without_response += 1
 
     async def async_set_levels(
