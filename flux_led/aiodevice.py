@@ -68,7 +68,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self,
         ipaddr: str,
         port: int = 0,
-        timeout: float = 5,
+        timeout: float = 7.5,
         discovery: Optional[FluxLEDDiscovery] = None,
     ) -> None:
         """Init and setup the bulb."""
