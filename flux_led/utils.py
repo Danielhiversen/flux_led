@@ -35,7 +35,6 @@ class utils:
     def color_object_to_tuple(
         color: Union[Tuple[int, ...], str]
     ) -> Optional[Tuple[int, ...]]:
-
         # see if it's already a color tuple
         if isinstance(color, tuple) and len(color) in [3, 4, 5]:
             return color

@@ -11,6 +11,7 @@ from .base_device import (
     ALL_ADDRESSABLE_PROTOCOLS,
     ALL_IC_PROTOCOLS,
     DeviceType,
+    DeviceUnavailableException,
     LEDENETDevice,
 )
 from .const import (
@@ -147,8 +148,8 @@ class AIOWifiLedBulb(LEDENETDevice):
             async with asyncio_timeout(self.timeout):
                 await self._power_restore_future
         except asyncio.TimeoutError:
-            self.set_unavailable()
-            raise RuntimeError(
+            self.set_unavailable("Could not determine power restore state")
+            raise DeviceUnavailableException(
                 f"{self.ipaddr}: Could not determine power restore state"
             )
 
@@ -169,8 +170,10 @@ class AIOWifiLedBulb(LEDENETDevice):
             async with asyncio_timeout(self.timeout):
                 await self._device_config_future
         except asyncio.TimeoutError:
-            self.set_unavailable()
-            raise RuntimeError(f"{self.ipaddr}: Could not determine number pixels")
+            self.set_unavailable("Could not determine number pixels")
+            raise DeviceUnavailableException(
+                f"{self.ipaddr}: Could not determine number pixels"
+            )
 
     async def async_stop(self) -> None:
         """Shutdown the connection."""
@@ -178,7 +181,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     def _async_stop(self) -> None:
         """Shutdown the connection and mark unavailable."""
-        self.set_unavailable()
+        self.set_unavailable("Connection closed")
         if self._aio_protocol:
             self._aio_protocol.close()
         self._last_update_time = NEVER_TIME
@@ -313,7 +316,14 @@ class AIOWifiLedBulb(LEDENETDevice):
         """
         now = time.monotonic()
         assert self._protocol is not None
-        if not force and (self._last_update_time + PUSH_UPDATE_INTERVAL) > now:
+        if (
+            # If the device is not available from a previous disconnect
+            # fall through and try to reconnect send we do the
+            # _async_send_state_query
+            self.available
+            and not force
+            and (self._last_update_time + PUSH_UPDATE_INTERVAL) > now
+        ):
             if self.is_on:
                 # If the device pushes state updates when on
                 # then no need to poll except for the interval
@@ -331,16 +341,22 @@ class AIOWifiLedBulb(LEDENETDevice):
         if self._updates_without_response == MAX_UPDATES_WITHOUT_RESPONSE:
             if self._aio_protocol:
                 self._aio_protocol.close()
-            self.set_unavailable()
+            self.set_unavailable(
+                f"device stopped responding after {MAX_UPDATES_WITHOUT_RESPONSE} requests to send state"
+            )
             self._updates_without_response = 0
-            raise RuntimeError(f"{self.ipaddr}: Bulb stopped responding")
+            raise DeviceUnavailableException(
+                f"{self.ipaddr}: device stopped responding after {MAX_UPDATES_WITHOUT_RESPONSE} requests to send state"
+            )
         await self._async_send_state_query()
         self._updates_without_response += 1
 
     def _async_raise_if_offline(self) -> None:
-        """Raise RuntimeError if the bulb is offline."""
+        """Raise DeviceUnavailableException if the bulb is offline."""
         if not self.available:
-            raise RuntimeError(f"{self.ipaddr}: Bulb not responding, too soon to retry")
+            raise DeviceUnavailableException(
+                f"{self.ipaddr}: Bulb not responding, too soon to retry"
+            )
 
     async def async_set_levels(
         self,
@@ -655,7 +671,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     def _async_connection_lost(self, exc: Optional[Exception]) -> None:
         """Called when the connection is lost."""
         self._aio_protocol = None
-        self.set_unavailable()
+        self.set_unavailable("Connection lost")
 
     def _async_data_recieved(self, data: bytes) -> None:
         """New data on the socket."""
@@ -695,7 +711,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     def _async_process_message(self, msg: bytes) -> None:
         """Process a full message (maybe reassembled)."""
         assert self._protocol is not None
-        self.set_available()
+        self.set_available(f"Received message {msg.hex()}")
         prev_state = self.raw_state
         changed_state = False
         if self._protocol.is_valid_outer_message(msg):
@@ -845,5 +861,5 @@ class AIOWifiLedBulb(LEDENETDevice):
                     continue
                 else:
                     return
-        self.set_unavailable()
-        raise RuntimeError(f"{self.ipaddr}: Cannot determine protocol")
+        self.set_unavailable("Cannot determine protocol")
+        raise DeviceUnavailableException(f"{self.ipaddr}: Cannot determine protocol")

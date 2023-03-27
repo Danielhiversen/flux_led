@@ -385,7 +385,6 @@ def processCustomArgs(
 
 
 def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
-
     parser = OptionParser()
 
     parser.description = "A utility to control Flux WiFi LED Bulbs. "

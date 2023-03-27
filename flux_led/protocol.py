@@ -1528,7 +1528,6 @@ class ProtocolLEDENETAddressableA1(ProtocolLEDENETAddressableBase):
 
 
 class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
-
     # ic response
     # 0x96 0x63 0x00 0x32 0x00 0x01 0x01 0x04 0x32 0x01 0x64 (11)
     def construct_request_strip_setting(self) -> bytearray:
@@ -2146,7 +2145,6 @@ class ProtocolLEDENETSocket(ProtocolLEDENET8Byte):
 
 
 class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
-
     MIN_BRIGHTNESS = 2
 
     @property
