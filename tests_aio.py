@@ -717,6 +717,9 @@ async def test_handling_unavailable_after_no_response_force(mock_aio_protocol):
         await light.async_update()
 
     transport.reset_mock()
+    light._aio_protocol.data_received(
+        b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+    )
     await light.async_update(force=True)
     assert len(transport.mock_calls) == 1
     assert transport.mock_calls[0][0] == "write"
@@ -724,7 +727,7 @@ async def test_handling_unavailable_after_no_response_force(mock_aio_protocol):
         transport.mock_calls[0][1][0]
         == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x04\x81\x8a\x8b\x96\xfd"
     )
-    assert light.available is False
+    assert light.available is True
     light._aio_protocol.data_received(
         b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
     )
@@ -2275,6 +2278,9 @@ async def test_wrapped_cct_protocol_device(mock_aio_protocol):
 
     # Should not raise now that bulb has recovered
     light._last_update_time = aiodevice.NEVER_TIME
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x24\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC9"
+    )
     await light.async_update()
 
 
@@ -2352,7 +2358,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
     await light.async_update()
     await light.async_update()
     await asyncio.sleep(0)
-    assert len(transport.mock_calls) == 4
+    assert len(transport.mock_calls) == 1
 
     # light is off
     light._aio_protocol.data_received(
@@ -2383,6 +2389,9 @@ async def test_cct_protocol_device(mock_aio_protocol):
 
     # Should not raise now that bulb has recovered
     light._last_update_time = aiodevice.NEVER_TIME
+    light._aio_protocol.data_received(
+        b"\x81\x1C\x24\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC9"
+    )
     await light.async_update()
 
 
