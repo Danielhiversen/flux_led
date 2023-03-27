@@ -341,7 +341,6 @@ class AIOWifiLedBulb(LEDENETDevice):
             self.set_unavailable(
                 f"device stopped responding after {MAX_UPDATES_WITHOUT_RESPONSE} requests to send state"
             )
-            self._updates_without_response = 0
             raise DeviceUnavailableException(
                 f"{self.ipaddr}: device stopped responding after {MAX_UPDATES_WITHOUT_RESPONSE} requests to send state"
             )
