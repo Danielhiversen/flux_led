@@ -164,7 +164,6 @@ def _process_remote_access_message(data: FluxLEDDiscovery, decoded_data: str) ->
 
 
 class BulbScanner:
-
     DISCOVERY_PORT = 48899
     BROADCAST_FREQUENCY = 6  # At least 6 for 0xA1 models
     RESPONSE_SIZE = 64

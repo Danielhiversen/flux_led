@@ -121,6 +121,10 @@ from .utils import scaled_color_temp_to_white_levels, utils, white_levels_to_col
 _LOGGER = logging.getLogger(__name__)
 
 
+class DeviceUnavailableException(RuntimeError):
+    """Exception to indicate a device is not available."""
+
+
 PROTOCOL_PROBES: Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]] = (
     ProtocolLEDENET8Byte,
     ProtocolLEDENETOriginal,
@@ -237,6 +241,7 @@ class LEDENETDevice:
         self._last_effect_brightness: int = 100
         self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
         self._last_message: Dict[str, bytes] = {}
+        self._unavailable_reason: Optional[str] = None
 
     def _protocol_probes(
         self,
@@ -754,10 +759,14 @@ class LEDENETDevice:
             return ARMACOST_PORT
         return DEFAULT_PORT
 
-    def set_unavailable(self) -> None:
+    def set_unavailable(self, reason: str) -> None:
+        _LOGGER.debug("%s: set_unavailable: %s", self.ipaddr, reason)
+        self._unavailable_reason = reason
         self.available = False
 
-    def set_available(self) -> None:
+    def set_available(self, reason: str) -> None:
+        _LOGGER.debug("%s: set_available: %s", self.ipaddr, reason)
+        self._unavailable_reason = None
         self.available = True
 
     def process_device_config_response(self, msg: bytes) -> None:

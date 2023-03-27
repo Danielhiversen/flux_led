@@ -359,9 +359,9 @@ class WifiLedBulb(LEDENETDevice):
     def update_state(self, retry: int = 2) -> None:
         rx = self.query_state(retry=retry)
         if rx and self.process_state_response(rx):
-            self.available = True
+            self.set_available("successfully processed state response")
             return
-        self.set_unavailable()
+        self.set_unavailable("failed to process state response")
 
     def setCustomPattern(
         self,
