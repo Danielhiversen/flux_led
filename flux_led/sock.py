@@ -28,7 +28,7 @@ def _socket_retry(attempts: int = DEFAULT_RETRIES) -> WrapFuncType:
                 attempts_remaining -= 1
                 try:
                     ret = func(self, *args, **kwargs)
-                    self.set_available()
+                    self.set_available(f"{func.__name__} was successful")
                     return ret
                 except OSError as ex:
                     _LOGGER.debug(
@@ -36,7 +36,7 @@ def _socket_retry(attempts: int = DEFAULT_RETRIES) -> WrapFuncType:
                     )
                     if attempts_remaining:
                         continue
-                    self.set_unavailable()
+                    self.set_unavailable(f"{func.__name__} failed: {ex}")
                     self.close()
                     # We need to raise or the bulb will
                     # always be seen as available in Home Assistant
