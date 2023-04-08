@@ -3269,6 +3269,7 @@ async def test_async_config_remotes_unsupported_device(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(sys.version_info[:3][1] in (7,), reason="no AsyncMock in 3.7")
 async def test_async_config_remotes_no_response(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):
