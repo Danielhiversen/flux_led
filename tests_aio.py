@@ -4,11 +4,17 @@ import datetime
 import json
 import logging
 import time
+import sys
 from unittest.mock import MagicMock, call, patch
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from unittest.mock import MagicMock as AsyncMock
 
 import pytest
 
-from flux_led import aiodevice, aioscanner
+from flux_led import aiodevice, aioscanner, DeviceUnavailableException
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.aioprotocol import AIOLEDENETProtocol
 from flux_led.aioscanner import AIOBulbScanner, LEDENETDiscovery
@@ -682,7 +688,7 @@ async def test_handling_unavailable_after_no_response_force(mock_aio_protocol):
         pass
 
     task = asyncio.create_task(light.async_setup(_updated_callback))
-    transport, _ = await mock_aio_protocol()
+    transport, original_aio_protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
         b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
     )
@@ -713,8 +719,10 @@ async def test_handling_unavailable_after_no_response_force(mock_aio_protocol):
         await light.async_update()
     assert light.available is False
 
-    with pytest.raises(RuntimeError):
-        await light.async_update()
+    # simulate reconnect
+    await light.async_update()
+    assert light._aio_protocol != original_aio_protocol
+    light._aio_protocol = original_aio_protocol
 
     transport.reset_mock()
     light._aio_protocol.data_received(
@@ -725,7 +733,7 @@ async def test_handling_unavailable_after_no_response_force(mock_aio_protocol):
     assert transport.mock_calls[0][0] == "write"
     assert (
         transport.mock_calls[0][1][0]
-        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x05\x00\x04\x81\x8a\x8b\x96\xfd"
+        == b"\xb0\xb1\xb2\xb3\x00\x01\x01\x06\x00\x04\x81\x8a\x8b\x96\xfe"
     )
     assert light.available is True
     light._aio_protocol.data_received(
@@ -1835,8 +1843,8 @@ async def test_async_set_custom_effect(
 
 
 @pytest.mark.asyncio
-async def test_async_set_brightness_rgbww(mock_aio_protocol):
-    """Test we can set brightness rgbww."""
+async def test_async_stop(mock_aio_protocol):
+    """Test we can stop without throwing."""
     light = AIOWifiLedBulb("192.168.1.166")
 
     def _updated_callback(*args, **kwargs):
@@ -1851,6 +1859,22 @@ async def test_async_set_brightness_rgbww(mock_aio_protocol):
 
     await light.async_stop()
     await asyncio.sleep(0)  # make sure nothing throws
+
+
+@pytest.mark.asyncio
+async def test_async_set_brightness_rgbww(mock_aio_protocol):
+    """Test we can set brightness rgbww."""
+    light = AIOWifiLedBulb("192.168.1.166")
+
+    def _updated_callback(*args, **kwargs):
+        pass
+
+    task = asyncio.create_task(light.async_setup(_updated_callback))
+    transport, protocol = await mock_aio_protocol()
+    light._aio_protocol.data_received(
+        b"\x81\x25\x23\x61\x05\x10\xb6\x00\x98\x19\x04\x25\x0f\xde"
+    )
+    await task
 
     transport.reset_mock()
     await light.async_set_brightness(255)
@@ -1877,9 +1901,6 @@ async def test_async_set_brightness_cct_0x25(mock_aio_protocol):
         b"\x81\x25\x23\x61\x02\x10\xb6\x00\x98\x19\x04\x25\x0f\xdb"
     )
     await task
-
-    await light.async_stop()
-    await asyncio.sleep(0)  # make sure nothing throws
 
     transport.reset_mock()
     await light.async_set_brightness(255)
@@ -1909,9 +1930,6 @@ async def test_async_set_brightness_cct_0x07(mock_aio_protocol):
     )
     await task
 
-    await light.async_stop()
-    await asyncio.sleep(0)  # make sure nothing throws
-
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
@@ -1939,9 +1957,6 @@ async def test_async_set_brightness_dim(mock_aio_protocol):
         b"\x81\x25\x23\x61\x01\x10\xb6\x00\x98\x19\x04\x25\x0f\xda"
     )
     await task
-
-    await light.async_stop()
-    await asyncio.sleep(0)  # make sure nothing throws
 
     transport.reset_mock()
     await light.async_set_brightness(255)
@@ -1971,9 +1986,6 @@ async def test_async_set_brightness_rgb_0x33(mock_aio_protocol):
     )
     await task
 
-    await light.async_stop()
-    await asyncio.sleep(0)  # make sure nothing throws
-
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
@@ -2002,9 +2014,6 @@ async def test_async_set_brightness_rgb_0x25(mock_aio_protocol):
     )
     await task
 
-    await light.async_stop()
-    await asyncio.sleep(0)  # make sure nothing throws
-
     transport.reset_mock()
     await light.async_set_brightness(255)
     assert transport.mock_calls[0][0] == "write"
@@ -2032,9 +2041,6 @@ async def test_async_set_brightness_rgbw(mock_aio_protocol):
         b"\x81\x25\x23\x61\x04\x10\xb6\x00\x98\x19\x04\x25\x0f\xdd"
     )
     await task
-
-    await light.async_stop()
-    await asyncio.sleep(0)  # make sure nothing throws
 
     transport.reset_mock()
     await light.async_set_brightness(255)
@@ -2162,6 +2168,7 @@ async def test_0x06_rgbw_cct_cold(mock_aio_protocol, caplog: pytest.LogCaptureFi
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(sys.version_info[:3][1] in (7,), reason="no AsyncMock in 3.7")
 async def test_wrapped_cct_protocol_device(mock_aio_protocol):
     """Test a wrapped cct protocol device."""
     light = AIOWifiLedBulb("192.168.1.166")
@@ -2170,7 +2177,7 @@ async def test_wrapped_cct_protocol_device(mock_aio_protocol):
         pass
 
     task = asyncio.create_task(light.async_setup(_updated_callback))
-    transport, protocol = await mock_aio_protocol()
+    transport, original_aio_protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
         b"\x81\x1C\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xC8"
     )
@@ -2273,9 +2280,12 @@ async def test_wrapped_cct_protocol_device(mock_aio_protocol):
         # First failure should keep the device in
         # a failure state until we get to an update
         # time
-        with pytest.raises(RuntimeError):
+        with patch.object(
+            light, "_async_connect", AsyncMock(side_effect=asyncio.TimeoutError)
+        ), pytest.raises(DeviceUnavailableException):
             await light.async_update()
 
+    light._aio_protocol = original_aio_protocol
     # Should not raise now that bulb has recovered
     light._last_update_time = aiodevice.NEVER_TIME
     light._aio_protocol.data_received(
@@ -2285,6 +2295,7 @@ async def test_wrapped_cct_protocol_device(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(sys.version_info[:3][1] in (7,), reason="no AsyncMock in 3.7")
 async def test_cct_protocol_device(mock_aio_protocol):
     """Test a original cct protocol device."""
     light = AIOWifiLedBulb("192.168.1.166")
@@ -2293,7 +2304,7 @@ async def test_cct_protocol_device(mock_aio_protocol):
         pass
 
     task = asyncio.create_task(light.async_setup(_updated_callback))
-    transport, protocol = await mock_aio_protocol()
+    transport, original_aio_protocol = await mock_aio_protocol()
     light._aio_protocol.data_received(
         b"\x81\x09\x23\x61\x00\x05\x00\x64\x64\x64\x03\x64\x0F\xB5"
     )
@@ -2384,8 +2395,12 @@ async def test_cct_protocol_device(mock_aio_protocol):
         # First failure should keep the device in
         # a failure state until we get to an update
         # time
-        with pytest.raises(RuntimeError):
+        with patch.object(
+            light, "_async_connect", AsyncMock(side_effect=asyncio.TimeoutError)
+        ), pytest.raises(DeviceUnavailableException):
             await light.async_update()
+
+    light._aio_protocol = original_aio_protocol
 
     # Should not raise now that bulb has recovered
     light._last_update_time = aiodevice.NEVER_TIME
@@ -3254,6 +3269,7 @@ async def test_async_config_remotes_unsupported_device(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(sys.version_info[:3][1] in (7,), reason="no AsyncMock in 3.7")
 async def test_async_config_remotes_no_response(
     mock_aio_protocol, caplog: pytest.LogCaptureFixture
 ):

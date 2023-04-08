@@ -182,9 +182,14 @@ class AIOWifiLedBulb(LEDENETDevice):
     def _async_stop(self) -> None:
         """Shutdown the connection and mark unavailable."""
         self.set_unavailable("Connection closed")
+        self._async_close()
+        self._last_update_time = NEVER_TIME
+
+    def _async_close(self) -> None:
+        """Close the connection."""
         if self._aio_protocol:
             self._aio_protocol.close()
-        self._last_update_time = NEVER_TIME
+            self._aio_protocol = None
 
     async def _async_send_state_query(self) -> None:
         assert self._protocol is not None
@@ -335,9 +340,11 @@ class AIOWifiLedBulb(LEDENETDevice):
                 # to make sure the device is still responding
                 return
         self._last_update_time = now
-        if self._updates_without_response >= MAX_UPDATES_WITHOUT_RESPONSE:
-            if self._aio_protocol:
-                self._aio_protocol.close()
+        if (
+            self._aio_protocol
+            and self._updates_without_response >= MAX_UPDATES_WITHOUT_RESPONSE
+        ):
+            self._async_close()
             self.set_unavailable(
                 f"device stopped responding after {MAX_UPDATES_WITHOUT_RESPONSE} requests to send state"
             )
@@ -851,8 +858,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                     async with asyncio_timeout(self.timeout):
                         await self._determine_protocol_future
                 except asyncio.TimeoutError:
-                    if self._aio_protocol:
-                        self._aio_protocol.close()
+                    self._async_close()
                     continue
                 else:
                     return
