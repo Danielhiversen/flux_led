@@ -4,7 +4,13 @@ import datetime
 import json
 import logging
 import time
+import sys
 from unittest.mock import MagicMock, call, patch, AsyncMock
+
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from unittest.mock import MagicMock as AsyncMock
 
 import pytest
 
@@ -2162,6 +2168,7 @@ async def test_0x06_rgbw_cct_cold(mock_aio_protocol, caplog: pytest.LogCaptureFi
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(sys.version_info[:3][1] in (7), reason="no AsyncMock in 3.7")
 async def test_wrapped_cct_protocol_device(mock_aio_protocol):
     """Test a wrapped cct protocol device."""
     light = AIOWifiLedBulb("192.168.1.166")
@@ -2288,6 +2295,7 @@ async def test_wrapped_cct_protocol_device(mock_aio_protocol):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(sys.version_info[:3][1] in (7), reason="no AsyncMock in 3.7")
 async def test_cct_protocol_device(mock_aio_protocol):
     """Test a original cct protocol device."""
     light = AIOWifiLedBulb("192.168.1.166")
