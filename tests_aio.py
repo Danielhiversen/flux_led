@@ -5,7 +5,7 @@ import json
 import logging
 import time
 import sys
-from unittest.mock import MagicMock, call, patch, AsyncMock
+from unittest.mock import MagicMock, call, patch
 
 try:
     from unittest.mock import AsyncMock
