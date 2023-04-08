@@ -435,7 +435,6 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
     def test_rgbww_controller_version_4(self, mock_connect, mock_read, mock_send):
-
         calls = 0
 
         def read_data(expected):
@@ -633,7 +632,6 @@ class TestLight(unittest.TestCase):
     def test_rgbww_controller_version_2_after_factory_reset(
         self, mock_connect, mock_read, mock_send
     ):
-
         calls = 0
 
         def read_data(expected):
@@ -667,7 +665,6 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
     def test_rgbww_controller_version_9(self, mock_connect, mock_read, mock_send):
-
         calls = 0
 
         def read_data(expected):
@@ -829,7 +826,6 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
     def test_rgbcw_bulb_v4(self, mock_connect, mock_read, mock_send):
-
         calls = 0
 
         def read_data(expected):
@@ -1354,7 +1350,6 @@ class TestLight(unittest.TestCase):
     @patch("flux_led.WifiLedBulb._read_msg")
     @patch("flux_led.WifiLedBulb.connect")
     def test_rgbcw_bulb_v9(self, mock_connect, mock_read, mock_send):
-
         calls = 0
 
         def read_data(expected):
