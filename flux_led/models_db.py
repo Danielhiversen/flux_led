@@ -485,6 +485,30 @@ HARDWARE = [
         dimmable_effects=True,
     ),
     LEDENETHardware(
+        model="AK001-ZJ21411",  # seen on newer floor lamps
+        chip=LEDENETChip.BL602,
+        remote_rf=True,  # verified
+        remote_24g=True,
+        remote_24g_controls=True,
+        auto_on=True,
+        dimmable_effects=True,
+        # Also has the ability to change the power restored
+        # state to on/off/memory but this is not supported
+        # by the library yet
+    ),
+    LEDENETHardware(
+        model="AK001-ZJ21412",  # seen on newer floor lamps
+        chip=LEDENETChip.BL602,
+        remote_rf=True,  # verified
+        remote_24g=True,
+        remote_24g_controls=True,
+        auto_on=True,
+        dimmable_effects=True,
+        # Also has the ability to change the power restored
+        # state to on/off/memory but this is not supported
+        # by the library yet
+    ),
+    LEDENETHardware(
         model="HF-A11",  # reported older large box controllers (may be original proto)
         chip=LEDENETChip.HFLPB100,
         remote_rf=False,  # unverified
@@ -773,8 +797,9 @@ MODELS = [
         # 'AK001-ZJ2104' likely supports turning on by effect/levels set
         # 'AK001-ZJ2104' is v7
         # 'AK001-ZJ2148' is v9.75 with Remote and 2.4G remote settings
+        # 'AK001-ZJ21411' is v11.78 with Remote and 2.4G remote settings
         model_num=0x0E,  # Should be the same as 0x35
-        models=["AK001-ZJ2104", "AK001-ZJ2148"],
+        models=["AK001-ZJ2104", "AK001-ZJ2148", "AK001-ZJ21411", "AK001-ZJ21412"],
         description="Floor Lamp RGBCW",
         always_writes_white_and_colors=False,  # Formerly rgbwprotocol
         protocols=[
