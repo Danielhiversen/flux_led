@@ -662,7 +662,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_connect(self) -> None:
         """Create connection."""
         async with asyncio_timeout(self.timeout):
-            _, self._aio_protocol = await self.loop.create_connection(  # type: ignore
+            _, self._aio_protocol = await self.loop.create_connection(
                 lambda: AIOLEDENETProtocol(
                     self._async_data_recieved, self._async_connection_lost
                 ),

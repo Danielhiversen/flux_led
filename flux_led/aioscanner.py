@@ -95,7 +95,7 @@ class AIOBulbScanner(BulbScanner):
             ),
             sock=sock,
         )
-        transport = cast(asyncio.DatagramTransport, transport_proto[0])
+        transport = transport_proto[0]
         commands: List[bytes] = []
         if messages:
             commands.extend(messages)
@@ -159,7 +159,7 @@ class AIOBulbScanner(BulbScanner):
             ),
             sock=sock,
         )
-        transport = cast(asyncio.DatagramTransport, transport_proto[0])
+        transport = transport_proto[0]
         try:
             await self._async_run_scan(
                 transport, destination, timeout, found_all_future
