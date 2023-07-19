@@ -6,7 +6,7 @@ import socket
 import sys
 import time
 from datetime import date
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union
 
 from .const import (
     ATTR_FIRMWARE_DATE,
