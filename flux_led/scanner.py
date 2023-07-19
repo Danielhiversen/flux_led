@@ -6,7 +6,7 @@ import socket
 import sys
 import time
 from datetime import date
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union
 
 from .const import (
     ATTR_FIRMWARE_DATE,
@@ -83,7 +83,7 @@ def merge_discoveries(target: FluxLEDDiscovery, source: FluxLEDDiscovery) -> Non
     """Merge keys from a second discovery that may be missing from the first one."""
     for k, v in source.items():
         if target.get(k) is None:
-            target[k] = v  # type: ignore[misc]
+            target[k] = v  # type: ignore[literal-required]
 
 
 def _strip_new_lines(msg: str) -> str:
@@ -137,7 +137,7 @@ def _process_version_message(data: FluxLEDDiscovery, decoded_data: str) -> None:
     if len(data_split) == 4:
         data[ATTR_MODEL_INFO] = data_split[3]
     data[ATTR_MODEL_DESCRIPTION] = get_model_description(
-        cast(int, data[ATTR_MODEL_NUM]), data[ATTR_MODEL_INFO]
+        data[ATTR_MODEL_NUM], data[ATTR_MODEL_INFO]
     )
 
 
