@@ -600,8 +600,6 @@ CHRISTMAS_ADDRESSABLE_EFFECT_ID_NAME = {
     91: "Seven-color Wave, Breathe Sync",
     92: "Seven-color Breathe Sync, Flash Sync",
     93: "Seven-color Flash Sync, Jump Sync",
-    93: "Seven-color Flash Sync, Jump Sync",
-    93: "Seven-color Flash Sync, Jump Sync",
     94: "Seven-color Wave, Breathe Sync, Flash Sync, Jump Sync",
     95: "Overlap Red, Green, Blue",
     96: "Overlap Red, Green, Blue, Cyan, Purple, White",
