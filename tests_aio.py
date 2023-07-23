@@ -161,6 +161,7 @@ async def mock_aio_protocol():
         transport, protocol = await future
         await asyncio.sleep(0)
         await asyncio.sleep(0)
+        await asyncio.sleep(0)
         return transport, protocol
 
     async def _mock_create_connection(func, ip, port):
