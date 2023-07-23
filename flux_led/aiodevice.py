@@ -201,9 +201,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         done, _ = await asyncio.wait(
             futures, timeout=timeout, return_when=asyncio.FIRST_COMPLETED
         )
-        if done and self.is_on == state:
-            return True
-        return False
+        return bool(done and self.is_on == state)
 
     async def _async_set_power_state(
         self, state: bool, accept_any_power_state_response: bool
