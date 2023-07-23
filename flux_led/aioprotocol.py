@@ -32,12 +32,13 @@ class AIOLEDENETProtocol(asyncio.Protocol):
     def write(self, data: bytes) -> None:
         """Write data to the client."""
         assert self.transport is not None
-        _LOGGER.debug(
-            "%s => %s (%d)",
-            self.peername,
-            " ".join(f"0x{x:02X}" for x in data),
-            len(data),
-        )
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug(
+                "%s => %s (%d)",
+                self.peername,
+                " ".join(f"0x{x:02X}" for x in data),
+                len(data),
+            )
         self.transport.write(data)
 
     def close(self) -> None:
@@ -48,10 +49,11 @@ class AIOLEDENETProtocol(asyncio.Protocol):
 
     def data_received(self, data: bytes) -> None:
         """Process new data from the socket."""
-        _LOGGER.debug(
-            "%s <= %s (%d)",
-            self.peername,
-            " ".join(f"0x{x:02X}" for x in data),
-            len(data),
-        )
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug(
+                "%s <= %s (%d)",
+                self.peername,
+                " ".join(f"0x{x:02X}" for x in data),
+                len(data),
+            )
         self._data_receive_callback(data)
