@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .device import WifiLedBulb
 
 
-def _socket_retry(attempts: int = DEFAULT_RETRIES) -> WrapFuncType:  # type: ignore[type-var]
+def _socket_retry(attempts: int = DEFAULT_RETRIES) -> Callable[..., Any]:  # type: ignore[type-var]
     """Define a wrapper to retry on socket failures."""
 
     def decorator_retry(func: WrapFuncType) -> WrapFuncType:
