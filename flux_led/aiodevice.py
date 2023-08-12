@@ -198,9 +198,14 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_wait_state_change(
         self, futures: List["asyncio.Future[Any]"], state: bool, timeout: float
     ) -> bool:
-        done, _ = await asyncio.wait(
-            futures, timeout=timeout, return_when=asyncio.FIRST_COMPLETED
-        )
+        if self.requires_turn_on:
+            # If the device requires the two step turn on, we need to wait for the
+            # power state and the state update. If its the single step turn on, we
+            # only need to wait for any future.
+            return_when = asyncio.ALL_COMPLETED
+        else:
+            return_when = asyncio.FIRST_COMPLETED
+        done, _ = await asyncio.wait(futures, timeout=timeout, return_when=return_when)
         return bool(done and self.is_on == state)
 
     async def _async_set_power_state(
