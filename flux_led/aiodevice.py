@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import time
+from asyncio import ALL_COMPLETED, FIRST_COMPLETED
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-from asyncio import ALL_COMPLETED, FIRST_COMPLETED
+
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
 from .aioutils import asyncio_timeout
