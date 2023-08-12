@@ -3,7 +3,7 @@ import logging
 import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-
+from asyncio import ALL_COMPLETED, FIRST_COMPLETED, Future, gather, wait
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
 from .aioutils import asyncio_timeout
@@ -198,13 +198,10 @@ class AIOWifiLedBulb(LEDENETDevice):
     async def _async_wait_state_change(
         self, futures: List["asyncio.Future[Any]"], state: bool, timeout: float
     ) -> bool:
-        if self.requires_turn_on:
-            # If the device requires the two step turn on, we need to wait for the
-            # power state and the state update. If its the single step turn on, we
-            # only need to wait for any future.
-            return_when = asyncio.ALL_COMPLETED
-        else:
-            return_when = asyncio.FIRST_COMPLETED
+        # If the device requires the two step turn on, we need to wait for the
+        # power state and the state update. If its the single step turn on, we
+        # only need to wait for any future.
+        return_when = ALL_COMPLETED if self.requires_turn_on else FIRST_COMPLETED
         done, _ = await asyncio.wait(futures, timeout=timeout, return_when=return_when)
         return bool(done and self.is_on == state)
 
