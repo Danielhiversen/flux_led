@@ -74,6 +74,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> None:
         """Init and setup the bulb."""
         super().__init__(ipaddr, port, timeout, discovery)
+        loop = asyncio.get_running_loop()
         self._connect_lock = asyncio.Lock()
         self._aio_protocol: Optional[AIOLEDENETProtocol] = None
         self._get_time_lock: asyncio.Lock = asyncio.Lock()
@@ -81,10 +82,10 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._get_timers_lock: asyncio.Lock = asyncio.Lock()
         self._get_timers_future: Optional[asyncio.Future[bool]] = None
         self._timers: Optional[List[LedTimer]] = None
-        self._power_restore_future: "asyncio.Future[bool]" = asyncio.Future()
+        self._power_restore_future: "asyncio.Future[bool]" = loop.create_future()
         self._device_config_lock: asyncio.Lock = asyncio.Lock()
-        self._device_config_future: asyncio.Future[bool] = asyncio.Future()
-        self._remote_config_future: asyncio.Future[bool] = asyncio.Future()
+        self._device_config_future: asyncio.Future[bool] = loop.create_future()
+        self._remote_config_future: asyncio.Future[bool] = loop.create_future()
         self._device_config_setup = False
         self._power_state_lock = asyncio.Lock()
         self._power_state_futures: List["asyncio.Future[bool]"] = []
@@ -97,7 +98,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._last_update_time: float = NEVER_TIME
         self._power_restore_state: Optional[PowerRestoreStates] = None
         self._buffer = b""
-        self.loop = asyncio.get_running_loop()
+        self.loop = loop
 
     @property
     def power_restore_states(self) -> Optional[PowerRestoreStates]:
@@ -162,7 +163,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             return
 
         if self._device_config_setup:
-            self._device_config_future = asyncio.Future()
+            self._device_config_future = self.loop.create_future()
         self._device_config_setup = True
 
         assert isinstance(self._protocol, ALL_ADDRESSABLE_PROTOCOLS)
@@ -210,9 +211,9 @@ class AIOWifiLedBulb(LEDENETDevice):
         self, state: bool, accept_any_power_state_response: bool
     ) -> bool:
         assert self._protocol is not None
-        power_state_future: "asyncio.Future[bool]" = asyncio.Future()
+        power_state_future: "asyncio.Future[bool]" = self.loop.create_future()
         state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
-            asyncio.Future()
+            self.loop.create_future()
         )
         self._power_state_futures.append(power_state_future)
         self._state_futures.append(state_future)
@@ -237,7 +238,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 "%s: Bulb failed to respond, sending state query", self.ipaddr
             )
         if state_future.done():
-            state_future = asyncio.Future()
+            state_future = self.loop.create_future()
             self._state_futures.append(state_future)
         pending: "List[asyncio.Future[Any]]" = [state_future]
         if not power_state_future.done():
@@ -622,7 +623,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_get_time())
         async with self._get_time_lock:
-            self._get_time_future = asyncio.Future()
+            self._get_time_future = self.loop.create_future()
             try:
                 async with asyncio_timeout(self.timeout):
                     await self._get_time_future
@@ -639,7 +640,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             return led_timers
         await self._async_send_msg(self._protocol.construct_get_timers())
         async with self._get_timers_lock:
-            self._get_timers_future = asyncio.Future()
+            self._get_timers_future = self.loop.create_future()
             try:
                 async with asyncio_timeout(self.timeout):
                     await self._get_timers_future
@@ -855,7 +856,7 @@ class AIOWifiLedBulb(LEDENETDevice):
             async with self._connect_lock:
                 await self._async_connect()
                 assert self._aio_protocol is not None
-                self._determine_protocol_future = asyncio.Future()
+                self._determine_protocol_future = self.loop.create_future()
                 self._aio_protocol.write(protocol.construct_state_query())
                 try:
                     async with asyncio_timeout(self.timeout):
