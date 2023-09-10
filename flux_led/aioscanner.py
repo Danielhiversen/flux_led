@@ -144,7 +144,7 @@ class AIOBulbScanner(BulbScanner):
         """Discover LEDENET."""
         sock = self._create_socket()
         destination = self._destination_from_address(address)
-        found_all_future: "asyncio.Future[bool]" = asyncio.Future()
+        found_all_future: "asyncio.Future[bool]" = self.loop.create_future()
 
         def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
             _LOGGER.debug("discover: %s <= %s", addr, data)
