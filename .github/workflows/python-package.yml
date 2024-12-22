@@ -27,6 +27,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install flake8 pytest .[test] -r requirements.txt -r requirements_test.txt
+      - uses: pre-commit/action@v3.0.0
       - name: mypy
         run: |
           mypy flux_led
