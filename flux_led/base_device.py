@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import colorsys
 import logging
 import random
 import time
 from dataclasses import asdict, is_dataclass
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Union
 from collections.abc import Iterable
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
@@ -220,36 +222,36 @@ class LEDENETDevice:
         ipaddr: str,
         port: int = 0,
         timeout: float = 5,
-        discovery: Optional[FluxLEDDiscovery] = None,
+        discovery: FluxLEDDiscovery | None = None,
     ) -> None:
         """Init the LEDENEt Device."""
         self.ipaddr: str = ipaddr
         self._port: int = port
         self.timeout: float = timeout
-        self.raw_state: Optional[Union[LEDENETOriginalRawState, LEDENETRawState]] = None
-        self.available: Optional[bool] = None
-        self._model_num: Optional[int] = None
-        self._model_data: Optional[LEDENETModel] = None
-        self._paired_remotes: Optional[int] = None
-        self._remote_config: Optional[RemoteConfig] = None
+        self.raw_state: LEDENETOriginalRawState | LEDENETRawState | None = None
+        self.available: bool | None = None
+        self._model_num: int | None = None
+        self._model_data: LEDENETModel | None = None
+        self._paired_remotes: int | None = None
+        self._remote_config: RemoteConfig | None = None
         self._white_channel_channel_type: WhiteChannelType = DEFAULT_WHITE_CHANNEL_TYPE
         self._discovery = discovery
-        self._protocol: Optional[PROTOCOL_TYPES] = None
-        self._mode: Optional[str] = None
+        self._protocol: PROTOCOL_TYPES | None = None
+        self._mode: str | None = None
         self._transition_complete_time: float = 0
         self._preset_pattern_transition_complete_time: float = 0
         self._power_state_transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
-        self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
+        self._device_config: LEDENETAddressableDeviceConfiguration | None = None
         self._last_message: dict[str, bytes] = {}
-        self._unavailable_reason: Optional[str] = None
+        self._unavailable_reason: str | None = None
 
     def _protocol_probes(
         self,
-    ) -> Union[
-        tuple[type[ProtocolLEDENETOriginal], type[ProtocolLEDENET8Byte]],
-        tuple[type[ProtocolLEDENET8Byte], type[ProtocolLEDENETOriginal]],
-    ]:
+    ) -> (
+        tuple[type[ProtocolLEDENETOriginal], type[ProtocolLEDENET8Byte]]
+        | tuple[type[ProtocolLEDENET8Byte], type[ProtocolLEDENETOriginal]]
+    ):
         """Determine the probe order based on device type."""
         discovery = self.discovery
         return (
@@ -269,7 +271,7 @@ class LEDENETDevice:
         return self._model_data
 
     @property
-    def discovery(self) -> Optional[FluxLEDDiscovery]:
+    def discovery(self) -> FluxLEDDiscovery | None:
         """Return the discovery data."""
         return self._discovery
 
@@ -289,7 +291,7 @@ class LEDENETDevice:
         self._white_channel_channel_type = value
 
     @property
-    def hardware(self) -> Optional[LEDENETHardware]:
+    def hardware(self) -> LEDENETHardware | None:
         """Retrurn the hardware mapping for the device."""
         if not self._discovery or ATTR_MODEL not in self._discovery:
             return None
@@ -300,12 +302,12 @@ class LEDENETDevice:
         return HARDWARE_MAP.get(model)
 
     @property
-    def paired_remotes(self) -> Optional[int]:
+    def paired_remotes(self) -> int | None:
         """Return the number of paired remotes or None if not supported."""
         return self._paired_remotes
 
     @property
-    def remote_config(self) -> Optional[RemoteConfig]:
+    def remote_config(self) -> RemoteConfig | None:
         """Return the number of remote config or None if not supported."""
         return self._remote_config
 
@@ -457,35 +459,35 @@ class LEDENETDevice:
         )
 
     @property
-    def pixels_per_segment(self) -> Optional[int]:
+    def pixels_per_segment(self) -> int | None:
         """Return the pixels per segment."""
         if self._device_config is None:
             return None
         return self._device_config.pixels_per_segment
 
     @property
-    def segments(self) -> Optional[int]:
+    def segments(self) -> int | None:
         """Return the number of segments."""
         if self._device_config is None:
             return None
         return self._device_config.segments
 
     @property
-    def music_pixels_per_segment(self) -> Optional[int]:
+    def music_pixels_per_segment(self) -> int | None:
         """Return the music pixels per segment."""
         if self._device_config is None:
             return None
         return self._device_config.music_pixels_per_segment
 
     @property
-    def music_segments(self) -> Optional[int]:
+    def music_segments(self) -> int | None:
         """Return the number of music segments."""
         if self._device_config is None:
             return None
         return self._device_config.music_segments
 
     @property
-    def wiring(self) -> Optional[str]:
+    def wiring(self) -> str | None:
         """Return the sort order as a string."""
         device_config = self.model_data.device_config
         if not device_config.wiring:
@@ -496,7 +498,7 @@ class LEDENETDevice:
         return device_config.num_to_wiring.get(int((self.raw_state.mode & 0xF0) / 16))
 
     @property
-    def wiring_num(self) -> Optional[int]:
+    def wiring_num(self) -> int | None:
         """Return the wiring number."""
         if not self.model_data.device_config.wiring:
             return None
@@ -506,7 +508,7 @@ class LEDENETDevice:
         return int((self.raw_state.mode & 0xF0) / 16)
 
     @property
-    def wirings(self) -> Optional[list[str]]:
+    def wirings(self) -> list[str] | None:
         """Return available wirings for the device."""
         device_config = self.model_data.device_config
         if not device_config.wiring:
@@ -516,7 +518,7 @@ class LEDENETDevice:
         return list(device_config.wiring_to_num)
 
     @property
-    def operating_mode(self) -> Optional[str]:
+    def operating_mode(self) -> str | None:
         """Return the strip mode as a string."""
         device_config = self.model_data.device_config
         if not device_config.operating_modes:
@@ -527,7 +529,7 @@ class LEDENETDevice:
         return device_config.num_to_operating_mode.get(self.raw_state.mode & 0x0F)
 
     @property
-    def operating_mode_num(self) -> Optional[int]:
+    def operating_mode_num(self) -> int | None:
         """Return the strip mode as a string."""
         if not self.model_data.device_config.operating_modes:
             return None
@@ -535,14 +537,14 @@ class LEDENETDevice:
         return self.raw_state.mode & 0x0F
 
     @property
-    def operating_modes(self) -> Optional[list[str]]:
+    def operating_modes(self) -> list[str] | None:
         """Return available operating modes for the device."""
         if not self.model_data.device_config.operating_modes:
             return None
         return list(self.model_data.device_config.operating_mode_to_num)
 
     @property
-    def ic_type(self) -> Optional[str]:
+    def ic_type(self) -> str | None:
         """Return the strip ictype as a string."""
         if not self.model_data.device_config.ic_type:
             return None
@@ -550,7 +552,7 @@ class LEDENETDevice:
         return self._device_config.ic_type
 
     @property
-    def ic_type_num(self) -> Optional[int]:
+    def ic_type_num(self) -> int | None:
         """Return the strip ictype as an int."""
         if not self.model_data.device_config.ic_type:
             return None
@@ -558,14 +560,14 @@ class LEDENETDevice:
         return self._device_config.ic_type_num
 
     @property
-    def ic_types(self) -> Optional[list[str]]:
+    def ic_types(self) -> list[str] | None:
         """Return the ic types."""
         if not self.model_data.device_config.ic_type:
             return None
         return list(self.model_data.device_config.ic_type_to_num)
 
     @property
-    def color_mode(self) -> Optional[str]:
+    def color_mode(self) -> str | None:
         """The current color mode."""
         color_modes = self._internal_color_modes
         if COLOR_MODE_RGBWW in color_modes:
@@ -585,7 +587,7 @@ class LEDENETDevice:
         return None  # Usually a switch or non-light device
 
     @property
-    def protocol(self) -> Optional[str]:
+    def protocol(self) -> str | None:
         """Returns the name of the protocol in use."""
         if self._protocol is None:
             return None
@@ -610,7 +612,7 @@ class LEDENETDevice:
         return self.raw_state.power_state == self._protocol.on_byte
 
     @property
-    def mode(self) -> Optional[str]:
+    def mode(self) -> str | None:
         return self._mode
 
     @property
@@ -638,14 +640,14 @@ class LEDENETDevice:
         return [*effects, EFFECT_RANDOM]
 
     @property
-    def effect(self) -> Optional[str]:
+    def effect(self) -> str | None:
         """Return the current effect."""
         if self.protocol in CHRISTMAS_EFFECTS_PROTOCOLS:
             return self._named_effect
         return PATTERN_CODE_TO_EFFECT.get(self.preset_pattern_num, self._named_effect)
 
     @property
-    def _named_effect(self) -> Optional[str]:
+    def _named_effect(self) -> str | None:
         """Returns the named effect."""
         assert self.raw_state is not None
         mode = self.raw_state.mode
@@ -723,7 +725,7 @@ class LEDENETDevice:
         # Default color mode (RGB)
         return int(v_255)
 
-    def _determineMode(self) -> Optional[str]:
+    def _determineMode(self) -> str | None:
         assert self.raw_state is not None
         pattern_code = self.raw_state.preset_pattern
         if self.device_type == DeviceType.Switch:
@@ -787,7 +789,7 @@ class LEDENETDevice:
             )
             return False
 
-        raw_state: Union[LEDENETOriginalRawState, LEDENETRawState] = (
+        raw_state: LEDENETOriginalRawState | LEDENETRawState = (
             self._protocol.named_raw_state(rx)
         )
         _LOGGER.debug("%s: State: %s", self.ipaddr, raw_state)
@@ -854,8 +856,8 @@ class LEDENETDevice:
 
     def _set_raw_state(
         self,
-        raw_state: Union[LEDENETOriginalRawState, LEDENETRawState],
-        updated: Optional[set[str]] = None,
+        raw_state: LEDENETOriginalRawState | LEDENETRawState,
+        updated: set[str] | None = None,
     ) -> None:
         """Set the raw state remapping channels as needed.
 
@@ -1089,9 +1091,9 @@ class LEDENETDevice:
 
     def _generate_levels_change(  # noqa: C901
         self,
-        channels: dict[str, Optional[int]],
+        channels: dict[str, int | None],
         persist: bool = True,
-        brightness: Optional[int] = None,
+        brightness: int | None = None,
     ) -> tuple[list[bytearray], dict[str, int]]:
         """Generate the levels change request."""
         channel_map = self.model_data.channel_map
@@ -1123,7 +1125,7 @@ class LEDENETDevice:
         if w2 is None:
             if w is not None and self.color_mode in {COLOR_MODE_CCT, COLOR_MODE_RGBWW}:
                 # If we're only setting a single white value, we preserve the cold white value
-                w2_value: Optional[int] = self.cold_white
+                w2_value: int | None = self.cold_white
             else:
                 # If we're only setting a single white value, we set the second output to be the same as the first
                 w2_value = w_value

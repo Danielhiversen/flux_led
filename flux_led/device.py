@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import select
 import socket
 import threading
 import time
-from typing import Optional
 
 from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
 
@@ -34,11 +35,11 @@ class WifiLedBulb(LEDENETDevice):
         ipaddr: str,
         port: int = 5577,
         timeout: float = 5,
-        discovery: Optional[FluxLEDDiscovery] = None,
+        discovery: FluxLEDDiscovery | None = None,
     ) -> None:
         """Init and setup the bulb."""
         super().__init__(ipaddr, port, timeout, discovery)
-        self._socket: Optional[socket.socket] = None
+        self._socket: socket.socket | None = None
         self._lock = threading.Lock()
         self.setup()
 
@@ -143,33 +144,33 @@ class WifiLedBulb(LEDENETDevice):
         g: int,
         b: int,
         persist: bool = True,
-        brightness: Optional[int] = None,
+        brightness: int | None = None,
         retry: int = DEFAULT_RETRIES,
     ) -> None:
         self.set_levels(r, g, b, persist=persist, brightness=brightness, retry=retry)
 
     def setRgbw(
         self,
-        r: Optional[int] = None,
-        g: Optional[int] = None,
-        b: Optional[int] = None,
-        w: Optional[int] = None,
+        r: int | None = None,
+        g: int | None = None,
+        b: int | None = None,
+        w: int | None = None,
         persist: bool = True,
-        brightness: Optional[int] = None,
-        w2: Optional[int] = None,
+        brightness: int | None = None,
+        w2: int | None = None,
         retry: int = DEFAULT_RETRIES,
     ) -> None:
         self.set_levels(r, g, b, w, w2, persist, brightness, retry=retry)
 
     def set_levels(
         self,
-        r: Optional[int] = None,
-        g: Optional[int] = None,
-        b: Optional[int] = None,
-        w: Optional[int] = None,
-        w2: Optional[int] = None,
+        r: int | None = None,
+        g: int | None = None,
+        b: int | None = None,
+        w: int | None = None,
+        w2: int | None = None,
         persist: bool = True,
-        brightness: Optional[int] = None,
+        brightness: int | None = None,
         retry: int = DEFAULT_RETRIES,
     ) -> None:
         self._process_levels_change(
@@ -245,7 +246,7 @@ class WifiLedBulb(LEDENETDevice):
                 self._socket.setblocking(True)
         return rx
 
-    def getClock(self) -> Optional[datetime.datetime]:
+    def getClock(self) -> datetime.datetime | None:
         assert self._protocol is not None
         return self._protocol.parse_get_time(
             self._send_and_read_with_retry(
@@ -319,7 +320,7 @@ class WifiLedBulb(LEDENETDevice):
     @_socket_retry(attempts=2)  # type: ignore
     def _send_and_read_with_retry(
         self, msg: bytearray, read_len: int
-    ) -> Optional[bytearray]:
+    ) -> bytearray | None:
         with self._lock:
             self._connect_if_disconnected()
             self._send_msg(msg)
@@ -345,7 +346,7 @@ class WifiLedBulb(LEDENETDevice):
         )
 
     @_socket_retry(attempts=2)  # type: ignore
-    def query_state(self, led_type: Optional[str] = None) -> bytearray:
+    def query_state(self, led_type: str | None = None) -> bytearray:
         if led_type:
             self.setProtocol(led_type)
         elif not self._protocol:

@@ -1,8 +1,9 @@
 """FluxLED Models Database."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional
 
 from .const import (
     COLOR_MODE_CCT,
@@ -1340,7 +1341,7 @@ MODELS = [
 MODEL_MAP: dict[int, LEDENETModel] = {model.model_num: model for model in MODELS}
 
 
-def get_model(model_num: int, fallback_protocol: Optional[str] = None) -> LEDENETModel:
+def get_model(model_num: int, fallback_protocol: str | None = None) -> LEDENETModel:
     """Return the LEDNETModel for the model_num."""
     return MODEL_MAP.get(
         model_num,
@@ -1369,12 +1370,12 @@ def _unknown_ledenet_model(model_num: int, fallback_protocol: str) -> LEDENETMod
     )
 
 
-def get_model_description(model_num: int, model_info: Optional[str]) -> str:
+def get_model_description(model_num: int, model_info: str | None) -> str:
     """Return the description for a model."""
     return format_model_description(get_model(model_num).description, model_info)
 
 
-def format_model_description(description: str, model_info: Optional[str]) -> str:
+def format_model_description(description: str, model_info: str | None) -> str:
     """Format the description for a model."""
     if model_info:
         extra = MODEL_INFO_NAMES.get(model_info.upper())

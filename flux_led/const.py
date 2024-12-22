@@ -1,5 +1,7 @@
 """FluxLED Models Database."""
 
+from __future__ import annotations
+
 from enum import Enum
 
 from typing import Final  # pylint: disable=no-name-in-module

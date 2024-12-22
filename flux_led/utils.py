@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import ast
 import colorsys
 import contextlib
 import datetime
 from collections import namedtuple
-from typing import Optional, Union, cast
+from typing import cast
 from collections.abc import Iterable
 
 import webcolors  # type: ignore
@@ -34,8 +36,8 @@ TemperatureBrightness = namedtuple(
 class utils:
     @staticmethod
     def color_object_to_tuple(
-        color: Union[tuple[int, ...], str],
-    ) -> Optional[tuple[int, ...]]:
+        color: tuple[int, ...] | str,
+    ) -> tuple[int, ...] | None:
         # see if it's already a color tuple
         if isinstance(color, tuple) and len(color) in [3, 4, 5]:
             return color
@@ -176,7 +178,7 @@ def _adjust_brightness(
 
 def rgbw_brightness(
     rgbw_data: tuple[int, int, int, int],
-    brightness: Optional[int] = None,
+    brightness: int | None = None,
 ) -> tuple[int, int, int, int]:
     """Convert rgbw to brightness."""
     original_r, original_g, original_b = rgbw_data[0:3]
@@ -210,7 +212,7 @@ def rgbw_brightness(
 
 def rgbww_brightness(
     rgbww_data: tuple[int, int, int, int, int],
-    brightness: Optional[int] = None,
+    brightness: int | None = None,
 ) -> tuple[int, int, int, int, int]:
     """Convert rgbww to brightness."""
     original_r, original_g, original_b = rgbww_data[0:3]
@@ -238,7 +240,7 @@ def rgbww_brightness(
 
 def rgbcw_brightness(
     rgbcw_data: tuple[int, int, int, int, int],
-    brightness: Optional[int] = None,
+    brightness: int | None = None,
 ) -> tuple[int, int, int, int, int]:
     """Convert rgbww to brightness."""
     original_r, original_g, original_b = rgbcw_data[0:3]

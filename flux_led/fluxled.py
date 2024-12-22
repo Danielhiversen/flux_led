@@ -38,12 +38,14 @@ See the following for valid color names: http://www.w3schools.com/html/html_colo
 
 """
 
+from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
 import sys
 from optparse import OptionGroup, OptionParser, Values
-from typing import Any, Optional
+from typing import Any
 
 from .aio import AIOWifiLedBulb
 from .aioscanner import AIOBulbScanner
@@ -355,7 +357,7 @@ def processSetTimerArgs(parser: OptionParser, args: Any) -> LedTimer:  # noqa: C
 
 def processCustomArgs(
     parser: OptionParser, args: Any
-) -> Optional[tuple[Any, int, list[tuple[int, ...]]]]:
+) -> tuple[Any, int, list[tuple[int, ...]]] | None:
     if args[0] not in ["gradual", "jump", "strobe"]:
         parser.error(f"bad pattern type: {args[0]}")
         return None

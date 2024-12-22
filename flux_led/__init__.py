@@ -1,5 +1,7 @@
 """Init file for Flux LED"""
 
+from __future__ import annotations
+
 from .base_device import DeviceType, DeviceUnavailableException
 from .device import WifiLedBulb
 from .pattern import PresetPattern

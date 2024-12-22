@@ -1,4 +1,6 @@
-from typing import Optional, cast
+from __future__ import annotations
+
+from typing import cast
 
 from .const import MultiColorEffects
 
@@ -656,7 +658,7 @@ class PresetPattern:
         self._hex_str_valid_values = {f"0x{byte:02X}" for byte in self._value_to_str}
 
     @classmethod
-    def instance(cls) -> "PresetPattern":
+    def instance(cls) -> PresetPattern:
         """Get preset pattern instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -674,7 +676,7 @@ class PresetPattern:
             raise ValueError(f"Pattern must be one of {instance._hex_str_valid_values}")
 
     @staticmethod
-    def valtostr(pattern: int) -> Optional[str]:
+    def valtostr(pattern: int) -> str | None:
         instance = PresetPattern.instance()
         return instance._value_to_str.get(pattern)
 
