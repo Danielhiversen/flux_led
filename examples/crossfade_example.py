@@ -7,6 +7,7 @@ Assumes the bulb is already on.
 The python file with the Flux LED wrapper classes should live in
 the same folder as this script
 """
+
 from itertools import cycle
 import os
 import sys
@@ -19,7 +20,6 @@ sys.path.append(this_folder)
 
 
 def crossFade(bulb, color1, color2):
-
     r1, g1, b1 = color1
     r2, g2, b2 = color2
 
@@ -33,7 +33,6 @@ def crossFade(bulb, color1, color2):
 
 
 def main():
-
     # Find the bulb on the LAN
     scanner = BulbScanner()
     scanner.scan(timeout=4)
@@ -42,7 +41,6 @@ def main():
     bulb_info = scanner.getBulbInfoByID("ACCF235FFFFF")
 
     if bulb_info:
-
         bulb = WifiLedBulb(bulb_info["ipaddr"])
 
         color_time = 5  # seconds on each color
@@ -81,7 +79,6 @@ def main():
         color = next(colorpool)
 
         while True:
-
             bulb.refreshState()
 
             # set to color and wait

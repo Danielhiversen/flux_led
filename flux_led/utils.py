@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import ast
 import colorsys
 import contextlib
 import datetime
 from collections import namedtuple
-from typing import Iterable, List, Optional, Tuple, Union, cast
+from typing import cast
+from collections.abc import Iterable
 
-import webcolors  # type: ignore
+import webcolors  # type: ignore[import-untyped]
 
 from .const import MAX_TEMP, MIN_TEMP
 
@@ -33,8 +36,8 @@ TemperatureBrightness = namedtuple(
 class utils:
     @staticmethod
     def color_object_to_tuple(
-        color: Union[Tuple[int, ...], str]
-    ) -> Optional[Tuple[int, ...]]:
+        color: tuple[int, ...] | str,
+    ) -> tuple[int, ...] | None:
         # see if it's already a color tuple
         if isinstance(color, tuple) and len(color) in [3, 4, 5]:
             return color
@@ -46,12 +49,12 @@ class utils:
 
         # try to convert from an english name
         with contextlib.suppress(Exception):
-            return cast(Tuple[int, int, int], webcolors.name_to_rgb(color))
+            return cast(tuple[int, int, int], webcolors.name_to_rgb(color))
 
         # try to convert an web hex code
         with contextlib.suppress(Exception):
             return cast(
-                Tuple[int, int, int],
+                tuple[int, int, int],
                 webcolors.hex_to_rgb(webcolors.normalize_hex(color)),
             )
 
@@ -65,20 +68,20 @@ class utils:
         return None
 
     @staticmethod
-    def color_tuple_to_string(rgb: Tuple[int, int, int]) -> str:
+    def color_tuple_to_string(rgb: tuple[int, int, int]) -> str:
         # try to convert to an english name
         with contextlib.suppress(Exception):
             return cast(str, webcolors.rgb_to_name(rgb))
         return str(rgb)
 
     @staticmethod
-    def get_color_names_list() -> List[str]:
+    def get_color_names_list() -> list[str]:
         return sorted(
             {
-                *webcolors.CSS2_HEX_TO_NAMES.values(),
-                *webcolors.CSS21_HEX_TO_NAMES.values(),
-                *webcolors.CSS3_HEX_TO_NAMES.values(),
-                *webcolors.HTML4_HEX_TO_NAMES.values(),
+                *webcolors.names(webcolors.CSS2),
+                *webcolors.names(webcolors.CSS21),
+                *webcolors.names(webcolors.CSS3),
+                *webcolors.names(webcolors.HTML4),
             }
         )
 
@@ -129,15 +132,15 @@ class utils:
 
 
 def rgbwc_to_rgbcw(
-    rgbwc_data: Tuple[int, int, int, int, int]
-) -> Tuple[int, int, int, int, int]:
+    rgbwc_data: tuple[int, int, int, int, int],
+) -> tuple[int, int, int, int, int]:
     r, g, b, w, c = rgbwc_data
     return r, g, b, c, w
 
 
 def rgbcw_to_rgbwc(
-    rgbcw_data: Tuple[int, int, int, int, int]
-) -> Tuple[int, int, int, int, int]:
+    rgbcw_data: tuple[int, int, int, int, int],
+) -> tuple[int, int, int, int, int]:
     r, g, b, c, w = rgbcw_data
     return r, g, b, w, c
 
@@ -148,7 +151,7 @@ def _adjust_brightness(
     color_brightness: int,
     cw_brightness: int,
     ww_brightness: int,
-) -> Tuple[int, int, int]:
+) -> tuple[int, int, int]:
     if new_brightness < current_brightness:
         change_brightness_pct = (
             current_brightness - new_brightness
@@ -174,9 +177,9 @@ def _adjust_brightness(
 
 
 def rgbw_brightness(
-    rgbw_data: Tuple[int, int, int, int],
-    brightness: Optional[int] = None,
-) -> Tuple[int, int, int, int]:
+    rgbw_data: tuple[int, int, int, int],
+    brightness: int | None = None,
+) -> tuple[int, int, int, int]:
     """Convert rgbw to brightness."""
     original_r, original_g, original_b = rgbw_data[0:3]
     h, s, v = colorsys.rgb_to_hsv(original_r / 255, original_g / 255, original_b / 255)
@@ -208,9 +211,9 @@ def rgbw_brightness(
 
 
 def rgbww_brightness(
-    rgbww_data: Tuple[int, int, int, int, int],
-    brightness: Optional[int] = None,
-) -> Tuple[int, int, int, int, int]:
+    rgbww_data: tuple[int, int, int, int, int],
+    brightness: int | None = None,
+) -> tuple[int, int, int, int, int]:
     """Convert rgbww to brightness."""
     original_r, original_g, original_b = rgbww_data[0:3]
     h, s, v = colorsys.rgb_to_hsv(original_r / 255, original_g / 255, original_b / 255)
@@ -236,9 +239,9 @@ def rgbww_brightness(
 
 
 def rgbcw_brightness(
-    rgbcw_data: Tuple[int, int, int, int, int],
-    brightness: Optional[int] = None,
-) -> Tuple[int, int, int, int, int]:
+    rgbcw_data: tuple[int, int, int, int, int],
+    brightness: int | None = None,
+) -> tuple[int, int, int, int, int]:
     """Convert rgbww to brightness."""
     original_r, original_g, original_b = rgbcw_data[0:3]
     h, s, v = colorsys.rgb_to_hsv(original_r / 255, original_g / 255, original_b / 255)

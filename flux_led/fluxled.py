@@ -38,12 +38,14 @@ See the following for valid color names: http://www.w3schools.com/html/html_colo
 
 """
 
+from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
 import sys
 from optparse import OptionGroup, OptionParser, Values
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from .aio import AIOWifiLedBulb
 from .aioscanner import AIOBulbScanner
@@ -355,7 +357,7 @@ def processSetTimerArgs(parser: OptionParser, args: Any) -> LedTimer:  # noqa: C
 
 def processCustomArgs(
     parser: OptionParser, args: Any
-) -> Optional[Tuple[Any, int, List[Tuple[int, ...]]]]:
+) -> tuple[Any, int, list[tuple[int, ...]]] | None:
     if args[0] not in ["gradual", "jump", "strobe"]:
         parser.error(f"bad pattern type: {args[0]}")
         return None
@@ -384,7 +386,7 @@ def processCustomArgs(
     return args[0], speed, color_list
 
 
-def parseArgs() -> Tuple[Values, Any]:  # noqa: C901
+def parseArgs() -> tuple[Values, Any]:  # noqa: C901
     parser = OptionParser()
 
     parser.description = "A utility to control Flux WiFi LED Bulbs. "
@@ -812,7 +814,7 @@ async def _async_run_commands(  # noqa: C901
         buf_in("{} [{}] {} ({})".format(info["id"], info["ipaddr"], bulb, bulb.model))
 
     if options.settimer:
-        empty_timers: List[LedTimer] = []
+        empty_timers: list[LedTimer] = []
         timers = await bulb.async_get_timers() or empty_timers
         num = int(options.settimer[0])
         buf_in(f"New Timer ---- #{num}: {options.new_timer}")
@@ -871,7 +873,9 @@ async def async_main() -> None:  # noqa: C901
         for addr in args:
             if addr in found_addrs:
                 continue
-            bulb_info_list.append(FluxLEDDiscovery({ATTR_IPADDR: addr, ATTR_ID: "Unknown ID"}))  # type: ignore
+            bulb_info_list.append(
+                FluxLEDDiscovery({ATTR_IPADDR: addr, ATTR_ID: "Unknown ID"})  # type: ignore[typeddict-item]
+            )
 
     # now we have our bulb list, perform same operation on all of them
     tasks = [_async_process_bulb(info, options) for info in bulb_info_list]

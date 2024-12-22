@@ -6,56 +6,59 @@
 [![License][license-shield]](LICENSE)\
 [![GitHub Top Language][language-shield]][language]
 
-
-
-
 ### Magic Home / Surp Life / flux_led
 
 This is a utility for controlling stand-alone [Magic Home](http://www.zengge.com/appkzd) and [Surp Life](http://www.zengge.com/newbrand) devices manufactured by [Zengge](http://www.zengge.com/sy).
-The protocol was reverse-engineered by studying packet captures between a 
-bulb and the controlling "Magic Home" mobile app.  The code here dealing 
+The protocol was reverse-engineered by studying packet captures between a
+bulb and the controlling "Magic Home" mobile app. The code here dealing
 with the network protocol is littered with magic numbers, and ain't so pretty.
 But it does seem to work!
 
 So far most of the functionality of the apps is available here via the CLI
 and/or programmatically.
 
-The classes in this project could very easily be used as an API, and incorporated into a GUI app written 
+The classes in this project could very easily be used as an API, and incorporated into a GUI app written
 in PyQt, Kivy, or some other framework.
 
 #### Minimum python version
 
-3.7
+3.9
 
 ##### Available:
-* Discovering bulbs on LAN
-* Turning on/off bulb
-* Get state information
-* Setting "warm white" mode
-* Setting single color mode
-* Setting preset pattern mode
-* Setting custom pattern mode
-* Reading timers
-* Setting timers
-* Sync clock
-* Music Mode for devices with a built-in microphone (asyncio version only)
-* Remote access administration (asyncio version only)
-* Device configuration including wiring order, ic type, pixels, etc (asyncio version only)
-	
+
+- Discovering bulbs on LAN
+- Turning on/off bulb
+- Get state information
+- Setting "warm white" mode
+- Setting single color mode
+- Setting preset pattern mode
+- Setting custom pattern mode
+- Reading timers
+- Setting timers
+- Sync clock
+- Music Mode for devices with a built-in microphone (asyncio version only)
+- Remote access administration (asyncio version only)
+- Device configuration including wiring order, ic type, pixels, etc (asyncio version only)
+
 ##### Some missing pieces:
-* Initial administration to set up WiFi SSID and passphrase/key.
-	  
+
+- Initial administration to set up WiFi SSID and passphrase/key.
+
 ##### Cool feature:
-* Specify colors with names or web hex values.  Requires that python "webcolors" 
-package is installed.  (Easily done via pip, easy_install, or apt-get, etc.) Use --listcolors to show valid color names.
+
+- Specify colors with names or web hex values. Requires that python "webcolors"
+  package is installed. (Easily done via pip, easy_install, or apt-get, etc.) Use --listcolors to show valid color names.
 
 ##### Installation:
-* Flux_led package available at https://pypi.python.org/pypi/flux-led/
+
+- Flux_led package available at https://pypi.python.org/pypi/flux-led/
+
 ```
 pip install flux_led
 ```
 
 ##### Examples:
+
 ```
 Scan network:
 	flux_led -s
@@ -74,7 +77,7 @@ Turn off:
 	flux_led 192.168.1.100 --off
 	flux_led 192.168.1.100 --0
 	flux_led -sS --off
-	
+
 Set warm white, 75%
 	flux_led 192.168.1.100 -w 75 -1
 
@@ -82,27 +85,28 @@ Set fixed color red :
 	flux_led 192.168.1.100 -c Red
 	flux_led 192.168.1.100 -c 255,0,0
 	flux_led 192.168.1.100 -c "#FF0000"
-	
-Set preset pattern #35 with 40% speed:	
+
+Set preset pattern #35 with 40% speed:
 	flux_led 192.168.1.100 -p 35 40
-	
+
 Set custom pattern 25% speed, red/green/blue, gradual change:
 	flux_led 192.168.1.100 -C gradual 25 "red green (0,0,255)"
 
 Sync all bulb's clocks with this computer's:
 	flux_led -sS --setclock
-		
+
 Set timer #1 to turn on red at 5:30pm on weekdays:
 	flux_led 192.168.1.100 -T 1 color "time:1730;repeat:12345;color:red"
-	
+
 Deactivate timer #4:
 	flux_led 192.168.1.100 -T 4 inactive ""
 
 Use --timerhelp for more details on setting timers
 ```
-	
+
 ##### Show help:
-```	
+
+```
 $ flux_led -h
 Usage: usage: __main__.py [-sS10cwpCiltThe] [addr1 [addr2 [addr3] ...].
 
@@ -154,64 +158,64 @@ Options:
 
 The following models have been tested with library.
 
-| Model | Description                 | Microphone | Notes                           |
-| ----- | --------------------------- | ---------- | ------------------------------- |
-| 0x01  | Legacy RGB Controller       | no         | Original protocol               |
-| 0x03  | Legacy CCT Controller       | no         | Original protocol               |
-| 0x04  | UFO Controller RGBW         | no         |                                 |
-| 0x06  | Controller RGBW             | no         |                                 |
-| 0x07  | Controller RGBCW            | no         |                                 |
-| 0x08  | Controller RGB with MIC     | yes        |                                 |
-| 0x09  | Ceiling Light CCT           | no         |                                 |
-| 0x0E  | Floor Lamp RGBCW            | no         |                                 |
-| 0x10  | Christmas Light             | no         |                                 |
-| 0x16  | Magnetic Light CCT          | no         |                                 |
-| 0x17  | Magnetic Light Dimmable     | no         |                                 |
-| 0x1A  | Christmas Light             | no         |                                 |
-| 0x1C  | Table Light CCT             | no         |                                 |
-| 0x1E  | Ceiling Light RGBCW         | no         |                                 |
-| 0x21  | Bulb Dimmable               | no         |                                 |
-| 0x25  | Controller RGB/WW/CW        | no         | Supports RGB, RGBW, RGBWW, CW, DIM |
-| 0x33  | Controller RGB              | no         |                                 |
-| 0x35  | Bulb RGBCW                  | no         |                                 |
-| 0x41  | Controller Dimmable         | no         |                                 |
-| 0x44  | Bulb RGBW                   | no         |                                 |
-| 0x52  | Bulb CCT                    | no         |                                 |
-| 0x54  | Downlight RGBW              | no         |                                 |
-| 0x62  | Controller CCT              | no         |                                 |
-| 0x93  | Switch 1 Channel            | no         |                                 |
-| 0x97  | Socket                      | no         |                                 |
-| 0xA1  | Addressable v1              | no         | Supports UCS1903, SM16703, WS2811, WS2812B, SK6812, INK1003, WS2801, LB1914 |
-| 0xA2  | Addressable v2              | yes        | Supports UCS1903, SM16703, WS2811, WS2811B, SK6812, INK1003, WS2801, WS2815, APA102, TM1914, UCS2904B |
-| 0xA3  | Addressable v3              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B |
-| 0xA4  | Addressable v4              | no         | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B |
-| 0xA6  | Addressable v6              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B |
-| 0xA7  | Addressable v7              | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B |
-| 0xE1  | Ceiling Light CCT           | no         |                                 |
-| 0xE2  | Ceiling Light Assist        | no         | Auxiliary Switch not supported  |
+| Model | Description             | Microphone | Notes                                                                                                 |
+| ----- | ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
+| 0x01  | Legacy RGB Controller   | no         | Original protocol                                                                                     |
+| 0x03  | Legacy CCT Controller   | no         | Original protocol                                                                                     |
+| 0x04  | UFO Controller RGBW     | no         |                                                                                                       |
+| 0x06  | Controller RGBW         | no         |                                                                                                       |
+| 0x07  | Controller RGBCW        | no         |                                                                                                       |
+| 0x08  | Controller RGB with MIC | yes        |                                                                                                       |
+| 0x09  | Ceiling Light CCT       | no         |                                                                                                       |
+| 0x0E  | Floor Lamp RGBCW        | no         |                                                                                                       |
+| 0x10  | Christmas Light         | no         |                                                                                                       |
+| 0x16  | Magnetic Light CCT      | no         |                                                                                                       |
+| 0x17  | Magnetic Light Dimmable | no         |                                                                                                       |
+| 0x1A  | Christmas Light         | no         |                                                                                                       |
+| 0x1C  | Table Light CCT         | no         |                                                                                                       |
+| 0x1E  | Ceiling Light RGBCW     | no         |                                                                                                       |
+| 0x21  | Bulb Dimmable           | no         |                                                                                                       |
+| 0x25  | Controller RGB/WW/CW    | no         | Supports RGB, RGBW, RGBWW, CW, DIM                                                                    |
+| 0x33  | Controller RGB          | no         |                                                                                                       |
+| 0x35  | Bulb RGBCW              | no         |                                                                                                       |
+| 0x41  | Controller Dimmable     | no         |                                                                                                       |
+| 0x44  | Bulb RGBW               | no         |                                                                                                       |
+| 0x52  | Bulb CCT                | no         |                                                                                                       |
+| 0x54  | Downlight RGBW          | no         |                                                                                                       |
+| 0x62  | Controller CCT          | no         |                                                                                                       |
+| 0x93  | Switch 1 Channel        | no         |                                                                                                       |
+| 0x97  | Socket                  | no         |                                                                                                       |
+| 0xA1  | Addressable v1          | no         | Supports UCS1903, SM16703, WS2811, WS2812B, SK6812, INK1003, WS2801, LB1914                           |
+| 0xA2  | Addressable v2          | yes        | Supports UCS1903, SM16703, WS2811, WS2811B, SK6812, INK1003, WS2801, WS2815, APA102, TM1914, UCS2904B |
+| 0xA3  | Addressable v3          | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B   |
+| 0xA4  | Addressable v4          | no         | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B   |
+| 0xA6  | Addressable v6          | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B   |
+| 0xA7  | Addressable v7          | yes        | Supports WS2812B, SM16703, SM16704, WS2811, UCS1903, SK6812, SK6812RGBW (WS2814), INK1003, UCS2904B   |
+| 0xE1  | Ceiling Light CCT       | no         |                                                                                                       |
+| 0xE2  | Ceiling Light Assist    | no         | Auxiliary Switch not supported                                                                        |
 
 ### Untested Models
 
 The following models have not been tested with the library but may work.
 
-| Model | Description                 | Microphone | Notes                           |
-| ----- | --------------------------- | ---------- | ------------------------------- |
-| 0x02  | Legacy Dimmable Controller  | no         | Original protocol, discontinued |
+| Model | Description                | Microphone | Notes                           |
+| ----- | -------------------------- | ---------- | ------------------------------- |
+| 0x02  | Legacy Dimmable Controller | no         | Original protocol, discontinued |
 
 ### Unsupported Models
 
 The following models are confirmed to be unsupported.
 
-| Model | Description                 | Microphone | Notes                           |
-| ----- | --------------------------- | ---------- | ------------------------------- |
-| 0x18  | Plant Grow Light            | no         |                                 |
-| 0x19  | Socket with 2 USB           | no         |                                 |
-| 0x1B  | Aroma Fragrance Lamp        | no         |                                 |
-| 0x1D  | Fill Light                  | no         |                                 |
-| 0x94  | Switch 1c Watt              | no         |                                 |
-| 0x95  | Switch 2 Channel            | no         |                                 |
-| 0x96  | Switch 4 Channel            | no         |                                 |
-| 0xD1  | Digital Time Lamp           | no         |                                 |
+| Model | Description          | Microphone | Notes |
+| ----- | -------------------- | ---------- | ----- |
+| 0x18  | Plant Grow Light     | no         |       |
+| 0x19  | Socket with 2 USB    | no         |       |
+| 0x1B  | Aroma Fragrance Lamp | no         |       |
+| 0x1D  | Fill Light           | no         |       |
+| 0x94  | Switch 1c Watt       | no         |       |
+| 0x95  | Switch 2 Channel     | no         |       |
+| 0x96  | Switch 4 Channel     | no         |       |
+| 0xD1  | Digital Time Lamp    | no         |       |
 
 ### Known Vendors
 
@@ -272,7 +276,7 @@ The following models are confirmed to be unsupported.
 - SMFX
 - [Sumaote](https://fvtled.com/)
 - [Superhome](https://superhome.com.cy/)
-- [SurpLife](http://www.zengge.com/newbrand) 
+- [SurpLife](http://www.zengge.com/newbrand)
 - [SuperlightingLED](https://www.superlightingled.com/)
 - Svipear
 - Tommox
@@ -282,7 +286,7 @@ The following models are confirmed to be unsupported.
 - [Zengge](http://www.zengge.com/sy)
 - Zombber
 
-### File Structure 
+### File Structure
 
 device.py -> contains code to manipulate device as well as get any information from device that's needed.\
 fluxled.py -> command line code for flux_led.\
@@ -306,4 +310,3 @@ utils.py -> contains helpers to calculate differnt parameters such as color, cct
 [python-package-shield]: https://github.com/Danielhiversen/flux_led/actions/workflows/python-package.yml/badge.svg?branch=master
 [python-ver]: https://pypi.python.org/pypi/flux_led/
 [python-ver-shield]: https://img.shields.io/pypi/pyversions/flux_led.svg
-

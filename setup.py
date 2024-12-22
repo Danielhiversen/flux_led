@@ -1,4 +1,3 @@
-# coding=utf-8
 from setuptools import setup
 
 setup_requirements = [
@@ -31,7 +30,11 @@ dev_requirements = [
     "wheel>=0.34.2",
 ]
 
-requirements = ["webcolors", 'typing_extensions;python_version<"3.8"', "async_timeout>=3.0.0"]
+requirements = [
+    "webcolors",
+    'typing_extensions;python_version<"3.8"',
+    "async_timeout>=3.0.0",
+]
 
 
 extra_requirements = {
@@ -77,7 +80,7 @@ setup(
         "Topic :: Home Automation",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     setup_requires=setup_requirements,
     tests_require=test_requirements,
     extras_require=extra_requirements,

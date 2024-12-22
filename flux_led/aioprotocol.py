@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from asyncio.transports import BaseTransport, WriteTransport
-from typing import Any, Callable, Optional, cast
+from typing import Any, Callable, cast
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -12,13 +14,13 @@ class AIOLEDENETProtocol(asyncio.Protocol):
     def __init__(
         self,
         data_received: Callable[[bytes], Any],
-        connection_lost: Callable[[Optional[Exception]], Any],
+        connection_lost: Callable[[Exception | None], Any],
     ) -> None:
         self._data_receive_callback = data_received
         self._connection_lost_callback = connection_lost
-        self.transport: Optional[WriteTransport] = None
+        self.transport: WriteTransport | None = None
 
-    def connection_lost(self, exc: Optional[Exception]) -> None:
+    def connection_lost(self, exc: Exception | None) -> None:
         """Handle connection lost."""
         _LOGGER.debug("%s: Connection lost: %s", self.peername, exc)
         self.close()

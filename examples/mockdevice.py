@@ -2,7 +2,7 @@ import asyncio
 import logging
 import socket
 
-from typing import Tuple, Optional
+from typing import Optional
 from flux_led.aioscanner import AIOBulbScanner
 from flux_led.protocol import OUTER_MESSAGE_WRAPPER
 
@@ -43,7 +43,7 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
 
-    def send(self, data: bytes, addr: Tuple[str, int]) -> None:
+    def send(self, data: bytes, addr: tuple[str, int]) -> None:
         """Trigger on data."""
         _LOGGER.debug(
             "UDP %s => %s (%d)",
@@ -53,7 +53,7 @@ class MagicHomeDiscoveryProtocol(asyncio.Protocol):
         )
         self.transport.sendto(data, addr)
 
-    def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
+    def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         """Trigger on data."""
         _LOGGER.debug(
             "UDP %s <= %s (%d)",

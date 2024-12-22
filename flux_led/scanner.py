@@ -3,10 +3,9 @@ import contextlib
 import logging
 import select
 import socket
-import sys
 import time
 from datetime import date
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from .const import (
     ATTR_FIRMWARE_DATE,
@@ -22,10 +21,7 @@ from .const import (
     ATTR_VERSION_NUM,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pylint: disable=no-name-in-module
-else:
-    from typing_extensions import TypedDict
+from typing import TypedDict  # pylint: disable=no-name-in-module
 
 from .models_db import get_model_description
 
@@ -176,10 +172,10 @@ class BulbScanner:
     BROADCAST_ADDRESS = "<broadcast>"
 
     def __init__(self) -> None:
-        self._discoveries: Dict[str, FluxLEDDiscovery] = {}
+        self._discoveries: dict[str, FluxLEDDiscovery] = {}
 
     @property
-    def found_bulbs(self) -> List[FluxLEDDiscovery]:
+    def found_bulbs(self) -> list[FluxLEDDiscovery]:
         """Return only complete bulb discoveries."""
         return [info for info in self._discoveries.values() if info["id"]]
 
@@ -189,13 +185,13 @@ class BulbScanner:
                 return b
         return b
 
-    def getBulbInfo(self) -> List[FluxLEDDiscovery]:
+    def getBulbInfo(self) -> list[FluxLEDDiscovery]:
         return self.found_bulbs
 
     def _create_socket(self) -> socket.socket:
         return create_udp_socket(self.DISCOVERY_PORT)
 
-    def _destination_from_address(self, address: Optional[str]) -> Tuple[str, int]:
+    def _destination_from_address(self, address: Optional[str]) -> tuple[str, int]:
         if address is None:
             address = self.BROADCAST_ADDRESS
         return (address, self.DISCOVERY_PORT)
@@ -203,9 +199,9 @@ class BulbScanner:
     def _process_response(
         self,
         data: Optional[bytes],
-        from_address: Tuple[str, int],
+        from_address: tuple[str, int],
         address: Optional[str],
-        response_list: Dict[str, FluxLEDDiscovery],
+        response_list: dict[str, FluxLEDDiscovery],
     ) -> bool:
         """Process a response.
 
@@ -227,9 +223,9 @@ class BulbScanner:
 
     def _process_data(
         self,
-        from_address: Tuple[str, int],
+        from_address: tuple[str, int],
         decoded_data: str,
-        response_list: Dict[str, FluxLEDDiscovery],
+        response_list: dict[str, FluxLEDDiscovery],
     ) -> None:
         """Process data."""
         from_ipaddr = from_address[0]
@@ -262,31 +258,31 @@ class BulbScanner:
 
     def _get_start_messages(
         self,
-    ) -> List[bytes]:
+    ) -> list[bytes]:
         return [self.DISCOVER_MESSAGE]
 
     def _get_enable_remote_access_messages(
         self,
         remote_access_host: str,
         remote_access_port: int,
-    ) -> List[bytes]:
+    ) -> list[bytes]:
         enable_message = f"AT+SOCKB=TCP,{remote_access_port},{remote_access_host}\r"
         return [enable_message.encode()]
 
     def _get_disable_remote_access_messages(
         self,
-    ) -> List[bytes]:
+    ) -> list[bytes]:
         return [self.DISABLE_REMOTE_ACCESS_MESSAGE]
 
     def _get_reboot_messages(
         self,
-    ) -> List[bytes]:
+    ) -> list[bytes]:
         return [self.REBOOT_MESSAGE]
 
     def _send_message(
         self,
         sender: Union[socket.socket, asyncio.DatagramTransport],
-        destination: Tuple[str, int],
+        destination: tuple[str, int],
         message: bytes,
     ) -> None:
         _LOGGER.debug("udp: %s => %s", destination, message)
@@ -294,9 +290,9 @@ class BulbScanner:
 
     def _send_messages(
         self,
-        messages: List[bytes],
+        messages: list[bytes],
         sender: Union[socket.socket, asyncio.DatagramTransport],
-        destination: Tuple[str, int],
+        destination: tuple[str, int],
     ) -> None:
         """Send messages with a short delay between them."""
         for idx, message in enumerate(messages):
@@ -306,12 +302,12 @@ class BulbScanner:
 
     def get_discovery_messages(
         self,
-    ) -> List[bytes]:
+    ) -> list[bytes]:
         return [self.DISCOVER_MESSAGE, self.VERSION_MESSAGE, self.REMOTE_ACCESS_MESSAGE]
 
     def scan(
         self, timeout: int = 10, address: Optional[str] = None
-    ) -> List[FluxLEDDiscovery]:
+    ) -> list[FluxLEDDiscovery]:
         """Scan for bulbs.
 
         If an address is provided, the scan will return

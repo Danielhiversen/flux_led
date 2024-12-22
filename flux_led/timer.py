@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import datetime
-from typing import Optional, Union
 
 from .pattern import PresetPattern
 from .utils import utils
@@ -43,7 +44,7 @@ class LedTimer:
         )
 
     def __init__(
-        self, bytes: Optional[Union[bytes, bytearray]] = None, length: int = 14
+        self, bytes: bytes | bytearray | None = None, length: int = 14
     ) -> None:
         self.cold_level = 0
         self.pattern_code = 0
@@ -203,7 +204,7 @@ class LedTimer:
         14: 0f = turn off, f0 = turn on
     """
 
-    def fromBytes(self, bytes: Union[bytes, bytearray]) -> None:  # noqa: C901
+    def fromBytes(self, bytes: bytes | bytearray) -> None:  # noqa: C901
         self.red = 0
         self.green = 0
         self.blue = 0

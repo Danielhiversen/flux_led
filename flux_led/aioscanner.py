@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import logging
 import time
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 
 from .aioutils import asyncio_timeout
 from .scanner import MESSAGE_SEND_INTERLEAVE_DELAY, BulbScanner, FluxLEDDiscovery
@@ -13,23 +15,23 @@ _LOGGER = logging.getLogger(__name__)
 class LEDENETDiscovery(asyncio.DatagramProtocol):
     def __init__(
         self,
-        destination: Tuple[str, int],
-        on_response: Callable[[bytes, Tuple[str, int]], None],
+        destination: tuple[str, int],
+        on_response: Callable[[bytes, tuple[str, int]], None],
     ) -> None:
         """Init the discovery protocol."""
         self.transport = None
         self.destination = destination
         self.on_response = on_response
 
-    def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
+    def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         """Trigger on_response."""
         self.on_response(data, addr)
 
-    def error_received(self, ex: Optional[Exception]) -> None:
+    def error_received(self, ex: Exception | None) -> None:
         """Handle error."""
         _LOGGER.debug("LEDENETDiscovery error: %s", ex)
 
-    def connection_lost(self, ex: Optional[Exception]) -> None:
+    def connection_lost(self, ex: Exception | None) -> None:
         """The connection is lost."""
 
 
@@ -42,9 +44,9 @@ class AIOBulbScanner(BulbScanner):
 
     async def _async_send_messages(
         self,
-        messages: List[bytes],
+        messages: list[bytes],
         sender: asyncio.DatagramTransport,
-        destination: Tuple[str, int],
+        destination: tuple[str, int],
     ) -> None:
         """Send messages with a short delay between them."""
         last_idx = len(messages) - 1
@@ -55,14 +57,14 @@ class AIOBulbScanner(BulbScanner):
 
     async def _async_send_and_wait(
         self,
-        events: List[asyncio.Event],
-        commands: List[bytes],
+        events: list[asyncio.Event],
+        commands: list[bytes],
         transport: asyncio.DatagramTransport,
-        destination: Tuple[str, int],
+        destination: tuple[str, int],
         timeout: int,
     ) -> None:
         """Send a message and wait for a response."""
-        event_map: Dict[int, asyncio.Event] = {}
+        event_map: dict[int, asyncio.Event] = {}
         for idx, _ in enumerate(commands):
             event = asyncio.Event()
             event_map[idx] = event
@@ -74,16 +76,16 @@ class AIOBulbScanner(BulbScanner):
 
     async def _async_send_commands_and_reboot(
         self,
-        messages: Optional[List[bytes]],
+        messages: list[bytes] | None,
         address: str,
         timeout: int = 5,
     ) -> None:
         """Send a command and reboot."""
         sock = self._create_socket()
         destination = self._destination_from_address(address)
-        events: List[asyncio.Event] = []
+        events: list[asyncio.Event] = []
 
-        def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
+        def _on_response(data: bytes, addr: tuple[str, int]) -> None:
             _LOGGER.debug("udp: %s <= %s", addr, data)
             if data.startswith(b"+ok"):
                 events.pop(0).set()
@@ -96,7 +98,7 @@ class AIOBulbScanner(BulbScanner):
             sock=sock,
         )
         transport = transport_proto[0]
-        commands: List[bytes] = []
+        commands: list[bytes] = []
         if messages:
             commands.extend(messages)
         commands.extend(self._get_reboot_messages())
@@ -113,9 +115,9 @@ class AIOBulbScanner(BulbScanner):
     async def _async_run_scan(
         self,
         transport: asyncio.DatagramTransport,
-        destination: Tuple[str, int],
+        destination: tuple[str, int],
         timeout: int,
-        found_all_future: "asyncio.Future[bool]",
+        found_all_future: asyncio.Future[bool],
     ) -> None:
         """Send the scans."""
         discovery_messages = self.get_discovery_messages()
@@ -139,14 +141,14 @@ class AIOBulbScanner(BulbScanner):
             await self._async_send_messages(discovery_messages, transport, destination)
 
     async def async_scan(
-        self, timeout: int = 10, address: Optional[str] = None
-    ) -> List[FluxLEDDiscovery]:
+        self, timeout: int = 10, address: str | None = None
+    ) -> list[FluxLEDDiscovery]:
         """Discover LEDENET."""
         sock = self._create_socket()
         destination = self._destination_from_address(address)
-        found_all_future: "asyncio.Future[bool]" = self.loop.create_future()
+        found_all_future: asyncio.Future[bool] = self.loop.create_future()
 
-        def _on_response(data: bytes, addr: Tuple[str, int]) -> None:
+        def _on_response(data: bytes, addr: tuple[str, int]) -> None:
             _LOGGER.debug("discover: %s <= %s", addr, data)
             if self._process_response(data, addr, address, self._discoveries):
                 with contextlib.suppress(asyncio.InvalidStateError):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 __all__ = ["asyncio_timeout"]

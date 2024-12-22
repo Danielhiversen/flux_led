@@ -16,7 +16,6 @@ async def go():
 
     await bulb.async_setup(_async_updated)
     while True:
-
         pprint.pprint("Setting to red/orange/yellow/green/blue/indigo/violet - static")
         await bulb.async_set_zones(
             [

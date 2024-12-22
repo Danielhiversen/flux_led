@@ -1,12 +1,10 @@
 """FluxLED Models Database."""
 
-import sys
+from __future__ import annotations
+
 from enum import Enum
 
-if sys.version_info >= (3, 8):
-    from typing import Final  # pylint: disable=no-name-in-module
-else:
-    from typing_extensions import Final
+from typing import Final  # pylint: disable=no-name-in-module
 
 MIN_TEMP: Final = 2700
 MAX_TEMP: Final = 6500

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
@@ -18,7 +20,7 @@ def _socket_retry(attempts: int = DEFAULT_RETRIES) -> WrapFuncType:  # type: ign
 
     def decorator_retry(func: WrapFuncType) -> WrapFuncType:
         def _retry_wrap(
-            self: "WifiLedBulb",
+            self: WifiLedBulb,
             *args: Any,
             retry: int = attempts,
             **kwargs: Any,

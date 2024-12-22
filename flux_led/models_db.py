@@ -1,8 +1,9 @@
 """FluxLED Models Database."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 
 from .const import (
     COLOR_MODE_CCT,
@@ -185,18 +186,18 @@ GENERIC_RGBWW_MAP = {
 @dataclass
 class LEDENETDeviceConfigurationOptions:
     wiring: bool  # supports changing strip order
-    num_to_wiring: Dict[int, str]
-    wiring_to_num: Dict[str, int]
+    num_to_wiring: dict[int, str]
+    wiring_to_num: dict[str, int]
     operating_modes: bool  # has color modes ie RGB&W or RGB/W
-    num_to_operating_mode: Dict[int, str]
-    operating_mode_to_num: Dict[str, int]
+    num_to_operating_mode: dict[int, str]
+    operating_mode_to_num: dict[str, int]
     pixels: bool
     segments: bool
     music_pixels: bool
     music_segments: bool
     ic_type: bool
-    num_to_ic_type: Dict[int, str]
-    ic_type_to_num: Dict[str, int]
+    num_to_ic_type: dict[int, str]
+    ic_type_to_num: dict[str, int]
 
 
 IMMUTABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(  # aka fixed models
@@ -324,19 +325,21 @@ NEW_ADDRESABLE_DEVICE_CONFIG = LEDENETDeviceConfigurationOptions(
 @dataclass
 class LEDENETModel:
     model_num: int  # The model number aka byte 1
-    models: List[str]  # The model names from discovery
+    models: list[str]  # The model names from discovery
     description: str  # Description of the model ({type} {color_mode})
-    always_writes_white_and_colors: bool  # Devices that don't require a separate rgb/w bit aka rgbwprotocol
-    protocols: List[
+    always_writes_white_and_colors: (
+        bool  # Devices that don't require a separate rgb/w bit aka rgbwprotocol
+    )
+    protocols: list[
         MinVersionProtocol
     ]  # The device protocols, must be ordered highest version to lowest version
-    mode_to_color_mode: Dict[
-        int, Set[str]
+    mode_to_color_mode: dict[
+        int, set[str]
     ]  # A mapping of mode aka byte 2 to color mode that overrides color_modes
-    color_modes: Set[
+    color_modes: set[
         str
     ]  # The color modes to use if there is no mode_to_color_mode_mapping
-    channel_map: Dict[str, str]  # Used to remap channels
+    channel_map: dict[str, str]  # Used to remap channels
     microphone: bool
     device_config: LEDENETDeviceConfigurationOptions
 
@@ -636,7 +639,7 @@ HARDWARE = [
     ),
 ]
 
-HARDWARE_MAP: Dict[str, LEDENETHardware] = {model.model: model for model in HARDWARE}
+HARDWARE_MAP: dict[str, LEDENETHardware] = {model.model: model for model in HARDWARE}
 
 
 MODELS = [
@@ -1335,10 +1338,10 @@ MODELS = [
     ),
 ]
 
-MODEL_MAP: Dict[int, LEDENETModel] = {model.model_num: model for model in MODELS}
+MODEL_MAP: dict[int, LEDENETModel] = {model.model_num: model for model in MODELS}
 
 
-def get_model(model_num: int, fallback_protocol: Optional[str] = None) -> LEDENETModel:
+def get_model(model_num: int, fallback_protocol: str | None = None) -> LEDENETModel:
     """Return the LEDNETModel for the model_num."""
     return MODEL_MAP.get(
         model_num,
@@ -1367,12 +1370,12 @@ def _unknown_ledenet_model(model_num: int, fallback_protocol: str) -> LEDENETMod
     )
 
 
-def get_model_description(model_num: int, model_info: Optional[str]) -> str:
+def get_model_description(model_num: int, model_info: str | None) -> str:
     """Return the description for a model."""
     return format_model_description(get_model(model_num).description, model_info)
 
 
-def format_model_description(description: str, model_info: Optional[str]) -> str:
+def format_model_description(description: str, model_info: str | None) -> str:
     """Format the description for a model."""
     if model_info:
         extra = MODEL_INFO_NAMES.get(model_info.upper())
