@@ -4,7 +4,8 @@ import random
 import time
 from dataclasses import asdict, is_dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Optional, Union
+from collections.abc import Iterable
 
 from .const import (  # imported for back compat, remove once Home Assistant no longer uses
     ADDRESSABLE_STATE_CHANGE_LATENCY,
@@ -125,12 +126,12 @@ class DeviceUnavailableException(RuntimeError):
     """Exception to indicate a device is not available."""
 
 
-PROTOCOL_PROBES: Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]] = (
+PROTOCOL_PROBES: tuple[type[ProtocolLEDENET8Byte], type[ProtocolLEDENETOriginal]] = (
     ProtocolLEDENET8Byte,
     ProtocolLEDENETOriginal,
 )
-PROTOCOL_PROBES_LEGACY: Tuple[
-    Type[ProtocolLEDENETOriginal], Type[ProtocolLEDENET8Byte]
+PROTOCOL_PROBES_LEGACY: tuple[
+    type[ProtocolLEDENETOriginal], type[ProtocolLEDENET8Byte]
 ] = (ProtocolLEDENETOriginal, ProtocolLEDENET8Byte)
 
 PROTOCOL_TYPES = Union[
@@ -240,14 +241,14 @@ class LEDENETDevice:
         self._power_state_transition_complete_time: float = 0
         self._last_effect_brightness: int = 100
         self._device_config: Optional[LEDENETAddressableDeviceConfiguration] = None
-        self._last_message: Dict[str, bytes] = {}
+        self._last_message: dict[str, bytes] = {}
         self._unavailable_reason: Optional[str] = None
 
     def _protocol_probes(
         self,
     ) -> Union[
-        Tuple[Type[ProtocolLEDENETOriginal], Type[ProtocolLEDENET8Byte]],
-        Tuple[Type[ProtocolLEDENET8Byte], Type[ProtocolLEDENETOriginal]],
+        tuple[type[ProtocolLEDENETOriginal], type[ProtocolLEDENET8Byte]],
+        tuple[type[ProtocolLEDENET8Byte], type[ProtocolLEDENETOriginal]],
     ]:
         """Determine the probe order based on device type."""
         discovery = self.discovery
@@ -400,7 +401,7 @@ class LEDENETDevice:
         raw_state = self.raw_state
         return bool(raw_state.red or raw_state.green or raw_state.blue)
 
-    def rgbw_color_temp_support(self, color_modes: Set[str]) -> bool:
+    def rgbw_color_temp_support(self, color_modes: set[str]) -> bool:
         """RGBW color temp support."""
         return COLOR_MODE_RGBW in color_modes and self.max_temp != self.min_temp
 
@@ -422,7 +423,7 @@ class LEDENETDevice:
         return len(self.color_modes) > 1
 
     @property
-    def color_modes(self) -> Set[str]:
+    def color_modes(self) -> set[str]:
         """The available color modes."""
         color_modes = self._internal_color_modes
         # We support CCT mode if the device supports RGBWW
@@ -438,7 +439,7 @@ class LEDENETDevice:
         return color_modes
 
     @property
-    def _internal_color_modes(self) -> Set[str]:
+    def _internal_color_modes(self) -> set[str]:
         """The internal available color modes."""
         assert self.raw_state is not None
         if (
@@ -505,7 +506,7 @@ class LEDENETDevice:
         return int((self.raw_state.mode & 0xF0) / 16)
 
     @property
-    def wirings(self) -> Optional[List[str]]:
+    def wirings(self) -> Optional[list[str]]:
         """Return available wirings for the device."""
         device_config = self.model_data.device_config
         if not device_config.wiring:
@@ -534,7 +535,7 @@ class LEDENETDevice:
         return self.raw_state.mode & 0x0F
 
     @property
-    def operating_modes(self) -> Optional[List[str]]:
+    def operating_modes(self) -> Optional[list[str]]:
         """Return available operating modes for the device."""
         if not self.model_data.device_config.operating_modes:
             return None
@@ -557,7 +558,7 @@ class LEDENETDevice:
         return self._device_config.ic_type_num
 
     @property
-    def ic_types(self) -> Optional[List[str]]:
+    def ic_types(self) -> Optional[list[str]]:
         """Return the ic types."""
         if not self.model_data.device_config.ic_type:
             return None
@@ -618,7 +619,7 @@ class LEDENETDevice:
         return self.raw_state.warm_white if self._rgbwwprotocol else 0
 
     @property
-    def effect_list(self) -> List[str]:
+    def effect_list(self) -> list[str]:
         """Return the list of available effects."""
         effects: Iterable[str] = []
         protocol = self.protocol
@@ -786,9 +787,9 @@ class LEDENETDevice:
             )
             return False
 
-        raw_state: Union[
-            LEDENETOriginalRawState, LEDENETRawState
-        ] = self._protocol.named_raw_state(rx)
+        raw_state: Union[LEDENETOriginalRawState, LEDENETRawState] = (
+            self._protocol.named_raw_state(rx)
+        )
         _LOGGER.debug("%s: State: %s", self.ipaddr, raw_state)
 
         if raw_state != self.raw_state:
@@ -854,7 +855,7 @@ class LEDENETDevice:
     def _set_raw_state(
         self,
         raw_state: Union[LEDENETOriginalRawState, LEDENETRawState],
-        updated: Optional[Set[str]] = None,
+        updated: Optional[set[str]] = None,
     ) -> None:
         """Set the raw state remapping channels as needed.
 
@@ -966,7 +967,7 @@ class LEDENETDevice:
         self._replace_raw_state({"power_state": new_power_state})
         self._set_transition_complete_time()
 
-    def _replace_raw_state(self, new_states: Dict[str, int]) -> None:
+    def _replace_raw_state(self, new_states: dict[str, int]) -> None:
         assert self.raw_state is not None
         _LOGGER.debug("%s: _replace_raw_state: %s", self.ipaddr, new_states)
         self._set_raw_state(
@@ -981,7 +982,7 @@ class LEDENETDevice:
             return 255
         return self.brightness
 
-    def getWhiteTemperature(self) -> Tuple[int, int]:
+    def getWhiteTemperature(self) -> tuple[int, int]:
         """Returns the color temp and brightness"""
         # Assume input temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
@@ -997,14 +998,14 @@ class LEDENETDevice:
         )
         return temp, brightness
 
-    def getRgbw(self) -> Tuple[int, int, int, int]:
+    def getRgbw(self) -> tuple[int, int, int, int]:
         """Returns red,green,blue,white (usually warm)."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255)
         return self.rgbw
 
     @property
-    def rgbw(self) -> Tuple[int, int, int, int]:
+    def rgbw(self) -> tuple[int, int, int, int]:
         """Returns red,green,blue,white (usually warm)."""
         assert self.raw_state is not None
         raw_state = self.raw_state
@@ -1015,14 +1016,14 @@ class LEDENETDevice:
             raw_state.warm_white,
         )
 
-    def getRgbww(self) -> Tuple[int, int, int, int, int]:
+    def getRgbww(self) -> tuple[int, int, int, int, int]:
         """Returns red,green,blue,warm,cool."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
         return self.rgbww
 
     @property
-    def rgbww(self) -> Tuple[int, int, int, int, int]:
+    def rgbww(self) -> tuple[int, int, int, int, int]:
         """Returns red,green,blue,warm,cool."""
         raw_state = self.raw_state
         assert raw_state is not None
@@ -1034,14 +1035,14 @@ class LEDENETDevice:
             raw_state.cool_white,
         )
 
-    def getRgbcw(self) -> Tuple[int, int, int, int, int]:
+    def getRgbcw(self) -> tuple[int, int, int, int, int]:
         """Returns red,green,blue,cool,warm."""
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255, 255, 255)
         return self.rgbcw
 
     @property
-    def rgbcw(self) -> Tuple[int, int, int, int, int]:
+    def rgbcw(self) -> tuple[int, int, int, int, int]:
         """Returns red,green,blue,cool,warm."""
         raw_state = self.raw_state
         assert raw_state is not None
@@ -1053,7 +1054,7 @@ class LEDENETDevice:
             raw_state.warm_white,
         )
 
-    def getCCT(self) -> Tuple[int, int]:
+    def getCCT(self) -> tuple[int, int]:
         if self.color_mode != COLOR_MODE_CCT:
             return (255, 255)
         raw_state = self.raw_state
@@ -1072,7 +1073,7 @@ class LEDENETDevice:
     def getSpeed(self) -> int:
         return self.speed
 
-    def _generate_random_levels_change(self) -> Tuple[List[bytearray], Dict[str, int]]:
+    def _generate_random_levels_change(self) -> tuple[list[bytearray], dict[str, int]]:
         """Generate a random levels change."""
         channels = {STATE_WARM_WHITE}
         if COLOR_MODES_RGB.intersection(self.color_modes):
@@ -1088,10 +1089,10 @@ class LEDENETDevice:
 
     def _generate_levels_change(  # noqa: C901
         self,
-        channels: Dict[str, Optional[int]],
+        channels: dict[str, Optional[int]],
         persist: bool = True,
         brightness: Optional[int] = None,
-    ) -> Tuple[List[bytearray], Dict[str, int]]:
+    ) -> tuple[list[bytearray], dict[str, int]]:
         """Generate the levels change request."""
         channel_map = self.model_data.channel_map
         if channel_map:
@@ -1201,19 +1202,19 @@ class LEDENETDevice:
             self._power_state_transition_complete_time,
         )
 
-    def getRgb(self) -> Tuple[int, int, int]:
+    def getRgb(self) -> tuple[int, int, int]:
         if self.color_mode not in COLOR_MODES_RGB:
             return (255, 255, 255)
         return self.rgb
 
     @property
-    def rgb(self) -> Tuple[int, int, int]:
+    def rgb(self) -> tuple[int, int, int]:
         assert self.raw_state is not None
         raw_state = self.raw_state
         return (raw_state.red, raw_state.green, raw_state.blue)
 
     @property
-    def rgb_unscaled(self) -> Tuple[int, int, int]:
+    def rgb_unscaled(self) -> tuple[int, int, int]:
         """Return the unscaled RGB."""
         r, g, b = self.rgb
         hsv = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
@@ -1221,8 +1222,8 @@ class LEDENETDevice:
         return round(r_p * 255), round(g_p * 255), round(b_p * 255)
 
     def _calculateBrightness(
-        self, rgb: Tuple[int, int, int], level: int
-    ) -> Tuple[int, int, int]:
+        self, rgb: tuple[int, int, int], level: int
+    ) -> tuple[int, int, int]:
         hsv = colorsys.rgb_to_hsv(*rgb)
         r, g, b = colorsys.hsv_to_rgb(hsv[0], hsv[1], level)
         return int(r), int(g), int(b)
@@ -1266,7 +1267,7 @@ class LEDENETDevice:
         return self._protocol.construct_preset_pattern(pattern, speed, brightness)
 
     def _generate_custom_patterm(
-        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
+        self, rgb_list: list[tuple[int, int, int]], speed: int, transition_type: str
     ) -> bytearray:
         """Generate the custom pattern protocol bytes."""
         # truncate if more than 16
@@ -1294,9 +1295,9 @@ class LEDENETDevice:
         return PresetPattern.str_to_val(effect)
 
     @property
-    def diagnostics(self) -> Dict[str, Any]:
+    def diagnostics(self) -> dict[str, Any]:
         """Return diagnostics for the device."""
-        data: Dict[str, Any] = {"device_state": {}, "last_messages": {}}
+        data: dict[str, Any] = {"device_state": {}, "last_messages": {}}
         last_messages = data["last_messages"]
         for name, msg in self._last_message.items():
             last_messages[name] = " ".join(f"0x{x:02X}" for x in msg)

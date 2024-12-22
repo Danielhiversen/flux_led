@@ -4,7 +4,7 @@ import select
 import socket
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 from flux_led.protocol import LEDENET_TIME_RESPONSE_LEN, ProtocolLEDENETOriginal
 
@@ -189,7 +189,7 @@ class WifiLedBulb(LEDENETDevice):
 
     @_socket_retry(attempts=2)  # type: ignore
     def _process_levels_change(
-        self, msgs: List[bytearray], updates: Dict[str, int]
+        self, msgs: list[bytearray], updates: dict[str, int]
     ) -> None:
         # send the message
         with self._lock:
@@ -327,20 +327,21 @@ class WifiLedBulb(LEDENETDevice):
                 return None
             return self._read_msg(read_len)
 
-    def getTimers(self) -> List[LedTimer]:
+    def getTimers(self) -> list[LedTimer]:
         assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETOriginal):
-            led_timers: List[LedTimer] = []
+            led_timers: list[LedTimer] = []
             return led_timers
         msg = self._protocol.construct_get_timers()
         return self._protocol.parse_get_timers(
             self._send_and_read_with_retry(msg, self._protocol.timer_response_len)
         )
 
-    def sendTimers(self, timer_list: List[LedTimer]) -> None:
+    def sendTimers(self, timer_list: list[LedTimer]) -> None:
         assert self._protocol is not None
         self._send_and_read_with_retry(
-            self._protocol.construct_set_timers(timer_list), 4  # b'\x94\x00\x00\x00'
+            self._protocol.construct_set_timers(timer_list),
+            4,  # b'\x94\x00\x00\x00'
         )
 
     @_socket_retry(attempts=2)  # type: ignore
@@ -365,7 +366,7 @@ class WifiLedBulb(LEDENETDevice):
 
     def setCustomPattern(
         self,
-        rgb_list: List[Tuple[int, int, int]],
+        rgb_list: list[tuple[int, int, int]],
         speed: int,
         transition_type: str,
         retry: int = DEFAULT_RETRIES,

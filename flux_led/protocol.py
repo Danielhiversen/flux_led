@@ -7,7 +7,7 @@ import logging
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import NamedTuple, Optional, Union
 
 from .const import (
     COLOR_MODE_RGB,
@@ -51,11 +51,11 @@ class LEDENETAddressableDeviceConfiguration:
     segments: Optional[int]  # number of segments
     music_pixels_per_segment: Optional[int]  # music pixels per segment
     music_segments: Optional[int]  # number of music segments
-    wirings: List[str]  # available wirings in the current mode
+    wirings: list[str]  # available wirings in the current mode
     wiring: Optional[str]  # RGB/BRG/GBR etc
     wiring_num: Optional[int]  # RGB/BRG/GBR number
-    num_to_wiring: Dict[int, str]
-    wiring_to_num: Dict[str, int]
+    num_to_wiring: dict[int, str]
+    wiring_to_num: dict[str, int]
     ic_type: Optional[str]  # WS2812B UCS.. etc
     ic_type_num: Optional[int]  # WS2812B UCS.. number etc
     operating_mode: Optional[str]  # RGB, RGBW
@@ -597,7 +597,7 @@ class ProtocolBase:
             and self.is_checksum_correct(msg)
         )
 
-    def parse_get_timers(self, msg: bytes) -> List[LedTimer]:
+    def parse_get_timers(self, msg: bytes) -> list[LedTimer]:
         """Parse get timers."""
         if not self.is_valid_timers_response(msg):
             raise ValueError(f"Timers response not valid: {msg!r}")
@@ -612,7 +612,7 @@ class ProtocolBase:
             start += timer_bytes_len
         return timer_list
 
-    def construct_set_timers(self, timer_list: List[LedTimer]) -> bytearray:
+    def construct_set_timers(self, timer_list: list[LedTimer]) -> bytearray:
         """Construct a set timers message."""
         # remove inactive or expired timers from list
         for t in timer_list:
@@ -668,9 +668,9 @@ class ProtocolBase:
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_color: Optional[Tuple[int, int, int]] = None,
-        background_color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[bytearray]:
+        foreground_color: Optional[tuple[int, int, int]] = None,
+        background_color: Optional[tuple[int, int, int]] = None,
+    ) -> list[bytearray]:
         """The bytes to send to set music mode."""
 
     @abstractmethod
@@ -683,7 +683,7 @@ class ProtocolBase:
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request."""
 
     @abstractmethod
@@ -693,7 +693,7 @@ class ProtocolBase:
         """The bytes to send for a preset pattern."""
 
     def construct_custom_effect(
-        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
+        self, rgb_list: list[tuple[int, int, int]], speed: int, transition_type: str
     ) -> bytearray:
         """The bytes to send for a custom effect."""
         msg = bytearray()
@@ -868,7 +868,7 @@ class ProtocolLEDENETOriginal(ProtocolBase):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
@@ -910,7 +910,7 @@ class ProtocolLEDENETOriginalRGBW(ProtocolLEDENETOriginal):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET RGBW protocol (w/o checksum at end)
         return [
@@ -945,7 +945,7 @@ class ProtocolLEDENETOriginalCCT(ProtocolLEDENETOriginal):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for original LEDENET protocol (w/o checksum at end)
         #  0  1  2  3  4
@@ -1025,7 +1025,7 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for 8-byte protocols (w/ checksum at end)
         #  0  1  2  3  4  5  6
@@ -1087,9 +1087,9 @@ class ProtocolLEDENET8Byte(ProtocolBase):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_color: Optional[Tuple[int, int, int]] = None,
-        background_color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[bytearray]:
+        foreground_color: Optional[tuple[int, int, int]] = None,
+        background_color: Optional[tuple[int, int, int]] = None,
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -1223,9 +1223,9 @@ class ProtocolLEDENET8ByteDimmableEffects(ProtocolLEDENET8ByteAutoOn):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_color: Optional[Tuple[int, int, int]] = None,
-        background_color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[bytearray]:
+        foreground_color: Optional[tuple[int, int, int]] = None,
+        background_color: Optional[tuple[int, int, int]] = None,
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -1300,7 +1300,7 @@ class ProtocolLEDENET9Byte(ProtocolLEDENET8Byte):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request."""
         # sample message for 9-byte LEDENET protocol (w/ checksum at end)
         #  0  1  2  3  4  5  6  7
@@ -1577,7 +1577,7 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request.
 
         white  41 01 ff ff ff 00 00 00 60 ff 00 00 9e
@@ -1615,9 +1615,9 @@ class ProtocolLEDENETAddressableA2(ProtocolLEDENETAddressableBase):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_color: Optional[Tuple[int, int, int]] = None,
-        background_color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[bytearray]:
+        foreground_color: Optional[tuple[int, int, int]] = None,
+        background_color: Optional[tuple[int, int, int]] = None,
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -1933,9 +1933,9 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         brightness: int,
         mode: Optional[int],
         effect: Optional[int],
-        foreground_color: Optional[Tuple[int, int, int]] = None,
-        background_color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[bytearray]:
+        foreground_color: Optional[tuple[int, int, int]] = None,
+        background_color: Optional[tuple[int, int, int]] = None,
+    ) -> list[bytearray]:
         """The bytes to send for music mode.
 
         Known messages
@@ -1983,7 +1983,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request.
 
         b0 [unknown static?] b1 [unknown static?] b2 [unknown static?] b3 [unknown static?] 00 [unknown static?] 01 [unknown static?] 01 [unknown static?] 6a [incrementing sequence number] 00 [unknown static?] 0d [unknown, sometimes 0c] 41 [unknown static?] 02 [preset number] ff [foreground r] 00 [foreground g] 00 [foreground b] 00 [background red] ff [background green] 00 [background blue] 06 [speed or direction?] 00 [unknown static?] 00 [unknown static?] 00 [unknown static?] 47 [speed or direction?] cd [check sum]
@@ -2035,7 +2035,7 @@ class ProtocolLEDENETAddressableA3(ProtocolLEDENETAddressableA2):
     def construct_zone_change(
         self,
         points: int,  # the number of points on the strip
-        rgb_list: List[Tuple[int, int, int]],
+        rgb_list: list[tuple[int, int, int]],
         speed: int,
         effect: MultiColorEffects,
     ) -> bytearray:
@@ -2181,7 +2181,7 @@ class ProtocolLEDENETCCT(ProtocolLEDENET9Byte):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request.
 
         b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
@@ -2252,7 +2252,7 @@ class ProtocolLEDENETCCTWrapped(ProtocolLEDENETCCT):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request.
 
         b0 b1 b2 b3 00 01 01 52 00 09 35 b1 00 64 00 00 00 03 4d bd - 100% warm
@@ -2344,7 +2344,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
         warm_white: Optional[int],
         cool_white: Optional[int],
         write_mode: LevelWriteMode,
-    ) -> List[bytearray]:
+    ) -> list[bytearray]:
         """The bytes to send for a level change request.
 
         Green 100%:
@@ -2422,7 +2422,7 @@ class ProtocolLEDENETAddressableChristmas(ProtocolLEDENETAddressableBase):
     def construct_zone_change(
         self,
         points: int,  # the number of points on the strip
-        rgb_list: List[Tuple[int, int, int]],
+        rgb_list: list[tuple[int, int, int]],
         speed: int,
         effect: MultiColorEffects,
     ) -> bytearray:

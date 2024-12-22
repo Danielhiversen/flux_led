@@ -642,11 +642,11 @@ class TestLight(unittest.TestCase):
                 return bytearray(b"\x81\x25")
             if calls == 2:
                 self.assertEqual(expected, 12)
-                return bytearray(b"\x23\x61\x00\x03\x00\xFF\x00\x00\x02\x00\x5A\x88")
+                return bytearray(b"\x23\x61\x00\x03\x00\xff\x00\x00\x02\x00\x5a\x88")
             if calls == 3:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\x25\x23\x61\x00\x03\x00\xFF\x00\x00\x02\x00\x5A\x88"
+                    b"\x81\x25\x23\x61\x00\x03\x00\xff\x00\x00\x02\x00\x5a\x88"
                 )
 
         mock_read.side_effect = read_data
@@ -689,12 +689,12 @@ class TestLight(unittest.TestCase):
             if calls == 5:
                 self.assertEqual(expected, 94)
                 return bytearray(
-                    b"\x0F\x22\xF0\x16\x01\x04\x00\x2B\x00\x00\x61\x19\x47\xFF\x00\x00\xF0\xF0\x16\x01\x04\x04\x2C\x00\x00\x61\x7F\xFF\x00\x00\x00\xF0\xF0\x16\x01\x03\x16\x1F\x00\x00\x61\xFF\x00\x00\x00\x00\xF0\xF0\x16\x01\x03\x17\x13\x00\x00\x61\x81\x81\x81\x00\x00\xF0\xF0\x16\x01\x03\x17\x28\x00\x00\x61\x00\xFF\x00\x00\x00\xF0\xF0\x16\x01\x04\x07\x2C\x00\x00\x61\x21\x00\xFF\x00\x00\xF0\x00\x00"
+                    b"\x0f\x22\xf0\x16\x01\x04\x00\x2b\x00\x00\x61\x19\x47\xff\x00\x00\xf0\xf0\x16\x01\x04\x04\x2c\x00\x00\x61\x7f\xff\x00\x00\x00\xf0\xf0\x16\x01\x03\x16\x1f\x00\x00\x61\xff\x00\x00\x00\x00\xf0\xf0\x16\x01\x03\x17\x13\x00\x00\x61\x81\x81\x81\x00\x00\xf0\xf0\x16\x01\x03\x17\x28\x00\x00\x61\x00\xff\x00\x00\x00\xf0\xf0\x16\x01\x04\x07\x2c\x00\x00\x61\x21\x00\xff\x00\x00\xf0\x00\x00"
                 )
             if calls == 5:
                 self.assertEqual(expected, 4)
                 return bytearray(
-                    b"\x0F\x22\xF0\x16\x01\x04\x00\x2B\x00\x00\x61\x19\x47\xFF\x00\x00\xF0\xF0\x16\x01\x04\x04\x2C\x00\x00\x61\x7F\xFF\x00\x00\x00\xF0\xF0\x16\x01\x03\x16\x1F\x00\x00\x61\xFF\x00\x00\x00\x00\xF0\xF0\x16\x01\x03\x17\x13\x00\x00\x61\x81\x81\x81\x00\x00\xF0\xF0\x16\x01\x03\x17\x28\x00\x00\x61\x00\xFF\x00\x00\x00\xF0\xF0\x16\x01\x04\x07\x2C\x00\x00\x61\x21\x00\xFF\x00\x00\xF0\x00\x00"
+                    b"\x0f\x22\xf0\x16\x01\x04\x00\x2b\x00\x00\x61\x19\x47\xff\x00\x00\xf0\xf0\x16\x01\x04\x04\x2c\x00\x00\x61\x7f\xff\x00\x00\x00\xf0\xf0\x16\x01\x03\x16\x1f\x00\x00\x61\xff\x00\x00\x00\x00\xf0\xf0\x16\x01\x03\x17\x13\x00\x00\x61\x81\x81\x81\x00\x00\xf0\xf0\x16\x01\x03\x17\x28\x00\x00\x61\x00\xff\x00\x00\x00\xf0\xf0\x16\x01\x04\x07\x2c\x00\x00\x61\x21\x00\xff\x00\x00\xf0\x00\x00"
                 )
 
         mock_read.side_effect = read_data
@@ -1001,7 +1001,7 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b"\x81\x0E")
+                return bytearray(b"\x81\x0e")
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"\x23\x61\x07\x10\xb6\x00\x98\x00\x07\x00\xf0\x6f")
@@ -1064,7 +1064,7 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b"\x81\x0E")
+                return bytearray(b"\x81\x0e")
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"\x23\x61\x07\x10\xb6\x00\x98\x00\x09\x00\xf0\x71")
@@ -1693,7 +1693,7 @@ class TestLight(unittest.TestCase):
         light.setWhiteTemperature(2700, 255)
         self.assertEqual(mock_read.call_count, 3)
         self.assertEqual(mock_send.call_count, 3)
-        self.assertEqual(mock_send.call_args, mock.call(bytearray((b"V\xff\x00\xaa"))))
+        self.assertEqual(mock_send.call_args, mock.call(bytearray(b"V\xff\x00\xaa")))
 
         light._transition_complete_time = 0
         light.update_state()
@@ -1992,7 +1992,7 @@ class TestLight(unittest.TestCase):
             if calls == 3:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\xde\x23\x41\x47\x00\x00\x00\x00\x00\x02\xFF\x00\x0b"
+                    b"\x81\xde\x23\x41\x47\x00\x00\x00\x00\x00\x02\xff\x00\x0b"
                 )
 
         mock_read.side_effect = read_data
@@ -2217,19 +2217,19 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b"\x81\xA2")
+                return bytearray(b"\x81\xa2")
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"#a\x41\x10\xff\x00\x00\x00\x04\x00\xf0\xeb")
             if calls == 3:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\xA2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
+                    b"\x81\xa2#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd4"
                 )
             if calls == 4:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\xA2#\x24\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd3"
+                    b"\x81\xa2#\x24\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd3"
                 )
             raise ValueError("Too many calls")
 
@@ -2312,14 +2312,14 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b"\x81\xA3")
+                return bytearray(b"\x81\xa3")
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"#a\x41\x10\xff\x00\x00\x00\x04\x00\xf0\xec")
             if calls == 3:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\xA3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
+                    b"\x81\xa3#\x25\x01\x10\x64\x00\x00\x00\x04\x00\xf0\xd5"
                 )
             raise ValueError("Too many calls")
 
@@ -2409,19 +2409,19 @@ class TestLight(unittest.TestCase):
             calls += 1
             if calls == 1:
                 self.assertEqual(expected, 2)
-                return bytearray(b"\x81\xA1")
+                return bytearray(b"\x81\xa1")
             if calls == 2:
                 self.assertEqual(expected, 12)
                 return bytearray(b"#a\x41\x10\xff\x00\x00\x00\x04\x00\xf0\xea")
             if calls == 3:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\xA1#\x00\xa1\x01\x64\x00\x00\x00\x04\x00\xf0\x3f"
+                    b"\x81\xa1#\x00\xa1\x01\x64\x00\x00\x00\x04\x00\xf0\x3f"
                 )
             if calls == 4:
                 self.assertEqual(expected, 14)
                 return bytearray(
-                    b"\x81\xA1\x23\x00\x61\x64\x07\x00\x21\x03\x03\x01\x2C\x65"
+                    b"\x81\xa1\x23\x00\x61\x64\x07\x00\x21\x03\x03\x01\x2c\x65"
                 )
             raise ValueError("Too many calls")
 

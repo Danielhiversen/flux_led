@@ -3,7 +3,7 @@ import logging
 import time
 from asyncio import ALL_COMPLETED, FIRST_COMPLETED
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Union
 
 from .aioprotocol import AIOLEDENETProtocol
 from .aioscanner import AIOBulbScanner
@@ -81,15 +81,15 @@ class AIOWifiLedBulb(LEDENETDevice):
         self._get_time_future: Optional[asyncio.Future[bool]] = None
         self._get_timers_lock: asyncio.Lock = asyncio.Lock()
         self._get_timers_future: Optional[asyncio.Future[bool]] = None
-        self._timers: Optional[List[LedTimer]] = None
+        self._timers: Optional[list[LedTimer]] = None
         self._power_restore_future: "asyncio.Future[bool]" = loop.create_future()
         self._device_config_lock: asyncio.Lock = asyncio.Lock()
         self._device_config_future: asyncio.Future[bool] = loop.create_future()
         self._remote_config_future: asyncio.Future[bool] = loop.create_future()
         self._device_config_setup = False
         self._power_state_lock = asyncio.Lock()
-        self._power_state_futures: List["asyncio.Future[bool]"] = []
-        self._state_futures: List[
+        self._power_state_futures: list["asyncio.Future[bool]"] = []
+        self._state_futures: list[
             "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]"
         ] = []
         self._determine_protocol_future: Optional["asyncio.Future[bool]"] = None
@@ -198,7 +198,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         await self._async_send_msg(self._protocol.construct_state_query())
 
     async def _async_wait_state_change(
-        self, futures: List["asyncio.Future[Any]"], state: bool, timeout: float
+        self, futures: list["asyncio.Future[Any]"], state: bool, timeout: float
     ) -> bool:
         # If the device requires the two step turn on, we need to wait for the
         # power state and the state update. If its the single step turn on, we
@@ -212,9 +212,7 @@ class AIOWifiLedBulb(LEDENETDevice):
     ) -> bool:
         assert self._protocol is not None
         power_state_future: "asyncio.Future[bool]" = self.loop.create_future()
-        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = (
-            self.loop.create_future()
-        )
+        state_future: "asyncio.Future[Union[LEDENETRawState, LEDENETOriginalRawState]]" = self.loop.create_future()
         self._power_state_futures.append(power_state_future)
         self._state_futures.append(state_future)
         await self._async_send_msg(self._protocol.construct_state_change(state))
@@ -390,7 +388,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
 
     async def _async_process_levels_change(
-        self, msgs: List[bytearray], updates: Dict[str, int]
+        self, msgs: list[bytearray], updates: dict[str, int]
     ) -> None:
         """Process and send a levels change."""
         self._set_transition_complete_time()
@@ -413,7 +411,7 @@ class AIOWifiLedBulb(LEDENETDevice):
         )
 
     async def async_set_custom_pattern(
-        self, rgb_list: List[Tuple[int, int, int]], speed: int, transition_type: str
+        self, rgb_list: list[tuple[int, int, int]], speed: int, transition_type: str
     ) -> None:
         """Set a custom pattern on the device."""
         await self._async_send_msg(
@@ -436,7 +434,7 @@ class AIOWifiLedBulb(LEDENETDevice):
 
     async def async_set_zones(
         self,
-        rgb_list: List[Tuple[int, int, int]],
+        rgb_list: list[tuple[int, int, int]],
         speed: int = 100,
         effect: MultiColorEffects = MultiColorEffects.STATIC,
     ) -> None:
@@ -461,8 +459,8 @@ class AIOWifiLedBulb(LEDENETDevice):
         brightness: Optional[int] = 100,
         mode: Optional[int] = None,
         effect: Optional[int] = None,
-        foreground_color: Optional[Tuple[int, int, int]] = None,
-        background_color: Optional[Tuple[int, int, int]] = None,
+        foreground_color: Optional[tuple[int, int, int]] = None,
+        background_color: Optional[tuple[int, int, int]] = None,
     ) -> None:
         """Set music mode."""
         assert self._protocol is not None
@@ -632,11 +630,11 @@ class AIOWifiLedBulb(LEDENETDevice):
                 return None
             return self._last_time
 
-    async def async_get_timers(self) -> Optional[List[LedTimer]]:
+    async def async_get_timers(self) -> Optional[list[LedTimer]]:
         """Get the timers."""
         assert self._protocol is not None
         if isinstance(self._protocol, ProtocolLEDENETOriginal):
-            led_timers: List[LedTimer] = []
+            led_timers: list[LedTimer] = []
             return led_timers
         await self._async_send_msg(self._protocol.construct_get_timers())
         async with self._get_timers_lock:
@@ -649,7 +647,7 @@ class AIOWifiLedBulb(LEDENETDevice):
                 return None
             return self._timers
 
-    async def async_set_timers(self, timer_list: List[LedTimer]) -> None:
+    async def async_set_timers(self, timer_list: list[LedTimer]) -> None:
         """Set the timers."""
         assert self._protocol is not None
         await self._async_send_msg(self._protocol.construct_set_timers(timer_list))

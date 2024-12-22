@@ -1,4 +1,4 @@
-from typing import Dict, Optional, cast
+from typing import Optional, cast
 
 from .const import MultiColorEffects
 
@@ -645,7 +645,7 @@ class PresetPattern:
     red_green_blue_cross_fade = EFFECT_MAP_DIMMABLE[EFFECT_RED_GREEN_BLUE_CROSS_FADE]
 
     def __init__(self) -> None:
-        self._value_to_str: Dict[int, str] = {
+        self._value_to_str: dict[int, str] = {
             **EFFECT_ID_NAME_LEGACY_CCT,
             **{
                 v: k.replace("_", " ").title()
