@@ -4,6 +4,7 @@ import logging
 import select
 import socket
 import time
+import platform
 from datetime import date
 from typing import Optional, Union
 
@@ -170,6 +171,8 @@ class BulbScanner:
     REBOOT_MESSAGE = b"AT+Z\r"
     ALL_MESSAGES = {DISCOVER_MESSAGE, VERSION_MESSAGE, REMOTE_ACCESS_MESSAGE}
     BROADCAST_ADDRESS = "<broadcast>"
+    if platform.system() == "Windows":
+        BROADCAST_ADDRESS = "255.255.255.255"
 
     def __init__(self) -> None:
         self._discoveries: dict[str, FluxLEDDiscovery] = {}
