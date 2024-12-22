@@ -8,7 +8,7 @@ from collections import namedtuple
 from typing import cast
 from collections.abc import Iterable
 
-import webcolors  # type: ignore
+import webcolors
 
 from .const import MAX_TEMP, MIN_TEMP
 
@@ -78,10 +78,10 @@ class utils:
     def get_color_names_list() -> list[str]:
         return sorted(
             {
-                *webcolors.CSS2_HEX_TO_NAMES.values(),
-                *webcolors.CSS21_HEX_TO_NAMES.values(),
-                *webcolors.CSS3_HEX_TO_NAMES.values(),
-                *webcolors.HTML4_HEX_TO_NAMES.values(),
+                *webcolors.names(webcolors.CSS2),
+                *webcolors.names(webcolors.CSS21),
+                *webcolors.names(webcolors.CSS3),
+                *webcolors.names(webcolors.HTML4),
             }
         )
 
