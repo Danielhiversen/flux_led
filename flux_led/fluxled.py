@@ -874,8 +874,8 @@ async def async_main() -> None:  # noqa: C901
             if addr in found_addrs:
                 continue
             bulb_info_list.append(
-                FluxLEDDiscovery({ATTR_IPADDR: addr, ATTR_ID: "Unknown ID"})
-            )  # type: ignore
+                FluxLEDDiscovery({ATTR_IPADDR: addr, ATTR_ID: "Unknown ID"})  # type: ignore[typeddict-item]
+            )
 
     # now we have our bulb list, perform same operation on all of them
     tasks = [_async_process_bulb(info, options) for info in bulb_info_list]

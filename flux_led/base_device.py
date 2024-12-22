@@ -1309,7 +1309,7 @@ class LEDENETDevice:
                 continue
             value: Any = getattr(self, name)
             if is_dataclass(value):
-                value = asdict(value)
+                value = asdict(value)  # type: ignore[arg-type]
             if hasattr(value, "value"):
                 value = value.value
             if value is None or isinstance(value, SERIALIZABLE_TYPES):
