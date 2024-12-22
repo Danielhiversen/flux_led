@@ -8,7 +8,7 @@ from collections import namedtuple
 from typing import cast
 from collections.abc import Iterable
 
-import webcolors
+import webcolors  # type: ignore[import-untyped]
 
 from .const import MAX_TEMP, MIN_TEMP
 
